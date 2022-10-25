@@ -483,6 +483,11 @@ cl_int Kernel::getArgInfo(cl_uint argIndex, cl_kernel_arg_info paramName, size_t
         return retVal;
     }
 
+    program->callPopulateZebinExtendedArgsMetadataOnce(clDevice.getRootDeviceIndex());
+    if (kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty()) {
+        return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
+    }
+
     const auto &argTraits = args[argIndex].getTraits();
     const auto &argMetadata = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata[argIndex];
 

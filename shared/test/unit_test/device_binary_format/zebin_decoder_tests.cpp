@@ -583,7 +583,7 @@ kernels_misc_info:
     programInfo.kernelInfos.push_back(kernel2Info);
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, zeInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, zeInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::Success, res);
     EXPECT_TRUE(outErrors.empty());
     EXPECT_TRUE(outWarnings.empty());
@@ -648,7 +648,7 @@ kernels_misc_info:
     programInfo.kernelInfos.push_back(kernelInfo);
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfoUnrecognized, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognized, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::Success, res);
     EXPECT_TRUE(outErrors.empty());
 
@@ -678,7 +678,7 @@ kernels_misc_info:
     programInfo.kernelInfos.push_back(kernelInfo);
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::Success, res);
     EXPECT_TRUE(outErrors.empty());
 
@@ -715,7 +715,7 @@ kernels_misc_info:
     programInfo.kernelInfos.push_back(kernelInfo);
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::InvalidBinary, res);
 
     EXPECT_NE(std::string::npos, outErrors.find("DeviceBinaryFormat::Zebin::.ze_info : could not read name from : [-] in context of : kernels_misc_info\n"));
@@ -751,7 +751,7 @@ kernels_misc_info:
     programInfo.kernelInfos.push_back(kernelInfo);
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::InvalidBinary, res);
 
     EXPECT_NE(std::string::npos, outErrors.find("DeviceBinaryFormat::Zebin::.ze_info : could not read address_qualifier from : [-] in context of : kernels_misc_info\n"));
@@ -775,7 +775,7 @@ kernels_misc_info:
     programInfo.kernelInfos.push_back(kernelInfo);
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfoEmptyArgsInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoEmptyArgsInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::Success, res);
     EXPECT_TRUE(outErrors.empty());
     std::array<std::string, 5> missingMembers = {
@@ -801,7 +801,7 @@ kernels_misc_info:
     programInfo.kernelMiscInfoPos = 0u;
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::InvalidBinary, res);
 }
 
@@ -821,7 +821,7 @@ kernels_misc_info:
     programInfo.kernelMiscInfoPos = 0u;
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::InvalidBinary, res);
 
     auto expectedError{"DeviceBinaryFormat::Zebin : Error : Missing kernel name in kernels_misc_info section.\n"};
@@ -848,7 +848,7 @@ kernels_misc_info:
     programInfo.kernelInfos.push_back(kernelInfo);
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::InvalidBinary, res);
 
     auto expectedError{"DeviceBinaryFormat::Zebin : Error : Cannot find kernel info for kernel some_kernel.\n"};
@@ -872,7 +872,7 @@ kernels:
     setKernelMiscInfoPosition(zeInfo, programInfo);
     EXPECT_EQ(std::string::npos, programInfo.kernelMiscInfoPos);
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo, zeInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, zeInfo, outErrors, outWarnings);
 
     EXPECT_EQ(DecodeError::InvalidBinary, res);
     auto expectedError{"DeviceBinaryFormat::Zebin : Position of kernels_misc_info not set - may be missing in zeInfo.\n"};
@@ -6732,4 +6732,49 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_FALSE(warnings.empty());
     EXPECT_TRUE(errors.empty()) << errors;
+}
+
+TEST(ZeInfoMetadataExtractionFromElf, givenValidElfContainingZeInfoSectionWhenExtractingZeInfoMetadataStringThenProperMetadataIsReturnedForEachElfType) {
+    ConstStringRef zeInfoData{"mockZeInfoData\n"};
+    constexpr auto mockSectionDataSize = 0x10;
+    uint8_t mockSectionData[mockSectionDataSize]{0};
+
+    NEO::Elf::ElfEncoder<Elf::EI_CLASS_32> elfEncoder32B;
+    NEO::Elf::ElfEncoder<Elf::EI_CLASS_64> elfEncoder64B;
+
+    elfEncoder32B.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfoData.data(), zeInfoData.size()));
+    elfEncoder32B.appendSection(NEO::Elf::SHT_PROGBITS, "someOtherSection", ArrayRef<const uint8_t>::fromAny(mockSectionData, mockSectionDataSize));
+    auto encoded32BElf = elfEncoder32B.encode();
+
+    elfEncoder64B.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfoData.data(), zeInfoData.size()));
+    elfEncoder64B.appendSection(NEO::Elf::SHT_PROGBITS, "someOtherSection", ArrayRef<const uint8_t>::fromAny(mockSectionData, mockSectionDataSize));
+    auto encoded64BElf = elfEncoder64B.encode();
+
+    std::string outErrors{}, outWarnings{};
+    auto zeInfoStr32B = extractZeInfoMetadataStringFromZebin(ArrayRef<const uint8_t>::fromAny(encoded32BElf.data(), encoded32BElf.size()), outErrors, outWarnings);
+    auto zeInfoStr64B = extractZeInfoMetadataStringFromZebin(ArrayRef<const uint8_t>::fromAny(encoded64BElf.data(), encoded64BElf.size()), outErrors, outWarnings);
+    EXPECT_STREQ(zeInfoStr32B.data(), zeInfoData.data());
+    EXPECT_STREQ(zeInfoStr64B.data(), zeInfoData.data());
+}
+
+TEST(ZeInfoMetadataExtractionFromElf, givenValidElfNotContainingZeInfoSectionWhenExtractingZeInfoMetadataStringThenEmptyDataIsReturnedForEachElfType) {
+    constexpr auto mockSectionDataSize = 0x10;
+    uint8_t mockSectionData[mockSectionDataSize]{0};
+
+    NEO::Elf::ElfEncoder<Elf::EI_CLASS_32> elfEncoder32B;
+    NEO::Elf::ElfEncoder<Elf::EI_CLASS_64> elfEncoder64B;
+
+    elfEncoder32B.appendSection(NEO::Elf::SHT_ZEBIN_SPIRV, "notZeInfoSection", ArrayRef<const uint8_t>::fromAny(mockSectionData, mockSectionDataSize));
+    elfEncoder32B.appendSection(NEO::Elf::SHT_PROGBITS, "alsoNotZeInfoSection", ArrayRef<const uint8_t>::fromAny(mockSectionData, mockSectionDataSize));
+    auto encoded32BElf = elfEncoder32B.encode();
+
+    elfEncoder64B.appendSection(NEO::Elf::SHT_ZEBIN_SPIRV, "notZeInfoSection", ArrayRef<const uint8_t>::fromAny(mockSectionData, mockSectionDataSize));
+    elfEncoder64B.appendSection(NEO::Elf::SHT_PROGBITS, "alsoNotZeInfoSection", ArrayRef<const uint8_t>::fromAny(mockSectionData, mockSectionDataSize));
+    auto encoded64BElf = elfEncoder64B.encode();
+
+    std::string outErrors{}, outWarnings{};
+    auto zeInfoStr32B = extractZeInfoMetadataStringFromZebin(ArrayRef<const uint8_t>::fromAny(encoded32BElf.data(), encoded32BElf.size()), outErrors, outWarnings);
+    auto zeInfoStr64B = extractZeInfoMetadataStringFromZebin(ArrayRef<const uint8_t>::fromAny(encoded64BElf.data(), encoded64BElf.size()), outErrors, outWarnings);
+    EXPECT_EQ(nullptr, zeInfoStr32B.data());
+    EXPECT_EQ(nullptr, zeInfoStr64B.data());
 }

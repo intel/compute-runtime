@@ -290,6 +290,7 @@ class Program : public BaseObject<_cl_program> {
     void notifyDebuggerWithDebugData(ClDevice *clDevice);
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
     Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
+    void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
@@ -356,6 +357,7 @@ class Program : public BaseObject<_cl_program> {
 
         std::unique_ptr<char[]> debugData;
         size_t debugDataSize = 0U;
+        size_t kernelMiscInfoPos = std::string::npos;
     };
 
     std::vector<BuildInfo> buildInfos;
@@ -375,6 +377,8 @@ class Program : public BaseObject<_cl_program> {
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     std::mutex lockMutex;
     uint32_t exposedKernels = 0;
+
+    std::once_flag extractAndDecodeMetadataOnce;
 };
 
 } // namespace NEO

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -248,6 +249,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
             buildInfos[rootDeviceIndex].globalVarTotalSize = 0u;
         }
     }
+    buildInfos[rootDeviceIndex].kernelMiscInfoPos = src.kernelMiscInfoPos;
 
     for (auto &kernelInfo : kernelInfoArray) {
         cl_int retVal = CL_SUCCESS;
@@ -345,5 +347,22 @@ void Program::notifyDebuggerWithDebugData(ClDevice *clDevice) {
             }
         }
     }
+}
+
+void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {
+    auto &buildInfo = this->buildInfos[rootDeviceIndex];
+    auto extractAndDecodeMetadata = [&]() {
+        auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
+        if (false == NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+            return;
+        }
+        std::string errors{}, warnings{};
+        auto metadataString = extractZeInfoMetadataStringFromZebin(refBin, errors, warnings);
+        auto decodeError = decodeAndPopulateKernelMiscInfo(buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray, metadataString, errors, warnings);
+        if (NEO::DecodeError::Success != decodeError) {
+            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error in decodeAndPopulateKernelMiscInfo: %s\n", errors.c_str());
+        }
+    };
+    std::call_once(extractAndDecodeMetadataOnce, extractAndDecodeMetadata);
 }
 } // namespace NEO

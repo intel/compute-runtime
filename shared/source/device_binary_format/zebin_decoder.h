@@ -12,6 +12,7 @@
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <string>
@@ -153,6 +154,8 @@ NEO::DecodeError readKernelMiscArgumentInfos(const NEO::Yaml::YamlParser &parser
 
 void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMiscArgInfosVec, std::string &outErrReason, std::string &outWarning);
 
-NEO::DecodeError decodeAndPopulateKernelMiscInfo(ProgramInfo &dst, ConstStringRef metadataString, std::string &outErrReason, std::string &outWarning);
+NEO::DecodeError decodeAndPopulateKernelMiscInfo(size_t kernelMiscInfoOffset, std::vector<NEO::KernelInfo *> &kernelInfos, ConstStringRef metadataString, std::string &outErrReason, std::string &outWarning);
+
+ConstStringRef extractZeInfoMetadataStringFromZebin(const ArrayRef<const uint8_t> zebin, std::string &outErrReason, std::string &outWarning);
 
 } // namespace NEO

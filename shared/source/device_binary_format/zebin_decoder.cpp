@@ -1609,12 +1609,12 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
     }
 }
 
-NEO::DecodeError decodeAndPopulateKernelMiscInfo(ProgramInfo &dst, ConstStringRef metadataString, std::string &outErrReason, std::string &outWarning) {
-    if (std::string::npos == dst.kernelMiscInfoPos) {
+NEO::DecodeError decodeAndPopulateKernelMiscInfo(size_t kernelMiscInfoOffset, std::vector<NEO::KernelInfo *> &kernelInfos, ConstStringRef metadataString, std::string &outErrReason, std::string &outWarning) {
+    if (std::string::npos == kernelMiscInfoOffset) {
         outErrReason.append("DeviceBinaryFormat::Zebin : Position of " + Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str() + " not set - may be missing in zeInfo.\n");
         return DecodeError::InvalidBinary;
     }
-    ConstStringRef kernelMiscInfoString(reinterpret_cast<const char *>(metadataString.begin() + dst.kernelMiscInfoPos), metadataString.size() - dst.kernelMiscInfoPos);
+    ConstStringRef kernelMiscInfoString(reinterpret_cast<const char *>(metadataString.begin() + kernelMiscInfoOffset), metadataString.size() - kernelMiscInfoOffset);
     NEO::KernelInfo *kernelInfo = nullptr;
 
     NEO::Yaml::YamlParser parser;
@@ -1651,7 +1651,7 @@ NEO::DecodeError decodeAndPopulateKernelMiscInfo(ProgramInfo &dst, ConstStringRe
         return DecodeError::InvalidBinary;
     }
     for (auto &[kName, miscInfos] : kernelArgsMiscInfoVec) {
-        for (auto dstKernelInfo : dst.kernelInfos) {
+        for (auto dstKernelInfo : kernelInfos) {
             if (dstKernelInfo->kernelDescriptor.kernelMetadata.kernelName == kName) {
                 kernelInfo = dstKernelInfo;
                 break;
@@ -1808,6 +1808,24 @@ NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std:
     }
 
     return DecodeError::Success;
+}
+
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+ConstStringRef extractZeInfoMetadataString(const ArrayRef<const uint8_t> zebin, std::string &outErrReason, std::string &outWarning) {
+    auto decodedElf = NEO::Elf::decodeElf<numBits>(zebin, outErrReason, outWarning);
+    for (const auto &sectionHeader : decodedElf.sectionHeaders) {
+        if (sectionHeader.header->type == NEO::Elf::SHT_ZEBIN_ZEINFO) {
+            auto zeInfoData = sectionHeader.data;
+            return ConstStringRef{reinterpret_cast<const char *>(zeInfoData.begin()), zeInfoData.size()};
+        }
+    }
+    return ConstStringRef{};
+}
+
+ConstStringRef extractZeInfoMetadataStringFromZebin(const ArrayRef<const uint8_t> zebin, std::string &outErrReason, std::string &outWarning) {
+    return Elf::isElf<Elf::EI_CLASS_32>(zebin)
+               ? extractZeInfoMetadataString<Elf::EI_CLASS_32>(zebin, outErrReason, outWarning)
+               : extractZeInfoMetadataString<Elf::EI_CLASS_64>(zebin, outErrReason, outWarning);
 }
 
 } // namespace NEO
