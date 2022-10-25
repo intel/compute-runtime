@@ -95,25 +95,18 @@ void LKF::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
     featureTable->flags.ftrTileMappedResource = true;
-    featureTable->flags.ftrEnableGuC = true;
 
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
-    featureTable->flags.ftrFbcCpuTracking = true;
     featureTable->flags.ftrTileY = true;
 
     featureTable->flags.ftrAstcHdr2D = true;
     featureTable->flags.ftrAstcLdr2D = true;
 
-    featureTable->flags.ftr3dMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
 };
 
 void LKF::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {

@@ -82,7 +82,6 @@ WorkaroundTable BXT::workaroundTable = {};
 FeatureTable BXT::featureTable = {};
 
 void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    PLATFORM *platform = &hwInfo->platform;
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
@@ -91,34 +90,20 @@ void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrL3IACoherency = true;
     featureTable->flags.ftrULT = true;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
-    featureTable->flags.ftr3dMidBatchPreempt = true;
-    featureTable->flags.ftr3dObjectLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
     featureTable->flags.ftrLCIA = true;
     featureTable->flags.ftrPPGTT = true;
     featureTable->flags.ftrIA32eGfxPTEs = true;
     featureTable->flags.ftrDisplayYTiling = true;
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
-    featureTable->flags.ftrEnableGuC = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
-    featureTable->flags.ftrFbcCpuTracking = true;
     featureTable->flags.ftrTileY = true;
-
-    if (platform->usRevId >= 3) {
-        featureTable->flags.ftrGttCacheInvalidation = true;
-    }
 
     workaroundTable->flags.waLLCCachingUnsupported = true;
     workaroundTable->flags.waMsaa8xTileYDepthPitchAlignment = true;
     workaroundTable->flags.waFbcLinearSurfaceStride = true;
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->flags.waSendMIFLUSHBeforeVFE = true;
-    workaroundTable->flags.waForcePcBbFullCfgRestore = true;
-    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 

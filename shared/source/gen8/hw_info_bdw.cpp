@@ -90,13 +90,9 @@ void BDW::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrSVM = true;
     featureTable->flags.ftrIA32eGfxPTEs = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
-    featureTable->flags.ftrFbcCpuTracking = true;
     featureTable->flags.ftrTileY = true;
 
     workaroundTable->flags.waDisableLSQCROPERFforOCL = true;
-    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
     workaroundTable->flags.waUseVAlign16OnTileXYBpp816 = true;
     workaroundTable->flags.waModifyVFEStateAfterGPGPUPreemption = true;
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;

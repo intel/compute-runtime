@@ -89,15 +89,11 @@ void GLK::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
     featureTable->flags.ftrL3IACoherency = true;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
-    featureTable->flags.ftr3dMidBatchPreempt = true;
-    featureTable->flags.ftr3dObjectLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
     featureTable->flags.ftrLCIA = true;
     featureTable->flags.ftrPPGTT = true;
     featureTable->flags.ftrIA32eGfxPTEs = true;
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
-    featureTable->flags.ftrEnableGuC = true;
     featureTable->flags.ftrTileMappedResource = true;
     featureTable->flags.ftrULT = true;
     featureTable->flags.ftrAstcHdr2D = true;
@@ -108,10 +104,7 @@ void GLK::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waMsaa8xTileYDepthPitchAlignment = true;
     workaroundTable->flags.waFbcLinearSurfaceStride = true;
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->flags.waSendMIFLUSHBeforeVFE = true;
-    workaroundTable->flags.waForcePcBbFullCfgRestore = true;
-    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 

@@ -140,8 +140,8 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     const FeatureTable *skus[] = {&s1, &s2};
     WorkaroundTable w1;
     WorkaroundTable w2;
-    w1.flags.waDoNotUseMIReportPerfCount = true;
-    w2.flags.waDoNotUseMIReportPerfCount = false;
+    w1.flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+    w2.flags.wa4kAlignUVOffsetNV12LinearSurface = false;
     const WorkaroundTable *was[] = {&w1, &w2};
 
     std::array<std::string, 4> inputArray = {{std::string(""),

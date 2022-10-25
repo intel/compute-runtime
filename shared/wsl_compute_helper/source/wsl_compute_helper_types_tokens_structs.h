@@ -432,7 +432,7 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     TokenVariableLength base;
 
     TOKSTR__SKU_FEATURE_TABLE(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrAssignedGpuTile) + sizeof(FtrAssignedGpuTile) - offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrDesktop), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+        : base(tokenId, elementId, offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrAssignedGpuTile) + sizeof(FtrAssignedGpuTile) - offsetof(TOKSTR__SKU_FEATURE_TABLE, FtrULT), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
     TOKSTR__SKU_FEATURE_TABLE()
         : base(TOK_S_SKU_FEATURE_TABLE, 0, sizeof(*this) - sizeof(base)) {}
@@ -441,18 +441,13 @@ struct TOKSTR__SKU_FEATURE_TABLE {
         TokenVariableLength base;
 
         TOKSTR_ANONYMOUS3245(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS3245, FtrCCSMultiInstance) + sizeof(FtrCCSMultiInstance) - offsetof(TOKSTR_ANONYMOUS3245, FtrDesktop), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS3245, FtrCCSMultiInstance) + sizeof(FtrCCSMultiInstance) - offsetof(TOKSTR_ANONYMOUS3245, FtrULT), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
         TOKSTR_ANONYMOUS3245()
             : base(TOK_S_SKU_FEATURE_TABLE__ANONYMOUS3245, 0, sizeof(*this) - sizeof(base)) {}
 
-        TokenDword FtrDesktop = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_DESKTOP};
         TokenDword FtrULT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT};
-        TokenDword FtrIVBM0M1Platform = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_IVBM0M1PLATFORM};
-        TokenDword FtrChannelSwizzlingXOREnabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CHANNEL_SWIZZLING_XORENABLED};
-        TokenDword Ftr5Slice = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR5SLICE};
         TokenDword FtrLCIA = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_LCIA};
-        TokenDword FtrResourceStreamer = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_RESOURCE_STREAMER};
         TokenDword FtrCCSRing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSRING};
         TokenDword FtrCCSNode = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSNODE};
         TokenDword FtrCCSMultiInstance = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSMULTI_INSTANCE};
@@ -464,13 +459,12 @@ struct TOKSTR__SKU_FEATURE_TABLE {
         TokenVariableLength base;
 
         TOKSTR_ANONYMOUS11155(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS11155, FtrSGTPVSKUStrapPresent) + sizeof(FtrSGTPVSKUStrapPresent) - offsetof(TOKSTR_ANONYMOUS11155, FtrDisplayDisabled), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS11155, FtrDisplayDisabled) + sizeof(FtrDisplayDisabled) - offsetof(TOKSTR_ANONYMOUS11155, FtrDisplayDisabled), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
         TOKSTR_ANONYMOUS11155()
             : base(TOK_S_SKU_FEATURE_TABLE__ANONYMOUS11155, 0, sizeof(*this) - sizeof(base)) {}
 
         TokenDword FtrDisplayDisabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS11155__FTR_DISPLAY_DISABLED};
-        TokenDword FtrSGTPVSKUStrapPresent = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS11155__FTR_SGTPVSKUSTRAP_PRESENT};
     };
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS11155>, "");
     static_assert(sizeof(TOKSTR_ANONYMOUS11155) % sizeof(uint32_t) == 0, "");
@@ -501,9 +495,6 @@ struct TOKSTR__SKU_FEATURE_TABLE {
         TokenDword FtrGpGpuMidBatchPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_MID_BATCH_PREEMPT};
         TokenDword FtrGpGpuThreadGroupLevelPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_THREAD_GROUP_LEVEL_PREEMPT};
         TokenDword FtrGpGpuMidThreadLevelPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_MID_THREAD_LEVEL_PREEMPT};
-        TokenDword Ftr3dMidBatchPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR3D_MID_BATCH_PREEMPT};
-        TokenDword Ftr3dObjectLevelPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR3D_OBJECT_LEVEL_PREEMPT};
-        TokenDword FtrPerCtxtPreemptionGranularityControl = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PER_CTXT_PREEMPTION_GRANULARITY_CONTROL};
         TokenDword FtrPPGTT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PPGTT};
         TokenDword FtrIA32eGfxPTEs = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_IA32E_GFX_PTES};
         TokenDword FtrMemTypeMocsDeferPAT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_MEM_TYPE_MOCS_DEFER_PAT};
@@ -516,14 +507,11 @@ struct TOKSTR__SKU_FEATURE_TABLE {
         TokenDword FtrL3IACoherency = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_L3IACOHERENCY};
         TokenDword FtrEDram = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_EDRAM};
         TokenDword FtrLLCBypass = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LLCBYPASS};
-        TokenDword FtrCrystalwell = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CRYSTALWELL};
         TokenDword FtrCentralCachePolicy = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CENTRAL_CACHE_POLICY};
-        TokenDword FtrIoMmuPageFaulting = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_IO_MMU_PAGE_FAULTING};
         TokenDword FtrWddm2GpuMmu = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2GPU_MMU};
         TokenDword FtrWddm2Svm = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2SVM};
         TokenDword FtrStandardMipTailFormat = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_STANDARD_MIP_TAIL_FORMAT};
         TokenDword FtrWddm2_1_64kbPages = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2_1_64KB_PAGES};
-        TokenDword FtrGttCacheInvalidation = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GTT_CACHE_INVALIDATION};
         TokenDword FtrE2ECompression = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_E2ECOMPRESSION};
         TokenDword FtrLinearCCS = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LINEAR_CCS};
         TokenDword FtrLocalMemory = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LOCAL_MEMORY};
@@ -576,31 +564,16 @@ struct TOKSTR__SKU_FEATURE_TABLE {
         TokenVariableLength base;
 
         TOKSTR_ANONYMOUS66219(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS66219, FtrSimulationMode) + sizeof(FtrSimulationMode) - offsetof(TOKSTR_ANONYMOUS66219, FtrS3D), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS66219, FtrDisplayEngineS3d) + sizeof(FtrDisplayEngineS3d) - offsetof(TOKSTR_ANONYMOUS66219, FtrS3D), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
         TOKSTR_ANONYMOUS66219()
             : base(TOK_S_SKU_FEATURE_TABLE__ANONYMOUS66219, 0, sizeof(*this) - sizeof(base)) {}
 
         TokenDword FtrS3D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_S3D};
         TokenDword FtrDisplayEngineS3d = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_DISPLAY_ENGINE_S3D};
-        TokenDword FtrSimulationMode = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_SIMULATION_MODE};
     };
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS66219>, "");
     static_assert(sizeof(TOKSTR_ANONYMOUS66219) % sizeof(uint32_t) == 0, "");
-
-    struct TOKSTR_ANONYMOUS88095 {
-        TokenVariableLength base;
-
-        TOKSTR_ANONYMOUS88095(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS88095, FtrEnableGuC) + sizeof(FtrEnableGuC) - offsetof(TOKSTR_ANONYMOUS88095, FtrEnableGuC), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
-
-        TOKSTR_ANONYMOUS88095()
-            : base(TOK_S_SKU_FEATURE_TABLE__ANONYMOUS88095, 0, sizeof(*this) - sizeof(base)) {}
-
-        TokenDword FtrEnableGuC = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS88095__FTR_ENABLE_GU_C};
-    };
-    static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS88095>, "");
-    static_assert(sizeof(TOKSTR_ANONYMOUS88095) % sizeof(uint32_t) == 0, "");
 
     struct TOKSTR_ANONYMOUS89755 {
         TokenVariableLength base;
@@ -630,73 +603,56 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS91822>, "");
     static_assert(sizeof(TOKSTR_ANONYMOUS91822) % sizeof(uint32_t) == 0, "");
 
-    TokenDword FtrDesktop = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_DESKTOP};                                                              // Indirect field from anonymous struct
-    TokenDword FtrULT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT};                                                                      // Indirect field from anonymous struct
-    TokenDword FtrIVBM0M1Platform = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_IVBM0M1PLATFORM};                                              // Indirect field from anonymous struct
-    TokenDword FtrChannelSwizzlingXOREnabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CHANNEL_SWIZZLING_XORENABLED};                      // Indirect field from anonymous struct
-    TokenDword Ftr5Slice = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR5SLICE};                                                                 // Indirect field from anonymous struct
-    TokenDword FtrLCIA = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_LCIA};                                                                    // Indirect field from anonymous struct
-    TokenDword FtrResourceStreamer = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_RESOURCE_STREAMER};                                           // Indirect field from anonymous struct
-    TokenDword FtrCCSRing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSRING};                                                              // Indirect field from anonymous struct
-    TokenDword FtrCCSNode = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSNODE};                                                              // Indirect field from anonymous struct
-    TokenDword FtrCCSMultiInstance = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSMULTI_INSTANCE};                                           // Indirect field from anonymous struct
-    TokenDword FtrDisplayDisabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS11155__FTR_DISPLAY_DISABLED};                                            // Indirect field from anonymous struct
-    TokenDword FtrSGTPVSKUStrapPresent = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS11155__FTR_SGTPVSKUSTRAP_PRESENT};                                  // Indirect field from anonymous struct
-    TokenDword FtrPooledEuEnabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21584__FTR_POOLED_EU_ENABLED};                                           // Indirect field from anonymous struct
-    TokenDword FtrGpGpuMidBatchPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_MID_BATCH_PREEMPT};                               // Indirect field from anonymous struct
-    TokenDword FtrGpGpuThreadGroupLevelPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_THREAD_GROUP_LEVEL_PREEMPT};              // Indirect field from anonymous struct
-    TokenDword FtrGpGpuMidThreadLevelPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_MID_THREAD_LEVEL_PREEMPT};                  // Indirect field from anonymous struct
-    TokenDword Ftr3dMidBatchPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR3D_MID_BATCH_PREEMPT};                                       // Indirect field from anonymous struct
-    TokenDword Ftr3dObjectLevelPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR3D_OBJECT_LEVEL_PREEMPT};                                 // Indirect field from anonymous struct
-    TokenDword FtrPerCtxtPreemptionGranularityControl = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PER_CTXT_PREEMPTION_GRANULARITY_CONTROL}; // Indirect field from anonymous struct
-    TokenDword FtrPPGTT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PPGTT};                                                                 // Indirect field from anonymous struct
-    TokenDword FtrIA32eGfxPTEs = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_IA32E_GFX_PTES};                                                 // Indirect field from anonymous struct
-    TokenDword FtrMemTypeMocsDeferPAT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_MEM_TYPE_MOCS_DEFER_PAT};                                 // Indirect field from anonymous struct
-    TokenDword FtrPml4Support = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PML4SUPPORT};                                                     // Indirect field from anonymous struct
-    TokenDword FtrSVM = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_SVM};                                                                     // Indirect field from anonymous struct
-    TokenDword FtrTileMappedResource = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_TILE_MAPPED_RESOURCE};                                     // Indirect field from anonymous struct
-    TokenDword FtrTranslationTable = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_TRANSLATION_TABLE};                                          // Indirect field from anonymous struct
-    TokenDword FtrUserModeTranslationTable = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_USER_MODE_TRANSLATION_TABLE};                        // Indirect field from anonymous struct
-    TokenDword FtrNullPages = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_NULL_PAGES};                                                        // Indirect field from anonymous struct
-    TokenDword FtrL3IACoherency = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_L3IACOHERENCY};                                                 // Indirect field from anonymous struct
-    TokenDword FtrEDram = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_EDRAM};                                                                 // Indirect field from anonymous struct
-    TokenDword FtrLLCBypass = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LLCBYPASS};                                                         // Indirect field from anonymous struct
-    TokenDword FtrCrystalwell = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CRYSTALWELL};                                                     // Indirect field from anonymous struct
-    TokenDword FtrCentralCachePolicy = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CENTRAL_CACHE_POLICY};                                     // Indirect field from anonymous struct
-    TokenDword FtrIoMmuPageFaulting = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_IO_MMU_PAGE_FAULTING};                                      // Indirect field from anonymous struct
-    TokenDword FtrWddm2GpuMmu = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2GPU_MMU};                                                    // Indirect field from anonymous struct
-    TokenDword FtrWddm2Svm = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2SVM};                                                           // Indirect field from anonymous struct
-    TokenDword FtrStandardMipTailFormat = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_STANDARD_MIP_TAIL_FORMAT};                              // Indirect field from anonymous struct
-    TokenDword FtrWddm2_1_64kbPages = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2_1_64KB_PAGES};                                        // Indirect field from anonymous struct
-    TokenDword FtrGttCacheInvalidation = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GTT_CACHE_INVALIDATION};                                 // Indirect field from anonymous struct
-    TokenDword FtrE2ECompression = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_E2ECOMPRESSION};                                               // Indirect field from anonymous struct
-    TokenDword FtrLinearCCS = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LINEAR_CCS};                                                        // Indirect field from anonymous struct
-    TokenDword FtrLocalMemory = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LOCAL_MEMORY};                                                    // Indirect field from anonymous struct
-    TokenDword FtrPpgtt64KBWalkOptimization = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PPGTT64KBWALK_OPTIMIZATION};                        // Indirect field from anonymous struct
-    TokenDword FtrTileY = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_TILE_Y};                                                                // Indirect field from anonymous struct
-    TokenDword FtrFlatPhysCCS = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_FLAT_PHYS_CCS};                                                   // Indirect field from anonymous struct
-    TokenDword FtrMultiTileArch = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_MULTI_TILE_ARCH};                                               // Indirect field from anonymous struct
-    TokenDword FtrLocalMemoryAllows4KB = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LOCAL_MEMORY_ALLOWS4KB};                                 // Indirect field from anonymous struct
-    TokenDword FtrDisplayXTiling = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_DISPLAY_XTILING};                                              // Indirect field from anonymous struct
-    TokenDword FtrCameraCaptureCaching = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CAMERA_CAPTURE_CACHING};                                 // Indirect field from anonymous struct
-    TokenDword FtrKmdDaf = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_KMD_DAF};                                                              // Indirect field from anonymous struct
-    TokenDword FtrFrameBufferLLC = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_FRAME_BUFFER_LLC};                                             // Indirect field from anonymous struct
-    TokenDword FtrDriverFLR = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_DRIVER_FLR};                                                        // Indirect field from anonymous struct
-    TokenDword FtrAstcLdr2D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC_LDR2D};                                                        // Indirect field from anonymous struct
-    TokenDword FtrAstcHdr2D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC_HDR2D};                                                        // Indirect field from anonymous struct
-    TokenDword FtrAstc3D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC3D};                                                               // Indirect field from anonymous struct
-    TokenDword FtrFbc = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC};                                                                     // Indirect field from anonymous struct
-    TokenDword FtrFbc2AddressTranslation = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC2ADDRESS_TRANSLATION};                              // Indirect field from anonymous struct
-    TokenDword FtrFbcBlitterTracking = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC_BLITTER_TRACKING};                                     // Indirect field from anonymous struct
-    TokenDword FtrFbcCpuTracking = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC_CPU_TRACKING};                                             // Indirect field from anonymous struct
-    TokenDword FtrRendComp = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS54736__FTR_REND_COMP};                                                          // Indirect field from anonymous struct
-    TokenDword FtrDisplayYTiling = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS54736__FTR_DISPLAY_YTILING};                                              // Indirect field from anonymous struct
-    TokenDword FtrS3D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_S3D};                                                                     // Indirect field from anonymous struct
-    TokenDword FtrDisplayEngineS3d = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_DISPLAY_ENGINE_S3D};                                         // Indirect field from anonymous struct
-    TokenDword FtrSimulationMode = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_SIMULATION_MODE};                                              // Indirect field from anonymous struct
-    TokenDword FtrEnableGuC = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS88095__FTR_ENABLE_GU_C};                                                       // Indirect field from anonymous struct
-    TokenDword FtrVgt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS89755__FTR_VGT};                                                                     // Indirect field from anonymous struct
-    TokenDword FtrAssignedGpuTile = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS91822__FTR_ASSIGNED_GPU_TILE};                                           // Indirect field from anonymous struct
+    TokenDword FtrULT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT};                                                         // Indirect field from anonymous struct
+    TokenDword FtrLCIA = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_LCIA};                                                       // Indirect field from anonymous struct
+    TokenDword FtrCCSRing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSRING};                                                 // Indirect field from anonymous struct
+    TokenDword FtrCCSNode = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSNODE};                                                 // Indirect field from anonymous struct
+    TokenDword FtrCCSMultiInstance = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CCSMULTI_INSTANCE};                              // Indirect field from anonymous struct
+    TokenDword FtrDisplayDisabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS11155__FTR_DISPLAY_DISABLED};                               // Indirect field from anonymous struct
+    TokenDword FtrPooledEuEnabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21584__FTR_POOLED_EU_ENABLED};                              // Indirect field from anonymous struct
+    TokenDword FtrGpGpuMidBatchPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_MID_BATCH_PREEMPT};                  // Indirect field from anonymous struct
+    TokenDword FtrGpGpuThreadGroupLevelPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_THREAD_GROUP_LEVEL_PREEMPT}; // Indirect field from anonymous struct
+    TokenDword FtrGpGpuMidThreadLevelPreempt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_GP_GPU_MID_THREAD_LEVEL_PREEMPT};     // Indirect field from anonymous struct
+    TokenDword FtrPPGTT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PPGTT};                                                    // Indirect field from anonymous struct
+    TokenDword FtrIA32eGfxPTEs = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_IA32E_GFX_PTES};                                    // Indirect field from anonymous struct
+    TokenDword FtrMemTypeMocsDeferPAT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_MEM_TYPE_MOCS_DEFER_PAT};                    // Indirect field from anonymous struct
+    TokenDword FtrPml4Support = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PML4SUPPORT};                                        // Indirect field from anonymous struct
+    TokenDword FtrSVM = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_SVM};                                                        // Indirect field from anonymous struct
+    TokenDword FtrTileMappedResource = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_TILE_MAPPED_RESOURCE};                        // Indirect field from anonymous struct
+    TokenDword FtrTranslationTable = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_TRANSLATION_TABLE};                             // Indirect field from anonymous struct
+    TokenDword FtrUserModeTranslationTable = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_USER_MODE_TRANSLATION_TABLE};           // Indirect field from anonymous struct
+    TokenDword FtrNullPages = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_NULL_PAGES};                                           // Indirect field from anonymous struct
+    TokenDword FtrL3IACoherency = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_L3IACOHERENCY};                                    // Indirect field from anonymous struct
+    TokenDword FtrEDram = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_EDRAM};                                                    // Indirect field from anonymous struct
+    TokenDword FtrLLCBypass = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LLCBYPASS};                                            // Indirect field from anonymous struct
+    TokenDword FtrCentralCachePolicy = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CENTRAL_CACHE_POLICY};                        // Indirect field from anonymous struct
+    TokenDword FtrWddm2GpuMmu = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2GPU_MMU};                                       // Indirect field from anonymous struct
+    TokenDword FtrWddm2Svm = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2SVM};                                              // Indirect field from anonymous struct
+    TokenDword FtrStandardMipTailFormat = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_STANDARD_MIP_TAIL_FORMAT};                 // Indirect field from anonymous struct
+    TokenDword FtrWddm2_1_64kbPages = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WDDM2_1_64KB_PAGES};                           // Indirect field from anonymous struct
+    TokenDword FtrE2ECompression = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_E2ECOMPRESSION};                                  // Indirect field from anonymous struct
+    TokenDword FtrLinearCCS = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LINEAR_CCS};                                           // Indirect field from anonymous struct
+    TokenDword FtrLocalMemory = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LOCAL_MEMORY};                                       // Indirect field from anonymous struct
+    TokenDword FtrPpgtt64KBWalkOptimization = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PPGTT64KBWALK_OPTIMIZATION};           // Indirect field from anonymous struct
+    TokenDword FtrTileY = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_TILE_Y};                                                   // Indirect field from anonymous struct
+    TokenDword FtrFlatPhysCCS = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_FLAT_PHYS_CCS};                                      // Indirect field from anonymous struct
+    TokenDword FtrMultiTileArch = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_MULTI_TILE_ARCH};                                  // Indirect field from anonymous struct
+    TokenDword FtrLocalMemoryAllows4KB = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_LOCAL_MEMORY_ALLOWS4KB};                    // Indirect field from anonymous struct
+    TokenDword FtrDisplayXTiling = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_DISPLAY_XTILING};                                 // Indirect field from anonymous struct
+    TokenDword FtrCameraCaptureCaching = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CAMERA_CAPTURE_CACHING};                    // Indirect field from anonymous struct
+    TokenDword FtrKmdDaf = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_KMD_DAF};                                                 // Indirect field from anonymous struct
+    TokenDword FtrFrameBufferLLC = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_FRAME_BUFFER_LLC};                                // Indirect field from anonymous struct
+    TokenDword FtrDriverFLR = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_DRIVER_FLR};                                           // Indirect field from anonymous struct
+    TokenDword FtrAstcLdr2D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC_LDR2D};                                           // Indirect field from anonymous struct
+    TokenDword FtrAstcHdr2D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC_HDR2D};                                           // Indirect field from anonymous struct
+    TokenDword FtrAstc3D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC3D};                                                  // Indirect field from anonymous struct
+    TokenDword FtrFbc = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC};                                                        // Indirect field from anonymous struct
+    TokenDword FtrRendComp = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS54736__FTR_REND_COMP};                                             // Indirect field from anonymous struct
+    TokenDword FtrDisplayYTiling = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS54736__FTR_DISPLAY_YTILING};                                 // Indirect field from anonymous struct
+    TokenDword FtrS3D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_S3D};                                                        // Indirect field from anonymous struct
+    TokenDword FtrDisplayEngineS3d = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_DISPLAY_ENGINE_S3D};                            // Indirect field from anonymous struct
+    TokenDword FtrVgt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS89755__FTR_VGT};                                                        // Indirect field from anonymous struct
+    TokenDword FtrAssignedGpuTile = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS91822__FTR_ASSIGNED_GPU_TILE};                              // Indirect field from anonymous struct
 };
 static_assert(std::is_standard_layout_v<TOKSTR__SKU_FEATURE_TABLE>, "");
 static_assert(sizeof(TOKSTR__SKU_FEATURE_TABLE) % sizeof(uint32_t) == 0, "");
@@ -705,21 +661,17 @@ struct TOKSTR__WA_TABLE {
     TokenVariableLength base;
 
     TOKSTR__WA_TABLE(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR__WA_TABLE, Wa32bppTileY2DColorNoHAlign4) + sizeof(Wa32bppTileY2DColorNoHAlign4) - offsetof(TOKSTR__WA_TABLE, WaDoNotUseMIReportPerfCount), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+        : base(tokenId, elementId, offsetof(TOKSTR__WA_TABLE, Wa32bppTileY2DColorNoHAlign4) + sizeof(Wa32bppTileY2DColorNoHAlign4) - offsetof(TOKSTR__WA_TABLE, WaAlignIndexBuffer), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
     TOKSTR__WA_TABLE()
         : base(TOK_S_WA_TABLE, 0, sizeof(*this) - sizeof(base)) {}
 
-    TokenDword WaDoNotUseMIReportPerfCount = {TOK_FBD_WA_TABLE__WA_DO_NOT_USE_MIREPORT_PERF_COUNT};
     TokenDword WaAlignIndexBuffer = {TOK_FBD_WA_TABLE__WA_ALIGN_INDEX_BUFFER};
     TokenDword WaSendMIFLUSHBeforeVFE = {TOK_FBD_WA_TABLE__WA_SEND_MIFLUSHBEFORE_VFE};
     TokenDword WaDisablePerCtxtPreemptionGranularityControl = {TOK_FBD_WA_TABLE__WA_DISABLE_PER_CTXT_PREEMPTION_GRANULARITY_CONTROL};
-    TokenDword WaEnablePreemptionGranularityControlByUMD = {TOK_FBD_WA_TABLE__WA_ENABLE_PREEMPTION_GRANULARITY_CONTROL_BY_UMD};
     TokenDword WaDisableLSQCROPERFforOCL = {TOK_FBD_WA_TABLE__WA_DISABLE_LSQCROPERFFOR_OCL};
     TokenDword WaValign2For96bppFormats = {TOK_FBD_WA_TABLE__WA_VALIGN2FOR96BPP_FORMATS};
     TokenDword WaValign2ForR8G8B8UINTFormat = {TOK_FBD_WA_TABLE__WA_VALIGN2FOR_R8G8B8UINTFORMAT};
-    TokenDword WaReportPerfCountUseGlobalContextID = {TOK_FBD_WA_TABLE__WA_REPORT_PERF_COUNT_USE_GLOBAL_CONTEXT_ID};
-    TokenDword WaForcePcBbFullCfgRestore = {TOK_FBD_WA_TABLE__WA_FORCE_PC_BB_FULL_CFG_RESTORE};
     TokenDword WaCSRUncachable = {TOK_FBD_WA_TABLE__WA_CSRUNCACHABLE};
     TokenDword WaDisableFusedThreadScheduling = {TOK_FBD_WA_TABLE__WA_DISABLE_FUSED_THREAD_SCHEDULING};
     TokenDword WaModifyVFEStateAfterGPGPUPreemption = {TOK_FBD_WA_TABLE__WA_MODIFY_VFESTATE_AFTER_GPGPUPREEMPTION};

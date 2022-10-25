@@ -90,25 +90,16 @@ void KBL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
     featureTable->flags.ftrL3IACoherency = true;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
-    featureTable->flags.ftr3dMidBatchPreempt = true;
-    featureTable->flags.ftr3dObjectLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
     featureTable->flags.ftrPPGTT = true;
     featureTable->flags.ftrSVM = true;
     featureTable->flags.ftrIA32eGfxPTEs = true;
     featureTable->flags.ftrDisplayYTiling = true;
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
-    featureTable->flags.ftrEnableGuC = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
-    featureTable->flags.ftrFbcCpuTracking = true;
     featureTable->flags.ftrTileY = true;
 
-    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->flags.waSendMIFLUSHBeforeVFE = true;
-    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
     workaroundTable->flags.waMsaa8xTileYDepthPitchAlignment = true;
     workaroundTable->flags.waLosslessCompressionSurfaceStride = true;
     workaroundTable->flags.waFbcLinearSurfaceStride = true;
@@ -118,9 +109,6 @@ void KBL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     if (platform->usRevId <= 0x6) {
         workaroundTable->flags.waDisableLSQCROPERFforOCL = true;
         workaroundTable->flags.waEncryptedEdramOnlyPartials = true;
-    }
-    if (platform->usRevId <= 0x8) {
-        workaroundTable->flags.waForcePcBbFullCfgRestore = true;
     }
 }
 

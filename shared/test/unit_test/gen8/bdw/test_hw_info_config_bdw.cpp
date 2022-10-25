@@ -60,13 +60,9 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
             EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc2AddressTranslation);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcBlitterTracking);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcCpuTracking);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
 
             EXPECT_EQ(setParamBool, workaroundTable.flags.waDisableLSQCROPERFforOCL);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waReportPerfCountUseGlobalContextID);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waUseVAlign16OnTileXYBpp816);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads);

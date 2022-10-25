@@ -31,11 +31,6 @@ TEST(SkuInfoReceiverTest, givenAdapterInfoWhenReceivingThenUpdateFtrTable) {
     EXPECT_EQ(1lu, requestedFeatureTable.ftrBcsInfo.to_ulong());
 
     EXPECT_TRUE(refFeatureTable == requestedFeatureTable);
-
-    refFeatureTable.flags.ftr3dMidBatchPreempt = false;
-    requestedFeatureTable.flags.ftr3dMidBatchPreempt = true;
-
-    EXPECT_FALSE(refFeatureTable == requestedFeatureTable);
 }
 
 TEST(SkuInfoReceiverTest, givenFeatureTableWhenDifferentDataThenEqualityOperatorReturnsCorrectScore) {

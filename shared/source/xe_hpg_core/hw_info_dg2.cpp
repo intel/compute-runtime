@@ -99,17 +99,12 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
     featureTable->flags.ftrTileMappedResource = true;
-    featureTable->flags.ftrEnableGuC = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
     featureTable->flags.ftrAstcHdr2D = true;
     featureTable->flags.ftrAstcLdr2D = true;
 
-    featureTable->flags.ftr3dMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
 
     featureTable->flags.ftrTileY = false;
     featureTable->flags.ftrLocalMemory = true;
@@ -117,12 +112,10 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrE2ECompression = true;
     featureTable->flags.ftrCCSNode = true;
     featureTable->flags.ftrCCSRing = true;
-    featureTable->flags.ftrCCSMultiInstance = true;
 
     featureTable->flags.ftrUnified3DMediaCompressionFormats = true;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
 };
 
 void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {

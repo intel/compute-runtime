@@ -57,15 +57,11 @@ GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWor
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftr3dMidBatchPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftr3dObjectLevelPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrLCIA);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrEnableGuC);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrULT);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
@@ -76,10 +72,7 @@ GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWor
             EXPECT_EQ(setParamBool, workaroundTable.flags.waMsaa8xTileYDepthPitchAlignment);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waFbcLinearSurfaceStride);
             EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waSendMIFLUSHBeforeVFE);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waForcePcBbFullCfgRestore);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waReportPerfCountUseGlobalContextID);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
         }
     }

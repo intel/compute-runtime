@@ -27,7 +27,6 @@ XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(featureTable.flags.ftrCCSNode);
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
-    EXPECT_FALSE(featureTable.flags.ftrCCSMultiInstance);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
@@ -41,7 +40,6 @@ XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(featureTable.flags.ftrCCSNode);
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
-    EXPECT_FALSE(featureTable.flags.ftrCCSMultiInstance);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
@@ -55,7 +53,6 @@ XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_TRUE(featureTable.flags.ftrCCSNode);
     EXPECT_TRUE(featureTable.flags.ftrCCSRing);
     EXPECT_TRUE(featureTable.flags.ftrMultiTileArch);
-    EXPECT_TRUE(featureTable.flags.ftrCCSMultiInstance);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);

@@ -19,7 +19,6 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrULT = 1;
         refFtrTable.FtrEDram = 1;
         refFtrTable.FtrFrameBufferLLC = 1;
-        refFtrTable.FtrCrystalwell = 1;
         refFtrTable.FtrDisplayEngineS3d = 1;
         refFtrTable.FtrTileY = 1;
         refFtrTable.FtrDisplayYTiling = 1;
@@ -44,7 +43,6 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrSVM = 1;
         refFtrTable.FtrFlatPhysCCS = 1;
         refFtrTable.FtrMultiTileArch = 1;
-        refFtrTable.FtrCCSMultiInstance = 1;
         refFtrTable.FtrPpgtt64KBWalkOptimization = 1;
         refFtrTable.FtrUnified3DMediaCompressionFormats = 1;
         refFtrTable.Ftr57bGPUAddressing = 1;
@@ -65,22 +63,12 @@ struct SkuInfoBaseReference {
 
     static void fillReferenceFtrToReceive(FeatureTable &refFtrTable) {
         refFtrTable = {};
-        refFtrTable.flags.ftrDesktop = true;
-        refFtrTable.flags.ftrChannelSwizzlingXOREnabled = true;
-
-        refFtrTable.flags.ftrIVBM0M1Platform = true;
-        refFtrTable.flags.ftrSGTPVSKUStrapPresent = true;
-        refFtrTable.flags.ftr5Slice = true;
 
         refFtrTable.flags.ftrGpGpuMidBatchPreempt = true;
         refFtrTable.flags.ftrGpGpuThreadGroupLevelPreempt = true;
         refFtrTable.flags.ftrGpGpuMidThreadLevelPreempt = true;
-
-        refFtrTable.flags.ftrIoMmuPageFaulting = true;
         refFtrTable.flags.ftrWddm2Svm = true;
         refFtrTable.flags.ftrPooledEuEnabled = true;
-
-        refFtrTable.flags.ftrResourceStreamer = true;
 
         refFtrTable.flags.ftrPPGTT = true;
         refFtrTable.flags.ftrSVM = true;
@@ -88,39 +76,27 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrL3IACoherency = true;
         refFtrTable.flags.ftrIA32eGfxPTEs = true;
 
-        refFtrTable.flags.ftr3dMidBatchPreempt = true;
-        refFtrTable.flags.ftr3dObjectLevelPreempt = true;
-        refFtrTable.flags.ftrPerCtxtPreemptionGranularityControl = true;
-
         refFtrTable.flags.ftrTileY = true;
         refFtrTable.flags.ftrDisplayYTiling = true;
         refFtrTable.flags.ftrTranslationTable = true;
         refFtrTable.flags.ftrUserModeTranslationTable = true;
 
-        refFtrTable.flags.ftrEnableGuC = true;
-
         refFtrTable.flags.ftrFbc = true;
-        refFtrTable.flags.ftrFbc2AddressTranslation = true;
-        refFtrTable.flags.ftrFbcBlitterTracking = true;
-        refFtrTable.flags.ftrFbcCpuTracking = true;
 
         refFtrTable.flags.ftrULT = true;
         refFtrTable.flags.ftrLCIA = true;
-        refFtrTable.flags.ftrGttCacheInvalidation = true;
         refFtrTable.flags.ftrTileMappedResource = true;
         refFtrTable.flags.ftrAstcHdr2D = true;
         refFtrTable.flags.ftrAstcLdr2D = true;
 
         refFtrTable.flags.ftrStandardMipTailFormat = true;
         refFtrTable.flags.ftrFrameBufferLLC = true;
-        refFtrTable.flags.ftrCrystalwell = true;
         refFtrTable.flags.ftrLLCBypass = true;
         refFtrTable.flags.ftrDisplayEngineS3d = true;
         refFtrTable.flags.ftrWddm2GpuMmu = true;
         refFtrTable.flags.ftrWddm2_1_64kbPages = true;
 
         refFtrTable.flags.ftrKmdDaf = true;
-        refFtrTable.flags.ftrSimulationMode = true;
 
         refFtrTable.flags.ftrE2ECompression = true;
         refFtrTable.flags.ftrLinearCCS = true;
@@ -133,7 +109,6 @@ struct SkuInfoBaseReference {
 
         refFtrTable.flags.ftrFlatPhysCCS = true;
         refFtrTable.flags.ftrMultiTileArch = true;
-        refFtrTable.flags.ftrCCSMultiInstance = true;
         refFtrTable.flags.ftrPpgtt64KBWalkOptimization = true;
         refFtrTable.flags.ftrUnified3DMediaCompressionFormats = true;
         refFtrTable.flags.ftr57bGPUAddressing = true;
@@ -141,11 +116,8 @@ struct SkuInfoBaseReference {
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {
         refWaTable = {};
-        refWaTable.flags.waDoNotUseMIReportPerfCount = true;
 
-        refWaTable.flags.waEnablePreemptionGranularityControlByUMD = true;
         refWaTable.flags.waSendMIFLUSHBeforeVFE = true;
-        refWaTable.flags.waReportPerfCountUseGlobalContextID = true;
         refWaTable.flags.waDisableLSQCROPERFforOCL = true;
         refWaTable.flags.waMsaa8xTileYDepthPitchAlignment = true;
         refWaTable.flags.waLosslessCompressionSurfaceStride = true;
@@ -153,7 +125,6 @@ struct SkuInfoBaseReference {
         refWaTable.flags.wa4kAlignUVOffsetNV12LinearSurface = true;
         refWaTable.flags.waEncryptedEdramOnlyPartials = true;
         refWaTable.flags.waDisableEdramForDisplayRT = true;
-        refWaTable.flags.waForcePcBbFullCfgRestore = true;
         refWaTable.flags.waCompressedResourceRequiresConstVA21 = true;
         refWaTable.flags.waDisablePerCtxtPreemptionGranularityControl = true;
         refWaTable.flags.waLLCCachingUnsupported = true;

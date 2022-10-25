@@ -439,17 +439,9 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
 
-    igcFtrWa->SetFtrDesktop(device.getHardwareInfo().featureTable.flags.ftrDesktop);
-    igcFtrWa->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.flags.ftrChannelSwizzlingXOREnabled);
-    igcFtrWa->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.flags.ftrIVBM0M1Platform);
-    igcFtrWa->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.flags.ftrSGTPVSKUStrapPresent);
-    igcFtrWa->SetFtr5Slice(device.getHardwareInfo().featureTable.flags.ftr5Slice);
     igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(CompilerHwInfoConfig::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
-    igcFtrWa->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.flags.ftrIoMmuPageFaulting);
     igcFtrWa->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
     igcFtrWa->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.flags.ftrPooledEuEnabled);
-
-    igcFtrWa->SetFtrResourceStreamer(device.getHardwareInfo().featureTable.flags.ftrResourceStreamer);
 
     igcDeviceContexts[&device] = std::move(newDeviceCtx);
     return igcDeviceContexts[&device].get();

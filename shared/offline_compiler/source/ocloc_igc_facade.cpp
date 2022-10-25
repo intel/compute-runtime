@@ -132,21 +132,12 @@ CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> OclocIgcFacade::getIgcFe
 }
 
 void OclocIgcFacade::populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerHwInfoConfig *compilerHwInfoConfig) const {
-    handle->SetFtrDesktop(hwInfo.featureTable.flags.ftrDesktop);
-    handle->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.flags.ftrChannelSwizzlingXOREnabled);
-    handle->SetFtrIVBM0M1Platform(hwInfo.featureTable.flags.ftrIVBM0M1Platform);
-    handle->SetFtrSGTPVSKUStrapPresent(hwInfo.featureTable.flags.ftrSGTPVSKUStrapPresent);
-    handle->SetFtr5Slice(hwInfo.featureTable.flags.ftr5Slice);
-
     if (compilerHwInfoConfig) {
         handle->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
     }
 
-    handle->SetFtrIoMmuPageFaulting(hwInfo.featureTable.flags.ftrIoMmuPageFaulting);
     handle->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
     handle->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
-
-    handle->SetFtrResourceStreamer(hwInfo.featureTable.flags.ftrResourceStreamer);
 }
 
 CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocIgcFacade::createConstBuffer(const void *data, size_t size) {

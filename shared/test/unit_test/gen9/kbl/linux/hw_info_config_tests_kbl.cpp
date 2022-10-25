@@ -107,7 +107,6 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenWaFlagsWhenConfiguringHwInfoThenInforma
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waDisableLSQCROPERFforOCL);
     EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waEncryptedEdramOnlyPartials);
-    EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waForcePcBbFullCfgRestore);
 }
 
 KBLTEST_F(HwInfoConfigTestLinuxKbl, WhenConfiguringHwInfoThenEdramInformationIsCorrect) {

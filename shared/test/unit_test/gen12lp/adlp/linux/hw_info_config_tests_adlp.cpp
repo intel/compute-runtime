@@ -90,21 +90,15 @@ TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSyst
         EXPECT_FALSE(featureTable.flags.ftrTranslationTable);
         EXPECT_FALSE(featureTable.flags.ftrUserModeTranslationTable);
         EXPECT_FALSE(featureTable.flags.ftrTileMappedResource);
-        EXPECT_FALSE(featureTable.flags.ftrEnableGuC);
         EXPECT_FALSE(featureTable.flags.ftrFbc);
-        EXPECT_FALSE(featureTable.flags.ftrFbc2AddressTranslation);
-        EXPECT_FALSE(featureTable.flags.ftrFbcBlitterTracking);
-        EXPECT_FALSE(featureTable.flags.ftrFbcCpuTracking);
         EXPECT_FALSE(featureTable.flags.ftrTileY);
         EXPECT_FALSE(featureTable.flags.ftrAstcHdr2D);
         EXPECT_FALSE(featureTable.flags.ftrAstcLdr2D);
-        EXPECT_FALSE(featureTable.flags.ftr3dMidBatchPreempt);
+
         EXPECT_FALSE(featureTable.flags.ftrGpGpuMidBatchPreempt);
         EXPECT_FALSE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-        EXPECT_FALSE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
         EXPECT_FALSE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        EXPECT_FALSE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
         EXPECT_FALSE(workaroundTable.flags.waUntypedBufferCompression);
     }
     ret = drm.setupHardwareInfo(&device, true);
@@ -126,21 +120,15 @@ TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSyst
         EXPECT_TRUE(featureTable.flags.ftrTranslationTable);
         EXPECT_TRUE(featureTable.flags.ftrUserModeTranslationTable);
         EXPECT_TRUE(featureTable.flags.ftrTileMappedResource);
-        EXPECT_TRUE(featureTable.flags.ftrEnableGuC);
         EXPECT_TRUE(featureTable.flags.ftrFbc);
-        EXPECT_TRUE(featureTable.flags.ftrFbc2AddressTranslation);
-        EXPECT_TRUE(featureTable.flags.ftrFbcBlitterTracking);
-        EXPECT_TRUE(featureTable.flags.ftrFbcCpuTracking);
         EXPECT_FALSE(featureTable.flags.ftrTileY);
         EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
         EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
-        EXPECT_TRUE(featureTable.flags.ftr3dMidBatchPreempt);
+
         EXPECT_TRUE(featureTable.flags.ftrGpGpuMidBatchPreempt);
         EXPECT_TRUE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-        EXPECT_TRUE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
         EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        EXPECT_TRUE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
         EXPECT_TRUE(workaroundTable.flags.waUntypedBufferCompression);
     }
 }

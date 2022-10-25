@@ -77,22 +77,15 @@ ICLLPTEST_F(IcllpHwInfo, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTable
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrEnableGuC);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc2AddressTranslation);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcBlitterTracking);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcCpuTracking);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftr3dMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
             EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waReportPerfCountUseGlobalContextID);
         }
     }
 }

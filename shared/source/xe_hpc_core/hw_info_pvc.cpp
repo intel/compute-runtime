@@ -104,7 +104,6 @@ void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrCCSNode = true;
     featureTable->flags.ftrCCSRing = true;
     featureTable->flags.ftrMultiTileArch = true;
-    featureTable->flags.ftrCCSMultiInstance = true;
 
     featureTable->flags.ftrPPGTT = true;
     featureTable->flags.ftrSVM = true;
@@ -114,22 +113,16 @@ void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
     featureTable->flags.ftrTileMappedResource = true;
-    featureTable->flags.ftrEnableGuC = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
     featureTable->flags.ftrAstcHdr2D = true;
     featureTable->flags.ftrAstcLdr2D = true;
 
-    featureTable->flags.ftr3dMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
 
     featureTable->flags.ftrTileY = false;
     featureTable->ftrBcsInfo = maxNBitValue(9);
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
 }
 
 void PVC::adjustHardwareInfo(HardwareInfo *hwInfo) {
