@@ -234,8 +234,9 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenGetPortsReturnsErrorThenReturnE
 class MockIoctlHelperIafTest : public NEO::IoctlHelperPrelim20 {
   public:
     using IoctlHelperPrelim20::IoctlHelperPrelim20;
-    bool getFabricLatency(uint32_t fabricId, uint32_t &latency) override {
+    bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override {
         latency = 1;
+        bandwidth = 10;
         return mockFabricLatencyReturn;
     }
 
@@ -253,8 +254,17 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
         auto drmMock = new DrmMockResources(*rootDeviceEnvironment);
         drmMock->ioctlHelper.reset(new MockIoctlHelperIafTest(*drmMock));
         rootDeviceEnvironment->osInterface.reset(osInterface);
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
+        executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
     }
+
+    // initialize
+    uint32_t count = 0;
+    std::vector<ze_fabric_vertex_handle_t> phVertices;
+    ze_result_t res = driverHandle->fabricVertexGetExp(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    phVertices.resize(count);
+    res = driverHandle->fabricVertexGetExp(&count, phVertices.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     //  IAF port connection configuration
     //    Device | SubDevice | Port -- Connected to -- Device | SubDevice | Port
@@ -417,7 +427,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
 
     EXPECT_EQ(static_cast<uint32_t>(driverHandle->fabricEdges.size()), root2root + subDevice2root + subDevice2SubDevice);
 
-    uint32_t count = 0;
+    count = 0;
     std::vector<ze_fabric_edge_handle_t> edges(30);
 
     // Root to Root Connection
@@ -537,8 +547,17 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenLatencyRequest
         mockIoctlHelper->mockFabricLatencyReturn = false;
         drmMock->ioctlHelper.reset(mockIoctlHelper);
         rootDeviceEnvironment->osInterface.reset(osInterface);
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
+        executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
     }
+
+    // initialize
+    uint32_t count = 0;
+    std::vector<ze_fabric_vertex_handle_t> phVertices;
+    ze_result_t res = driverHandle->fabricVertexGetExp(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    phVertices.resize(count);
+    res = driverHandle->fabricVertexGetExp(&count, phVertices.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     //  IAF port connection configuration
     //    Device | SubDevice | Port -- Connected to -- Device | SubDevice | Port
@@ -589,7 +608,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenLatencyRequest
     }
     driverHandle->fabricEdges.clear();
     FabricEdge::createEdgesFromVertices(driverHandle->fabricVertices, driverHandle->fabricEdges);
-    uint32_t count = 0;
+    count = 0;
     std::vector<ze_fabric_edge_handle_t> edges(30);
 
     // Root to Root Connection

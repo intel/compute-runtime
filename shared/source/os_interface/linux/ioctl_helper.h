@@ -134,7 +134,7 @@ class IoctlHelper {
     virtual std::string getFileForMaxGpuFrequency() const;
     virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const;
     virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const;
-    virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency) = 0;
+    virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
 
     uint32_t getFlagsForPrimeHandleToFd() const;
 
@@ -191,7 +191,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     int getDrmParamValue(DrmParam drmParam) const override;
     std::string getDrmParamString(DrmParam param) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
-    bool getFabricLatency(uint32_t fabricId, uint32_t &latency) override;
+    bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -258,7 +258,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     std::string getDrmParamString(DrmParam param) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const override;
-    bool getFabricLatency(uint32_t fabricId, uint32_t &latency) override;
+    bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
 };
 
 } // namespace NEO

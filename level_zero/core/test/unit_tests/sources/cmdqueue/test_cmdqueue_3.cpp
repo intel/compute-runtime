@@ -712,6 +712,57 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     commandQueue->destroy();
 }
 
+HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabricEnumerationWhenExecutingThenEnableSingleSliceDispatch, IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+
+    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(0));
+    auto defaultEngine = subDevice->getDefaultEngine();
+    EXPECT_TRUE(defaultEngine.osContext->isEngineInstanced());
+
+    std::vector<std::unique_ptr<NEO::Device>> devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(subDevice));
+
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+
+    driverHandle->initializeVertexes();
+
+    auto l0Device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, returnValue));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
+    auto commandListHandle = commandList->toHandle();
+
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    GenCmdList cmdList;
+    FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
+
+    auto cfeStates = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
+
+    EXPECT_NE(0u, cfeStates.size());
+
+    for (auto &cmd : cfeStates) {
+        auto cfeState = reinterpret_cast<CFE_STATE *>(*cmd);
+        EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
+    }
+
+    commandQueue->destroy();
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandQueueHandleIndirectAllocs : public MockCommandQueueHw<gfxCoreFamily> {
   public:

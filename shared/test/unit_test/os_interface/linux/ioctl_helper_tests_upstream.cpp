@@ -482,6 +482,6 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingFabricLatencyThenFalseIsR
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     IoctlHelperUpstream ioctlHelper{*drm};
-    uint32_t fabricId = 0, latency = 0;
-    EXPECT_FALSE(ioctlHelper.getFabricLatency(fabricId, latency));
+    uint32_t fabricId = 0, latency = 0, bandwidth = 0;
+    EXPECT_FALSE(ioctlHelper.getFabricLatency(fabricId, latency, bandwidth));
 }

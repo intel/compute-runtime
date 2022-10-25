@@ -71,6 +71,7 @@ struct DriverHandleImp : public DriverHandle {
                                                NEO::SvmAllocationData *allocData,
                                                void *basePtr,
                                                uintptr_t *peerGpuAddress);
+    void initializeVertexes();
     ze_result_t fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phDevices) override;
     void createHostPointerManager();
     void sortNeoDevices(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
