@@ -113,17 +113,6 @@ void PrintFormatter::stripVectorTypeConversion(char *format) {
     }
 }
 
-template <>
-void PrintFormatter::adjustFormatString<int64_t>(std::string &formatString) {
-    auto longPosition = formatString.find('l');
-
-    UNRECOVERABLE_IF(longPosition == std::string::npos || longPosition == formatString.size() - 1);
-
-    if (formatString.at(longPosition + 1) != 'l') {
-        formatString.insert(longPosition, "l");
-    }
-}
-
 size_t PrintFormatter::printToken(char *output, size_t size, const char *formatString) {
     PRINTF_DATA_TYPE type(PRINTF_DATA_TYPE::INVALID);
     read(&type);
