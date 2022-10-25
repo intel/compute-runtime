@@ -48,8 +48,8 @@ DEVICE(0x56A1, Dg2HwConfig)
 DEVICE(0x56A2, Dg2HwConfig)
 DEVICE(0x56A5, Dg2HwConfig)
 DEVICE(0x56A6, Dg2HwConfig)
-DEVICE(0x56C0, Dg2HwConfig)
-DEVICE(0x56C1, Dg2HwConfig)
+NAMEDDEVICE(0x56C0, Dg2HwConfig, "Intel(R) Data Center GPU Flex Series 170")
+NAMEDDEVICE(0x56C1, Dg2HwConfig, "Intel(R) Data Center GPU Flex Series 140")
 #endif
 #endif
 
