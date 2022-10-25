@@ -243,19 +243,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         createHostPointerManager();
     }
 
-    for (auto &device : this->devices) {
-
-        auto deviceImpl = static_cast<DeviceImp *>(device);
-        auto fabricVertex = FabricVertex::createFromDevice(device);
-        if (fabricVertex == nullptr) {
-            continue;
-        }
-        deviceImpl->setFabricVertex(fabricVertex);
-        this->fabricVertices.push_back(fabricVertex);
-    }
-
-    FabricEdge::createEdgesFromVertices(this->fabricVertices, this->fabricEdges);
-
     return ZE_RESULT_SUCCESS;
 }
 
@@ -643,7 +630,25 @@ ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const v
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
+void DriverHandleImp::initializeVertexes() {
+    for (auto &device : this->devices) {
+        auto deviceImpl = static_cast<DeviceImp *>(device);
+        auto fabricVertex = FabricVertex::createFromDevice(device);
+        if (fabricVertex == nullptr) {
+            continue;
+        }
+        deviceImpl->setFabricVertex(fabricVertex);
+        this->fabricVertices.push_back(fabricVertex);
+    }
+
+    FabricEdge::createEdgesFromVertices(this->fabricVertices, this->fabricEdges);
+}
+
 ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phVertices) {
+
+    if (fabricVertices.empty()) {
+        this->initializeVertexes();
+    }
 
     uint32_t fabricVertexCount = static_cast<uint32_t>(this->fabricVertices.size());
     if (*pCount == 0) {

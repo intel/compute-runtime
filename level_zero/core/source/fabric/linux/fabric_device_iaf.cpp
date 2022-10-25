@@ -224,7 +224,8 @@ bool FabricSubDeviceIaf::getEdgeProperty(FabricSubDeviceIaf *pNeighbourInterface
 
         edgeProperty.latency = std::numeric_limits<uint32_t>::max();
         edgeProperty.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
-        if (pDrm->getIoctlHelper()->getFabricLatency(neighbourFabricId, edgeProperty.latency) == true) {
+        uint32_t bandwidth = 0;
+        if (pDrm->getIoctlHelper()->getFabricLatency(neighbourFabricId, edgeProperty.latency, bandwidth) == true) {
             edgeProperty.latencyUnit = ZE_LATENCY_UNIT_HOP;
         }
 

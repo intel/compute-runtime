@@ -655,7 +655,7 @@ bool IoctlHelperPrelim20::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctl
     return IoctlHelper::checkIfIoctlReinvokeRequired(error, ioctlRequest);
 }
 
-bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency) {
+bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) {
     Query query = {};
     QueryItem queryItem = {};
     PrelimI915::prelim_drm_i915_query_fabric_info info = {};
@@ -673,13 +673,14 @@ bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency)
         return false;
     }
 
-    if (info.latency < 10) {
+    if (info.latency < 10 || info.bandwidth == 0) {
         return false;
     }
 
     // Latency is in tenths of path length. 10 == 1 fabric link between src and dst
     // 1 link = zero hops
     latency = (info.latency / 10) - 1;
+    bandwidth = info.bandwidth;
     return true;
 }
 

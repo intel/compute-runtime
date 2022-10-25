@@ -129,7 +129,7 @@ TEST_F(DriverLinuxWithouthPciOrderTests, GivenNoEnvironmentVariableForDeviceOrde
     delete driverHandle;
 }
 
-class DriverPciOrderWitSimilarBusLinuxFixture : public ::testing::Test {
+class DriverPciOrderWithSimilarBusLinuxFixture : public ::testing::Test {
   public:
     void SetUp() override {
         DebugManagerStateRestore restorer;
@@ -170,7 +170,7 @@ class DriverPciOrderWitSimilarBusLinuxFixture : public ::testing::Test {
     std::unique_ptr<UltDeviceFactory> deviceFactory;
 };
 
-TEST_F(DriverPciOrderWitSimilarBusLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
+TEST_F(DriverPciOrderWithSimilarBusLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
 
     DriverHandleImp *driverHandle = new DriverHandleImp;
 
@@ -187,7 +187,27 @@ TEST_F(DriverPciOrderWitSimilarBusLinuxFixture, GivenEnvironmentVariableForDevic
     delete driverHandle;
 }
 
-class DriverPciOrderWitDifferentDeviceLinuxFixture : public ::testing::Test {
+TEST_F(DriverPciOrderWithSimilarBusLinuxFixture,
+       GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesAndThenInitializingVertexesThenNeoDevicesAccordingToBusOrderRetrieved) {
+
+    DriverHandleImp *driverHandle = new DriverHandleImp;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    driverHandle->initializeVertexes();
+
+    for (uint32_t i = 0; i < numRootDevices; i++) {
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+            EXPECT_NE(pDrm, nullptr);
+            EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
+        }
+    }
+    delete driverHandle;
+}
+
+class DriverPciOrderWithDifferentDeviceLinuxFixture : public ::testing::Test {
   public:
     void SetUp() override {
         DebugManagerStateRestore restorer;
@@ -228,7 +248,7 @@ class DriverPciOrderWitDifferentDeviceLinuxFixture : public ::testing::Test {
     std::unique_ptr<UltDeviceFactory> deviceFactory;
 };
 
-TEST_F(DriverPciOrderWitDifferentDeviceLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
+TEST_F(DriverPciOrderWithDifferentDeviceLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
 
     DriverHandleImp *driverHandle = new DriverHandleImp;
 
@@ -245,7 +265,27 @@ TEST_F(DriverPciOrderWitDifferentDeviceLinuxFixture, GivenEnvironmentVariableFor
     delete driverHandle;
 }
 
-class DriverPciOrderWitSimilarBusAndDeviceLinuxFixture : public ::testing::Test {
+TEST_F(DriverPciOrderWithDifferentDeviceLinuxFixture,
+       GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesAndThenInitializingVertexesThenNeoDevicesAccordingToBusOrderRetrieved) {
+
+    DriverHandleImp *driverHandle = new DriverHandleImp;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    driverHandle->initializeVertexes();
+
+    for (uint32_t i = 0; i < numRootDevices; i++) {
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+            EXPECT_NE(pDrm, nullptr);
+            EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
+        }
+    }
+    delete driverHandle;
+}
+
+class DriverPciOrderWithSimilarBusAndDeviceLinuxFixture : public ::testing::Test {
   public:
     void SetUp() override {
         DebugManagerStateRestore restorer;
@@ -286,7 +326,7 @@ class DriverPciOrderWitSimilarBusAndDeviceLinuxFixture : public ::testing::Test 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
 };
 
-TEST_F(DriverPciOrderWitSimilarBusAndDeviceLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
+TEST_F(DriverPciOrderWithSimilarBusAndDeviceLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
 
     DriverHandleImp *driverHandle = new DriverHandleImp;
 
@@ -445,6 +485,21 @@ TEST_F(DriverWDDMLinuxFixture, ClearPciSortFlagToVerifyCodeCoverageOnly) {
 
     DriverHandleImp *driverHandle = new DriverHandleImp;
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(0);
+
+    executionEnvironment->sortNeoDevices();
+
+    delete driverHandle;
+}
+
+TEST_F(DriverWDDMLinuxFixture, ClearPciSortFlagWithFabricEnumerationToVerifyCodeCoverageOnly) {
+
+    DriverHandleImp *driverHandle = new DriverHandleImp;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
+    driverHandle->initializeVertexes();
+
     DebugManagerStateRestore restorer;
     DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(0);
 
