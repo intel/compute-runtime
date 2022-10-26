@@ -30,11 +30,6 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     }
 
     if (globalsAreExported && (svmAllocManager != nullptr)) {
-        NEO::SVMAllocsManager::SvmAllocationProperties svmProps = {};
-        svmProps.coherent = false;
-        svmProps.readOnly = constant;
-        svmProps.hostPtrReadOnly = constant;
-
         RootDeviceIndicesContainer rootDeviceIndices;
         rootDeviceIndices.push_back(rootDeviceIndex);
         std::map<uint32_t, DeviceBitfield> subDeviceBitfields;
