@@ -2757,12 +2757,19 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
     ASSERT_TRUE(pProgram->requiresRebuild);
 }
 
-TEST(CreateProgramFromBinaryTests, givenBinaryProgramNotBuiltInWhenBuiltInKernelRebulildIsForcedThenDeviceBinaryIsUsed) {
+TEST(CreateProgramFromBinaryTests, givenBinaryProgramNotBuiltInWhenBuiltInKernelRebulildIsForcedThenDeviceBinaryIsNotUsed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
     PatchTokensTestData::ValidEmptyProgram programTokens;
+    Elf::ElfEncoder<Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = Elf::ET_OPENCL_EXECUTABLE;
+
+    constexpr auto mockSpirvDataSize = 0x10;
+    uint8_t mockSpirvData[mockSpirvDataSize]{0};
+    elfEncoder.appendSection(Elf::SHT_OPENCL_SPIRV, Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(mockSpirvData, mockSpirvDataSize));
+    programTokens.storage = elfEncoder.encode();
     const unsigned char *binaries[] = {programTokens.storage.data()};
     size_t lengths[] = {programTokens.storage.size()};
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -2777,10 +2784,10 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramNotBuiltInWhenBuiltInKernel
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-    EXPECT_NE(nullptr, pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get());
-    EXPECT_LT(0U, pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
-    EXPECT_NE(nullptr, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinary);
-    EXPECT_LT(0U, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get());
+    EXPECT_EQ(0U, pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinary);
+    EXPECT_EQ(0U, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
 }
 
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsNotForcedThenDeviceBinaryIsUsed) {

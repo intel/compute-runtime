@@ -193,7 +193,7 @@ cl_int Program::createProgramFromBinary(
             this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
 
             bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn);
-            rebuild |= isBuiltIn && DebugManager.flags.RebuildPrecompiledKernels.get();
+            rebuild |= DebugManager.flags.RebuildPrecompiledKernels.get();
             if (rebuild && 0u == this->irBinarySize) {
                 return CL_INVALID_BINARY;
             }
