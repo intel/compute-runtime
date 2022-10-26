@@ -15,6 +15,8 @@
 #include <level_zero/ze_api.h>
 
 // driver experimental API headers
+#include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
+
 #include "zex_driver.h"
 #include "zex_memory.h"
 #include "zex_module.h"

@@ -36,6 +36,7 @@
 #include "shared/source/program/sync_buffer_handler.inl"
 #include "shared/source/utilities/software_tags_manager.h"
 
+#include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device.h"
@@ -2594,6 +2595,107 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
             outArguments.patternOffsetRemainder = (outArguments.mainGroupSize * outArguments.groups & (outArguments.patternSizeInEls - 1)) * middleElSize;
         }
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
+                                                                     void *ptr,
+                                                                     uint32_t data,
+                                                                     ze_event_handle_t hSignalEvent) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    auto descriptor = reinterpret_cast<zex_wait_on_mem_desc_t *>(desc);
+    COMPARE_OPERATION comparator;
+    switch (descriptor->actionFlag) {
+    case ZEX_WAIT_ON_MEMORY_FLAG_EQUAL:
+        comparator = COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD;
+        break;
+    case ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL:
+        comparator = COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD;
+        break;
+    case ZEX_WAIT_ON_MEMORY_FLAG_GREATER_THAN:
+        comparator = COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD;
+        break;
+    case ZEX_WAIT_ON_MEMORY_FLAG_GREATER_THAN_EQUAL:
+        comparator = COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD;
+        break;
+    case ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN:
+        comparator = COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_SDD;
+        break;
+    case ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL:
+        comparator = COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD;
+        break;
+    default:
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto srcAllocationStruct = getAlignedAllocation(this->device, ptr, sizeof(uint32_t), true);
+    UNRECOVERABLE_IF(srcAllocationStruct.alloc == nullptr);
+    commandContainer.addToResidencyContainer(srcAllocationStruct.alloc);
+    uint64_t gpuAddress = static_cast<uint64_t>(srcAllocationStruct.alignedAllocationPtr);
+    NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                               gpuAddress,
+                                                               data,
+                                                               comparator);
+
+    if (hSignalEvent) {
+        auto event = Event::fromHandle(hSignalEvent);
+        const auto &hwInfo = this->device->getHwInfo();
+
+        commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+        uint64_t baseAddr = event->getGpuAddress(this->device);
+        size_t eventSignalOffset = 0;
+
+        if (isCopyOnly()) {
+            NEO::MiFlushArgs args;
+            args.commandWithPostSync = true;
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset),
+                                                              Event::STATE_SIGNALED, args, hwInfo);
+        } else {
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+                *commandContainer.getCommandStream(), NEO::PostSyncMode::ImmediateData,
+                ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED,
+                hwInfo,
+                args);
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc,
+                                                                      void *ptr,
+                                                                      uint64_t data) {
+    auto descriptor = reinterpret_cast<zex_write_to_mem_desc_t *>(desc);
+
+    size_t bufSize = sizeof(uint64_t);
+    auto dstAllocationStruct = getAlignedAllocation(this->device, ptr, bufSize, false);
+    UNRECOVERABLE_IF(dstAllocationStruct.alloc == nullptr);
+    commandContainer.addToResidencyContainer(dstAllocationStruct.alloc);
+
+    const auto &hwInfo = this->device->getHwInfo();
+    NEO::PipeControlArgs args;
+    args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(descriptor->writeScope, hwInfo);
+    args.dcFlushEnable &= dstAllocationStruct.needsFlush;
+    const uint64_t gpuAddress = static_cast<uint64_t>(dstAllocationStruct.alignedAllocationPtr);
+
+    if (isCopyOnly()) {
+        NEO::MiFlushArgs args;
+        args.commandWithPostSync = true;
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), gpuAddress,
+                                                          data, args, hwInfo);
+    } else {
+        NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+            *commandContainer.getCommandStream(),
+            NEO::PostSyncMode::ImmediateData,
+            gpuAddress,
+            data,
+            hwInfo,
+            args);
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

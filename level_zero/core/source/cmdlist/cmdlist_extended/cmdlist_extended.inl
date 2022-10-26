@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,21 +56,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMINoop() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPipeControl(void *dstPtr, uint64_t value) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
-                                                                     void *ptr,
-                                                                     uint32_t data,
-                                                                     ze_event_handle_t hSignalEvent) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc,
-                                                                      void *ptr,
-                                                                      uint64_t data) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
