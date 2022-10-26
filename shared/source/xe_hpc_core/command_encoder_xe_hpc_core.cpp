@@ -36,7 +36,7 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 
     if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
         interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-        bool adjustTGDispatchSize = true;
+        bool adjustTGDispatchSize = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported == hwInfo.gtSystemInfo.DualSubSliceCount;
         if (DebugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
             adjustTGDispatchSize = !!DebugManager.flags.AdjustThreadGroupDispatchSize.get();
         }
@@ -49,7 +49,6 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
             uint32_t availableThreadCount = hwHelper.calculateAvailableThreadCount(hwInfo, numGrf);
             uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
             uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
-
             UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
 
             if (dispatchedTotalThreadCount <= availableThreadCount) {
