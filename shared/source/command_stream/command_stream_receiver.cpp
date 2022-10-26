@@ -276,7 +276,7 @@ bool CommandStreamReceiver::isRcs() const {
 }
 
 bool CommandStreamReceiver::skipResourceCleanup() const {
-    return this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->skipResourceCleanup();
+    return ((this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->skipResourceCleanup()) || forceSkipResourceCleanupRequired);
 }
 
 bool CommandStreamReceiver::isGpuHangDetected() const {

@@ -117,6 +117,14 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenAskingForSkipResourceCleanupThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->initializeMemoryManager();
+    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create("", false, *executionEnvironment, 0, 1));
+    EXPECT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->skipResourceCleanup());
+}
+
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenItIsCreatedWithAubDumpAndAubCaptureFileNameHasBeenSpecifiedThenItShouldBeUsedToOpenTheFileWithAubCapture) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");

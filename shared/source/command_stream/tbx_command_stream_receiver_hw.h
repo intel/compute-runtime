@@ -27,6 +27,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
   protected:
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
+    using BaseClass::forceSkipResourceCleanupRequired;
     using BaseClass::getParametersForWriteMemory;
     using BaseClass::osContext;
 
