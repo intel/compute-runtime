@@ -31,7 +31,7 @@ void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd,
 }
 
 template <>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf) {
+void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
@@ -47,6 +47,10 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
             constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
             auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
             uint32_t availableThreadCount = hwHelper.calculateAvailableThreadCount(hwInfo, numGrf);
+            if (ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true)) {
+                const uint32_t tilesCount = device.getNumSubDevices();
+                availableThreadCount *= tilesCount;
+            }
             uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
             uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
             UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
@@ -63,6 +67,7 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 
             uint32_t exponent = INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1 - interfaceDescriptor.getThreadGroupDispatchSize();
             uint32_t threadGroupDispatchSize = 1u << exponent;
+
             if ((dispatchedTotalThreadCount % (numberOfThreadsInThreadGroup * threadGroupDispatchSize)) != 0) {
                 interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
             }
