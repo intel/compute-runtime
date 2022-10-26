@@ -40,7 +40,6 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
                                                                   const DeviceBitfield deviceBitfield)
     : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {
 
-    skipResourceCleanupRequired = true;
     physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo()));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(this->localMemoryEnabled, "", this->getType());
     auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
