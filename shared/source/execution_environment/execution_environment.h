@@ -49,6 +49,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
   protected:
     void parseCcsCountLimitations();
     void adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const;
+    void configureNeoEnvironment();
     bool debuggingEnabled = false;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
 };

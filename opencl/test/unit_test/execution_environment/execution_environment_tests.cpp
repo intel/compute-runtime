@@ -190,6 +190,72 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenIniti
     EXPECT_EQ(controller, nullptr);
 }
 
+TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {
+    const std::unordered_map<std::string, int32_t> config = {
+        {"UseDrmVirtualEnginesForCcs", 0},
+        {"UseDrmVirtualEnginesForBcs", 0},
+        {"EnableCmdQRoundRobindBcsEngineAssignLimit", 6},
+        {"EnableCmdQRoundRobindBcsEngineAssign", 1},
+        {"ForceBCSForInternalCopyEngine", 7},
+        {"AssignBCSAtEnqueue", 0},
+        {"EnableCopyEngineSelector", 1},
+        {"SplitBcsCopy", 0},
+    };
+
+#undef DECLARE_DEBUG_VARIABLE
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());
+
+#include "shared/source/debug_settings/release_variables.inl"
+
+#include "debug_variables.inl"
+
+#undef DECLARE_DEBUG_VARIABLE
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.NEO_CAL_ENABLED.set(1);
+    ExecutionEnvironment exeEnv;
+
+#undef DECLARE_DEBUG_VARIABLE
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)      \
+    {                                                                                  \
+        if constexpr (std::is_same_v<bool, dataType>) {                                \
+            if (strcmp(#variableName, "NEO_CAL_ENABLED") == 0) {                       \
+                EXPECT_TRUE(DebugManager.flags.variableName.getRef());                 \
+            } else {                                                                   \
+                EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());     \
+            }                                                                          \
+        } else {                                                                       \
+            if constexpr (std::is_same_v<int32_t, dataType>) {                         \
+                auto it = config.find(#variableName);                                  \
+                if (it != config.end()) {                                              \
+                    EXPECT_EQ(it->second, DebugManager.flags.variableName.getRef());   \
+                } else {                                                               \
+                    EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef()); \
+                }                                                                      \
+            } else {                                                                   \
+                EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());     \
+            }                                                                          \
+        }                                                                              \
+    }
+
+#include "shared/source/debug_settings/release_variables.inl"
+
+#include "debug_variables.inl"
+
+#undef DECLARE_DEBUG_VARIABLE
+}
+
+TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecutionEnvironmentThenRespectAppSetting) {
+    constexpr int32_t appCommandBufferAlignment = 12345;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.NEO_CAL_ENABLED.set(1);
+    DebugManager.flags.ForceCommandBufferAlignment.set(appCommandBufferAlignment);
+    ExecutionEnvironment exeEnv;
+
+    EXPECT_EQ(DebugManager.flags.ForceCommandBufferAlignment.get(), appCommandBufferAlignment);
+}
+
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();

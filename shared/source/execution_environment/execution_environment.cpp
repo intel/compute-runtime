@@ -23,6 +23,7 @@
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
     WaitUtils::init();
+    this->configureNeoEnvironment();
 }
 
 void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment) {
@@ -251,6 +252,19 @@ void ExecutionEnvironment::parseCcsCountLimitations() {
                 rootDeviceEnvironments[rootDeviceIndex]->limitNumberOfCcs(maxCcsCount);
             }
         }
+    }
+}
+
+void ExecutionEnvironment::configureNeoEnvironment() {
+    if (DebugManager.flags.NEO_CAL_ENABLED.get()) {
+        DebugManager.flags.UseDrmVirtualEnginesForCcs.setIfDefault(0);
+        DebugManager.flags.UseDrmVirtualEnginesForBcs.setIfDefault(0);
+        DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.setIfDefault(6);
+        DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.setIfDefault(1);
+        DebugManager.flags.ForceBCSForInternalCopyEngine.setIfDefault(7);
+        DebugManager.flags.AssignBCSAtEnqueue.setIfDefault(0);
+        DebugManager.flags.EnableCopyEngineSelector.setIfDefault(1);
+        DebugManager.flags.SplitBcsCopy.setIfDefault(0);
     }
 }
 } // namespace NEO

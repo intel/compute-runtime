@@ -54,7 +54,7 @@ class SettingsReader;
 
 template <typename T>
 struct DebugVarBase {
-    DebugVarBase(const T &defaultValue) : value(defaultValue) {}
+    DebugVarBase(const T &defaultValue) : value(defaultValue), defaultValue(defaultValue) {}
     T get() const {
         return value;
     }
@@ -64,9 +64,15 @@ struct DebugVarBase {
     T &getRef() {
         return value;
     }
+    void setIfDefault(T data) {
+        if (value == defaultValue) {
+            this->set(data);
+        }
+    }
 
   private:
     T value;
+    T defaultValue;
 };
 
 struct DebugVariables { // NOLINT(clang-analyzer-optin.performance.Padding)
