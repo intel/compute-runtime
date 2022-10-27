@@ -124,5 +124,72 @@ struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixtu
     DebugManagerStateRestore restorer;
 };
 
+class AppendFillFixture : public DeviceFixture {
+  public:
+    class MockDriverFillHandle : public L0::DriverHandleImp {
+      public:
+        bool findAllocationDataForRange(const void *buffer,
+                                        size_t size,
+                                        NEO::SvmAllocationData **allocData) override;
+
+        const uint32_t rootDeviceIndex = 0u;
+        std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
+        NEO::SvmAllocationData data{rootDeviceIndex};
+    };
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+      public:
+        MockCommandList() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
+
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
+                                                 const ze_group_count_t *pThreadGroupDimensions,
+                                                 Event *event,
+                                                 const CmdListKernelLaunchParams &launchParams) override {
+            if (numberOfCallsToAppendLaunchKernelWithParams == thresholdOfCallsToAppendLaunchKernelWithParamsToFail) {
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+            if (numberOfCallsToAppendLaunchKernelWithParams < 3) {
+                threadGroupDimensions[numberOfCallsToAppendLaunchKernelWithParams] = *pThreadGroupDimensions;
+                xGroupSizes[numberOfCallsToAppendLaunchKernelWithParams] = kernel->getGroupSize()[0];
+            }
+            numberOfCallsToAppendLaunchKernelWithParams++;
+            return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(kernel,
+                                                                                      pThreadGroupDimensions,
+                                                                                      event,
+                                                                                      launchParams);
+        }
+        ze_group_count_t threadGroupDimensions[3];
+        uint32_t xGroupSizes[3];
+        uint32_t thresholdOfCallsToAppendLaunchKernelWithParamsToFail = std::numeric_limits<uint32_t>::max();
+        uint32_t numberOfCallsToAppendLaunchKernelWithParams = 0;
+    };
+
+    void setUp();
+    void tearDown();
+
+    DebugManagerStateRestore restorer;
+
+    std::unique_ptr<Mock<MockDriverFillHandle>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    static constexpr size_t allocSize = 70;
+    static constexpr size_t patternSize = 8;
+    uint8_t *dstPtr = nullptr;
+    uint8_t pattern[patternSize] = {1, 2, 3, 4};
+
+    static constexpr size_t immediateAllocSize = 106;
+    uint8_t immediatePattern = 4;
+    uint8_t *immediateDstPtr = nullptr;
+};
+
+struct TestExpectedValues {
+    uint32_t expectedPacketsInUse = 0;
+    uint32_t expectedKernelCount = 0;
+    uint32_t expectedWalkerPostSyncOp = 0;
+    uint32_t expectedPostSyncPipeControls = 0;
+    bool postSyncAddressZero = false;
+};
+
 } // namespace ult
 } // namespace L0

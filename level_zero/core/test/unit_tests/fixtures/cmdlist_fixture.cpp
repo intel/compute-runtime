@@ -137,5 +137,36 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
     ModuleMutableCommandListFixture::setUp();
 }
 
+bool AppendFillFixture::MockDriverFillHandle::findAllocationDataForRange(const void *buffer,
+                                                                         size_t size,
+                                                                         NEO::SvmAllocationData **allocData) {
+    mockAllocation.reset(new NEO::MockGraphicsAllocation(const_cast<void *>(buffer), size));
+    data.gpuAllocations.addAllocation(mockAllocation.get());
+    if (allocData) {
+        *allocData = &data;
+    }
+    return true;
+}
+
+void AppendFillFixture::setUp() {
+    dstPtr = new uint8_t[allocSize];
+    immediateDstPtr = new uint8_t[allocSize];
+
+    neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+    auto mockBuiltIns = new MockBuiltins();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<Mock<MockDriverFillHandle>>();
+    driverHandle->initialize(std::move(devices));
+    device = driverHandle->devices[0];
+    neoDevice->deviceInfo.maxWorkGroupSize = 256;
+}
+
+void AppendFillFixture::tearDown() {
+    delete[] immediateDstPtr;
+    delete[] dstPtr;
+}
+
 } // namespace ult
 } // namespace L0
