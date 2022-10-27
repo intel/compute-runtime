@@ -868,7 +868,7 @@ struct ZexHostPointerTests : public ::testing::Test {
     std::unique_ptr<ContextZexPointerMock> context;
 };
 
-TEST_F(ZexHostPointerTests, whenAllocatingSharedMemoryWithUseHostPtrFlagThenCreateHostUSMAlloc) {
+TEST_F(ZexHostPointerTests, whenAllocatingSharedMemoryWithUseHostPtrFlagThenCreateSharedUSMAlloc) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -887,8 +887,8 @@ TEST_F(ZexHostPointerTests, whenAllocatingSharedMemoryWithUseHostPtrFlagThenCrea
 
     uint32_t curAllocCounterShared = currSvmAllocsManager->sharedUnifiedMemoryAllocationTimes;
     uint32_t curAllocCounterHost = currSvmAllocsManager->hostUnifiedMemoryAllocationTimes;
-    EXPECT_EQ(curAllocCounterShared, prevAllocCounterShared);
-    EXPECT_EQ(curAllocCounterHost, prevAllocCounterHost + 1);
+    EXPECT_EQ(curAllocCounterShared, prevAllocCounterShared + 1);
+    EXPECT_EQ(curAllocCounterHost, prevAllocCounterHost);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

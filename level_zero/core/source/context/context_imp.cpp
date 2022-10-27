@@ -277,18 +277,13 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         unifiedMemoryProperties.allocationFlags.flags.resource48Bit = 1;
     }
 
-    void *usmPtr = nullptr;
     if (hostDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
-        usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
-                                                                                         unifiedMemoryProperties);
-    } else {
-        usmPtr =
-            this->driverHandle->svmAllocsManager->createSharedUnifiedMemoryAllocation(size,
-                                                                                      unifiedMemoryProperties,
-                                                                                      static_cast<void *>(neoDevice->getSpecializedDevice<L0::Device>()));
     }
 
+    auto usmPtr = this->driverHandle->svmAllocsManager->createSharedUnifiedMemoryAllocation(size,
+                                                                                            unifiedMemoryProperties,
+                                                                                            static_cast<void *>(neoDevice->getSpecializedDevice<L0::Device>()));
     if (usmPtr == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }

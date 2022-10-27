@@ -480,24 +480,28 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     auto rootDeviceIndex = unifiedMemoryProperties.device
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
+    auto externalPtr = reinterpret_cast<void *>(unifiedMemoryProperties.allocationFlags.hostptr);
+    bool useExternalHostPtrForCpu = externalPtr != nullptr;
     size_t alignedSizeCpu = alignUp<size_t>(size, MemoryConstants::pageSize2Mb);
     size_t pageSizeForAlignment = MemoryConstants::pageSize64k;
     size_t alignedSizeGpu = alignUp<size_t>(size, pageSizeForAlignment);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
-                                       true, // allocateMemory
+                                       !useExternalHostPtrForCpu, // allocateMemory
                                        alignedSizeCpu, AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
     cpuProperties.alignment = MemoryConstants::pageSize2Mb;
+    cpuProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false, cacheRegion);
-    GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties);
+    GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties, externalPtr);
     if (!allocationCpu) {
         return nullptr;
     }
     setUnifiedAllocationProperties(allocationCpu, svmProperties);
     void *svmPtr = allocationCpu->getUnderlyingBuffer();
+    UNRECOVERABLE_IF(useExternalHostPtrForCpu && (externalPtr != svmPtr));
 
     bool multiStorageAllocation = (subDevices.count() > 1) && multiOsContextSupport;
     if ((subDevices.count() > 1) && !multiOsContextSupport) {

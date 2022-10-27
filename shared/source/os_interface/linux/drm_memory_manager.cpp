@@ -400,7 +400,8 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
 
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     uint64_t gpuAddress = 0;
-    if (isLimitedRange(allocationData.rootDeviceIndex)) {
+    auto svmCpuAllocation = allocationData.type == AllocationType::SVM_CPU;
+    if (isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) {
         gpuAddress = acquireGpuRange(cSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
         if (!gpuAddress) {
             return nullptr;
