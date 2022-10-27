@@ -552,7 +552,6 @@ ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId>
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
-    applyResumeWa(bitmask.get(), bitmaskSize);
     printBitmask(bitmask.get(), bitmaskSize);
 
     KM_ESCAPE_INFO escapeInfo = {0};

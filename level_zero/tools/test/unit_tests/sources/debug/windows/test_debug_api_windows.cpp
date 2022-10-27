@@ -1799,7 +1799,7 @@ TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenResumeImpIsCalledThenErrorIsRetur
     EXPECT_EQ(2u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT]);
 }
 
-TEST_F(DebugApiWindowsTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedToBitmask) {
+TEST_F(DebugApiWindowsTest, GivenResumeImpCalledThenBitmaskIsCorrect) {
     auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
     ASSERT_NE(nullptr, session);
 
@@ -1821,29 +1821,7 @@ TEST_F(DebugApiWindowsTest, GivenResumeWARequiredWhenCallingResumeThenWaIsApplie
 
     auto bitmask = mockWddm->euControlBitmask.get();
     EXPECT_EQ(1u, bitmask[0]);
-
-    auto &l0HwHelper = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (l0HwHelper.isResumeWARequired()) {
-        EXPECT_EQ(1u, bitmask[4]);
-    } else {
-        EXPECT_EQ(0u, bitmask[4]);
-    }
-
-    thread = {0, 0, 4, 0};
-    session->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
-
-    result = session->resume(thread);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
-    bitmask = mockWddm->euControlBitmask.get();
-
-    if (l0HwHelper.isResumeWARequired()) {
-        EXPECT_EQ(1u, bitmask[0]);
-        EXPECT_EQ(1u, bitmask[4]);
-    } else {
-        EXPECT_EQ(0u, bitmask[0]);
-        EXPECT_EQ(1u, bitmask[4]);
-    }
+    EXPECT_EQ(0u, bitmask[4]);
 }
 
 } // namespace ult

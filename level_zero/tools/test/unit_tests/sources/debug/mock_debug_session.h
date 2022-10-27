@@ -137,6 +137,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSession::allThreads;
     using L0::DebugSession::debugArea;
 
+    using L0::DebugSessionImp::applyResumeWa;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
     using L0::DebugSessionImp::checkTriggerEventsForAttention;
     using L0::DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped;

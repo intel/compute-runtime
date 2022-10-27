@@ -51,6 +51,28 @@ TEST(DebugSessionTest, givenNullDeviceWhenDebugSessionCreatedThenAllThreadsAreEm
     EXPECT_TRUE(sessionMock->allThreads.empty());
 }
 
+TEST(DebugSessionTest, givenApplyResumeWaCalledThenWAIsApplied) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    size_t bitmaskSize = 32;
+    auto bitmask = std::make_unique<uint8_t[]>(bitmaskSize);
+    bitmask.get()[0] = 1;
+    sessionMock->applyResumeWa(bitmask.get(), bitmaskSize);
+    if (l0HwHelper.isResumeWARequired()) {
+        EXPECT_EQ(1, bitmask.get()[4]);
+    } else {
+        EXPECT_EQ(0, bitmask.get()[4]);
+    }
+}
+
 TEST(DebugSessionTest, givenAllStoppedThreadsWhenInterruptCalledThenErrorNotAvailableReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
