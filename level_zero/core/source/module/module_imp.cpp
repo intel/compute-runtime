@@ -893,7 +893,9 @@ bool ModuleImp::linkBinary() {
                                   globalsForPatching, constantsForPatching,
                                   isaSegmentsForPatching, unresolvedExternalsInfo, this->device->getNEODevice(),
                                   translationUnit->programInfo.globalConstants.initData,
+                                  translationUnit->programInfo.globalConstants.size,
                                   translationUnit->programInfo.globalVariables.initData,
+                                  translationUnit->programInfo.globalVariables.size,
                                   kernelDescriptors, translationUnit->programInfo.externalFunctions);
     this->symbols = linker.extractRelocatedSymbols();
     if (LinkingStatus::LinkedFully != linkStatus) {

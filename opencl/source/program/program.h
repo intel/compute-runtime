@@ -297,8 +297,9 @@ class Program : public BaseObject<_cl_program> {
 
     cl_int packDeviceBinary(ClDevice &clDevice);
 
-    MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData,
-                                       const ProgramInfo::GlobalSurfaceInfo &stringInfo, std::vector<NEO::ExternalFunctionInfo> &extFuncInfos);
+    MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, size_t constantsInitDataSize, const void *variablesInitData,
+                                       size_t variablesInitDataSize, const ProgramInfo::GlobalSurfaceInfo &stringInfo,
+                                       std::vector<NEO::ExternalFunctionInfo> &extFuncInfos);
 
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);

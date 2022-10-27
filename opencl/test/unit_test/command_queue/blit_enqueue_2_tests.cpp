@@ -605,7 +605,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAc
 
     auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
 
-    auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {}, externalFunctions);
+    auto ret = program.linkBinary(&device->getDevice(), nullptr, 0, nullptr, 0, {}, externalFunctions);
     EXPECT_EQ(CL_SUCCESS, ret);
 
     EXPECT_EQ(initialTaskCount + 1, bcsMockContext->bcsCsr->peekTaskCount());

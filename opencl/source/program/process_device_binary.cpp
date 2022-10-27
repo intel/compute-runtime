@@ -57,7 +57,7 @@ const KernelInfo *Program::getKernelInfo(size_t ordinal, uint32_t rootDeviceInde
     return kernelInfoArray[ordinal];
 }
 
-cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData,
+cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize,
                            const ProgramInfo::GlobalSurfaceInfo &stringsInfo, std::vector<NEO::ExternalFunctionInfo> &extFuncInfos) {
     auto linkerInput = getLinkerInput(pDevice->getRootDeviceIndex());
     if (linkerInput == nullptr) {
@@ -112,7 +112,8 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     bool linkSuccess = LinkingStatus::LinkedFully == linker.link(globals, constants, exportedFunctions, strings,
                                                                  globalsForPatching, constantsForPatching,
                                                                  isaSegmentsForPatching, unresolvedExternalsInfo,
-                                                                 pDevice, constantsInitData, variablesInitData,
+                                                                 pDevice, constantsInitData, constantsInitDataSize,
+                                                                 variablesInitData, variablesInitDataSize,
                                                                  kernelDescriptors, extFuncInfos);
     setSymbols(rootDeviceIndex, linker.extractRelocatedSymbols());
     if (false == linkSuccess) {
@@ -264,7 +265,8 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
         kernelInfo->apply(deviceInfoConstants);
     }
 
-    return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalVariables.initData, src.globalStrings, src.externalFunctions);
+    return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalConstants.size, src.globalVariables.initData,
+                      src.globalVariables.size, src.globalStrings, src.externalFunctions);
 }
 
 void Program::processDebugData(uint32_t rootDeviceIndex) {

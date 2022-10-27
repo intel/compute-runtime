@@ -17,7 +17,6 @@ set(NEO_CORE_COMPILER_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/external_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/intermediate_representations.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linker.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/linker.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/linker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.cpp

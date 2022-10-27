@@ -21,6 +21,7 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 struct KernelDescriptor;
+struct ProgramInfo;
 
 enum class SegmentType : uint32_t {
     Unknown,
@@ -219,30 +220,12 @@ struct Linker {
         : data(data) {
     }
 
-    LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo, const SegmentInfo &globalStringsSegInfo,
-                       GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg, const PatchableSegments &instructionsSegments,
-                       UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData, const void *variablesInitData,
-                       const KernelDescriptorsT &kernelDescriptors, ExternalFunctionsT &externalFunctions) {
-        bool success = data.isValid();
-        auto initialUnresolvedExternalsCount = outUnresolvedExternals.size();
-        success = success && processRelocations(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo, globalStringsSegInfo, instructionsSegments);
-        if (!success) {
-            return LinkingStatus::Error;
-        }
-        patchInstructionsSegments(instructionsSegments, outUnresolvedExternals, kernelDescriptors);
-        patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg,
-                          outUnresolvedExternals, pDevice, constantsInitData, variablesInitData);
-        resolveImplicitArgs(kernelDescriptors, pDevice);
-        resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
-        if (initialUnresolvedExternalsCount < outUnresolvedExternals.size()) {
-            return LinkingStatus::LinkedPartially;
-        }
-        success = resolveExternalFunctions(kernelDescriptors, externalFunctions);
-        if (!success) {
-            return LinkingStatus::Error;
-        }
-        return LinkingStatus::LinkedFully;
-    }
+    LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo,
+                       const SegmentInfo &globalStringsSegInfo, GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                       const PatchableSegments &instructionsSegments, UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData,
+                       size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize, const KernelDescriptorsT &kernelDescriptors,
+                       ExternalFunctionsT &externalFunctions);
+
     static void patchAddress(void *relocAddress, const uint64_t value, const RelocationInfo &relocation);
     RelocatedSymbolsMap extractRelocatedSymbols() {
         return RelocatedSymbolsMap(std::move(relocatedSymbols));
@@ -265,14 +248,14 @@ struct Linker {
     void patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
                            GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
                            std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
-                           const void *constantsInitData, const void *variablesInitData);
+                           const void *constantsInitData, size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize);
 
     bool resolveExternalFunctions(const KernelDescriptorsT &kernelDescriptors, std::vector<ExternalFunctionInfo> &externalFunctions);
     void resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, Device *pDevice);
     void resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments);
 
     template <typename PatchSizeT>
-    void patchIncrement(Device *pDevice, GraphicsAllocation *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue);
+    void patchIncrement(void *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue);
 
     std::unordered_map<uint32_t /*ISA segment id*/, StackVec<uint32_t *, 2> /*implicit args relocation address to patch*/> pImplicitArgsRelocationAddresses;
 };
