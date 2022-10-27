@@ -296,5 +296,250 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
     pCommandList->reset();
 }
 
+struct AppendKernelTestInput {
+    DriverHandle *driver = nullptr;
+    L0::Context *context = nullptr;
+    L0::Device *device = nullptr;
+
+    ze_event_pool_flags_t eventPoolFlags = 0;
+
+    uint32_t packetOffsetMul = 1;
+
+    bool useFirstEventPacketAddress = false;
+};
+
+template <int32_t compactL3FlushEventPacket, uint32_t multiTile>
+struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFixture {
+    void setUp() {
+        DebugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
+        if constexpr (multiTile == 1) {
+            DebugManager.flags.CreateMultipleSubDevices.set(2);
+            DebugManager.flags.EnableImplicitScaling.set(1);
+            arg.workloadPartition = true;
+            arg.expectDcFlush = 2; // DC Flush multi-tile platforms require DC Flush + x-tile sync after implicit scaling COMPUTE_WALKER
+            input.packetOffsetMul = 2;
+        } else {
+            arg.expectDcFlush = 1;
+        }
+        ModuleFixture::setUp();
+
+        input.driver = driverHandle.get();
+        input.context = context;
+        input.device = device;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    void testAppendLaunchKernelAndL3Flush(AppendKernelTestInput &input, TestExpectedValues &arg) {
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+        using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+        using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+        using OPERATION = typename POSTSYNC_DATA::OPERATION;
+
+        Mock<::L0::Kernel> kernel;
+        auto module = std::unique_ptr<Module>(new Mock<Module>(input.device, nullptr));
+        kernel.module = module.get();
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.count = 1;
+        eventPoolDesc.flags = input.eventPoolFlags;
+
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+        auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(input.driver, input.context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, input.device));
+
+        uint64_t firstKernelEventAddress = arg.postSyncAddressZero ? 0 : event->getGpuAddress(input.device);
+
+        ze_group_count_t groupCount{1, 1, 1};
+        CmdListKernelLaunchParams launchParams = {};
+        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
+        EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+            cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+            commandList->commandContainer.getCommandStream()->getUsed()));
+
+        auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        ASSERT_EQ(1u, itorWalkers.size());
+        auto firstWalker = itorWalkers[0];
+
+        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+        EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
+        EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+        uint64_t l3FlushPostSyncAddress = event->getGpuAddress(input.device) + input.packetOffsetMul * event->getSinglePacketSize();
+        if (input.useFirstEventPacketAddress) {
+            l3FlushPostSyncAddress = event->getGpuAddress(input.device);
+        }
+        if (event->isUsingContextEndOffset()) {
+            l3FlushPostSyncAddress += event->getContextEndOffset();
+        }
+
+        auto itorPipeControls = findAll<PIPE_CONTROL *>(firstWalker, cmdList.end());
+
+        uint32_t postSyncPipeControls = 0;
+        uint32_t dcFlushFound = 0;
+        for (auto it : itorPipeControls) {
+            auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+            if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                postSyncPipeControls++;
+                EXPECT_EQ(l3FlushPostSyncAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+                EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+                if (arg.workloadPartition) {
+                    EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+                } else {
+                    EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
+                }
+            }
+            if (cmd->getDcFlushEnable()) {
+                dcFlushFound++;
+            }
+        }
+        EXPECT_EQ(arg.expectedPostSyncPipeControls, postSyncPipeControls);
+        EXPECT_EQ(arg.expectDcFlush, dcFlushFound);
+    }
+
+    DebugManagerStateRestore restorer;
+
+    AppendKernelTestInput input = {};
+    TestExpectedValues arg = {};
+};
+
+using CommandListAppendLaunchKernelCompactL3FlushDisabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<0, 0>>;
+
+HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushDisabledTest,
+          givenAppendKernelWithSignalScopeTimestampEventWhenComputeWalkerTimestampPostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 2;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.expectedWalkerPostSyncOp = 3;
+    arg.postSyncAddressZero = false;
+
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushDisabledTest,
+          givenAppendKernelWithSignalScopeImmediateEventWhenComputeWalkerImmediatePostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 2;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.expectedWalkerPostSyncOp = L0HwHelper::get(gfxCoreFamily).multiTileCapablePlatform() ? 3 : 1;
+    arg.postSyncAddressZero = false;
+
+    input.eventPoolFlags = 0;
+
+    testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+using CommandListAppendLaunchKernelCompactL3FlushEnabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<1, 0>>;
+
+HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
+          givenAppendKernelWithSignalScopeTimestampEventWhenRegisterTimestampPostsyncUsedThenExpectNoComputeWalkerAndPipeControlPostsync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 1;
+    arg.expectedPostSyncPipeControls = 0;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    input.useFirstEventPacketAddress = true;
+
+    testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
+          givenAppendKernelWithSignalScopeImmediateEventWhenL3ImmediatePostsyncUsedThenExpectPipeControlPostsync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 1;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = 0;
+    input.useFirstEventPacketAddress = true;
+
+    testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+using CommandListAppendLaunchKernelMultiTileCompactL3FlushDisabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<0, 1>>;
+
+HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushDisabledTest,
+          givenAppendMultiTileKernelWithSignalScopeTimestampEventWhenComputeWalkerTimestampPostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 4;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.expectedWalkerPostSyncOp = 3;
+    arg.postSyncAddressZero = false;
+
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushDisabledTest,
+          givenAppendMultiTileKernelWithSignalScopeImmediateEventWhenComputeWalkerImmediatePostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 4;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.expectedWalkerPostSyncOp = 3;
+    arg.postSyncAddressZero = false;
+
+    input.eventPoolFlags = 0;
+
+    testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+using CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<1, 1>>;
+
+HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
+          givenAppendMultiTileKernelWithSignalScopeTimestampEventWhenRegisterTimestampPostsyncUsedThenExpectNoComputeWalkerAndPipeControlPostsync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 2;
+    arg.expectedPostSyncPipeControls = 0;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    input.useFirstEventPacketAddress = true;
+
+    testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
+          givenAppendMultiTileKernelWithSignalScopeImmediateEventWhenL3ImmediatePostsyncUsedThenExpectPipeControlPostsync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 2;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = 0;
+    input.useFirstEventPacketAddress = true;
+
+    testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
 } // namespace ult
 } // namespace L0

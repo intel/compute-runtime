@@ -53,4 +53,11 @@ bool L0HwHelper::usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwI
     return false;
 }
 
+bool L0HwHelper::useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo) {
+    if (NEO::DebugManager.flags.CompactL3FlushEventPacket.get() != -1) {
+        return !!NEO::DebugManager.flags.CompactL3FlushEventPacket.get();
+    }
+    return false;
+}
+
 } // namespace L0

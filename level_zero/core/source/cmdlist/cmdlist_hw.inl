@@ -138,6 +138,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking(hwInfo);
     this->pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking(hwInfo);
     this->pipeControlMultiKernelEventSync = L0HwHelper::usePipeControlMultiKernelEventSync(hwInfo);
+    this->compactL3FlushEventPacket = L0HwHelper::useCompactL3FlushEventPacket(hwInfo);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -1187,11 +1188,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
 
     CmdListKernelLaunchParams launchParams = {};
-
+    bool dcFlush = false;
     Event *signalEvent = nullptr;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
         launchParams.isHostSignalScopeEvent = !!(signalEvent->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
+        dcFlush = getDcFlushRequired(!!signalEvent->signalScope);
     }
 
     uint32_t kernelCounter = leftSize > 0 ? 1 : 0;
@@ -1199,7 +1201,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     kernelCounter += rightSize > 0 ? 1 : 0;
 
     launchParams.isKernelSplitOperation = kernelCounter > 1;
-    bool singlePipeControlPacket = this->pipeControlMultiKernelEventSync && launchParams.isKernelSplitOperation;
+    bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
 
     appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
 
@@ -1551,9 +1553,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     CmdListKernelLaunchParams launchParams = {};
 
     Event *signalEvent = nullptr;
+    bool dcFlush = false;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
         launchParams.isHostSignalScopeEvent = !!(signalEvent->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
+        dcFlush = getDcFlushRequired(!!signalEvent->signalScope);
     }
 
     if (isCopyOnly()) {
@@ -1610,7 +1614,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     setupFillKernelArguments(dstAllocation.offset, patternSize, size, fillArguments, builtinKernel);
 
     launchParams.isKernelSplitOperation = (fillArguments.leftRemainingBytes > 0 || fillArguments.rightRemainingBytes > 0);
-    bool singlePipeControlPacket = this->pipeControlMultiKernelEventSync && launchParams.isKernelSplitOperation;
+    bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
 
     appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
 

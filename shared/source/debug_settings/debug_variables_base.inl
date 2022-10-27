@@ -419,6 +419,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableChipsetUniqueUUID, -1, "Enables retrieving
 DECLARE_DEBUG_VARIABLE(int32_t, EnableFlushTaskSubmission, -1, "Driver uses csr flushTask for immediate commandlist submissions, -1:default (enabled), 0:disabled, 1:enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableImmediateCmdListHeapSharing, -1, "Immediate command lists using flush task use current csr heap instead private cmd list heap, -1:default (disabled), 0:disabled, 1:enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UsePipeControlMultiKernelEventSync, -1, "Use single PIPE_CONTROL for event signal of multi-kernel append operations instead multi-packet POSTSYNC_DATA from each COMPUTE_WALKER, -1: default , 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, CompactL3FlushEventPacket, -1, "Compact COMPUTE_WALKER event packet and L3 Flush signal packet into single event packet, -1: default , 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBcsSwControlWa, -1, "Enable BCS WA via BCSSWCONTROL MMIO. -1: default, 0: disabled, 1: if src in system mem, 2: if dst in system mem, 3: if src and dst in system mem, 4: always")
 
 /* IMPLICIT SCALING */

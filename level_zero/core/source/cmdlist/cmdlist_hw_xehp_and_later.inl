@@ -163,20 +163,26 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                               threadGroupDimensions->groupCountY,
                               threadGroupDimensions->groupCountZ);
     }
-    NEO::GraphicsAllocation *eventAlloc = nullptr;
+
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;
     bool l3FlushEnable = false;
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
+    Event *compactEvent = nullptr;
     if (event) {
-        eventAlloc = &event->getAllocation(this->device);
-        commandContainer.addToResidencyContainer(eventAlloc);
-        bool flushRequired = !!event->signalScope &&
-                             !launchParams.isKernelSplitOperation;
-        l3FlushEnable = getDcFlushRequired(flushRequired);
-        isTimestampEvent = event->isUsingContextEndOffset();
-        eventAddress = event->getPacketAddress(this->device);
         isHostSignalScopeEvent = !!(event->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
+        if (compactL3FlushEvent(getDcFlushRequired(!!event->signalScope))) {
+            compactEvent = event;
+            event = nullptr;
+        } else {
+            NEO::GraphicsAllocation *eventAlloc = &event->getAllocation(this->device);
+            commandContainer.addToResidencyContainer(eventAlloc);
+            bool flushRequired = !!event->signalScope &&
+                                 !launchParams.isKernelSplitOperation;
+            l3FlushEnable = getDcFlushRequired(flushRequired);
+            isTimestampEvent = event->isUsingContextEndOffset();
+            eventAddress = event->getPacketAddress(this->device);
+        }
     }
 
     bool isKernelUsingSystemAllocation = false;
@@ -249,6 +255,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     std::list<void *> additionalCommands;
 
+    if (compactEvent) {
+        appendEventForProfilingAllWalkers(compactEvent, true, true);
+    }
+
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         eventAddress,                                             // eventAddress
         neoDevice,                                                // device
@@ -273,7 +283,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
 
-    if (event) {
+    if (compactEvent) {
+        appendEventForProfilingAllWalkers(compactEvent, false, true);
+    } else if (event) {
         if (partitionCount > 1) {
             event->setPacketsInUse(partitionCount);
         }
@@ -404,7 +416,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
                                                                           Event *event,
                                                                           const CmdListKernelLaunchParams &launchParams) {
     if (event) {
-        if (this->pipeControlMultiKernelEventSync && launchParams.isKernelSplitOperation) {
+        if (eventSignalPipeControl(launchParams.isKernelSplitOperation, getDcFlushRequired(!!event->signalScope))) {
             event = nullptr;
         } else {
             event->increaseKernelCount();

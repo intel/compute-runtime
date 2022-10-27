@@ -26,12 +26,15 @@ struct FillTestInput {
     void *patternPtr = nullptr;
 
     ze_event_pool_flags_t eventPoolFlags = 0;
+
+    bool useFirstEventPacketAddress = false;
 };
 
-template <int32_t usePipeControlMultiPacketEventSync, uint32_t multiTile>
+template <int32_t usePipeControlMultiPacketEventSync, int32_t compactL3FlushEventPacket, uint32_t multiTile>
 struct AppendFillMultiPacketEventFixture : public AppendFillFixture {
     void setUp() {
         DebugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
+        DebugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
         if (multiTile == 1) {
             DebugManager.flags.CreateMultipleSubDevices.set(2);
             DebugManager.flags.EnableImplicitScaling.set(1);
@@ -158,6 +161,62 @@ void testSingleTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpecte
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void testSingleTileAppendMemoryFillManyKernelsAndL3Flush(FillTestInput &input, TestExpectedValues &arg) {
+    using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    using OPERATION = typename POSTSYNC_DATA::OPERATION;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = input.eventPoolFlags;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(input.driver, input.context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, input.device));
+
+    uint64_t firstKernelEventAddress = arg.postSyncAddressZero ? 0 : event->getGpuAddress(input.device);
+    uint64_t secondKernelEventAddress = arg.postSyncAddressZero ? 0 : event->getGpuAddress(input.device) + event->getSinglePacketSize();
+
+    auto commandList = std::make_unique<CommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto &commandContainer = commandList->commandContainer;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+
+    EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
+    EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+
+    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, itorWalkers.size());
+    auto firstWalker = itorWalkers[0];
+    auto secondWalker = itorWalkers[1];
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void testSingleTileAppendMemoryFillSingleKernel(FillTestInput &input, TestExpectedValues &arg) {
     using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
@@ -220,7 +279,7 @@ void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, 
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.flags = input.eventPoolFlags;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -263,7 +322,10 @@ void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, 
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
-    uint64_t l3FlushPostSyncAddress = firstKernelEventAddress + event->getSinglePacketSize();
+    uint64_t l3FlushPostSyncAddress = event->getGpuAddress(input.device);
+    if (!input.useFirstEventPacketAddress) {
+        l3FlushPostSyncAddress += event->getSinglePacketSize();
+    }
     if (event->isUsingContextEndOffset()) {
         l3FlushPostSyncAddress += event->getContextEndOffset();
     }
@@ -452,7 +514,7 @@ void testMultiTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, T
     EXPECT_EQ(expectedDcFlush, dcFlushFound);
 }
 
-using AppendFillMultiPacketEventTest = Test<AppendFillMultiPacketEventFixture<0, 0>>;
+using AppendFillMultiPacketEventTest = Test<AppendFillMultiPacketEventFixture<0, 0, 0>>;
 
 HWTEST2_F(AppendFillMultiPacketEventTest,
           givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesPostSyncProfiling,
@@ -506,10 +568,12 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
 
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
     testSingleTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
 }
 
-using AppendFillSinglePacketEventTest = Test<AppendFillMultiPacketEventFixture<1, 0>>;
+using AppendFillSinglePacketEventTest = Test<AppendFillMultiPacketEventFixture<1, 0, 0>>;
 
 HWTEST2_F(AppendFillSinglePacketEventTest,
           givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfiling,
@@ -563,10 +627,12 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
 
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
     testSingleTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
 }
 
-using MultiTileAppendFillEventMultiPacketTest = Test<AppendFillMultiPacketEventFixture<0, 1>>;
+using MultiTileAppendFillEventMultiPacketTest = Test<AppendFillMultiPacketEventFixture<0, 0, 1>>;
 
 HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
           givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncProfilingAndSingleDcFlushWithImmediatePostSync, IsAtLeastXeHpCore) {
@@ -646,7 +712,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     testMultiTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
 }
 
-using MultiTileAppendFillEventSinglePacketTest = Test<AppendFillMultiPacketEventFixture<1, 1>>;
+using MultiTileAppendFillEventSinglePacketTest = Test<AppendFillMultiPacketEventFixture<1, 0, 1>>;
 
 HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
           givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithNoPostSync, IsAtLeastXeHpCore) {
@@ -668,6 +734,249 @@ HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
 
 HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
           givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeImmediateEventUsesPipeControlPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithImmediatePostSync, IsAtLeastXeHpCore) {
+    arg.expectedPacketsInUse = 2;
+    arg.expectedKernelCount = 1;
+    arg.expectedPacketsInUse = 2;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = 0;
+
+    input.dstPtr = dstPtr;
+    input.allocSize = allocSize;
+    input.patternPtr = pattern;
+    input.patternSize = patternSize;
+
+    testMultiTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
+}
+
+using AppendFillCompactL3EventTest = Test<AppendFillMultiPacketEventFixture<0, 1, 0>>;
+
+HWTEST2_F(AppendFillCompactL3EventTest,
+          givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncProfiling,
+          IsAtLeastXeHpCore) {
+    arg.expectedPacketsInUse = 2;
+    arg.expectedKernelCount = 2;
+    arg.expectedWalkerPostSyncOp = 3;
+    arg.postSyncAddressZero = false;
+
+    input.dstPtr = immediateDstPtr;
+    input.allocSize = immediateAllocSize;
+    input.patternPtr = &immediatePattern;
+    input.patternSize = sizeof(immediatePattern);
+
+    testSingleTileAppendMemoryFillManyImmediateKernels<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(AppendFillCompactL3EventTest,
+          givenCallToAppendMemoryFillWhenTimestampEventUsesWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncProfiling,
+          IsAtLeastXeHpCore) {
+    arg.expectedPacketsInUse = 2;
+    arg.expectedKernelCount = 2;
+    arg.expectedWalkerPostSyncOp = 3;
+    arg.postSyncAddressZero = false;
+
+    input.dstPtr = dstPtr;
+    input.allocSize = allocSize;
+    input.patternPtr = pattern;
+    input.patternSize = patternSize;
+
+    testSingleTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(AppendFillCompactL3EventTest,
+          givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSync,
+          IsAtLeastXeHpCore) {
+    arg.expectedPacketsInUse = 1;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 3;
+    arg.postSyncAddressZero = false;
+
+    testSingleTileAppendMemoryFillSingleKernel<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(AppendFillCompactL3EventTest,
+          givenAppendMemoryFillUsingL3CompactEventWhenPatternDispatchOneKernelThenUseRegisterPostSync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedPacketsInUse = 1;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.expectedPostSyncPipeControls = 0;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    testSingleTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(AppendFillCompactL3EventTest,
+          givenCallToAppendMemoryFillWhenL3CompactImmediateEventUsesPipeControlPostSyncThenSinglePipeControlPostSyncUsed,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedPacketsInUse = 1;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = 0;
+    input.useFirstEventPacketAddress = true;
+
+    testSingleTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+using MultiTileAppendFillCompactL3EventTest = Test<AppendFillMultiPacketEventFixture<0, 1, 1>>;
+
+HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
+          givenMultiTileCmdListCallToAppendMemoryFillWhenPlatformNeedsDcFlushAndL3CompactTimestampEventThenRegisterPostSyncUsedOtherwiseUsesWalkerPostSyncProfiling,
+          IsAtLeastXeHpCore) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        arg.expectedPacketsInUse = 2;
+        arg.expectedKernelCount = 1;
+        arg.expectedWalkerPostSyncOp = 0;
+        arg.expectedPostSyncPipeControls = 0;
+        arg.postSyncAddressZero = true;
+    } else {
+        arg.expectedPacketsInUse = 4;
+        arg.expectedKernelCount = 2;
+        arg.expectedWalkerPostSyncOp = 3;
+        arg.expectedPostSyncPipeControls = 0;
+        arg.postSyncAddressZero = false;
+    }
+
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    input.dstPtr = dstPtr;
+    input.allocSize = allocSize;
+    input.patternPtr = pattern;
+    input.patternSize = patternSize;
+
+    testMultiTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
+          givenMultiTileCmdListCallToAppendMemoryFillWhenPlatformNeedsDcFlushAndL3CompactImmediateEventThenPipeControlPostSyncUsedOtherwiseUsesWalkerPostSyncProfiling,
+          IsAtLeastXeHpCore) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        arg.expectedPacketsInUse = 2;
+        arg.expectedKernelCount = 1;
+        arg.expectedWalkerPostSyncOp = 0;
+        arg.expectedPostSyncPipeControls = 1;
+        arg.postSyncAddressZero = true;
+    } else {
+        arg.expectedPacketsInUse = 4;
+        arg.expectedKernelCount = 2;
+        arg.expectedWalkerPostSyncOp = 3;
+        arg.expectedPostSyncPipeControls = 0;
+        arg.postSyncAddressZero = false;
+    }
+
+    input.eventPoolFlags = 0;
+
+    input.dstPtr = dstPtr;
+    input.allocSize = allocSize;
+    input.patternPtr = pattern;
+    input.patternSize = patternSize;
+
+    testMultiTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
+}
+
+using AppendFillKernelSplitAndCompactL3EventTest = Test<AppendFillMultiPacketEventFixture<1, 1, 0>>;
+
+HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
+          givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfiling,
+          IsAtLeastXeHpCore) {
+    arg.expectedPacketsInUse = 1;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.postSyncAddressZero = true;
+
+    input.dstPtr = immediateDstPtr;
+    input.allocSize = immediateAllocSize;
+    input.patternPtr = &immediatePattern;
+    input.patternSize = sizeof(immediatePattern);
+
+    testSingleTileAppendMemoryFillManyImmediateKernels<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
+          givenCallToAppendMemoryFillWhenTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfiling,
+          IsAtLeastXeHpCore) {
+    arg.expectedPacketsInUse = 1;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.postSyncAddressZero = true;
+
+    input.dstPtr = dstPtr;
+    input.allocSize = allocSize;
+    input.patternPtr = pattern;
+    input.patternSize = patternSize;
+
+    testSingleTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
+          givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSync,
+          IsAtLeastXeHpCore) {
+    arg.expectedPacketsInUse = 1;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 3;
+    arg.postSyncAddressZero = false;
+
+    testSingleTileAppendMemoryFillSingleKernel<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
+          givenAppendMemoryFillUsingL3CompactTimestampEventWhenPatternDispatchOneKernelThenUseRegisterPostSync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedPacketsInUse = 1;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.expectedPostSyncPipeControls = 0;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    testSingleTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
+          givenAppendMemoryFillUsingL3CompactImmediateEventWhenPatternDispatchOneKernelThenUsePipeControlPostSync,
+          IsXeHpOrXeHpgCore) {
+    arg.expectedPacketsInUse = 1;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.expectedPostSyncPipeControls = 1;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = 0;
+    input.useFirstEventPacketAddress = true;
+
+    testSingleTileAppendMemoryFillSingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+}
+
+using MultiTileAppendFillKernelSplitAndCompactL3EventTest = Test<AppendFillMultiPacketEventFixture<1, 1, 1>>;
+
+HWTEST2_F(MultiTileAppendFillKernelSplitAndCompactL3EventTest,
+          givenMultiTileCmdListCallToAppendMemoryFillWhenL3CompactTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithNoPostSync, IsAtLeastXeHpCore) {
+    arg.expectedPacketsInUse = 2;
+    arg.expectedKernelCount = 1;
+    arg.expectedWalkerPostSyncOp = 0;
+    arg.expectedPostSyncPipeControls = 0;
+    arg.postSyncAddressZero = true;
+
+    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    input.dstPtr = dstPtr;
+    input.allocSize = allocSize;
+    input.patternPtr = pattern;
+    input.patternSize = patternSize;
+
+    testMultiTileAppendMemoryFillManyKernels<gfxCoreFamily>(input, arg);
+}
+
+HWTEST2_F(MultiTileAppendFillKernelSplitAndCompactL3EventTest,
+          givenMultiTileCmdListCallToAppendMemoryFillWhenL3CompactImmediateEventUsesPipeControlPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithImmediatePostSync, IsAtLeastXeHpCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 2;

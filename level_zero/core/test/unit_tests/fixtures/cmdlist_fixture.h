@@ -188,7 +188,9 @@ struct TestExpectedValues {
     uint32_t expectedKernelCount = 0;
     uint32_t expectedWalkerPostSyncOp = 0;
     uint32_t expectedPostSyncPipeControls = 0;
+    uint32_t expectDcFlush = 0;
     bool postSyncAddressZero = false;
+    bool workloadPartition = false;
 };
 
 } // namespace ult

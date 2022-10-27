@@ -47,6 +47,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::commandListPerThreadScratchSize;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::commandsToPatch;
+    using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
     using BaseClass::csr;
@@ -123,6 +124,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::clearCommandsToPatch;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandsToPatch;
+    using BaseClass::compactL3FlushEventPacket;
     using BaseClass::csr;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
@@ -142,6 +144,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using BaseClass = CommandListCoreFamilyImmediate<gfxCoreFamily>;
+    using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;

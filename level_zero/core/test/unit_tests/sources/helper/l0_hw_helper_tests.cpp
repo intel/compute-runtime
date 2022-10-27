@@ -635,5 +635,11 @@ TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForUsePipeControlMult
     EXPECT_FALSE(defaultValue);
 }
 
+TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForCompactL3FlushEventPacketThenReturnFalse) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    bool defaultValue = L0::L0HwHelper::useCompactL3FlushEventPacket(hwInfo);
+    EXPECT_FALSE(defaultValue);
+}
+
 } // namespace ult
 } // namespace L0

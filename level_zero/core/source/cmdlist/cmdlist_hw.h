@@ -287,10 +287,18 @@ struct CommandListCoreFamily : CommandListImp {
                                   size_t dstSize,
                                   CmdListFillKernelArguments &outArguments,
                                   Kernel *kernel);
+    bool compactL3FlushEvent(bool dcFlush) const {
+        return this->compactL3FlushEventPacket && dcFlush;
+    }
+    bool eventSignalPipeControl(bool splitKernel, bool dcFlush) const {
+        return (this->pipeControlMultiKernelEventSync && splitKernel) ||
+               compactL3FlushEvent(dcFlush);
+    }
 
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;
     bool pipeControlMultiKernelEventSync = false;
+    bool compactL3FlushEventPacket = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>
