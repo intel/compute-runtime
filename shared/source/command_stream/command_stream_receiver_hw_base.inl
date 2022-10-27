@@ -281,7 +281,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool stateBaseAddressDirty = false;
 
     bool checkVfeStateDirty = false;
-    if (requiredScratchSize || requiredPrivateScratchSize) {
+    if (ssh && (requiredScratchSize || requiredPrivateScratchSize)) {
         scratchSpaceController->setRequiredScratchSpace(ssh->getCpuBase(),
                                                         0u,
                                                         requiredScratchSize,
