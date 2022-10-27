@@ -536,7 +536,9 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     NEO::SvmAllocationData *allocData = nullptr;
     if (argVal != nullptr) {
         const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
-        if (argInfo.allocId > 0 && requestedAddress == argInfo.value) {
+        if (argInfo.allocId > 0 &&
+            argInfo.allocId < NEO::SvmAllocationData::uninitializedAllocId &&
+            requestedAddress == argInfo.value) {
             bool reuseFromCache = false;
             if (allocationsCounter > 0) {
                 if (allocationsCounter == argInfo.allocIdMemoryManagerCounter) {

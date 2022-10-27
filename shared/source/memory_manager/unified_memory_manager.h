@@ -60,9 +60,11 @@ struct SvmAllocationData {
         return allocId;
     }
 
+    static constexpr uint32_t uninitializedAllocId = std::numeric_limits<uint32_t>::max();
+
   protected:
     const uint32_t maxRootDeviceIndex;
-    uint32_t allocId = std::numeric_limits<uint32_t>::max();
+    uint32_t allocId = uninitializedAllocId;
 };
 
 struct SvmMapOperation {
