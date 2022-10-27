@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
+#include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -2283,4 +2284,40 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushFlagSetWhenGettingCsrFlagValue
     bool csrValue = commandStreamReceiver.getDcFlushSupport();
     bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, hwInfo);
     EXPECT_EQ(helperValue, csrValue);
+}
+
+struct MockRequiredScratchSpaceController : public ScratchSpaceControllerBase {
+    MockRequiredScratchSpaceController(uint32_t rootDeviceIndex,
+                                       ExecutionEnvironment &environment,
+                                       InternalAllocationStorage &allocationStorage) : ScratchSpaceControllerBase(rootDeviceIndex, environment, allocationStorage) {}
+    void setRequiredScratchSpace(void *sshBaseAddress,
+                                 uint32_t scratchSlot,
+                                 uint32_t requiredPerThreadScratchSize,
+                                 uint32_t requiredPerThreadPrivateScratchSize,
+                                 uint32_t currentTaskCount,
+                                 OsContext &osContext,
+                                 bool &stateBaseAddressDirty,
+                                 bool &vfeStateDirty) override {
+        setRequiredScratchSpaceCalled = true;
+    }
+    bool setRequiredScratchSpaceCalled = false;
+};
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerformedThenDontSetRequiredScratchSpace) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto scratchController = new MockRequiredScratchSpaceController(pDevice->getRootDeviceIndex(),
+                                                                    *pDevice->getExecutionEnvironment(),
+                                                                    *pDevice->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+
+    commandStreamReceiver.scratchSpaceController.reset(scratchController);
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    EXPECT_FALSE(scratchController->setRequiredScratchSpaceCalled);
 }
