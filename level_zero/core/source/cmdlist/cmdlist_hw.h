@@ -98,7 +98,7 @@ struct CommandListCoreFamily : CommandListImp {
                                    const CmdListKernelLaunchParams &launchParams) override;
     ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
                                               const ze_group_count_t *launchKernelArgs,
-                                              ze_event_handle_t signalEvent,
+                                              ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents,
                                               ze_event_handle_t *waitEventHandles) override;
     ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t kernelHandle,

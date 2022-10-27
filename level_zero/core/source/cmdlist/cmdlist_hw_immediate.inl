@@ -546,18 +546,18 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBar
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
                                                                                          const ze_group_count_t *launchKernelArgs,
-                                                                                         ze_event_handle_t signalEvent,
+                                                                                         ze_event_handle_t hSignalEvent,
                                                                                          uint32_t numWaitEvents,
                                                                                          ze_event_handle_t *waitEventHandles) {
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
     }
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(kernelHandle, launchKernelArgs, signalEvent, numWaitEvents, waitEventHandles);
-    return flushImmediate(ret, true, signalEvent);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, waitEventHandles);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, ze_event_handle_t signalEvent) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, ze_event_handle_t hSignalEvent) {
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {
             inputRet = executeCommandListImmediateWithFlushTask(performMigration);
@@ -565,8 +565,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
             inputRet = executeCommandListImmediate(performMigration);
         }
     }
-    if (signalEvent) {
-        Event::fromHandle(signalEvent)->setCsr(this->csr);
+    if (hSignalEvent) {
+        Event::fromHandle(hSignalEvent)->setCsr(this->csr);
     }
     return inputRet;
 }

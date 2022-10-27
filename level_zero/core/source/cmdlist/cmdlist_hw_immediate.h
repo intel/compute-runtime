@@ -120,7 +120,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
                                               const ze_group_count_t *launchKernelArgs,
-                                              ze_event_handle_t signalEvent,
+                                              ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents,
                                               ze_event_handle_t *waitEventHandles) override;
 
@@ -129,7 +129,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void checkAvailableSpace();
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
 
-    ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, ze_event_handle_t signalEvent);
+    ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, ze_event_handle_t hSignalEvent);
 
     void createLogicalStateHelper() override {}
     NEO::LogicalStateHelper *getLogicalStateHelper() const override;

@@ -206,7 +206,7 @@ struct MockCommandList : public CommandList {
     ADDMETHOD_NOBASE(appendLaunchCooperativeKernel, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_kernel_handle_t kernelHandle,
                       const ze_group_count_t *launchKernelArgs,
-                      ze_event_handle_t signalEvent,
+                      ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
                       ze_event_handle_t *waitEventHandles));
 
