@@ -421,6 +421,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableImmediateCmdListHeapSharing, -1, "Immediat
 DECLARE_DEBUG_VARIABLE(int32_t, UsePipeControlMultiKernelEventSync, -1, "Use single PIPE_CONTROL for event signal of multi-kernel append operations instead multi-packet POSTSYNC_DATA from each COMPUTE_WALKER, -1: default , 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, CompactL3FlushEventPacket, -1, "Compact COMPUTE_WALKER event packet and L3 Flush signal packet into single event packet, -1: default , 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UseDynamicEventPacketsCount, -1, "Use dynamic estimation for event packet count based on a given device configuration, -1: default , 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, SignalAllEventPackets, -1, "All packets of event are signaled, reset and waited/synchronized, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBcsSwControlWa, -1, "Enable BCS WA via BCSSWCONTROL MMIO. -1: default, 0: disabled, 1: if src in system mem, 2: if dst in system mem, 3: if src and dst in system mem, 4: always")
 
 /* IMPLICIT SCALING */

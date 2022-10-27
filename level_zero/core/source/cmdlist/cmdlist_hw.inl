@@ -140,6 +140,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking(hwInfo);
     this->pipeControlMultiKernelEventSync = L0HwHelper::usePipeControlMultiKernelEventSync(hwInfo);
     this->compactL3FlushEventPacket = L0HwHelper::useCompactL3FlushEventPacket(hwInfo);
+    this->signalAllEventPackets = L0HwHelper::useSignalAllEventPackets(hwInfo);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -442,6 +443,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         if (this->partitionCount > 1) {
             appendMultiTileBarrier(*neoDevice);
         }
+    }
+
+    if ((this->signalAllEventPackets) && (packetsToReset < event->getMaxPacketsCount())) {
+        setRemainingEventPackets(event, Event::STATE_CLEARED);
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -1822,6 +1827,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
                 hwInfo,
                 args);
         }
+        if (this->signalAllEventPackets) {
+            setRemainingEventPackets(event, Event::STATE_SIGNALED);
+        }
     }
 }
 
@@ -2004,6 +2012,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         }
     }
 
+    if (this->signalAllEventPackets) {
+        setRemainingEventPackets(event, Event::STATE_SIGNALED);
+    }
+
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
             *commandContainer.getCommandStream(),
@@ -2071,6 +2083,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                                                                        COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
 
             gpuAddr += event->getSinglePacketSize();
+        }
+        if (this->signalAllEventPackets) {
+            waitOnRemainingEventPackets(event);
         }
     }
 
@@ -2158,6 +2173,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, false, hwInfo);
             bool workloadPartition = isTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, beforeWalker, true, workloadPartition);
+            if (this->signalAllEventPackets) {
+                setRemainingEventPackets(event, Event::STATE_SIGNALED);
+            }
         }
     }
 }
@@ -2725,6 +2743,75 @@ void CommandListCoreFamily<gfxCoreFamily>::allocateKernelPrivateMemoryIfNeeded(K
         kernel->patchCrossthreadDataWithPrivateAllocation(privateMemoryGraphicsAllocation);
         this->commandContainer.addToResidencyContainer(privateMemoryGraphicsAllocation);
         this->ownedPrivateAllocations.push_back(privateMemoryGraphicsAllocation);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::setRemainingEventPackets(Event *event, uint32_t value) {
+    uint32_t packetUsed = event->getPacketsInUse();
+    uint32_t packetsRemaining = event->getMaxPacketsCount() - packetUsed;
+    if (packetsRemaining == 0) {
+        return;
+    }
+
+    uint64_t gpuAddress = event->getGpuAddress(this->device);
+    size_t packetSize = event->getSinglePacketSize();
+    gpuAddress += packetSize * packetUsed;
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
+
+    uint32_t operationsRemaining = packetsRemaining / this->partitionCount;
+    size_t operationOffset = this->partitionCount * packetSize;
+
+    for (uint32_t i = 0; i < operationsRemaining; i++) {
+        if (isCopyOnly()) {
+            const auto &hwInfo = this->device->getHwInfo();
+            NEO::MiFlushArgs args;
+            args.commandWithPostSync = true;
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(
+                *commandContainer.getCommandStream(),
+                gpuAddress,
+                value,
+                args,
+                hwInfo);
+        } else {
+            NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
+                *commandContainer.getCommandStream(),
+                gpuAddress,
+                value,
+                0u,
+                false,
+                this->partitionCount > 1);
+        }
+
+        gpuAddress += operationOffset;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::waitOnRemainingEventPackets(Event *event) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    uint32_t packetUsed = event->getPacketsInUse();
+    uint32_t packetsRemaining = event->getMaxPacketsCount() - packetUsed;
+    if (packetsRemaining == 0) {
+        return;
+    }
+
+    uint64_t gpuAddress = event->getGpuAddress(this->device);
+    size_t packetSize = event->getSinglePacketSize();
+    gpuAddress += packetSize * packetUsed;
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
+
+    for (uint32_t i = 0; i < packetsRemaining; i++) {
+        NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                   gpuAddress,
+                                                                   Event::STATE_CLEARED,
+                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+        gpuAddress += packetSize;
     }
 }
 

@@ -23,6 +23,7 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::hostAddress;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;
+    using BaseClass::signalAllEventPackets;
 };
 
 using Event = WhiteBox<::L0::Event>;
@@ -61,7 +62,6 @@ struct Mock<EventPool> : public EventPool {
     ADDMETHOD_NOBASE(closeIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(createEvent, ze_result_t, ZE_RESULT_SUCCESS, (const ze_event_desc_t *desc, ze_event_handle_t *phEvent));
     ADDMETHOD_NOBASE(getDevice, Device *, nullptr, ());
-    ADDMETHOD_NOBASE(getEventSize, uint32_t, 0u, ());
 
     using EventPool::eventPoolAllocations;
 };
@@ -73,6 +73,7 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::isCompleted;
     using ::L0::Event::l3FlushAppliedOnKernel;
     using ::L0::Event::maxKernelCount;
+    using ::L0::Event::signalAllEventPackets;
 
     MockEvent() {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0,
@@ -120,7 +121,7 @@ class MockEvent : public ::L0::Event {
         return ZE_RESULT_SUCCESS;
     }
     uint32_t getPacketsUsedInLastKernel() override { return 1; }
-    uint32_t getPacketsInUse() override { return 1; }
+    uint32_t getPacketsInUse() const override { return 1; }
     void resetPackets(bool resetAllPackets) override {}
     void resetKernelCountAndPacketUsedCount() override {}
     void setPacketsInUse(uint32_t value) override {}

@@ -37,7 +37,7 @@ struct AppendMemoryCopyMultiPacketEventFixture : public DeviceFixture {
     void setUp() {
         DebugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
         DebugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
-        if (multiTile == 1) {
+        if constexpr (multiTile == 1) {
             DebugManager.flags.CreateMultipleSubDevices.set(2);
             DebugManager.flags.EnableImplicitScaling.set(1);
         }

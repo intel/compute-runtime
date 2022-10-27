@@ -71,6 +71,9 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
+    using BaseClass::setRemainingEventPackets;
+    using BaseClass::setupTimestampEventForMultiTile;
+    using BaseClass::signalAllEventPackets;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::unifiedMemoryControls;
     using BaseClass::updateStreamProperties;
@@ -142,6 +145,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
+    using BaseClass::signalAllEventPackets;
     using BaseClass::stateComputeModeTracking;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
@@ -174,6 +178,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::signalAllEventPackets;
     using BaseClass::stateComputeModeTracking;
 
     WhiteBox(Device *device);

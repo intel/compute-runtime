@@ -293,6 +293,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (l3FlushEnable) {
             programEventL3Flush<gfxCoreFamily>(event, this->device, partitionCount, commandContainer);
         }
+        if (this->signalAllEventPackets) {
+            setRemainingEventPackets(event, Event::STATE_SIGNALED);
+        }
     }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing) {

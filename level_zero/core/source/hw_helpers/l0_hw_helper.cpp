@@ -67,4 +67,11 @@ bool L0HwHelper::useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo) {
     return false;
 }
 
+bool L0HwHelper::useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo) {
+    if (NEO::DebugManager.flags.SignalAllEventPackets.get() != -1) {
+        return !!NEO::DebugManager.flags.SignalAllEventPackets.get();
+    }
+    return false;
+}
+
 } // namespace L0

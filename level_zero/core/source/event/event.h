@@ -59,7 +59,7 @@ struct Event : _ze_event_handle_t {
     virtual NEO::GraphicsAllocation &getAllocation(Device *device) = 0;
 
     virtual uint64_t getGpuAddress(Device *device) = 0;
-    virtual uint32_t getPacketsInUse() = 0;
+    virtual uint32_t getPacketsInUse() const = 0;
     virtual uint32_t getPacketsUsedInLastKernel() = 0;
     virtual uint64_t getPacketAddress(Device *device) = 0;
     virtual void resetPackets(bool resetAllPackets) = 0;
@@ -167,9 +167,11 @@ struct Event : _ze_event_handle_t {
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
+    uint32_t totalEventSize = 0;
 
     bool isTimestampEvent = false;
     bool usingContextEndOffset = false;
+    bool signalAllEventPackets = false;
     std::atomic<bool> isCompleted{false};
 };
 
@@ -192,7 +194,7 @@ struct EventImp : public Event {
         contextEndOffset = NEO::TimestampPackets<TagSizeT>::getContextEndOffset();
         globalStartOffset = NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset();
         globalEndOffset = NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset();
-        timestampSizeInDw = (sizeof(TagSizeT) / 4);
+        timestampSizeInDw = (sizeof(TagSizeT) / sizeof(uint32_t));
         singlePacketSize = NEO::TimestampPackets<TagSizeT>::getSinglePacketSize();
     }
 
@@ -218,7 +220,7 @@ struct EventImp : public Event {
     void resetKernelCountAndPacketUsedCount() override;
 
     uint64_t getPacketAddress(Device *device) override;
-    uint32_t getPacketsInUse() override;
+    uint32_t getPacketsInUse() const override;
     uint32_t getPacketsUsedInLastKernel() override;
     void setPacketsInUse(uint32_t value) override;
     void setGpuStartTimestamp() override;
@@ -236,6 +238,7 @@ struct EventImp : public Event {
     MOCKABLE_VIRTUAL ze_result_t hostEventSetValue(TagSizeT eventValue);
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
     MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
+    void setRemainingPackets(TagSizeT eventVal, void *nextPacketAddress, uint32_t packetsAlreadySet);
 };
 
 struct EventPool : _ze_event_pool_handle_t {
@@ -255,9 +258,12 @@ struct EventPool : _ze_event_pool_handle_t {
 
     virtual NEO::MultiGraphicsAllocation &getAllocation() { return *eventPoolAllocations; }
 
-    virtual uint32_t getEventSize() = 0;
-    virtual void setEventSize(uint32_t) = 0;
-    virtual void setEventAlignment(uint32_t) = 0;
+    uint32_t getEventSize() const { return eventSize; }
+    void setEventSize(uint32_t size) { eventSize = size; }
+    void setEventAlignment(uint32_t alignment) { eventAlignment = alignment; }
+    size_t getNumEvents() const { return numEvents; }
+    uint32_t getEventMaxPackets() const { return eventPackets; }
+    size_t getEventPoolSize() const { return eventPoolSize; }
 
     bool isEventPoolTimestampFlagSet() {
         if (NEO::DebugManager.flags.OverrideTimestampEvents.get() != -1) {
@@ -279,10 +285,20 @@ struct EventPool : _ze_event_pool_handle_t {
 
     std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
     ze_event_pool_flags_t eventPoolFlags;
+
+  protected:
+    EventPool() = default;
+    EventPool(size_t numEvents) : numEvents(numEvents) {}
+
+    size_t numEvents = 1;
+    size_t eventPoolSize = 0;
+    uint32_t eventAlignment = 0;
+    uint32_t eventSize = 0;
+    uint32_t eventPackets = 0;
 };
 
 struct EventPoolImp : public EventPool {
-    EventPoolImp(const ze_event_pool_desc_t *desc) : numEvents(desc->count) {
+    EventPoolImp(const ze_event_pool_desc_t *desc) : EventPool(desc->count) {
         eventPoolFlags = desc->flags;
     }
 
@@ -298,28 +314,15 @@ struct EventPoolImp : public EventPool {
 
     ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) override;
 
-    uint32_t getEventSize() override { return eventSize; }
-    void setEventSize(uint32_t size) override { eventSize = size; }
-    void setEventAlignment(uint32_t alignment) override { eventAlignment = alignment; }
-    size_t getNumEvents() { return numEvents; }
-    uint32_t getEventMaxPackets() { return eventPackets; }
-    size_t getEventPoolSize() const { return eventPoolSize; }
     void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::HardwareInfo &hwInfo);
 
     Device *getDevice() override { return devices[0]; }
 
-    void *eventPoolPtr = nullptr;
     std::vector<Device *> devices;
+    void *eventPoolPtr = nullptr;
     ContextImp *context = nullptr;
-    size_t numEvents;
     bool isImportedIpcPool = false;
     bool isShareableEventMemory = false;
-
-  protected:
-    size_t eventPoolSize = 0;
-    uint32_t eventAlignment = 0;
-    uint32_t eventSize = 0;
-    uint32_t eventPackets = 0;
 };
 
 } // namespace L0

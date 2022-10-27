@@ -2379,13 +2379,18 @@ TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
     EXPECT_EQ(event->csr, defaultCsr);
 }
 
-template <int32_t multiTile>
+template <int32_t multiTile, int32_t signalRemainingPackets>
 struct EventDynamicPacketUseFixture : public DeviceFixture {
     void setUp() {
         NEO::DebugManager.flags.UseDynamicEventPacketsCount.set(1);
-        if (multiTile == 1) {
+        if constexpr (multiTile == 1) {
             DebugManager.flags.CreateMultipleSubDevices.set(2);
             DebugManager.flags.EnableImplicitScaling.set(1);
+        }
+        NEO::DebugManager.flags.SignalAllEventPackets.set(signalRemainingPackets);
+        if constexpr (signalRemainingPackets == 1) {
+            NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+            NEO::DebugManager.flags.CompactL3FlushEventPacket.set(0);
         }
         DeviceFixture::setUp();
     }
@@ -2406,9 +2411,9 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, eventPool);
 
-        auto eventPoolMaxPackets = static_cast<L0::EventPoolImp *>(eventPool.get())->getEventMaxPackets();
+        auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
         auto expectedPoolMaxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
-        if (multiTile == 1) {
+        if constexpr (multiTile == 1) {
             expectedPoolMaxPackets *= 2;
         }
         EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
@@ -2448,7 +2453,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         std::vector<ze_device_handle_t> deviceHandles;
 
         L0::Device *eventDevice = device;
-        if (multiTile == 1) {
+        if constexpr (multiTile == 1) {
             uint32_t count = 2;
             ze_device_handle_t subDevices[2];
             result = device->getSubDevices(&count, subDevices);
@@ -2463,7 +2468,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, eventPool);
 
-        auto eventPoolMaxPackets = static_cast<L0::EventPoolImp *>(eventPool.get())->getEventMaxPackets();
+        auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
         auto expectedPoolMaxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
 
         EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
@@ -2487,25 +2492,153 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(maxKernels, event->getMaxKernelCount());
     }
 
+    void testSignalAllPackets(uint32_t eventValueAfterSignal, uint32_t queryRetAfterPartialReset, ze_event_pool_flags_t flags, bool signalAll) {
+        ze_result_t result = ZE_RESULT_SUCCESS;
+
+        auto &hwInfo = device->getHwInfo();
+        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        ze_event_pool_desc_t eventPoolDesc = {
+            ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+            nullptr,
+            flags,
+            1};
+
+        std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, eventPool);
+
+        auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
+        auto expectedPoolMaxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+
+        EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
+
+        ze_event_desc_t eventDesc = {
+            ZE_STRUCTURE_TYPE_EVENT_DESC,
+            nullptr,
+            0,
+            ZE_EVENT_SCOPE_FLAG_DEVICE,
+            ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+        std::unique_ptr<L0::Event> event(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+        EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
+
+        // natively one packet is in use
+        uint32_t usedPackets = event->getPacketsInUse();
+
+        uint32_t maxPackets = event->getMaxPacketsCount();
+        size_t packetSize = event->getSinglePacketSize();
+        void *eventHostAddress = event->getHostAddress();
+        uint32_t remainingPackets = maxPackets - usedPackets;
+        void *remainingPacketsAddress = ptrOffset(eventHostAddress, (usedPackets * packetSize));
+        if (event->isUsingContextEndOffset()) {
+            remainingPacketsAddress = ptrOffset(remainingPacketsAddress, event->getContextEndOffset());
+        }
+
+        for (uint32_t i = 0; i < remainingPackets; i++) {
+            uint32_t *completionField = reinterpret_cast<uint32_t *>(remainingPacketsAddress);
+            EXPECT_EQ(Event::STATE_INITIAL, *completionField);
+            remainingPacketsAddress = ptrOffset(remainingPacketsAddress, packetSize);
+        }
+
+        result = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+        event->resetCompletionStatus();
+
+        event->hostSignal();
+
+        remainingPacketsAddress = ptrOffset(eventHostAddress, (usedPackets * packetSize));
+        if (event->isUsingContextEndOffset()) {
+            remainingPacketsAddress = ptrOffset(remainingPacketsAddress, event->getContextEndOffset());
+        }
+
+        for (uint32_t i = 0; i < remainingPackets; i++) {
+            uint32_t *completionField = reinterpret_cast<uint32_t *>(remainingPacketsAddress);
+            EXPECT_EQ(eventValueAfterSignal, *completionField);
+            remainingPacketsAddress = ptrOffset(remainingPacketsAddress, packetSize);
+        }
+
+        result = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        event->resetCompletionStatus();
+
+        remainingPacketsAddress = ptrOffset(eventHostAddress, (usedPackets * packetSize));
+        if (event->isUsingContextEndOffset()) {
+            remainingPacketsAddress = ptrOffset(remainingPacketsAddress, event->getContextEndOffset());
+        }
+
+        {
+            uint32_t *completionField = reinterpret_cast<uint32_t *>(remainingPacketsAddress);
+            *completionField = Event::STATE_CLEARED;
+
+            result = event->queryStatus();
+            EXPECT_EQ(queryRetAfterPartialReset, result);
+            event->resetCompletionStatus();
+
+            *completionField = Event::STATE_SIGNALED;
+
+            result = event->queryStatus();
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            event->resetCompletionStatus();
+        }
+
+        event->reset();
+
+        uint32_t eventValueAfterReset = Event::STATE_CLEARED;
+        for (uint32_t i = 0; i < remainingPackets; i++) {
+            uint32_t *completionField = reinterpret_cast<uint32_t *>(remainingPacketsAddress);
+
+            // manually signaled free packet will not be cleared when signal all is not active
+            if (!signalAll && i == 0) {
+                eventValueAfterReset = Event::STATE_SIGNALED;
+            } else {
+                eventValueAfterReset = Event::STATE_CLEARED;
+            }
+            EXPECT_EQ(eventValueAfterReset, *completionField);
+            remainingPacketsAddress = ptrOffset(remainingPacketsAddress, packetSize);
+        }
+
+        result = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    }
+
     DebugManagerStateRestore restorer;
 };
 
-using EventDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<0>>;
-HWTEST2_F(EventDynamicPacketUseTest, testAllDevices, IsAtLeastSkl) {
+using EventDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<0, 0>>;
+HWTEST2_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromAllDevicesThenMaxPossibleSelected, IsAtLeastSkl) {
     testAllDevices();
 }
 
-HWTEST2_F(EventDynamicPacketUseTest, testSingleDevice, IsAtLeastSkl) {
+HWTEST2_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleDeviceThenMaxFromThisDeviceSelected, IsAtLeastSkl) {
     testSingleDevice();
 }
 
-using EventMultiTileDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<1>>;
-HWTEST2_F(EventMultiTileDynamicPacketUseTest, testAllDevices, IsAtLeastXeHpCore) {
+using EventMultiTileDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<1, 0>>;
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromAllDevicesThenMaxPossibleSelected, IsAtLeastXeHpCore) {
     testAllDevices();
 }
 
-HWTEST2_F(EventMultiTileDynamicPacketUseTest, testSingleDevice, IsAtLeastXeHpCore) {
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleOneTileDeviceThenMaxFromThisDeviceSelected, IsAtLeastXeHpCore) {
     testSingleDevice();
+}
+
+using EventSignalAllPacketsTest = Test<EventDynamicPacketUseFixture<0, 1>>;
+HWTEST2_F(EventSignalAllPacketsTest, givenDynamicPacketEstimationWhenImmediateEventSignalMaxPacketThenAllPacketCompletionSignaled, IsAtLeastXeHpCore) {
+    testSignalAllPackets(Event::STATE_SIGNALED, ZE_RESULT_NOT_READY, 0, true);
+}
+
+HWTEST2_F(EventSignalAllPacketsTest, givenDynamicPacketEstimationWhenTimestampEventSignalMaxPacketThenAllPacketCompletionSignaled, IsAtLeastXeHpCore) {
+    testSignalAllPackets(Event::STATE_SIGNALED, ZE_RESULT_NOT_READY, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, true);
+}
+
+using EventSignalUsedPacketsTest = Test<EventDynamicPacketUseFixture<0, 0>>;
+HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenImmediateSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeHpCore) {
+    testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, 0, false);
+}
+
+HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenTimestampSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeHpCore) {
+    testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false);
 }
 
 } // namespace ult

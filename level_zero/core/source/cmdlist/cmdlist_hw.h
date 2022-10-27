@@ -294,6 +294,8 @@ struct CommandListCoreFamily : CommandListImp {
                compactL3FlushEvent(dcFlush);
     }
     void allocateKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
+    void setRemainingEventPackets(Event *event, uint32_t value);
+    void waitOnRemainingEventPackets(Event *event);
 
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;

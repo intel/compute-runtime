@@ -336,6 +336,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool systolicModeSupport = false;
     bool pipelineSelectStateTracking = false;
     bool stateComputeModeTracking = false;
+    bool signalAllEventPackets = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);
