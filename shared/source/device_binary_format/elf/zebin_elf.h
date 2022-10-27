@@ -212,7 +212,8 @@ constexpr ConstStringRef bufferOffset("buffer_offset");
 constexpr ConstStringRef printfBuffer("printf_buffer");
 constexpr ConstStringRef workDimensions("work_dimensions");
 constexpr ConstStringRef implicitArgBuffer("implicit_arg_buffer");
-constexpr ConstStringRef inlineSampler("arg_inline_sampler");
+constexpr ConstStringRef syncBuffer("sync_buffer");
+
 namespace Image {
 constexpr ConstStringRef width("image_width");
 constexpr ConstStringRef height("image_height");
@@ -565,6 +566,7 @@ enum ArgType : uint8_t {
     ArgTypeVmeSubpixelMode,
     ArgTypeVmeSadAdjustMode,
     ArgTypeVmeSearchPathType,
+    ArgTypeSyncBuffer,
     ArgTypeMax
 };
 

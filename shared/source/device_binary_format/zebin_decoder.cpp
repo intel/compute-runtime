@@ -993,6 +993,13 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         break;
     }
 
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeSyncBuffer: {
+        dst.kernelAttributes.flags.usesSyncBuffer = true;
+        dst.payloadMappings.implicitArgs.syncBufferAddress.stateless = src.offset;
+        dst.payloadMappings.implicitArgs.syncBufferAddress.pointerSize = src.size;
+        break;
+    }
+
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeWorkDimensions: {
         if (4 != src.size) {
             outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::workDimensions.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 4. Got : " + std::to_string(src.size) + "\n");
@@ -1083,6 +1090,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         getVmeDescriptor()->searchPathType = src.offset;
         break;
     }
+
     return DecodeError::Success;
 }
 

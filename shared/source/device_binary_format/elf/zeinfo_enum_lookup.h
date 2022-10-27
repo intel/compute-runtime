@@ -22,7 +22,7 @@ using namespace Tags::Kernel::PayloadArgument::ArgType::Sampler::Vme;
 using ArgType = Types::Kernel::ArgType;
 
 constexpr ConstStringRef name = "argument type";
-constexpr LookupArray<ConstStringRef, ArgType, 34> lookup({{{packedLocalIds, ArgType::ArgTypePackedLocalIds},
+constexpr LookupArray<ConstStringRef, ArgType, 35> lookup({{{packedLocalIds, ArgType::ArgTypePackedLocalIds},
                                                             {localId, ArgType::ArgTypeLocalId},
                                                             {localSize, ArgType::ArgTypeLocalSize},
                                                             {groupCount, ArgType::ArgTypeGroupCount},
@@ -55,7 +55,8 @@ constexpr LookupArray<ConstStringRef, ArgType, 34> lookup({{{packedLocalIds, Arg
                                                             {blockType, ArgType::ArgTypeVmeMbBlockType},
                                                             {subpixelMode, ArgType::ArgTypeVmeSubpixelMode},
                                                             {sadAdjustMode, ArgType::ArgTypeVmeSadAdjustMode},
-                                                            {searchPathType, ArgType::ArgTypeVmeSearchPathType}}});
+                                                            {searchPathType, ArgType::ArgTypeVmeSearchPathType},
+                                                            {syncBuffer, ArgType::ArgTypeSyncBuffer}}});
 static_assert(lookup.size() == ArgType::ArgTypeMax - 1, "Every enum field must be present");
 } // namespace ArgType
 
