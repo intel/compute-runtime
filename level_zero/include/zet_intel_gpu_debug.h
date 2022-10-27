@@ -15,9 +15,19 @@
 extern "C" {
 #endif
 
+#ifndef ZET_INTEL_GPU_DEBUG_MAJOR
+#define ZET_INTEL_GPU_DEBUG_MAJOR 1
+#endif // !ZET_INTEL_GPU_DEBUG_MAJOR
+
+#ifndef ZET_INTEL_GPU_DEBUG_MINOR
+#define ZET_INTEL_GPU_DEBUG_MINOR 0
+#endif //!ZET_INTEL_GPU_DEBUG_MINOR
+
+#if ZET_INTEL_GPU_DEBUG_MAJOR == 1
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Supported device-specific register set types.
 typedef enum _zet_debug_regset_type_intel_gpu_t {
+#if ZET_INTEL_GPU_DEBUG_MINOR >= 0
     ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU = 0, ///< An invalid register set
     ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU = 1,     ///< The general purpose register set
     ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU = 2,    ///< The address register set
@@ -33,6 +43,7 @@ typedef enum _zet_debug_regset_type_intel_gpu_t {
     ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU = 12,    ///< The debug register set
     ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU = 13,     ///< The flow control register set
     ZET_DEBUG_REGSET_TYPE_FORCE_UINT32 = 0x7fffffff
+#endif // ZET_INTEL_GPU_DEBUG_MINOR >= 0
 } zet_debug_regset_type_intel_gpu_t;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,6 +60,7 @@ typedef enum _zet_debug_sba_intel_gpu_t {
     ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU = 8,    ///< ScratchSpaceBaseAddress
     ZET_DEBUG_SBA_COUNT_INTEL_GPU = 9             ///< Number of registers in SBA regster set
 } zet_debug_sba_intel_gpu_t;
+#endif // ZET_INTEL_GPU_DEBUG_MAJOR == 1
 
 #if defined(__cplusplus)
 } // extern "C"
