@@ -65,6 +65,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
+    using BaseClass::isTimestampEventForMultiTile;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
     using BaseClass::pipeControlMultiKernelEventSync;

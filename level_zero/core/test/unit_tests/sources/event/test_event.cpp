@@ -1490,19 +1490,19 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWh
     constexpr uint32_t waStartValue = 2u;
     constexpr uint32_t waEndValue = 15u;
 
-    //1st kernel 1st packet
+    // 1st kernel 1st packet
     packetData[0].contextStart = kernelStartValue;
     packetData[0].contextEnd = kernelEndValue;
     packetData[0].globalStart = kernelStartValue;
     packetData[0].globalEnd = kernelEndValue;
 
-    //1st kernel 2nd packet for L3 Flush
+    // 1st kernel 2nd packet for L3 Flush
     packetData[1].contextStart = waStartValue;
     packetData[1].contextEnd = waEndValue;
     packetData[1].globalStart = waStartValue;
     packetData[1].globalEnd = waEndValue;
 
-    //2nd kernel 1st packet
+    // 2nd kernel 1st packet
     packetData[2].contextStart = kernelStartValue;
     packetData[2].contextEnd = kernelEndValue;
     packetData[2].globalStart = kernelStartValue;
@@ -1534,19 +1534,19 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWh
     constexpr uint32_t waStartValue = 2u;
     constexpr uint32_t waEndValue = 15u;
 
-    //1st kernel 1st packet
+    // 1st kernel 1st packet
     packetData[0].contextStart = kernelStartValue;
     packetData[0].contextEnd = kernelEndValue;
     packetData[0].globalStart = kernelStartValue;
     packetData[0].globalEnd = kernelEndValue;
 
-    //2nd kernel 1st packet
+    // 2nd kernel 1st packet
     packetData[1].contextStart = kernelStartValue;
     packetData[1].contextEnd = kernelEndValue;
     packetData[1].globalStart = kernelStartValue;
     packetData[1].globalEnd = kernelEndValue;
 
-    //2nd kernel 2nd packet for L3 Flush
+    // 2nd kernel 2nd packet for L3 Flush
     packetData[2].contextStart = waStartValue;
     packetData[2].contextEnd = waEndValue;
     packetData[2].globalStart = waStartValue;
@@ -1573,19 +1573,19 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenOverflowingTimeStampDataOnTwoKer
 
     uint32_t maxTimeStampValue = std::numeric_limits<uint32_t>::max();
 
-    //1st kernel 1st packet (overflowing context timestamp)
+    // 1st kernel 1st packet (overflowing context timestamp)
     packetData[0].contextStart = maxTimeStampValue - 1;
     packetData[0].contextEnd = maxTimeStampValue + 1;
     packetData[0].globalStart = maxTimeStampValue - 2;
     packetData[0].globalEnd = maxTimeStampValue - 1;
 
-    //2nd kernel 1st packet (overflowing global timestamp)
+    // 2nd kernel 1st packet (overflowing global timestamp)
     packetData[1].contextStart = maxTimeStampValue - 2;
     packetData[1].contextEnd = maxTimeStampValue - 1;
     packetData[1].globalStart = maxTimeStampValue - 1;
     packetData[1].globalEnd = maxTimeStampValue + 1;
 
-    //2nd kernel 2nd packet (overflowing context timestamp)
+    // 2nd kernel 2nd packet (overflowing context timestamp)
     memcpy(&packetData[2], &packetData[0], sizeof(MockTimestampPackets32::Packet));
     packetData[2].contextStart = maxTimeStampValue;
     packetData[2].contextEnd = maxTimeStampValue + 2;
@@ -2321,6 +2321,48 @@ TEST_F(EventTests, WhenResetEventThenZeroCpuTimestamps) {
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     EXPECT_EQ(event->reset(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->gpuStartTimestamp, 0u);
+    EXPECT_EQ(event->gpuEndTimestamp, 0u);
+}
+
+TEST_F(EventTests, WhenEventResetIsCalledThenKernelCountAndPacketsUsedHaveNotBeenReset) {
+    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    event->gpuStartTimestamp = 10u;
+    event->gpuEndTimestamp = 20u;
+    event->zeroKernelCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->reset());
+
+    EXPECT_EQ(0u, event->getKernelCount());
+    EXPECT_EQ(0u, event->getPacketsInUse());
+    EXPECT_EQ(event->gpuStartTimestamp, 0u);
+    EXPECT_EQ(event->gpuEndTimestamp, 0u);
+}
+
+TEST_F(EventTests, GivenResetAllPacketsWhenResetPacketsThenOneKernelCountAndOnePacketUsed) {
+    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    event->gpuStartTimestamp = 10u;
+    event->gpuEndTimestamp = 20u;
+    event->zeroKernelCount();
+    auto resetAllPackets = true;
+    event->resetPackets(resetAllPackets);
+
+    EXPECT_EQ(1u, event->getKernelCount());
+    EXPECT_EQ(1u, event->getPacketsInUse());
+    EXPECT_EQ(event->gpuStartTimestamp, 0u);
+    EXPECT_EQ(event->gpuEndTimestamp, 0u);
+}
+
+TEST_F(EventTests, GivenResetAllPacketsFalseWhenResetPacketsThenKernelCountAndPacketsUsedHaveNotBeenReset) {
+    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    event->gpuStartTimestamp = 10u;
+    event->gpuEndTimestamp = 20u;
+    event->zeroKernelCount();
+    auto resetAllPackets = false;
+    event->resetPackets(resetAllPackets);
+
+    EXPECT_EQ(0u, event->getKernelCount());
+    EXPECT_EQ(0u, event->getPacketsInUse());
     EXPECT_EQ(event->gpuStartTimestamp, 0u);
     EXPECT_EQ(event->gpuEndTimestamp, 0u);
 }

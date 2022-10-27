@@ -62,7 +62,8 @@ struct Event : _ze_event_handle_t {
     virtual uint32_t getPacketsInUse() = 0;
     virtual uint32_t getPacketsUsedInLastKernel() = 0;
     virtual uint64_t getPacketAddress(Device *device) = 0;
-    virtual void resetPackets() = 0;
+    virtual void resetPackets(bool resetAllPackets) = 0;
+    virtual void resetKernelCountAndPacketUsedCount() = 0;
     void *getHostAddress() { return hostAddress; }
     virtual void setPacketsInUse(uint32_t value) = 0;
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
@@ -120,7 +121,7 @@ struct Event : _ze_event_handle_t {
         l3FlushAppliedOnKernel.set(kernelCount - 1);
     }
 
-    void resetCompletion() {
+    void resetCompletionStatus() {
         this->isCompleted = false;
     }
 
@@ -212,8 +213,10 @@ struct EventImp : public Event {
 
     uint64_t getGpuAddress(Device *device) override;
 
-    void resetPackets() override;
-    void resetDeviceCompletionData();
+    void resetPackets(bool resetAllPackets) override;
+    void resetDeviceCompletionData(bool resetAllPackets);
+    void resetKernelCountAndPacketUsedCount() override;
+
     uint64_t getPacketAddress(Device *device) override;
     uint32_t getPacketsInUse() override;
     uint32_t getPacketsUsedInLastKernel() override;

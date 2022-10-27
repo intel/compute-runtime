@@ -307,6 +307,45 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+using CommandListAppendLaunchKernelResetKernelCount = Test<DeviceFixture>;
+
+HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOperationFalseWhenAppendLaunchKernelThenResetKernelCount, IsAtLeastXeHpCore) {
+    Mock<::L0::Kernel> kernel;
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_group_count_t groupCount{1, 1, 1};
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    CmdListKernelLaunchParams launchParams = {};
+    {
+        event->zeroKernelCount();
+        event->increaseKernelCount();
+        event->increaseKernelCount();
+        launchParams.isKernelSplitOperation = true;
+
+        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(2u, event->getKernelCount());
+    }
+    {
+        launchParams.isKernelSplitOperation = false;
+        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(1u, event->getKernelCount());
+    }
+}
+
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendPageFaultThenSuccessIsReturned) {
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
 

@@ -246,7 +246,7 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
 
     event->setPacketsInUse(16u);
     commandList->appendEventReset(event->toHandle());
-    ASSERT_EQ(1u, event->getPacketsInUse());
+    ASSERT_EQ(16u, event->getPacketsInUse());
 
     auto contextOffset = event->getContextEndOffset();
     auto baseAddr = event->getGpuAddress(device);
@@ -353,7 +353,7 @@ HWTEST2_F(CommandListAppendEventReset,
     commandList->partitionCount = packets;
     returnValue = commandList->appendEventReset(event->toHandle());
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(1u, event->getPacketsInUse());
+    EXPECT_EQ(2u, event->getPacketsInUse());
 
     auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();

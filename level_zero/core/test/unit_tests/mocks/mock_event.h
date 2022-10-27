@@ -121,7 +121,8 @@ class MockEvent : public ::L0::Event {
     }
     uint32_t getPacketsUsedInLastKernel() override { return 1; }
     uint32_t getPacketsInUse() override { return 1; }
-    void resetPackets() override {}
+    void resetPackets(bool resetAllPackets) override {}
+    void resetKernelCountAndPacketUsedCount() override {}
     void setPacketsInUse(uint32_t value) override {}
     uint64_t getPacketAddress(L0::Device *) override { return 0; }
     void setGpuStartTimestamp() override {}

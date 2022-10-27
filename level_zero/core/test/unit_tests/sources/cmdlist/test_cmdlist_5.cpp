@@ -570,6 +570,28 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendSignalEventWithScopeThenPi
     EXPECT_NE(cmdList.end(), itor);
 }
 
+using CommandListTimestampEvent = Test<DeviceFixture>;
+
+HWTEST2_F(CommandListTimestampEvent, WhenIsTimestampEventForMultiTileThenCorrectResultIsReturned, IsAtLeastSkl) {
+
+    auto cmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+
+    cmdList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    MockEvent mockEvent;
+
+    cmdList->partitionCount = 1u;
+    EXPECT_FALSE(cmdList->isTimestampEventForMultiTile(nullptr));
+
+    cmdList->partitionCount = 2u;
+    EXPECT_FALSE(cmdList->isTimestampEventForMultiTile(nullptr));
+
+    mockEvent.setEventTimestampFlag(false);
+    EXPECT_FALSE(cmdList->isTimestampEventForMultiTile(&mockEvent));
+
+    mockEvent.setEventTimestampFlag(true);
+    EXPECT_TRUE(cmdList->isTimestampEventForMultiTile(&mockEvent));
+}
+
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWithDcFlushThenMiFlushDWIsProgrammed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     ze_result_t returnValue;

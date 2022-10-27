@@ -289,9 +289,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (compactEvent) {
         appendEventForProfilingAllWalkers(compactEvent, false, true);
     } else if (event) {
-        if (partitionCount > 1) {
-            event->setPacketsInUse(partitionCount);
-        }
+        event->setPacketsInUse(partitionCount);
         if (l3FlushEnable) {
             programEventL3Flush<gfxCoreFamily>(event, this->device, partitionCount, commandContainer);
         }
@@ -432,15 +430,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent) {
     if (isCopyOnly() || singlePacketEvent) {
         if (beforeWalker) {
-            bool workloadPartition = setupTimestampEventForMultiTile(event);
-            appendEventForProfiling(event, true, workloadPartition);
+            appendEventForProfiling(event, true);
         } else {
-            bool workloadPartition = isTimestampEventForMultiTile(event);
-            appendSignalEventPostWalker(event, workloadPartition);
+            appendSignalEventPostWalker(event);
         }
     } else {
         if (event) {
             if (beforeWalker) {
+                event->resetKernelCountAndPacketUsedCount();
                 event->zeroKernelCount();
             } else {
                 if (event->getKernelCount() > 1 && getDcFlushRequired(!!event->signalScope)) {

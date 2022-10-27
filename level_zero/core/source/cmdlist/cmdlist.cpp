@@ -159,12 +159,10 @@ void CommandList::migrateSharedAllocations() {
 }
 
 bool CommandList::isTimestampEventForMultiTile(Event *signalEvent) {
-    if (this->partitionCount > 1 &&
-        signalEvent) {
-        if (signalEvent->isEventTimestampFlagSet()) {
-            return true;
-        }
+    if (this->partitionCount > 1 && signalEvent && signalEvent->isEventTimestampFlagSet()) {
+        return true;
     }
+
     return false;
 }
 

@@ -53,7 +53,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     // do not reset even if it has been imported, since event pool
     // might have been imported after events being already signaled
     if (eventPoolImp->isImportedIpcPool == false) {
-        event->resetDeviceCompletionData();
+        event->resetDeviceCompletionData(true);
     }
 
     return event;
@@ -295,20 +295,24 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
-    this->resetCompletion();
-    this->resetDeviceCompletionData();
+    this->resetCompletionStatus();
+    this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();
     return ZE_RESULT_SUCCESS;
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::resetDeviceCompletionData() {
-    this->kernelCount = this->maxKernelCount;
-    for (uint32_t i = 0; i < kernelCount; i++) {
-        this->kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
+void EventImp<TagSizeT>::resetDeviceCompletionData(bool resetAllPackets) {
+
+    if (resetAllPackets) {
+        this->kernelCount = this->maxKernelCount;
+        for (uint32_t i = 0; i < kernelCount; i++) {
+            this->kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
+        }
     }
+
     this->hostEventSetValue(Event::STATE_INITIAL);
-    this->resetPackets();
+    this->resetPackets(resetAllPackets);
 }
 
 template <typename TagSizeT>
@@ -395,11 +399,10 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *pCo
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::resetPackets() {
-    for (uint32_t i = 0; i < kernelCount; i++) {
-        kernelEventCompletionData[i].setPacketsUsed(1);
+void EventImp<TagSizeT>::resetPackets(bool resetAllPackets) {
+    if (resetAllPackets) {
+        resetKernelCountAndPacketUsedCount();
     }
-    kernelCount = 1;
     cpuStartTimestamp = 0;
     gpuStartTimestamp = 0;
     gpuEndTimestamp = 0;
@@ -423,6 +426,14 @@ uint32_t EventImp<TagSizeT>::getPacketsUsedInLastKernel() {
 template <typename TagSizeT>
 void EventImp<TagSizeT>::setPacketsInUse(uint32_t value) {
     kernelEventCompletionData[getCurrKernelDataIndex()].setPacketsUsed(value);
+}
+
+template <typename TagSizeT>
+void EventImp<TagSizeT>::resetKernelCountAndPacketUsedCount() {
+    for (auto i = 0u; i < this->kernelCount; i++) {
+        this->kernelEventCompletionData[i].setPacketsUsed(1);
+    }
+    this->kernelCount = 1;
 }
 
 template <typename TagSizeT>
