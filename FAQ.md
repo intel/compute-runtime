@@ -22,6 +22,8 @@ that provides support for that platform (e.g. Coffee Lake requires kernel 4.14 o
 
 Our default (most frequent) validation config is currently Ubuntu 22.04 LTS (as of Q3'22).
 
+There are no plans for proactive enabling and distro adoption except for Ubuntu. We are open to accepting contributions (pull requests) that unblock support. 
+
 ### Does NEO support Microsoft Windows?
 
 Our closed-source driver for Windows is using the same codebase. At this time,
