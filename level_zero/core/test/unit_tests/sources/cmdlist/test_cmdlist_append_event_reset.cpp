@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -91,16 +92,29 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
         gpuAddress += event->getContextEndOffset();
     }
 
-    auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    uint32_t sdiFound = 0;
-    ASSERT_NE(0u, itorSdi.size());
-    for (auto it : itorSdi) {
-        auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*it);
-        EXPECT_EQ(gpuAddress, cmd->getAddress());
-        gpuAddress += event->getSinglePacketSize();
-        sdiFound++;
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    uint32_t maxPackets = EventPacketsCount::eventPackets;
+    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
     }
-    EXPECT_EQ(EventPacketsCount::eventPackets - 1, sdiFound);
+
+    auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+
+    if (maxPackets == 1) {
+        EXPECT_EQ(0u, itorSdi.size());
+    } else {
+        uint32_t sdiFound = 0;
+        ASSERT_NE(0u, itorSdi.size());
+        for (auto it : itorSdi) {
+            auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*it);
+            EXPECT_EQ(gpuAddress, cmd->getAddress());
+            gpuAddress += event->getSinglePacketSize();
+            sdiFound++;
+        }
+        EXPECT_EQ(EventPacketsCount::eventPackets - 1, sdiFound);
+    }
 
     uint32_t postSyncFound = 0;
     for (auto it : itorPC) {
@@ -216,6 +230,9 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->commandContainer;
 
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -234,7 +251,12 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
     auto contextOffset = event->getContextEndOffset();
     auto baseAddr = event->getGpuAddress(device);
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
-    gpuAddress += ((EventPacketsCount::eventPackets - 1) * event->getSinglePacketSize());
+
+    uint32_t maxPackets = EventPacketsCount::eventPackets;
+    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    }
+    gpuAddress += ((maxPackets - 1) * event->getSinglePacketSize());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

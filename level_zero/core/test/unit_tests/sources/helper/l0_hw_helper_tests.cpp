@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -639,6 +640,85 @@ TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForCompactL3FlushEven
     auto hwInfo = *NEO::defaultHwInfo.get();
     bool defaultValue = L0::L0HwHelper::useCompactL3FlushEventPacket(hwInfo);
     EXPECT_FALSE(defaultValue);
+}
+
+TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForDynamicEventPacketCountThenReturnFalse) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    bool defaultValue = L0::L0HwHelper::useDynamicEventPacketsCount(hwInfo);
+    EXPECT_FALSE(defaultValue);
+}
+
+HWTEST2_F(L0HwHelperTest, givenL0HelperWhenGettingMaxKernelAndMaxPacketThenExpectBothReturnOne, NonMultiTilePlatforms) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    EXPECT_EQ(1u, L0::L0HwHelperHw<FamilyType>::get().getEventMaxKernelCount(hwInfo));
+    EXPECT_EQ(1u, L0::L0HwHelperHw<FamilyType>::get().getEventBaseMaxPacketCount(hwInfo));
+}
+
+template <int32_t usePipeControlMultiPacketEventSync, int32_t compactL3FlushEventPacket>
+struct L0HwHelperMultiPacketEventFixture {
+    void setUp() {
+        DebugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
+        DebugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
+    }
+
+    void tearDown() {
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using L0HwHelperEventMultiKernelEnabledL3FlushCompactDisabledTest = Test<L0HwHelperMultiPacketEventFixture<0, 0>>;
+HWTEST2_F(L0HwHelperEventMultiKernelEnabledL3FlushCompactDisabledTest,
+          givenL0HelperWhenGettingMaxKernelAndMaxPacketThenExpectKernelThreeAndPacketThreeWithL3PacketWhenApplicable,
+          IsAtLeastXeHpCore) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    uint32_t expectedPacket = 3;
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, hwInfo)) {
+        expectedPacket++;
+    }
+
+    EXPECT_EQ(3u, L0::L0HwHelperHw<FamilyType>::get().getEventMaxKernelCount(hwInfo));
+    EXPECT_EQ(expectedPacket, L0::L0HwHelperHw<FamilyType>::get().getEventBaseMaxPacketCount(hwInfo));
+}
+
+using L0HwHelperEventMultiKernelEnabledL3FlushCompactEnabledTest = Test<L0HwHelperMultiPacketEventFixture<0, 1>>;
+HWTEST2_F(L0HwHelperEventMultiKernelEnabledL3FlushCompactEnabledTest,
+          givenL0HelperWhenGettingMaxKernelAndMaxPacketThenExpectKernelThreeAndPacketThree,
+          IsAtLeastXeHpCore) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    uint32_t expectedPacket = 3;
+
+    EXPECT_EQ(3u, L0::L0HwHelperHw<FamilyType>::get().getEventMaxKernelCount(hwInfo));
+    EXPECT_EQ(expectedPacket, L0::L0HwHelperHw<FamilyType>::get().getEventBaseMaxPacketCount(hwInfo));
+}
+
+using L0HwHelperEventMultiKernelDisabledL3FlushCompactDisabledTest = Test<L0HwHelperMultiPacketEventFixture<1, 0>>;
+HWTEST2_F(L0HwHelperEventMultiKernelDisabledL3FlushCompactDisabledTest,
+          givenL0HelperWhenGettingMaxKernelAndMaxPacketThenExpectKernelOneAndPacketOneWithL3PacketWhenApplicable,
+          IsAtLeastXeHpCore) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    uint32_t expectedPacket = 1;
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, hwInfo)) {
+        expectedPacket++;
+    }
+
+    EXPECT_EQ(1u, L0::L0HwHelperHw<FamilyType>::get().getEventMaxKernelCount(hwInfo));
+    EXPECT_EQ(expectedPacket, L0::L0HwHelperHw<FamilyType>::get().getEventBaseMaxPacketCount(hwInfo));
+}
+
+using L0HwHelperEventMultiKernelDisabledL3FlushCompactEnabledTest = Test<L0HwHelperMultiPacketEventFixture<1, 1>>;
+HWTEST2_F(L0HwHelperEventMultiKernelDisabledL3FlushCompactEnabledTest,
+          givenL0HelperWhenGettingMaxKernelAndMaxPacketThenExpectKernelOneAndPacketOne,
+          IsAtLeastXeHpCore) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    uint32_t expectedPacket = 1;
+
+    EXPECT_EQ(1u, L0::L0HwHelperHw<FamilyType>::get().getEventMaxKernelCount(hwInfo));
+    EXPECT_EQ(expectedPacket, L0::L0HwHelperHw<FamilyType>::get().getEventBaseMaxPacketCount(hwInfo));
 }
 
 } // namespace ult

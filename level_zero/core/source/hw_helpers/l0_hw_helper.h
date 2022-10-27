@@ -36,6 +36,7 @@ class L0HwHelper {
     static bool enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwInfo, bool cmdlistSupport);
     static bool usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo);
     static bool useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo);
+    static bool useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo);
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
 
@@ -52,6 +53,9 @@ class L0HwHelper {
     virtual bool platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual bool platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual bool platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const = 0;
+
+    virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const = 0;
 
   protected:
     L0HwHelper() = default;
@@ -80,6 +84,9 @@ class L0HwHelperHw : public L0HwHelper {
     bool platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const override;
     bool platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const override;
     bool platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const override;
+
+    uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
+    uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const override;
 };
 
 } // namespace L0

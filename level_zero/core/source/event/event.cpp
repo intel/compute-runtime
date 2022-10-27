@@ -43,17 +43,18 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 
     RootDeviceIndicesContainer rootDeviceIndices;
     uint32_t maxRootDeviceIndex = 0u;
+    uint32_t currentNumDevices = numDevices;
 
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driver);
     bool useDevicesFromApi = true;
     bool useDeviceAlloc = isEventPoolDeviceAllocationFlagSet();
 
     if (numDevices == 0) {
-        numDevices = static_cast<uint32_t>(driverHandleImp->devices.size());
+        currentNumDevices = static_cast<uint32_t>(driverHandleImp->devices.size());
         useDevicesFromApi = false;
     }
 
-    for (uint32_t i = 0u; i < numDevices; i++) {
+    for (uint32_t i = 0u; i < currentNumDevices; i++) {
         Device *eventDevice = nullptr;
 
         if (useDevicesFromApi) {
@@ -74,14 +75,11 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     }
     rootDeviceIndices.remove_duplicates();
 
-    auto &hwHelper = devices[0]->getHwHelper();
+    auto &hwInfo = getDevice()->getHwInfo();
+    useDeviceAlloc |= L0HwHelper::get(hwInfo.platform.eRenderCoreFamily).alwaysAllocateEventInLocalMem();
 
-    useDeviceAlloc |= L0HwHelper::get(getDevice()->getHwInfo().platform.eRenderCoreFamily).alwaysAllocateEventInLocalMem();
+    initializeSizeParameters(numDevices, phDevices, *driverHandleImp, hwInfo);
 
-    eventAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
-    eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment));
-
-    size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
     NEO::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
                                                                        : NEO::AllocationType::BUFFER_HOST_MEMORY;
     if (this->devices.size() > 1) {
@@ -97,7 +95,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     bool allocatedMemory = false;
 
     if (useDeviceAlloc) {
-        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, devices[0]->getNEODevice()->getDeviceBitfield()};
+        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, devices[0]->getNEODevice()->getDeviceBitfield()};
         allocationProperties.alignment = eventAlignment;
         if (eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC) {
             this->isShareableEventMemory = true;
@@ -110,7 +108,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         }
 
     } else {
-        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, systemMemoryBitfield};
+        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, systemMemoryBitfield};
         allocationProperties.alignment = eventAlignment;
 
         eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
@@ -156,6 +154,22 @@ ze_result_t EventPoolImp::createEvent(const ze_event_desc_t *desc, ze_event_hand
     *phEvent = l0HwHelper.createEvent(this, desc, getDevice());
 
     return ZE_RESULT_SUCCESS;
+}
+
+void EventPoolImp::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::HardwareInfo &hwInfo) {
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    setEventAlignment(static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment()));
+
+    bool useDynamicEventPackets = l0HwHelper.useDynamicEventPacketsCount(hwInfo);
+    eventPackets = EventPacketsCount::eventPackets;
+    if (useDynamicEventPackets) {
+        eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);
+    }
+    setEventSize(static_cast<uint32_t>(alignUp(eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment)));
+
+    eventPoolSize = alignUp<size_t>(this->numEvents * eventSize, MemoryConstants::pageSize64k);
 }
 
 ze_result_t Event::destroy() {

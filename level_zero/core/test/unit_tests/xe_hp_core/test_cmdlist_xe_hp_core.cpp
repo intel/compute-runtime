@@ -144,7 +144,17 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomics
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
 }
 
-using MultTileCommandListAppendLaunchKernelL3Flush = Test<MultiTileCommandListFixture<false, false, false>>;
+struct MultTileCommandListAppendLaunchKernelL3FlushFixture : public MultiTileCommandListFixture<false, false, false> {
+    using BaseClass = MultiTileCommandListFixture<false, false, false>;
+    void setUp() {
+        DebugManager.flags.CompactL3FlushEventPacket.set(0);
+        BaseClass::setUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using MultTileCommandListAppendLaunchKernelL3Flush = Test<MultTileCommandListAppendLaunchKernelL3FlushFixture>;
 
 HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEventAndWithWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -262,7 +272,17 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithTimestamp
     ASSERT_LE(1u, postSyncCount);
 }
 
-using CommandListAppendLaunchKernelL3Flush = Test<ModuleFixture>;
+struct CommandListAppendLaunchKernelL3FlushFixture : public ModuleFixture {
+    void setUp() {
+        DebugManager.flags.CompactL3FlushEventPacket.set(0);
+        ModuleFixture::setUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using CommandListAppendLaunchKernelL3Flush = Test<CommandListAppendLaunchKernelL3FlushFixture>;
+
 HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventAndWithoutWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -708,6 +728,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEventWhenInvokingAppendLaunchKerne
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CompactL3FlushEventPacket.set(0);
 
     createKernel();
     ze_result_t returnValue;

@@ -83,6 +83,7 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE(obtainReusableAllocation, NEO::GraphicsAllocation *, nullptr, (size_t requiredSize, NEO::AllocationType type))
     ADDMETHOD_NOBASE_VOIDRETURN(storeReusableAllocation, (NEO::GraphicsAllocation & alloc));
     ADDMETHOD_NOBASE(getFabricVertex, ze_result_t, ZE_RESULT_SUCCESS, (ze_fabric_vertex_handle_t * phVertex));
+    ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, ())
 
     DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) override {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

@@ -158,10 +158,18 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    uint32_t maxKernelSplit = 3;
-    uint32_t packetsSize = maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount *
+
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    uint32_t maxPacketCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
+    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPacketCount = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    }
+    uint32_t packetsSize = maxPacketCount *
                            static_cast<uint32_t>(NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize());
-    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, 4 * MemoryConstants::cacheLineSize));
+    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, hwHelper.getTimestampPacketAllocatorAlignment()));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
 
@@ -661,7 +669,8 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
 
-    auto &l0HwHelper = L0HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto event = std::unique_ptr<L0::Event>(l0HwHelper.createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
 
@@ -676,6 +685,10 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
         eventCompletionMemory = ptrOffset(eventCompletionMemory, event->getContextEndOffset());
     }
     uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
+    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPacketsCount = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    }
+
     for (uint32_t i = 0; i < maxPacketsCount; i++) {
         EXPECT_EQ(Event::STATE_INITIAL, *eventCompletionMemory);
         eventCompletionMemory = ptrOffset(eventCompletionMemory, event->getSinglePacketSize());
@@ -1142,9 +1155,9 @@ struct EventCreateAllocationResidencyTest : public ::testing::Test {
     L0::Device *device = nullptr;
 };
 
-class TimestampEventCreate : public Test<DeviceFixture> {
+class TimestampEventCreateFixture : public DeviceFixture {
   public:
-    void SetUp() override {
+    void setUp() {
         DeviceFixture::setUp();
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.count = 1;
@@ -1163,7 +1176,7 @@ class TimestampEventCreate : public Test<DeviceFixture> {
         ASSERT_NE(nullptr, event);
     }
 
-    void TearDown() override {
+    void tearDown() {
         event.reset(nullptr);
         eventPool.reset(nullptr);
         DeviceFixture::tearDown();
@@ -1173,13 +1186,33 @@ class TimestampEventCreate : public Test<DeviceFixture> {
     std::unique_ptr<L0::EventImp<uint32_t>> event;
 };
 
+struct TimestampEventCreateMultiKernelFixture : public TimestampEventCreateFixture {
+    void setUp() {
+        DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+        TimestampEventCreateFixture::setUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using TimestampEventCreate = Test<TimestampEventCreateFixture>;
+using TimestampEventCreateMultiKernel = Test<TimestampEventCreateMultiKernelFixture>;
+
 TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventFlagSet) {
     EXPECT_TRUE(event->isEventTimestampFlagSet());
 }
 
 TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    uint32_t maxKernelCount = EventPacketsCount::maxKernelSplit;
+    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxKernelCount = l0HwHelper.getEventMaxKernelCount(hwInfo);
+    }
+
     EXPECT_NE(nullptr, event->kernelEventCompletionData);
-    for (auto j = 0u; j < EventPacketsCount::maxKernelSplit; j++) {
+    for (auto j = 0u; j < maxKernelCount; j++) {
         for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
             EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getContextStartValue(i));
             EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getGlobalStartValue(i));
@@ -1212,7 +1245,7 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsDependentIfAllo
     }
 }
 
-TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsSetThenCorrectOffsetIsReturned) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenEventTimestampWhenPacketCountIsSetThenCorrectOffsetIsReturned, IsAtLeastXeHpCore) {
     EXPECT_EQ(1u, event->getPacketsInUse());
     auto gpuAddr = event->getGpuAddress(device);
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
@@ -1242,7 +1275,7 @@ TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrec
     event->reset();
     result = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
-    for (auto j = 0u; j < EventPacketsCount::maxKernelSplit; j++) {
+    for (auto j = 0u; j < event->getKernelCount(); j++) {
         for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
             EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getContextStartValue(i));
             EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelEventCompletionData[j].getGlobalStartValue(i));
@@ -1446,8 +1479,9 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSe
     }
 }
 
-TEST_F(TimestampEventCreate, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnFirstKernelThenDoNotUseSecondPacketOfFirstKernel) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnFirstKernelThenDoNotUseSecondPacketOfFirstKernel, IsAtLeastXeHpCore) {
     typename MockTimestampPackets32::Packet packetData[4];
+
     event->hostAddress = packetData;
 
     constexpr uint32_t kernelStartValue = 5u;
@@ -1489,8 +1523,9 @@ TEST_F(TimestampEventCreate, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOn
     EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
 }
 
-TEST_F(TimestampEventCreate, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnSecondKernelThenDoNotUseSecondPacketOfSecondKernel) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnSecondKernelThenDoNotUseSecondPacketOfSecondKernel, IsAtLeastXeHpCore) {
     typename MockTimestampPackets32::Packet packetData[4];
+
     event->hostAddress = packetData;
 
     constexpr uint32_t kernelStartValue = 5u;
@@ -1532,7 +1567,7 @@ TEST_F(TimestampEventCreate, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOn
     EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
 }
 
-TEST_F(TimestampEventCreate, givenOverflowingTimeStampDataOnTwoKernelsWhenQueryKernelTimestampIsCalledOverflowIsObserved) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenOverflowingTimeStampDataOnTwoKernelsWhenQueryKernelTimestampIsCalledOverflowIsObserved, IsAtLeastXeHpCore) {
     typename MockTimestampPackets32::Packet packetData[4] = {};
     event->hostAddress = packetData;
 
@@ -1993,10 +2028,12 @@ TEST_F(EventTests, givenEventUseMultiplePacketsWhenHostSignalThenExpectAllPacket
     }
 }
 
-TEST_F(EventTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel) {
+HWTEST2_F(EventTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+
     auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
     ASSERT_NE(event, nullptr);
-
     EXPECT_FALSE(event->getL3FlushForCurrenKernel());
 
     event->setL3FlushForCurrentKernel();
@@ -2071,10 +2108,18 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto &hwHelper = device->getHwHelper();
+    auto &hwInfo = device->getHwInfo();
+
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    uint32_t packetCount = EventPacketsCount::eventPackets;
+    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+        packetCount = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    }
 
     auto expectedAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
     auto singlePacketSize = TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
-    auto expectedSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * singlePacketSize, expectedAlignment));
+    auto expectedSize = static_cast<uint32_t>(alignUp(packetCount * singlePacketSize, expectedAlignment));
 
     EXPECT_EQ(expectedSize, eventPool->getEventSize());
 
@@ -2097,9 +2142,16 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
 }
 
 HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
-
     auto &hwHelper = device->getHwHelper();
+    auto &hwInfo = device->getHwInfo();
     auto expectedAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
+
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    uint32_t packetCount = EventPacketsCount::eventPackets;
+    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+        packetCount = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    }
 
     {
         DebugManager.flags.OverrideTimestampPacketSize.set(4);
@@ -2109,7 +2161,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         auto singlePacketSize = TimestampPackets<uint32_t>::getSinglePacketSize();
 
-        auto expectedSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * singlePacketSize, expectedAlignment));
+        auto expectedSize = static_cast<uint32_t>(alignUp(packetCount * singlePacketSize, expectedAlignment));
 
         EXPECT_EQ(expectedSize, eventPool->getEventSize());
 
@@ -2130,7 +2182,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         auto singlePacketSize = TimestampPackets<uint64_t>::getSinglePacketSize();
 
-        auto expectedSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * singlePacketSize, expectedAlignment));
+        auto expectedSize = static_cast<uint32_t>(alignUp(packetCount * singlePacketSize, expectedAlignment));
 
         EXPECT_EQ(expectedSize, eventPool->getEventSize());
 
@@ -2283,6 +2335,135 @@ TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
 
     event->reset();
     EXPECT_EQ(event->csr, defaultCsr);
+}
+
+template <int32_t multiTile>
+struct EventDynamicPacketUseFixture : public DeviceFixture {
+    void setUp() {
+        NEO::DebugManager.flags.UseDynamicEventPacketsCount.set(1);
+        if (multiTile == 1) {
+            DebugManager.flags.CreateMultipleSubDevices.set(2);
+            DebugManager.flags.EnableImplicitScaling.set(1);
+        }
+        DeviceFixture::setUp();
+    }
+
+    void testAllDevices() {
+        auto &hwInfo = device->getHwInfo();
+        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        ze_event_pool_desc_t eventPoolDesc = {
+            ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+            nullptr,
+            0,
+            1};
+
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, eventPool);
+
+        auto eventPoolMaxPackets = static_cast<L0::EventPoolImp *>(eventPool.get())->getEventMaxPackets();
+        auto expectedPoolMaxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+        if (multiTile == 1) {
+            expectedPoolMaxPackets *= 2;
+        }
+        EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
+
+        auto eventSize = eventPool->getEventSize();
+        auto expectedEventSize = static_cast<uint32_t>(alignUp(expectedPoolMaxPackets * hwHelper.getSingleTimestampPacketSize(), hwHelper.getTimestampPacketAllocatorAlignment()));
+        EXPECT_EQ(expectedEventSize, eventSize);
+
+        ze_event_desc_t eventDesc = {
+            ZE_STRUCTURE_TYPE_EVENT_DESC,
+            nullptr,
+            0,
+            ZE_EVENT_SCOPE_FLAG_DEVICE,
+            ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+        std::unique_ptr<L0::Event> event(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+        EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
+
+        uint32_t maxKernels = l0HwHelper.getEventMaxKernelCount(hwInfo);
+        EXPECT_EQ(maxKernels, event->getMaxKernelCount());
+    }
+
+    void testSingleDevice() {
+        ze_result_t result = ZE_RESULT_SUCCESS;
+
+        auto &hwInfo = device->getHwInfo();
+        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        ze_event_pool_desc_t eventPoolDesc = {
+            ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+            nullptr,
+            0,
+            1};
+
+        std::vector<ze_device_handle_t> deviceHandles;
+
+        L0::Device *eventDevice = device;
+        if (multiTile == 1) {
+            uint32_t count = 2;
+            ze_device_handle_t subDevices[2];
+            result = device->getSubDevices(&count, subDevices);
+            ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+            deviceHandles.push_back(subDevices[0]);
+            eventDevice = Device::fromHandle(subDevices[0]);
+        } else {
+            deviceHandles.push_back(device->toHandle());
+        }
+
+        std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 1, deviceHandles.data(), &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, eventPool);
+
+        auto eventPoolMaxPackets = static_cast<L0::EventPoolImp *>(eventPool.get())->getEventMaxPackets();
+        auto expectedPoolMaxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+
+        EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
+
+        auto eventSize = eventPool->getEventSize();
+        auto expectedEventSize = static_cast<uint32_t>(alignUp(expectedPoolMaxPackets * hwHelper.getSingleTimestampPacketSize(), hwHelper.getTimestampPacketAllocatorAlignment()));
+        EXPECT_EQ(expectedEventSize, eventSize);
+
+        ze_event_desc_t eventDesc = {
+            ZE_STRUCTURE_TYPE_EVENT_DESC,
+            nullptr,
+            0,
+            ZE_EVENT_SCOPE_FLAG_DEVICE,
+            ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+        std::unique_ptr<L0::Event> event(Event::create<uint32_t>(eventPool.get(), &eventDesc, eventDevice));
+
+        EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
+
+        uint32_t maxKernels = l0HwHelper.getEventMaxKernelCount(hwInfo);
+        EXPECT_EQ(maxKernels, event->getMaxKernelCount());
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using EventDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<0>>;
+HWTEST2_F(EventDynamicPacketUseTest, testAllDevices, IsAtLeastSkl) {
+    testAllDevices();
+}
+
+HWTEST2_F(EventDynamicPacketUseTest, testSingleDevice, IsAtLeastSkl) {
+    testSingleDevice();
+}
+
+using EventMultiTileDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<1>>;
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, testAllDevices, IsAtLeastXeHpCore) {
+    testAllDevices();
+}
+
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, testSingleDevice, IsAtLeastXeHpCore) {
+    testSingleDevice();
 }
 
 } // namespace ult

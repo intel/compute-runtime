@@ -22,7 +22,15 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->setEventTimestampFlag(true);
     }
     auto neoDevice = device->getNEODevice();
-    event->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<TagSizeT>[]>(EventPacketsCount::maxKernelSplit);
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    uint32_t maxKernels = EventPacketsCount::maxKernelSplit;
+    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxKernels = l0HwHelper.getEventMaxKernelCount(hwInfo);
+    }
+
+    event->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<TagSizeT>[]>(maxKernels);
 
     auto alloc = eventPool->getAllocation().getGraphicsAllocation(neoDevice->getRootDeviceIndex());
 
@@ -32,7 +40,9 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
     event->csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-    bool useContextEndOffset = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).multiTileCapablePlatform();
+    event->maxKernelCount = maxKernels;
+    event->maxPacketCount = static_cast<EventPoolImp *>(eventPool)->getEventMaxPackets();
+    bool useContextEndOffset = l0HwHelper.multiTileCapablePlatform();
     int32_t overrideUseContextEndOffset = NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.get();
     if (overrideUseContextEndOffset != -1) {
         useContextEndOffset = !!overrideUseContextEndOffset;
@@ -293,7 +303,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
 
 template <typename TagSizeT>
 void EventImp<TagSizeT>::resetDeviceCompletionData() {
-    this->kernelCount = EventPacketsCount::maxKernelSplit;
+    this->kernelCount = this->maxKernelCount;
     for (uint32_t i = 0; i < kernelCount; i++) {
         this->kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
     }

@@ -99,6 +99,7 @@ if(SUPPORT_XEHP_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_xe_hp_core_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_xehp_and_later.inl
   )
 endif()
 

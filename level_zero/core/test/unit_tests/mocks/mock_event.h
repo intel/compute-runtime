@@ -22,6 +22,7 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::csr;
     using BaseClass::hostAddress;
     using BaseClass::l3FlushAppliedOnKernel;
+    using BaseClass::maxKernelCount;
 };
 
 using Event = WhiteBox<::L0::Event>;
@@ -71,6 +72,7 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::gpuStartTimestamp;
     using ::L0::Event::isCompleted;
     using ::L0::Event::l3FlushAppliedOnKernel;
+    using ::L0::Event::maxKernelCount;
 
     MockEvent() {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0,

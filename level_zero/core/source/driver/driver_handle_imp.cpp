@@ -58,7 +58,7 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
     }
 
     *phContext = context->toHandle();
-
+    context->initDeviceHandles(numDevices, phDevices);
     if (numDevices == 0) {
         for (auto device : this->devices) {
             auto neoDevice = device->getNEODevice();
@@ -702,6 +702,24 @@ ze_result_t DriverHandleImp::fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA
 
     *pCount = edgeUpdateIndex;
     return ZE_RESULT_SUCCESS;
+}
+
+uint32_t DriverHandleImp::getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const {
+    uint32_t maxCount = 0;
+
+    if (numDevices == 0) {
+        for (auto device : this->devices) {
+            auto deviceMaxCount = device->getEventMaxPacketCount();
+            maxCount = std::max(maxCount, deviceMaxCount);
+        }
+    } else {
+        for (uint32_t i = 0; i < numDevices; i++) {
+            auto deviceMaxCount = Device::fromHandle(deviceHandles[i])->getEventMaxPacketCount();
+            maxCount = std::max(maxCount, deviceMaxCount);
+        }
+    }
+
+    return maxCount;
 }
 
 } // namespace L0

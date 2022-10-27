@@ -149,11 +149,20 @@ struct ContextImp : Context {
     bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) override;
     void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, ze_ipc_memory_flags_t flags) override;
 
+    void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+        this->numDevices = numDevices;
+        if (numDevices > 0) {
+            this->deviceHandles.assign(deviceHandles, deviceHandles + numDevices);
+        }
+    }
+
   protected:
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
 
     std::map<uint32_t, ze_device_handle_t> devices;
+    std::vector<ze_device_handle_t> deviceHandles;
     DriverHandleImp *driverHandle = nullptr;
+    uint32_t numDevices = 0;
 };
 
 } // namespace L0

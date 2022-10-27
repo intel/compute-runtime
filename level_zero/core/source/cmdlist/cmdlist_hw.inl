@@ -390,7 +390,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
 
     if (event->isEventTimestampFlagSet()) {
-        packetsToReset = EventPacketsCount::eventPackets;
+        packetsToReset = event->getMaxPacketsCount();
     }
     event->resetPackets();
     event->resetCompletion();

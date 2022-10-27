@@ -577,12 +577,11 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     auto device = Device::fromHandle(this->devices.begin()->second);
     auto neoDevice = device->getNEODevice();
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
-    auto &hwHelper = device->getHwHelper();
-    const uint32_t eventAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
-    uint32_t eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment));
-    size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
+
+    eventPool->initializeSizeParameters(this->numDevices, this->deviceHandles.data(), *this->driverHandle, device->getHwInfo());
+
     NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
-                                                      alignedSize,
+                                                      eventPool->getEventPoolSize(),
                                                       NEO::AllocationType::BUFFER_HOST_MEMORY,
                                                       systemMemoryBitfield};
 
@@ -605,8 +604,6 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     eventPool->eventPoolPtr = reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
     eventPool->devices.push_back(device);
     eventPool->isImportedIpcPool = true;
-    eventPool->setEventSize(eventSize);
-    eventPool->setEventAlignment(eventAlignment);
 
     for (auto currDeviceIndex : this->rootDeviceIndices) {
         if (currDeviceIndex == rootDeviceIndex) {

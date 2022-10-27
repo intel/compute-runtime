@@ -26,6 +26,7 @@ struct MetricStreamer;
 struct ContextImp;
 struct Context;
 struct DriverHandle;
+struct DriverHandleImp;
 struct Device;
 
 namespace EventPacketsCount {
@@ -104,7 +105,7 @@ struct Event : _ze_event_handle_t {
 
     void increaseKernelCount() {
         kernelCount++;
-        UNRECOVERABLE_IF(kernelCount > EventPacketsCount::maxKernelSplit);
+        UNRECOVERABLE_IF(kernelCount > maxKernelCount);
     }
     uint32_t getKernelCount() const {
         return kernelCount;
@@ -121,6 +122,16 @@ struct Event : _ze_event_handle_t {
 
     void resetCompletion() {
         this->isCompleted = false;
+    }
+
+    uint32_t getMaxPacketsCount() const {
+        return maxPacketCount;
+    }
+    void setMaxKernelCount(uint32_t value) {
+        maxKernelCount = value;
+    }
+    uint32_t getMaxKernelCount() const {
+        return maxKernelCount;
     }
 
     uint64_t globalStartTS;
@@ -152,7 +163,9 @@ struct Event : _ze_event_handle_t {
     size_t gpuStartTimestamp = 0u;
     size_t gpuEndTimestamp = 0u;
 
+    uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;
+    uint32_t maxPacketCount = 0;
 
     bool isTimestampEvent = false;
     bool usingContextEndOffset = false;
@@ -286,6 +299,9 @@ struct EventPoolImp : public EventPool {
     void setEventSize(uint32_t size) override { eventSize = size; }
     void setEventAlignment(uint32_t alignment) override { eventAlignment = alignment; }
     size_t getNumEvents() { return numEvents; }
+    uint32_t getEventMaxPackets() { return eventPackets; }
+    size_t getEventPoolSize() const { return eventPoolSize; }
+    void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::HardwareInfo &hwInfo);
 
     Device *getDevice() override { return devices[0]; }
 
@@ -297,8 +313,10 @@ struct EventPoolImp : public EventPool {
     bool isShareableEventMemory = false;
 
   protected:
+    size_t eventPoolSize = 0;
     uint32_t eventAlignment = 0;
     uint32_t eventSize = 0;
+    uint32_t eventPackets = 0;
 };
 
 } // namespace L0

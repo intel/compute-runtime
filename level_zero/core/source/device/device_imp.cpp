@@ -1515,4 +1515,14 @@ ze_result_t DeviceImp::getFabricVertex(ze_fabric_vertex_handle_t *phVertex) {
     return ZE_RESULT_SUCCESS;
 }
 
+uint32_t DeviceImp::getEventMaxPacketCount() const {
+    const auto &hardwareInfo = this->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    uint32_t basePackets = l0HwHelper.getEventBaseMaxPacketCount(hardwareInfo);
+    if (this->isImplicitScalingCapable()) {
+        basePackets *= static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
+    }
+    return basePackets;
+}
 } // namespace L0

@@ -1,17 +1,15 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/hw_helper.h"
+
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 
 namespace L0 {
-
-template <typename GfxFamily>
-void L0HwHelperHw<GfxFamily>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
-}
 
 template <typename Family>
 bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
@@ -40,12 +38,21 @@ bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking(const NEO::Har
 
 template <typename Family>
 uint32_t L0HwHelperHw<Family>::getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const {
-    return 1;
+    uint32_t kernelCount = EventPacketsCount::maxKernelSplit;
+    if (L0HwHelper::usePipeControlMultiKernelEventSync(hwInfo)) {
+        kernelCount = 1;
+    }
+    return kernelCount;
 }
 
 template <typename Family>
 uint32_t L0HwHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const {
-    return 1u;
+    uint32_t basePackets = getEventMaxKernelCount(hwInfo);
+    if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo)) {
+        basePackets += L0HwHelper::useCompactL3FlushEventPacket(hwInfo) ? 0 : 1;
+    }
+
+    return basePackets;
 }
 
 } // namespace L0
