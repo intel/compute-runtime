@@ -782,7 +782,8 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pDevice->getMemoryManager()->setForce32BitAllocations(false);
     if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
         pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
-    EXPECT_EQ(CL_OUT_OF_RESOURCES, kernel->initialize());
+    kernel->initialize();
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, kernel->patchPrivateSurface());
 }
 
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4And32BitAllocationsThenReturnOutOfResources) {

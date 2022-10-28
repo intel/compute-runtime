@@ -62,6 +62,22 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHa
     EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::ArgTUnknown);
 }
 
+TEST_F(KernelInitTest, givenKernelToInitWhenItHasTooBigPrivateSizeThenOutOfMemoryIsRetutned) {
+    auto globalSize = device->getNEODevice()->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().to_ulong()));
+    uint32_t perHwThreadPrivateMemorySizeRequested = (static_cast<uint32_t>((globalSize + device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch) / device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(1);
+    EXPECT_EQ(kernel->initialize(&desc), ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+}
+
 using KernelBaseAddressTests = Test<ModuleImmutableDataFixture>;
 TEST_F(KernelBaseAddressTests, whenQueryingKernelBaseAddressThenCorrectAddressIsReturned) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
@@ -774,7 +790,7 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCont
     EXPECT_EQ(sizeContainerWithoutPrivateMemory + 1u, sizeContainerWithPrivateMemory);
 }
 
-TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMemoryThenPrivateMemoryIsNotAllocated) {
+TEST_F(KernelImmutableDataTests, givenModuleWithPrivateMemoryBiggerThanGlobalMemoryThenPrivateMemoryIsNotAllocated) {
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
     ze_module_desc_t moduleDesc = {};
@@ -784,7 +800,7 @@ TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMem
     ModuleBuildLog *moduleBuildLog = nullptr;
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
 
-    uint32_t perHwThreadPrivateMemorySizeRequested = std::numeric_limits<uint32_t>::max();
+    uint32_t perHwThreadPrivateMemorySizeRequested = 0x1000;
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
     std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
                                                                       moduleBuildLog,
@@ -792,6 +808,7 @@ TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMem
                                                                       perHwThreadPrivateMemorySizeRequested,
                                                                       mockKernelImmData.get());
     result = module->initialize(&moduleDesc, device->getNEODevice());
+    module->allocatePrivateMemoryPerDispatch = true;
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(module->shouldAllocatePrivateMemoryPerDispatch());
 

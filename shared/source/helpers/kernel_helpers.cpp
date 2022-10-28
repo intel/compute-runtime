@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 
@@ -44,6 +45,19 @@ uint32_t KernelHelper::getMaxWorkGroupCount(uint32_t simd, uint32_t availableThr
     }
 
     return maxWorkGroupsCount;
+}
+
+KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device) {
+    auto globalMemorySize = device->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
+    uint32_t sizes[] = {attributes.perHwThreadPrivateMemorySize,
+                        attributes.perThreadScratchSize[0],
+                        attributes.perThreadScratchSize[1]};
+    for (auto &size : sizes) {
+        if (size != 0 && static_cast<uint64_t>(device->getDeviceInfo().computeUnitsUsedForScratch) * static_cast<uint64_t>(size) > globalMemorySize) {
+            return KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY;
+        }
+    }
+    return KernelHelper::ErrorCode::SUCCESS;
 }
 
 } // namespace NEO

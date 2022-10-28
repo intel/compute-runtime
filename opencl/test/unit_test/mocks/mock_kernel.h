@@ -122,6 +122,7 @@ class MockKernel : public Kernel {
     using Kernel::numberOfBindingTableStates;
     using Kernel::parentEventOffset;
     using Kernel::patchBufferOffset;
+    using Kernel::patchPrivateSurface;
     using Kernel::patchWithImplicitSurface;
     using Kernel::pImplicitArgs;
     using Kernel::preferredWkgMultipleOffset;

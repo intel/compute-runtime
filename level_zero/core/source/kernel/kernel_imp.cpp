@@ -802,7 +802,10 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto &hwInfo = neoDevice->getHardwareInfo();
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto &kernelDescriptor = kernelImmData->getDescriptor();
-
+    auto ret = NEO::KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, neoDevice);
+    if (ret == NEO::KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
     if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL) {
@@ -1074,5 +1077,5 @@ ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint
         threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
     }
     return ZE_RESULT_SUCCESS;
-} // namespace L0
+}
 } // namespace L0

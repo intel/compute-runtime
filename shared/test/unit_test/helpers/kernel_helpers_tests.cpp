@@ -8,6 +8,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -78,4 +79,37 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWorkG
 
     usedSlm = availableSlm;
     EXPECT_EQ(1u, getMaxWorkGroupCount());
+}
+
+using KernelHelperTest = Test<DeviceFixture>;
+
+TEST_F(KernelHelperTest, GivenStatelessPrivateSizeGreaterThanGlobalSizeWhenCheckingIfThereIsEnaughSpaceThenOutOfMemReturned) {
+    auto globalSize = pDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(pDevice->getDeviceBitfield().to_ulong()));
+    KernelDescriptor::KernelAttributes attributes = {};
+    attributes.perHwThreadPrivateMemorySize = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
+    EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY);
+}
+
+TEST_F(KernelHelperTest, GivenScratchSizeGreaterThanGlobalSizeWhenCheckingIfThereIsEnaughSpaceThenOutOfMemReturned) {
+    auto globalSize = pDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(pDevice->getDeviceBitfield().to_ulong()));
+    KernelDescriptor::KernelAttributes attributes = {};
+    attributes.perThreadScratchSize[0] = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
+    EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY);
+}
+
+TEST_F(KernelHelperTest, GivenScratchPrivateSizeGreaterThanGlobalSizeWhenCheckingIfThereIsEnaughSpaceThenOutOfMemReturned) {
+    auto globalSize = pDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(pDevice->getDeviceBitfield().to_ulong()));
+    KernelDescriptor::KernelAttributes attributes = {};
+    attributes.perThreadScratchSize[1] = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
+    EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY);
+}
+
+TEST_F(KernelHelperTest, GivenScratchAndPrivateSizeLessThanGlobalSizeWhenCheckingIfThereIsEnaughSpaceThenSuccessReturned) {
+    auto globalSize = pDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(pDevice->getDeviceBitfield().to_ulong()));
+    KernelDescriptor::KernelAttributes attributes = {};
+    auto size = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) - 100;
+    attributes.perHwThreadPrivateMemorySize = size;
+    attributes.perThreadScratchSize[0] = size;
+    attributes.perThreadScratchSize[1] = size;
+    EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::SUCCESS);
 }
