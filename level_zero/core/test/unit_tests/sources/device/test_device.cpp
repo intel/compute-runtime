@@ -3478,24 +3478,6 @@ TEST(zeDevice, givenNoImagesSupportedWhenGettingImagePropertiesThenZeroValuesAre
     EXPECT_EQ(0u, properties.maxWriteImageArgs);
 }
 
-TEST(zeDevice, givenNoImagesSupportedWhenCreatingImageErrorReturns) {
-    ze_result_t errorValue;
-
-    DriverHandleImp driverHandle{};
-    NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));
-
-    ze_image_handle_t image = {};
-    ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-
-    neoDevice->deviceInfo.imageSupport = false;
-
-    auto result = device->createImage(&desc, &image);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-    EXPECT_EQ(nullptr, image);
-}
-
 class MockCacheReservation : public CacheReservation {
   public:
     ~MockCacheReservation() override = default;
