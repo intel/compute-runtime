@@ -56,6 +56,7 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramExtendedPipeControlPriorToNonPipe
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
@@ -103,6 +104,7 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
@@ -155,6 +157,7 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));

@@ -45,7 +45,6 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
 
     if (isBasicWARequired) {
         PipeControlArgs args;
-        args.dcFlushEnable = dcFlush;
         NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(csr, args, hwInfo, isRcs);
     }
 
