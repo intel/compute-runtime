@@ -5,17 +5,15 @@
  *
  */
 
-#include "shared/source/gen9/hw_cmds_bxt.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> DeviceTest;
+using DeviceBxtTest = Test<DeviceFixture>;
 
-BXTTEST_F(DeviceTest, givenBxtDeviceWhenAskedForProflingTimerResolutionThen52IsReturned) {
+BXTTEST_F(DeviceBxtTest, givenBxtDeviceWhenAskedForProflingTimerResolutionThen52IsReturned) {
     auto resolution = pDevice->getProfilingTimerResolution();
     EXPECT_DOUBLE_EQ(52.083, resolution);
 }

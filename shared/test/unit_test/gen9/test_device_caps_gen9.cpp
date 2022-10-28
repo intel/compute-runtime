@@ -7,51 +7,13 @@
 
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen9DeviceCaps;
-
-GEN9TEST_F(Gen9DeviceCaps, WhenCheckingExtensionStringThenFp64CorrectlyReported) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    std::string extensionString = caps.deviceExtensions;
-    if (pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64) {
-        EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-        EXPECT_NE(0u, caps.doubleFpConfig);
-    } else {
-        EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-        EXPECT_EQ(0u, caps.doubleFpConfig);
-    }
-}
-
-GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckExtensionsThenDeviceProperlyReportsClKhrSubgroupsExtension) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    if (pClDevice->areOcl21FeaturesEnabled()) {
-        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
-    } else {
-        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
-    }
-}
-
-GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingCapsThenDeviceDoesProperlyReportsIndependentForwardProgress) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    if (pClDevice->areOcl21FeaturesEnabled()) {
-        EXPECT_TRUE(caps.independentForwardProgress != 0);
-    } else {
-        EXPECT_FALSE(caps.independentForwardProgress != 0);
-    }
-}
-
-GEN9TEST_F(Gen9DeviceCaps, WhenGettingDeviceInfoThenCorrectlyRoundedDivideSqrtIsEnabled) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_NE(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-}
+using Gen9DeviceCaps = Test<DeviceFixture>;
 
 GEN9TEST_F(Gen9DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsSupported) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);

@@ -10,6 +10,7 @@ if(TESTS_ADLP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_adlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/excludes_adlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/preamble_helper_tests_adlp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_adlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_adlp.cpp
   )
 

@@ -11,8 +11,6 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
-#include "opencl/source/helpers/cl_hw_helper.h"
-
 using HwHelperTestDg1 = HwHelperTest;
 
 DG1TEST_F(HwHelperTestDg1, givenDg1SteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {

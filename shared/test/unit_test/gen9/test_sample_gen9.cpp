@@ -5,16 +5,14 @@
  *
  */
 
-#include "shared/source/gen9/hw_cmds.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen9OnlyTest;
+using Gen9OnlyTest = ::testing::Test;
 
 GEN9TEST_F(Gen9OnlyTest, WhenGettingRenderCoreFamilyThenGen9CoreIsReturned) {
-    EXPECT_EQ(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());
+    EXPECT_EQ(IGFX_GEN9_CORE, defaultHwInfo->platform.eRenderCoreFamily);
 }

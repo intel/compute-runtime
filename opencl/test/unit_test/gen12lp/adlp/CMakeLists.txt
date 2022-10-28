@@ -13,7 +13,6 @@ if(TESTS_ADLP)
   set(IGDRCL_SRCS_tests_gen12lp_adlp
       ${IGDRCL_SRCS_tests_gen12lp_adlp_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_adlp.cpp
   )
 
   get_property(NEO_CORE_TESTS_GEN12LP_ADLP GLOBAL PROPERTY NEO_CORE_TESTS_GEN12LP_ADLP)

@@ -6,53 +6,16 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen12LpDeviceCaps;
-
-HWTEST2_F(Gen12LpDeviceCaps, WhenCheckingExtensionStringThenFp64IsNotSupported, IsTGLLP) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    std::string extensionString = caps.deviceExtensions;
-
-    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-    EXPECT_EQ(0u, caps.doubleFpConfig);
-}
-
-HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenSubgroupLocalBlockIOIsSupported, IsTGLLP) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_local_block_io")));
-}
-
-HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenDeviceDoesNotReportClKhrSubgroupsExtension, IsTGLLP) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
-}
-
-HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckingCapsThenDeviceDoesNotSupportIndependentForwardProgress, IsTGLLP) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    EXPECT_FALSE(caps.independentForwardProgress);
-}
-
-HWTEST2_F(Gen12LpDeviceCaps, WhenCheckingCapsThenCorrectlyRoundedDivideSqrtIsNotSupported, IsTGLLP) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-}
+using Gen12LpDeviceCaps = Test<DeviceFixture>;
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReported) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
-}
-
-GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenProfilingTimerResolutionIs83) {
-    const auto &caps = pClDevice->getSharedDeviceInfo();
-    EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenKmdNotifyMechanismIsCorrectlyReported) {

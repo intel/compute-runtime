@@ -7,14 +7,13 @@
 
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/gen11/hw_cmds.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-using Gen11TbxCommandStreamReceiverTests = Test<ClDeviceFixture>;
+using Gen11TbxCommandStreamReceiverTests = Test<DeviceFixture>;
 
 GEN11TEST_F(Gen11TbxCommandStreamReceiverTests, whenAskedForPollForCompletionParametersThenReturnCorrectValues) {
     class MyMockTbxHw : public TbxCommandStreamReceiverHw<FamilyType> {

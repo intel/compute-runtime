@@ -7,15 +7,13 @@
 
 #include "shared/source/gen11/hw_cmds.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen11DeviceCaps;
+using Gen11DeviceCaps = Test<DeviceFixture>;
 
 GEN11TEST_F(Gen11DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReturned) {
     EXPECT_TRUE(PreemptionMode::MidThread == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
@@ -76,30 +74,4 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingMediaBlockSupportThenReturnTr
 
 GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingCoherencySupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency);
-}
-
-GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckExtensionsThenSubgroupLocalBlockIOIsSupported) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_local_block_io")));
-}
-
-GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckExtensionsThenDeviceProperlyReportsClKhrSubgroupsExtension) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    if (pClDevice->areOcl21FeaturesEnabled()) {
-        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
-    } else {
-        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
-    }
-}
-
-GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingCapsThenDeviceDoesProperlyReportsIndependentForwardProgress) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    if (pClDevice->areOcl21FeaturesEnabled()) {
-        EXPECT_TRUE(caps.independentForwardProgress != 0);
-    } else {
-        EXPECT_FALSE(caps.independentForwardProgress != 0);
-    }
 }
