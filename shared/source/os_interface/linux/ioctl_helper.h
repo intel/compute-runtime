@@ -210,7 +210,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
 class IoctlHelperPrelim20 : public IoctlHelper {
   public:
-    using IoctlHelper::IoctlHelper;
+    IoctlHelperPrelim20(Drm &drmArg);
 
     bool initialize() override;
     bool isSetPairAvailable() override;
@@ -259,6 +259,9 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
+
+  protected:
+    bool handleExecBufferInNonBlockMode = false;
 };
 
 } // namespace NEO

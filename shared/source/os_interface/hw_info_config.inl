@@ -502,6 +502,11 @@ bool HwInfoConfigHw<gfxProduct>::isPlatformQuerySupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) {
     propertiesSupport.coherencyRequired = getScmPropertyCoherencyRequiredSupport();
     propertiesSupport.threadArbitrationPolicy = isThreadArbitrationPolicyReportedWithScm();

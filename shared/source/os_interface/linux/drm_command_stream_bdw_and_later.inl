@@ -20,6 +20,9 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
     int ret = this->exec(batchBuffer, 0u, static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0], 0);
 
     if (ret) {
+        if (ret == EWOULDBLOCK) {
+            return SubmissionStatus::OUT_OF_HOST_MEMORY;
+        }
         return SubmissionStatus::FAILED;
     }
     return SubmissionStatus::SUCCESS;

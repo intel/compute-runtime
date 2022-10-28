@@ -34,28 +34,6 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
 #include "shared/source/xe_hpc_core/pvc/os_agnostic_hw_info_config_pvc.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    enableCompression(hwInfo);
-
-    hwInfo->featureTable.flags.ftr57bGPUAddressing = (hwInfo->capabilityTable.gpuAddressSpace == maxNBitValue(57));
-
-    enableBlitterOperationsSupport(hwInfo);
-
-    hwInfo->featureTable.flags.ftrRcsNode = false;
-    if (DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) {
-        hwInfo->featureTable.flags.ftrRcsNode = true;
-    }
-
-    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
-    kmdNotifyProperties.enableKmdNotify = true;
-    kmdNotifyProperties.delayKmdNotifyMicroseconds = 150;
-    kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission = true;
-    kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds = 20;
-
-    return 0;
-}
-
-template <>
 uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
 
     if (osIface == nullptr) {
@@ -94,5 +72,10 @@ uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond
     return memoryMaxClkRateInMhz * 1000 * 1000 * numberOfHbmStacksPerTile * memoryBusWidth / 8;
 }
 
+} // namespace NEO
+
+#include "shared/source/xe_hpc_core/linux/hw_info_config_xe_hpc_core.inl"
+
+namespace NEO {
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO
