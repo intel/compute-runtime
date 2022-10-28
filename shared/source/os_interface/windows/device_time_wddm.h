@@ -24,6 +24,7 @@ class DeviceTimeWddm : public DeviceTime {
 
   protected:
     MOCKABLE_VIRTUAL bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo);
+    void convertTimestampsFromOaToCsDomain(HardwareInfo const &hwInfo, uint64_t &timestampData, uint64_t freqOA, uint64_t freqCS);
     Wddm *wddm = nullptr;
 };
 

@@ -737,4 +737,9 @@ template <typename gfxProduct>
 bool HwHelperHw<gfxProduct>::isSurfaceFormatSupportedForMediaBlockOperation(NEO::GFX3DSTATE_SURFACEFORMAT format) const {
     return true;
 }
+
+template <typename gfxProduct>
+bool HwHelperHw<gfxProduct>::isTimestampShiftRequired() const {
+    return true;
+}
 } // namespace NEO

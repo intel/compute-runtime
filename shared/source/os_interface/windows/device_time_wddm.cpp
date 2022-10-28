@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/windows/device_time_wddm.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -70,4 +71,12 @@ uint64_t DeviceTimeWddm::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) 
     return retVal;
 }
 
+void DeviceTimeWddm::convertTimestampsFromOaToCsDomain(HardwareInfo const &hwInfo, uint64_t &timestampData, uint64_t freqOA, uint64_t freqCS) {
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (hwHelper.isTimestampShiftRequired() && freqCS > 0) {
+        auto freqRatio = freqOA / freqCS;
+        timestampData /= freqRatio;
+    }
+};
 } // namespace NEO
