@@ -884,12 +884,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenEnabledDire
     EXPECT_EQ(nullptr, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get());
 }
 
-template <typename GfxFamily>
-struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
-    using DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver;
-    using DrmCommandStreamReceiver<GfxFamily>::dispatchMode;
-};
-
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreatePageTableManagerIsCalledThenCreatePageTableManager) {
     executionEnvironment.prepareRootDeviceEnvironments(2);
     executionEnvironment.rootDeviceEnvironments[1]->setHwInfo(defaultHwInfo.get());

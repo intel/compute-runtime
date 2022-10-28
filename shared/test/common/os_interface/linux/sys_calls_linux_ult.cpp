@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -17,6 +19,7 @@
 #include <cstdio>
 #include <cstring>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <iostream>
 #include <poll.h>
 #include <stdio.h>
@@ -32,7 +35,6 @@ int closeFuncRetVal = 0;
 int dlOpenFlags = 0;
 bool dlOpenCalled = 0;
 bool getNumThreadsCalled = false;
-constexpr int fakeFileDescriptor = 123;
 bool makeFakeDevicePath = false;
 bool allowFakeDevicePath = false;
 constexpr unsigned long int invalidIoctl = static_cast<unsigned long int>(-1);
@@ -44,6 +46,9 @@ uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 bool isInvalidAILTest = false;
 const char *drmVersion = "i915";
+int passedFileDescriptorFlagsToSet = 0;
+int getFileDescriptorFlagsCalled = 0;
+int setFileDescriptorFlagsCalled = 0;
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
@@ -194,6 +199,22 @@ ssize_t read(int fd, void *buf, size_t count) {
     if (sysCallsRead != nullptr) {
         return sysCallsRead(fd, buf, count);
     }
+    return 0;
+}
+
+int fcntl(int fd, int cmd) {
+    if (cmd == F_GETFL) {
+        getFileDescriptorFlagsCalled++;
+        return O_RDWR;
+    }
+    return 0;
+}
+int fcntl(int fd, int cmd, int arg) {
+    if (cmd == F_SETFL) {
+        setFileDescriptorFlagsCalled++;
+        passedFileDescriptorFlagsToSet = arg;
+    }
+
     return 0;
 }
 

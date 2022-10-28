@@ -370,4 +370,5 @@ std::string IoctlHelper::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId
 bool IoctlHelper::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const {
     return (error == EINTR || error == EAGAIN || error == EBUSY || error == -EBUSY);
 }
+
 } // namespace NEO

@@ -1117,6 +1117,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::handleSubmissionAndCompletionResults(
         if (submitRet == NEO::SubmissionStatus::OUT_OF_MEMORY) {
             completionRet = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
+        if (submitRet == NEO::SubmissionStatus::OUT_OF_HOST_MEMORY) {
+            completionRet = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
     }
 
     return completionRet;

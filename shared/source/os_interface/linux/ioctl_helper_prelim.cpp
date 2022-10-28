@@ -6,15 +6,19 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -24,6 +28,15 @@
 #include <sys/ioctl.h>
 
 namespace NEO {
+
+IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelper(drmArg) {
+    auto hwHelper = HwInfoConfig::get(this->drm.getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
+    if (hwHelper && hwHelper->isNonBlockingGpuSubmissionSupported()) {
+        handleExecBufferInNonBlockMode = true;
+        auto fileDescriptor = this->drm.getFileDescriptor();
+        SysCalls::fcntl(fileDescriptor, F_SETFL, SysCalls::fcntl(fileDescriptor, F_GETFL) | O_NONBLOCK);
+    }
+};
 
 bool IoctlHelperPrelim20::isSetPairAvailable() {
     int setPairSupported = 0;
@@ -649,6 +662,12 @@ bool IoctlHelperPrelim20::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctl
     switch (ioctlRequest) {
     case DrmIoctl::DebuggerOpen:
         return (error == EINTR || error == EAGAIN);
+    case DrmIoctl::GemExecbuffer2:
+        if (handleExecBufferInNonBlockMode) {
+            return (error == EINTR || error == EBUSY || error == -EBUSY);
+        } else {
+            return IoctlHelper::checkIfIoctlReinvokeRequired(error, ioctlRequest);
+        }
     default:
         break;
     }

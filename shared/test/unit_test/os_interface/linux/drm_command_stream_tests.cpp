@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -14,13 +16,6 @@ namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 } //namespace NEO
 using namespace NEO;
-
-template <typename GfxFamily>
-struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
-    using DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver;
-    using DrmCommandStreamReceiver<GfxFamily>::dispatchMode;
-    using DrmCommandStreamReceiver<GfxFamily>::completionFenceValuePointer;
-};
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenL0ApiConfigWhenCreatingDrmCsrThenEnableImmediateDispatch) {
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
@@ -74,4 +69,21 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionAddressThenOffsett
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenNoTagAddressWhenGettingCompletionAddressThenZeroIsReturned) {
     EXPECT_EQ(nullptr, csr->getTagAddress());
     EXPECT_EQ(0u, csr->getCompletionAddress());
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenExecBufferErrorWhenFlushInternalThenProperErrorIsReturned) {
+    mock->execBufferResult = -1;
+    mock->baseErrno = false;
+    mock->errnoRetVal = EWOULDBLOCK;
+    TestedBufferObject bo(mock, 128);
+    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    cmdBuffer.bufferObjects[0] = &bo;
+    uint8_t buff[128]{};
+
+    LinearStream cs(&cmdBuffer, buff, 128);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    auto ret = static_cast<MockDrmCsr<FamilyType> *>(csr)->flushInternal(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, ret);
 }
