@@ -123,7 +123,7 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
 
@@ -144,19 +144,7 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(stream, startOffset);
 
-    auto pipeControlIterator = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
-
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
-    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
-
-    EXPECT_FALSE(pipeControlCmd->getAmfsFlushEnable());
-    EXPECT_FALSE(pipeControlCmd->getInstructionCacheInvalidateEnable());
-    EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
-    EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
-
-    auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
+    auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
     EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
     expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);

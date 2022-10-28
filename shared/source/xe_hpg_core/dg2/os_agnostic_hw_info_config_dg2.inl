@@ -136,14 +136,13 @@ bool HwInfoConfigHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo 
 
 template <>
 std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    auto isBasicWARequired = true;
-    auto isExtendedWARequired = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 && !isRcs;
+    auto waRequired = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 && !isRcs;
 
     if (DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
-        isExtendedWARequired = DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
+        waRequired = DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
     }
 
-    return {isBasicWARequired, isExtendedWARequired};
+    return {waRequired, waRequired};
 }
 
 template <>
