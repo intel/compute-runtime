@@ -4794,8 +4794,8 @@ struct MI_FLUSH_DW {
 
             /// DWORD 1..2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 1);
-            uint64_t DestinationAddress : BITFIELD_RANGE(2, 47);
-            uint64_t Reserved_80 : BITFIELD_RANGE(48, 63);
+            uint64_t DestinationAddressType : BITFIELD_RANGE(2, 2);
+            uint64_t DestinationAddress : BITFIELD_RANGE(3, 63);
 
             /// DWORD 3..4
             uint64_t ImmediateData;
@@ -4888,7 +4888,7 @@ struct MI_FLUSH_DW {
     }
 
     typedef enum tagDESTINATIONADDRESS {
-        DESTINATIONADDRESS_BIT_SHIFT = 2,
+        DESTINATIONADDRESS_BIT_SHIFT = 3,
         DESTINATIONADDRESS_ALIGN_SIZE = 4,
     } DESTINATIONADDRESS;
 

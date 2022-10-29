@@ -52,6 +52,22 @@ HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAl
     EXPECT_EQ(0u, static_cast<uint32_t>(miFlushDwCmd->getNotifyEnable()));
 }
 
+HWTEST2_F(CommandEncoderTests, given57bitVaForDestinationAddressWhenProgrammingMiFlushDwThenVerifyAll57bitsAreUsed, IsPVC) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    const uint64_t setGpuAddress = 0xffffffffffffffff;
+    const uint64_t verifyGpuAddress = 0xfffffffffffffff8;
+
+    MiFlushArgs args;
+    args.commandWithPostSync = true;
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, setGpuAddress, 0, args, *defaultHwInfo);
+    auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
+
+    EXPECT_EQ(verifyGpuAddress, miFlushDwCmd->getDestinationAddress());
+}
+
 HWTEST_F(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing) {
     uint8_t buffer[MemoryConstants::pageSize] = {};
     LinearStream linearStream(buffer, sizeof(buffer));
