@@ -192,7 +192,6 @@ class DrmMock : public Drm {
     bool callBaseIsVmBindAvailable = false;
     bool callBaseIsSetPairAvailable = false;
     bool callBaseGetSetPairAvailable = false;
-    bool unrecoverableContextSet = false;
 
     bool capturedCooperativeContextRequest = false;
     bool incrementVmId = false;
@@ -208,7 +207,6 @@ class DrmMock : public Drm {
     uint32_t receivedContextParamRequestCount = 0;
     GemContextParam receivedContextParamRequest = {};
     uint64_t receivedRecoverableContextValue = std::numeric_limits<uint64_t>::max();
-    uint64_t requestSetVmId = std::numeric_limits<uint64_t>::max();
 
     bool queryPageFaultSupportCalled = false;
 

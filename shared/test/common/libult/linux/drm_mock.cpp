@@ -106,8 +106,6 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
             receivedContextParamRequestCount++;
             receivedContextParamRequest = *reinterpret_cast<GemContextParam *>(&receivedContextCreateSetParam.param);
             if (receivedContextCreateSetParam.param.param == I915_CONTEXT_PARAM_VM) {
-                this->requestSetVmId = receivedContextParamRequest.value;
-
                 return this->storedRetVal;
             }
         }
@@ -154,12 +152,10 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
             return this->storedRetValForPersistant;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
-            this->requestSetVmId = receivedContextParamRequest.value;
             return this->storedRetVal;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_RECOVERABLE) {
             receivedRecoverableContextValue = receivedContextParamRequest.value;
-            unrecoverableContextSet = true;
             return this->storedRetVal;
         }
     }
@@ -230,7 +226,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
     if (request == DrmIoctl::PrimeFdToHandle) {
         ioctlCount.primeFdToHandle++;
         auto primeToHandleParams = static_cast<PrimeHandle *>(arg);
-        // return BO
+        //return BO
         primeToHandleParams->handle = outputHandle;
         inputFd = primeToHandleParams->fileDescriptor;
         return fdToHandleRetVal;
