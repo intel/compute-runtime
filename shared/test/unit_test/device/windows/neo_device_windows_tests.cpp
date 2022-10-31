@@ -87,7 +87,7 @@ class TestMockHwHelper : public HwHelperHw<GfxFamily> {
     uint32_t shiftRequired = true;
 };
 
-HWTEST_F(MockOSTimeWinTest, whenConvertingTimestampsToCsDomainThenTimestampDataAreSetCorrectly) {
+HWTEST_F(MockOSTimeWinTest, whenConvertingTimestampsToCsDomainThenTimestampDataAreConvertedCorrectly) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto wddmMock = new WddmMock(rootDeviceEnvironment);
@@ -97,19 +97,32 @@ HWTEST_F(MockOSTimeWinTest, whenConvertingTimestampsToCsDomainThenTimestampDataA
     RAIIHwHelperFactory<TestMockHwHelper<FamilyType>> hwHelperBackup{hwInfo->platform.eRenderCoreFamily};
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock));
     uint64_t timestampData = 0x1234;
-    uint64_t freqOA = 1;
-    uint64_t freqCS = 0;
+    uint64_t freqOA = 5;
+    uint64_t freqCS = 2;
+    double ratio = static_cast<double>(freqOA) / static_cast<double>(freqCS);
+    auto expectedGpuTicksWhenOAfreqBiggerThanCSfreq = static_cast<uint64_t>(timestampData / ratio);
+    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    EXPECT_EQ(expectedGpuTicksWhenOAfreqBiggerThanCSfreq, timestampData);
+    freqOA = 2;
+    freqCS = 5;
+    ratio = static_cast<double>(freqCS) / static_cast<double>(freqOA);
+    auto expectedGpuTicksWhenCSfreqBiggerThanOAfreq = static_cast<uint64_t>(timestampData * ratio);
+    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    EXPECT_EQ(expectedGpuTicksWhenCSfreqBiggerThanOAfreq, timestampData);
+
+    freqOA = 1;
+    freqCS = 0;
     auto expectedGpuTicksWhenNotChange = timestampData;
     timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
+    freqOA = 1;
     freqCS = 1;
     timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
-    freqOA = 2;
-    uint64_t ratio = freqOA / freqCS;
-    auto expectedGpuTicksWhenRatioBiggerThanOne = timestampData / ratio;
+    freqOA = 0;
+    freqCS = 1;
     timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
-    EXPECT_EQ(expectedGpuTicksWhenRatioBiggerThanOne, timestampData);
+    EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
 
     hwHelperBackup.mockHwHelper.shiftRequired = false;
     freqOA = 1;
@@ -117,10 +130,12 @@ HWTEST_F(MockOSTimeWinTest, whenConvertingTimestampsToCsDomainThenTimestampDataA
     expectedGpuTicksWhenNotChange = timestampData;
     timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
+    freqOA = 0;
     freqCS = 1;
     timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
     freqOA = 2;
+    freqCS = 1;
     timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
 }
