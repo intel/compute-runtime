@@ -14,7 +14,6 @@ if(TESTS_DG2)
       ${IGDRCL_SRCS_tests_xe_hpg_core_dg2_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_dg2.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_dg2.cpp

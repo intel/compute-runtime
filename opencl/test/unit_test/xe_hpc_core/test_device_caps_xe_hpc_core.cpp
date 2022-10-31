@@ -10,10 +10,8 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "hw_cmds_xe_hpc_core_base.h"
 

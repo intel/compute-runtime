@@ -17,6 +17,7 @@ if(TESTS_DG2)
                  ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests_dg2.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_dg2.cpp

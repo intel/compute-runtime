@@ -16,6 +16,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_allocate_in_device_pool_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_allocate_in_preferred_pool_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_multi_device_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool_tests.cpp
