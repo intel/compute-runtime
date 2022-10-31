@@ -17,8 +17,7 @@ class DrmQueryMock : public DrmMock {
   public:
     using Drm::rootDeviceEnvironment;
 
-    DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmQueryMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
-    DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo);
+    DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment);
 
     DrmMockPrelimContext context{
         nullptr,

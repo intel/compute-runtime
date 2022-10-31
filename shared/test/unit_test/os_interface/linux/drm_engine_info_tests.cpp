@@ -18,9 +18,9 @@ TEST(DrmTest, whenQueryingEngineInfoThenSingleIoctlIsCalled) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, drm);
-
+    auto ioctlCount = drm->ioctlCount.total.load();
     drm->queryEngineInfo();
-    EXPECT_EQ(1u + drm->getBaseIoctlCalls(), drm->ioctlCallsCount);
+    EXPECT_EQ(1 + ioctlCount, drm->ioctlCount.total.load());
 }
 
 TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {

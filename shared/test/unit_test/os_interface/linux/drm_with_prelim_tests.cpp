@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -23,11 +23,7 @@ extern int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, in
 
 class DrmPrelimMock : public DrmMock {
   public:
-    DrmPrelimMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmPrelimMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
-    DrmPrelimMock(RootDeviceEnvironment &rootDeviceEnvironment, HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(inputHwInfo);
-        rootDeviceEnvironment.getMutableHardwareInfo()->platform.eProductFamily = IGFX_UNKNOWN;
-    }
+    using DrmMock::DrmMock;
 
     int ioctlRetVal = 0;
     int queryDistanceIoctlRetVal = 0;
@@ -37,6 +33,30 @@ class DrmPrelimMock : public DrmMock {
     }
 
     int handleRemainingRequests(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::Query && arg != nullptr) {
+            auto queryArg = static_cast<Query *>(arg);
+            for (auto i = 0u; i < queryArg->numItems; i++) {
+                auto queryItemArg = (reinterpret_cast<QueryItem *>(queryArg->itemsPtr) + i);
+                if (queryItemArg->queryId == PRELIM_DRM_I915_QUERY_HW_IP_VERSION) {
+                    ioctlCallsCount--;
+                    if (queryItemArg->length == 0) {
+                        queryItemArg->length = static_cast<int32_t>(sizeof(prelim_drm_i915_query_hw_ip_version));
+                        if (this->returnInvalidHwIpVersionLength) {
+                            queryItemArg->length -= 1;
+                        }
+                    } else {
+                        if (this->failRetHwIpVersion) {
+                            return EINVAL;
+                        }
+                        auto hwIpVersion = reinterpret_cast<prelim_drm_i915_query_hw_ip_version *>(queryItemArg->dataPtr);
+                        hwIpVersion->stepping = 1;
+                        hwIpVersion->release = 2;
+                        hwIpVersion->arch = 3;
+                    }
+                    return 0;
+                }
+            }
+        }
         return handlePrelimRequests(request, arg, ioctlRetVal, queryDistanceIoctlRetVal);
     }
 };
@@ -492,4 +512,57 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
     EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionIsSet) {
+    auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
+    ipVersion = {};
+    EXPECT_TRUE(drm->ioctlHelper->initialize());
+    EXPECT_EQ(ipVersion.revision, 1u);
+    EXPECT_EQ(ipVersion.release, 2u);
+    EXPECT_EQ(ipVersion.architecture, 3u);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsNotSet) {
+    auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
+    ipVersion = {};
+    drm->failRetHwIpVersion = true;
+    EXPECT_FALSE(drm->ioctlHelper->initialize());
+
+    EXPECT_EQ(ipVersion.revision, 0u);
+    EXPECT_EQ(ipVersion.release, 0u);
+    EXPECT_EQ(ipVersion.architecture, 0u);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnInitializationThenErrorIsPrinted) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    testing::internal::CaptureStderr();
+    drm->returnInvalidHwIpVersionLength = true;
+    EXPECT_FALSE(drm->ioctlHelper->initialize());
+
+    DebugManager.flags.PrintDebugMessages.set(false);
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expectedOutput = "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size\n";
+
+    EXPECT_STREQ(output.c_str(), expectedOutput.c_str());
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlatformQueryIsSupportedThenErrorIsPrinted) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    testing::internal::CaptureStderr();
+    drm->failRetHwIpVersion = true;
+    EXPECT_FALSE(drm->ioctlHelper->initialize());
+
+    DebugManager.flags.PrintDebugMessages.set(false);
+    std::string output = testing::internal::GetCapturedStderr();
+
+    if (HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily)->isPlatformQuerySupported()) {
+        EXPECT_STRNE(output.c_str(), "");
+    } else {
+        EXPECT_STREQ(output.c_str(), "");
+    }
 }

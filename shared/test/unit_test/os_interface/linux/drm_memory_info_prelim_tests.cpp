@@ -93,7 +93,7 @@ struct DrmVmTestFixture {
         testHwInfo->gtSystemInfo.MultiTileArchInfo.TileMask = 0b1111;
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
-        drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0], testHwInfo);
+        drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
         ASSERT_NE(nullptr, drm);
     }
 
@@ -193,7 +193,7 @@ struct MultiTileMemoryInfoFixture : public ::testing::Test {
         multiTileArch.TileCount = tileCount;
         multiTileArch.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
 
-        drm = std::make_unique<DrmQueryMock>(*rootDeviceEnvironment, rootDeviceEnvironment->getHardwareInfo());
+        drm = std::make_unique<DrmQueryMock>(*rootDeviceEnvironment);
 
         memoryInfo = new MemoryInfo(regionInfo, *drm);
         drm->memoryInfo.reset(memoryInfo);
@@ -417,7 +417,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithPairHandleThenR
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->context.setPairQueryValue = 1;

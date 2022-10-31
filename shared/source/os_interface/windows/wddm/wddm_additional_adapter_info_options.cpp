@@ -11,5 +11,6 @@ namespace NEO {
 
 void Wddm::populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterInfo) {
 }
-
+void Wddm::populateIpVersion(HardwareInfo &hwInfo) {
+}
 } // namespace NEO

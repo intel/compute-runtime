@@ -42,7 +42,7 @@ void DebugApiLinuxMultiDeviceFixture::setUp() {
     L0::Device *device = driverHandle->devices[0];
     deviceImp = static_cast<DeviceImp *>(device);
 
-    mockDrm = new DrmQueryMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0], neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getHardwareInfo());
+    mockDrm = new DrmQueryMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     mockDrm->allowDebugAttach = true;
 
     // set config from HwInfo to have correct topology requested by tests

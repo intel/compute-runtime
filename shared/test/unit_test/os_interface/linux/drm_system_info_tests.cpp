@@ -21,10 +21,11 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsNotCreatedAndIoctl
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
+    auto ioctlCount = drm.ioctlCount.total.load();
     EXPECT_FALSE(drm.querySystemInfo());
 
     EXPECT_EQ(nullptr, drm.getSystemInfo());
-    EXPECT_EQ(1u + drm.getBaseIoctlCalls(), drm.ioctlCallsCount);
+    EXPECT_EQ(1 + ioctlCount, drm.ioctlCount.total.load());
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThenReturnZero) {

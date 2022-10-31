@@ -137,17 +137,23 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     return result;
 }
 
+struct HardwareIpVersion {
+    uint8_t architecture;
+    uint8_t release;
+    uint8_t revision;
+};
+
 struct HardwareInfo {
     HardwareInfo() = default;
     HardwareInfo(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable,
                  const GT_SYSTEM_INFO *gtSystemInfo, const RuntimeCapabilityTable &capabilityTable);
 
-    PLATFORM platform = {};
-    FeatureTable featureTable = {};
-    WorkaroundTable workaroundTable = {};
-    alignas(4) GT_SYSTEM_INFO gtSystemInfo = {};
-
-    alignas(8) RuntimeCapabilityTable capabilityTable = {};
+    PLATFORM platform{};
+    FeatureTable featureTable{};
+    WorkaroundTable workaroundTable{};
+    alignas(4) GT_SYSTEM_INFO gtSystemInfo{};
+    alignas(8) RuntimeCapabilityTable capabilityTable{};
+    HardwareIpVersion ipVersion{};
 };
 
 template <PRODUCT_FAMILY product>

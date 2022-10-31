@@ -153,7 +153,7 @@ class DrmMock : public Drm {
     }
 
     uint32_t getBaseIoctlCalls() {
-        return ioctlCallsForHelperInitialization + static_cast<uint32_t>(virtualMemoryIds.size());
+        return static_cast<uint32_t>(virtualMemoryIds.size());
     }
 
     static const int mockFd = 33;
@@ -193,6 +193,8 @@ class DrmMock : public Drm {
     bool callBaseIsSetPairAvailable = false;
     bool callBaseGetSetPairAvailable = false;
     bool unrecoverableContextSet = false;
+    bool failRetHwIpVersion = false;
+    bool returnInvalidHwIpVersionLength = false;
 
     bool capturedCooperativeContextRequest = false;
     bool incrementVmId = false;
@@ -292,7 +294,6 @@ class DrmMock : public Drm {
         }
         return storedGetDeviceMemoryPhysicalSizeInBytesStatus;
     }
-    static uint32_t ioctlCallsForHelperInitialization;
 };
 
 class DrmMockNonFailing : public DrmMock {

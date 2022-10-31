@@ -47,6 +47,7 @@ class WddmMock : public Wddm {
     using Wddm::pagingQueue;
     using Wddm::platformSupportsEvictIfNecessary;
     using Wddm::populateAdditionalAdapterInfoOptions;
+    using Wddm::populateIpVersion;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
     using Wddm::setPlatformSupportEvictIfNecessaryFlag;

@@ -12,7 +12,6 @@
 #include "shared/source/os_interface/linux/i915.h"
 
 #include "gtest/gtest.h"
-#include "ioctl_helper_init_calls.inl"
 
 #include <cstring>
 
@@ -35,6 +34,11 @@ DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
 }
+
+int DrmMock::handleRemainingRequests(DrmIoctl request, void *arg) {
+    ioctlCallsCount--;
+    return -1;
+};
 
 int DrmMock::ioctl(DrmIoctl request, void *arg) {
     ioctlCallsCount++;

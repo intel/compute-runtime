@@ -24,6 +24,7 @@ class OsContextLinux;
 class IoctlHelper;
 enum class CacheRegion : uint16_t;
 struct HardwareInfo;
+struct HardwareIpVersion;
 
 struct MemoryRegion {
     MemoryClassInstance region;
@@ -261,6 +262,8 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
 
   protected:
+    bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);
+
     bool handleExecBufferInNonBlockMode = false;
 };
 

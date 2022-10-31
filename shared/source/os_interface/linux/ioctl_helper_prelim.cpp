@@ -705,6 +705,57 @@ bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency,
     bandwidth = info.bandwidth;
     return true;
 }
+bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret) {
+    QueryItem queryItem{};
+    queryItem.queryId = PRELIM_DRM_I915_QUERY_HW_IP_VERSION;
+
+    Query query{};
+    query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
+    query.numItems = 1u;
+    ret = ioctl(DrmIoctl::Query, &query);
+
+    if (ret != 0) {
+        return false;
+    }
+
+    if (queryItem.length != sizeof(prelim_drm_i915_query_hw_ip_version)) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n",
+                           "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size");
+        return false;
+    }
+
+    prelim_drm_i915_query_hw_ip_version queryHwIpVersion{};
+    queryHwIpVersion.engine.engine_class = engineInfo.engineClass;
+    queryHwIpVersion.engine.engine_instance = engineInfo.engineInstance;
+    queryItem.dataPtr = reinterpret_cast<uint64_t>(&queryHwIpVersion);
+
+    ret = ioctl(DrmIoctl::Query, &query);
+    if (ret != 0) {
+        return false;
+    }
+
+    ipVersion.architecture = queryHwIpVersion.arch;
+    ipVersion.release = queryHwIpVersion.release;
+    ipVersion.revision = queryHwIpVersion.stepping;
+
+    return true;
+}
+
+bool IoctlHelperPrelim20::initialize() {
+    auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::EngineClassRender)), 0};
+    int ret = 0;
+    bool result = queryHwIpVersion(engineInfo, hwInfo->ipVersion, ret);
+    if (result == false &&
+        ret != 0 &&
+        HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPlatformQuerySupported()) {
+        int err = drm.getErrno();
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+                           "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+    }
+
+    return result;
+}
 
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));
 static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_class));

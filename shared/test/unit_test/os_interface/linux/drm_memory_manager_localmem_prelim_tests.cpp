@@ -2025,7 +2025,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenGetLocalMemorySizeIs
 
     MockExecutionEnvironment executionEnvironment(&hwInfo, true, 4u);
     for (auto i = 0u; i < 4u; i++) {
-        auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment.rootDeviceEnvironments[i], &hwInfo);
+        auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment.rootDeviceEnvironments[i]);
         ASSERT_NE(nullptr, drm);
 
         executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();

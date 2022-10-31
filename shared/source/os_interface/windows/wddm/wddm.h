@@ -237,6 +237,7 @@ class Wddm : public DriverModel {
     }
     void setPlatformSupportEvictIfNecessaryFlag(const HwInfoConfig &hwInfoConfig);
     void populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterInfo);
+    void populateIpVersion(HardwareInfo &hwInfo);
 
     GMM_GFX_PARTITIONING gfxPartition{};
     ADAPTER_BDF adapterBDF{};

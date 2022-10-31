@@ -96,7 +96,7 @@ struct QueryTopologyTests : ::testing::Test {
         multiTileArch.TileCount = tileCount;
         multiTileArch.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
 
-        drmMock = std::make_unique<MyDrmQueryMock>(*rootDeviceEnvironment, rootDeviceEnvironment->getHardwareInfo());
+        drmMock = std::make_unique<MyDrmQueryMock>(*rootDeviceEnvironment);
 
         drmMock->storedSVal = 8;
         drmMock->storedSSVal = 32;

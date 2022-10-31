@@ -108,6 +108,7 @@ bool Wddm::init() {
     setPlatformSupportEvictIfNecessaryFlag(*hwConfig);
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
+    populateIpVersion(*hardwareInfo);
     rootDeviceEnvironment.setHwInfo(hardwareInfo.get());
     rootDeviceEnvironment.initGmm();
     this->rootDeviceEnvironment.getGmmClientContext()->setHandleAllocator(this->hwDeviceId->getUmKmDataTranslator()->createGmmHandleAllocator());

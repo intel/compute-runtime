@@ -313,7 +313,8 @@ TEST(DrmBufferObjectTestPrelim, givenLocalMemoryEnabledWhenCreateDrmVirtualMemor
     testHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
     testHwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
     testHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0b1;
-    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0], &testHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&testHwInfo);
+    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);

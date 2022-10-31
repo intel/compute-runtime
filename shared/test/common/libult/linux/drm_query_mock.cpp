@@ -12,8 +12,7 @@
 
 #include "gtest/gtest.h"
 
-DrmQueryMock::DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
-    rootDeviceEnvironment.setHwInfo(inputHwInfo);
+DrmQueryMock::DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
     context.hwInfo = rootDeviceEnvironment.getHardwareInfo();
     callBaseIsVmBindAvailable = true;
 
