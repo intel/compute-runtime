@@ -45,20 +45,11 @@ struct prelim_i915_user_extension {
 #define PRELIM_I915_CONTEXT_ENGINES_EXT_PARALLEL2_SUBMIT (PRELIM_I915_USER_EXT | 3)
 };
 
-struct prelim_drm_i915_gem_context_create_ext_clone {
+/* This API has been removed.  On the off chance someone somewhere has
+ * attempted to use it, never re-use this extension number.
+ */
+
 #define PRELIM_I915_CONTEXT_CREATE_EXT_CLONE	(PRELIM_I915_USER_EXT | 1)
-	struct i915_user_extension base;
-	__u32 clone_id;
-	__u32 flags;
-#define PRELIM_I915_CONTEXT_CLONE_ENGINES	(1u << 0)
-#define PRELIM_I915_CONTEXT_CLONE_FLAGS		(1u << 1)
-#define PRELIM_I915_CONTEXT_CLONE_SCHEDATTR	(1u << 2)
-#define PRELIM_I915_CONTEXT_CLONE_SSEU		(1u << 3)
-#define PRELIM_I915_CONTEXT_CLONE_TIMELINE	(1u << 4)
-#define PRELIM_I915_CONTEXT_CLONE_VM		(1u << 5)
-#define PRELIM_I915_CONTEXT_CLONE_UNKNOWN	-(PRELIM_I915_CONTEXT_CLONE_VM << 1)
-	__u64 rsvd;
-};
 
 /*
  * PRELIM UAPI VERSION - /sys/<...>/drm/card<n>/prelim_uapi_version
@@ -251,7 +242,6 @@ struct prelim_drm_i915_gem_context_create_ext_clone {
 
 /* Implicit scale support */
 #define PRELIM_I915_PARAM_HAS_SET_PAIR	(PRELIM_I915_PARAM | 8)
-
 /* End getparam */
 
 struct prelim_drm_i915_gem_create_ext {
@@ -305,6 +295,13 @@ struct prelim_drm_i915_gem_object_param {
  *	.param = PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_MEMORY_REGIONS
  */
 #define PRELIM_I915_PARAM_MEMORY_REGIONS ((1 << 16) | 0x1)
+
+/*
+ * PRELIM_I915_PARAM_SET_PAIR:
+ *
+ * Allows a "paired" buffer object to be specified to allow implicit scaling to
+ * use two buffer objects with a single exported dma-buf file descriptor
+ */
 #define PRELIM_I915_PARAM_SET_PAIR ((1 << 17) | 0x1)
 	__u64 param;
 
@@ -421,15 +418,10 @@ struct prelim_drm_i915_gem_memory_class_instance {
 struct prelim_drm_i915_query_item {
 #define PRELIM_DRM_I915_QUERY			(1 << 16)
 #define PRELIM_DRM_I915_QUERY_MASK(x)		(x & 0xffff)
-/* Keep lower 16 bits same as previous values */
 #define PRELIM_DRM_I915_QUERY_MEMORY_REGIONS	(PRELIM_DRM_I915_QUERY | 4)
 #define PRELIM_DRM_I915_QUERY_DISTANCE_INFO	(PRELIM_DRM_I915_QUERY | 5)
-	/**
-	 * Query HWConfig Table: Copies a device information table to the
-	 * query's item.data_ptr directly if the allocated length is big enough
-	 * For details about table format and content see intel_hwconfig_types.h
-	 */
-#define PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE		(PRELIM_DRM_I915_QUERY | 6)
+/* Deprecated: HWConfig is now upstream, do not use the prelim version anymore */
+#define PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE	(PRELIM_DRM_I915_QUERY | 6)
 	/**
 	 * Query Geometry Subslices: returns the items found in query_topology info
 	 * with a mask for geometry_subslice_mask applied
@@ -440,7 +432,6 @@ struct prelim_drm_i915_query_item {
 	 * instance.
 	 */
 #define PRELIM_DRM_I915_QUERY_GEOMETRY_SUBSLICES	(PRELIM_DRM_I915_QUERY | 7)
-#define PRELIM_DRM_I915_QUERY_GEOMETRY_SLICES		PRELIM_DRM_I915_QUERY_GEOMETRY_SUBSLICES
 	/**
 	 * Query Compute Subslices: returns the items found in query_topology info
 	 * with a mask for compute_subslice_mask applied
@@ -451,14 +442,13 @@ struct prelim_drm_i915_query_item {
 	 * instance.
 	 */
 #define PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES		(PRELIM_DRM_I915_QUERY | 8)
-#define PRELIM_DRM_I915_QUERY_COMPUTE_SLICES		PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES
 	/**
 	 * Query Command Streamer timestamp register.
 	 */
 #define PRELIM_DRM_I915_QUERY_CS_CYCLES			(PRELIM_DRM_I915_QUERY | 9)
 #define PRELIM_DRM_I915_QUERY_FABRIC_INFO		(PRELIM_DRM_I915_QUERY | 11)
+#define PRELIM_DRM_I915_QUERY_HW_IP_VERSION		(PRELIM_DRM_I915_QUERY | 12)
 #define PRELIM_DRM_I915_QUERY_ENGINE_INFO		(PRELIM_DRM_I915_QUERY | 13)
-#define PRELIM_DRM_I915_QUERY_L3_BANK_COUNT		(PRELIM_DRM_I915_QUERY | 14)
 };
 
 /*
@@ -516,6 +506,10 @@ enum prelim_drm_i915_oa_format {
 	PRELIM_I915_OA_FORMAT_A38u64_R2u64_B8_C8,
 	PRELIM_I915_OAM_FORMAT_A2u64_R2u64_B8_C8,
 	PRELIM_I915_OAC_FORMAT_A22u32_R2u32_B8_C8,
+
+	/* MTL */
+	PRELIM_I915_OAM_FORMAT_MPEC8u64_B8_C8,
+	PRELIM_I915_OAM_FORMAT_MPEC8u32_B8_C8,
 
 	PRELIM_I915_OA_FORMAT_MAX	/* non-ABI */
 };
@@ -992,6 +986,28 @@ struct prelim_drm_i915_query_cs_cycles {
 };
 
 /**
+ * prelim_struct drm_i915_query_hw_ip_version
+ *
+ * Hardware IP version (i.e., architecture generation) associated with a
+ * specific engine.
+ */
+struct prelim_drm_i915_query_hw_ip_version {
+	/** Engine to query HW IP version for */
+	struct i915_engine_class_instance engine;
+
+	__u8 flags;	/* MBZ */
+
+	/** Architecture  version */
+	__u8 arch;
+
+	/** Architecture release id */
+	__u8 release;
+
+	/** Stepping (e.g., A0, A1, B0, etc.) */
+	__u8 stepping;
+};
+
+/**
  * struct prelim_drm_i915_query_fabric_info
  *
  * With the given fabric id, query fabric info wrt the device.
@@ -1038,7 +1054,6 @@ struct prelim_drm_i915_engine_info {
 
 	/** Capabilities of this engine. */
 	__u64 capabilities;
-#define PRELIM_I915_RENDER_CLASS_CAPABILITY_3D		(1ull << 63)
 #define I915_VIDEO_CLASS_CAPABILITY_HEVC		(1 << 0)
 #define I915_VIDEO_AND_ENHANCE_CLASS_CAPABILITY_SFC	(1 << 1)
 #define PRELIM_I915_VIDEO_CLASS_CAPABILITY_VDENC	(1ull << 63)

@@ -376,7 +376,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
         }
     } break;
 
-    case PRELIM_DRM_I915_QUERY_COMPUTE_SLICES: {
+    case PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES: {
         auto &gtSystemInfo = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo;
         auto maxEuPerSubslice = gtSystemInfo.MaxEuPerSubSlice;
         auto maxSlices = gtSystemInfo.MaxSlicesSupported;
@@ -468,7 +468,7 @@ void DrmMockPrelimContext::storeVmBindExtensions(uint64_t ptr, bool bind) {
 }
 
 uint32_t DrmPrelimHelper::getQueryComputeSlicesIoctl() {
-    return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
+    return PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES;
 }
 
 uint32_t DrmPrelimHelper::getDistanceInfoQueryId() {

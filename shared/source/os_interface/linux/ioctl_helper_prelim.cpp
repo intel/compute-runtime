@@ -611,7 +611,7 @@ int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
     case DrmParam::QueryHwconfigTable:
         return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
     case DrmParam::QueryComputeSlices:
-        return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
+        return PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES;
     default:
         return getDrmParamValueBase(drmParam);
     }
