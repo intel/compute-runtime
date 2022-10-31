@@ -180,7 +180,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenProgramPipeControlPriorToNonPipelinedStateCo
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_FALSE(isExtendedWARequired);
-    EXPECT_FALSE(isBasicWARequired);
+    EXPECT_TRUE(isBasicWARequired);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithMultipleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenTrueIsReturned) {
@@ -204,7 +204,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithMultipleCSSWhenIsPipeControl
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_FALSE(isExtendedWARequired);
-    EXPECT_FALSE(isBasicWARequired);
+    EXPECT_TRUE(isBasicWARequired);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithSingleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenTrueIsReturned) {
@@ -216,7 +216,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithSingleCSSWhenIsPipeControlPr
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_FALSE(isExtendedWARequired);
-    EXPECT_FALSE(isBasicWARequired);
+    EXPECT_TRUE(isBasicWARequired);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithSingleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnRcsThenTrueIsReturned) {
@@ -228,7 +228,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithSingleCSSWhenIsPipeControlPr
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_FALSE(isExtendedWARequired);
-    EXPECT_FALSE(isBasicWARequired);
+    EXPECT_TRUE(isBasicWARequired);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenDg2WhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {

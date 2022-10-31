@@ -186,14 +186,22 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeContr
     parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
 
     auto requiredCmdSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, false);
-    auto cmdSize = sizeof(STATE_SIP);
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, commandStreamReceiver.isRcs());
-    std::ignore = isExtendedWARequired;
-    if (isBasicWARequired) {
-        cmdSize += sizeof(PIPE_CONTROL);
-    }
+    auto cmdSize = sizeof(STATE_SIP) + sizeof(PIPE_CONTROL);
     EXPECT_EQ(cmdSize, requiredCmdSize);
+
+    // first PC prior SBA
+    auto pipeControlIterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    pipeControlIterator = find<PIPE_CONTROL *>(++pipeControlIterator, cmdList.end());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
+    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+
+    EXPECT_FALSE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_FALSE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
 
     auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
     auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);

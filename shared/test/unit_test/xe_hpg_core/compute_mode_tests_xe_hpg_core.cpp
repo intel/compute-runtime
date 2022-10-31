@@ -106,13 +106,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenComputeModeCmdSizeWhenL
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 128u);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    auto cmdSize = sizeof(STATE_COMPUTE_MODE);
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, getCsrHw<FamilyType>()->isRcs());
-    std::ignore = isExtendedWARequired;
-    if (isBasicWARequired) {
-        cmdSize += sizeof(PIPE_CONTROL);
-    }
+    auto cmdSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 256u);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
@@ -136,13 +130,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithSharedHand
     overrideComputeModeRequest<FamilyType>(false, true, true);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, getCsrHw<FamilyType>()->isRcs());
-    std::ignore = isExtendedWARequired;
-    if (isBasicWARequired) {
-        cmdsSize += sizeof(PIPE_CONTROL);
-    }
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + (2 * sizeof(PIPE_CONTROL));
 
     overrideComputeModeRequest<FamilyType>(true, true, true);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
@@ -160,13 +148,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithoutSharedH
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     setUpImpl<FamilyType>();
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, getCsrHw<FamilyType>()->isRcs());
-    std::ignore = isExtendedWARequired;
-    if (isBasicWARequired) {
-        cmdsSize += sizeof(PIPE_CONTROL);
-    }
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, false);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
