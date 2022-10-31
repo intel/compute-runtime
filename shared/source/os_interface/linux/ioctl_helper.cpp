@@ -29,7 +29,7 @@ void IoctlHelper::fillExecObject(ExecObject &execObject, uint32_t handle, uint64
 
     auto &drmExecObject = *reinterpret_cast<drm_i915_gem_exec_object2 *>(execObject.data);
     drmExecObject.handle = handle;
-    drmExecObject.relocation_count = 0; //No relocations, we are SoftPinning
+    drmExecObject.relocation_count = 0; // No relocations, we are SoftPinning
     drmExecObject.relocs_ptr = 0ul;
     drmExecObject.alignment = 0;
     drmExecObject.offset = gpuAddress;
@@ -91,9 +91,7 @@ uint32_t IoctlHelper::createDrmContext(Drm &drm, OsContextLinux &osContext, uint
         drm.setNonPersistentContext(drmContextId);
     }
 
-    if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
-        drm.setUnrecoverableContext(drmContextId);
-    }
+    drm.setUnrecoverableContext(drmContextId);
 
     if (debuggableContext) {
         drm.setContextDebugFlag(drmContextId);

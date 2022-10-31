@@ -364,7 +364,7 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
         }
     }
 
-    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
 }
 
 TEST(DrmTest, whenCreatingDrmContextWithVirtualMemoryAddressSpaceThenProperVmIdIsSet) {
@@ -379,7 +379,9 @@ TEST(DrmTest, whenCreatingDrmContextWithVirtualMemoryAddressSpaceThenProperVmIdI
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
-    EXPECT_EQ(drmMock.receivedContextParamRequest.value, drmMock.getVirtualMemoryAddressSpace(0u));
+    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
+
+    EXPECT_EQ(drmMock.requestSetVmId, static_cast<uint64_t>(drmMock.getVirtualMemoryAddressSpace(0u)));
 }
 
 TEST(DrmTest, whenCreatingDrmContextWithNoVirtualMemoryAddressSpaceThenProperContextIdIsSet) {
@@ -395,7 +397,7 @@ TEST(DrmTest, whenCreatingDrmContextWithNoVirtualMemoryAddressSpaceThenProperCon
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
-    EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount); // unrecoverable context
 }
 
 TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextIsCreatedThenReceivedContextParamRequestCountReturnsCorrectValue) {
@@ -404,7 +406,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto expectedCount = 0u;
+    auto expectedCount = 1u; // unrecoverable context
 
     {
         drmMock.storedRetValForPersistant = -1;
@@ -420,7 +422,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         ++expectedCount;
         OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
         osContext.ensureContextInitialized();
-        expectedCount += 2;
+        expectedCount += 3;
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
 }
@@ -438,17 +440,17 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     OsContextLinux osContext2(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}));
     osContext2.ensureContextInitialized();
 
-    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
 
     drmMock.preemptionSupported = true;
 
     OsContextLinux osContext3(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext3.ensureContextInitialized();
-    EXPECT_EQ(3u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(6u, drmMock.receivedContextParamRequestCount);
 
     OsContextLinux osContext4(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}));
     osContext4.ensureContextInitialized();
-    EXPECT_EQ(5u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(9u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.storedDrmContextId, drmMock.receivedContextParamRequest.contextId);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
     EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
@@ -739,7 +741,7 @@ TEST(DrmTest, givenNoPerContextVmsDrmWhenCreatingOsContextsThenVmIdIsNotQueriedA
 
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
-    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
     auto &drmVmIds = osContext.getDrmVmIds();
     EXPECT_EQ(0u, drmVmIds.size());
@@ -871,6 +873,7 @@ TEST(DrmTest, givenProgramDebuggingWhenCreatingContextThenUnrecoverableContextIs
     OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
+    EXPECT_TRUE(drm.unrecoverableContextSet);
     EXPECT_EQ(0u, drm.receivedRecoverableContextValue);
     EXPECT_EQ(2u, drm.receivedContextParamRequestCount);
 }
