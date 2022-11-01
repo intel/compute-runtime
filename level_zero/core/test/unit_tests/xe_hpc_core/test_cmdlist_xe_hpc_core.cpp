@@ -1364,5 +1364,171 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenFlagDisabledAndCreateImmediateCommandL
     EXPECT_TRUE(static_cast<DeviceImp *>(device)->allocationsForReuse->peekIsEmpty());
 }
 
+struct AppendKernelXeHpcTestInput {
+    DriverHandle *driver = nullptr;
+    L0::Context *context = nullptr;
+    L0::Device *device = nullptr;
+};
+
+template <int32_t usePipeControlMultiPacketEventSync>
+struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModuleFixture {
+    void setUp() {
+        DebugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
+        LocalMemoryModuleFixture::setUp();
+
+        input.driver = driverHandle.get();
+        input.device = device;
+        input.context = context;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    void testHostSignalScopeDeviceMemoryAppendMultiKernelCopy(AppendKernelXeHpcTestInput &input) {
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+        ze_result_t result = ZE_RESULT_SUCCESS;
+
+        auto &hwInfo = *input.device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+        auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+        VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
+        hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+
+        constexpr size_t size = 4096u;
+        constexpr size_t alignment = 4096u;
+        void *ptr = nullptr;
+        const void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        result = input.context->allocDeviceMem(input.device->toHandle(),
+                                               &deviceDesc,
+                                               size, alignment, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.count = 1;
+        auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(input.driver, input.context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+        eventDesc.wait = 0;
+        auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, input.device));
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        result = commandList->initialize(input.device, NEO::EngineGroupType::Compute, 0u);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        constexpr size_t offset = 32;
+        void *copyPtr = reinterpret_cast<uint8_t *>(ptr) + offset;
+        result = commandList->appendMemoryCopy(copyPtr, srcPtr, size - offset, event.get(), 0, nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        GenCmdList commands;
+        ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(
+            commands,
+            commandList->commandContainer.getCommandStream()->getCpuBase(),
+            commandList->commandContainer.getCommandStream()->getUsed()));
+
+        auto itorWalkers = findAll<WALKER_TYPE *>(commands.begin(), commands.end());
+        EXPECT_NE(0u, itorWalkers.size());
+        for (const auto &it : itorWalkers) {
+            auto walkerCmd = genCmdCast<WALKER_TYPE *>(*it);
+            auto &postSyncData = walkerCmd->getPostSync();
+            EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
+        }
+
+        result = input.context->freeMem(ptr);
+        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    void testHostSignalScopeHostMemoryAppendMultiKernelCopy(AppendKernelXeHpcTestInput &input) {
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+        ze_result_t result = ZE_RESULT_SUCCESS;
+
+        auto &hwInfo = *input.device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+        auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+        VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
+        hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+
+        constexpr size_t size = 4096u;
+        constexpr size_t alignment = 4096u;
+        void *ptr = nullptr;
+        const void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+        ze_host_mem_alloc_desc_t hostDesc = {};
+        result = input.context->allocHostMem(&hostDesc, size, alignment, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.count = 1;
+        auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(input.driver, input.context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+        eventDesc.wait = 0;
+        auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, input.device));
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        result = commandList->initialize(input.device, NEO::EngineGroupType::Compute, 0u);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        constexpr size_t offset = 32;
+        void *copyPtr = reinterpret_cast<uint8_t *>(ptr) + offset;
+        result = commandList->appendMemoryCopy(copyPtr, srcPtr, size - offset, event.get(), 0, nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        GenCmdList commands;
+        ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(
+            commands,
+            commandList->commandContainer.getCommandStream()->getCpuBase(),
+            commandList->commandContainer.getCommandStream()->getUsed()));
+
+        auto itorWalkers = findAll<WALKER_TYPE *>(commands.begin(), commands.end());
+        EXPECT_NE(0u, itorWalkers.size());
+        for (const auto &it : itorWalkers) {
+            auto walkerCmd = genCmdCast<WALKER_TYPE *>(*it);
+            auto &postSyncData = walkerCmd->getPostSync();
+            EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
+        }
+
+        result = input.context->freeMem(ptr);
+        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    }
+
+    AppendKernelXeHpcTestInput input;
+};
+
+using CommandListAppendLaunchMultiKernelEventDisabledSinglePacketXeHpcCore = Test<CommandListAppendLaunchMultiKernelEventFixture<0>>;
+
+HWTEST2_F(CommandListAppendLaunchMultiKernelEventDisabledSinglePacketXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelUsingDeviceMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceNotUsed, IsXeHpcCore) {
+    testHostSignalScopeDeviceMemoryAppendMultiKernelCopy<gfxCoreFamily>(input);
+}
+
+HWTEST2_F(CommandListAppendLaunchMultiKernelEventDisabledSinglePacketXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
+    testHostSignalScopeHostMemoryAppendMultiKernelCopy<gfxCoreFamily>(input);
+}
+
+using CommandListAppendLaunchMultiKernelEventEnabledSinglePacketXeHpcCore = Test<CommandListAppendLaunchMultiKernelEventFixture<1>>;
+
+HWTEST2_F(CommandListAppendLaunchMultiKernelEventEnabledSinglePacketXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelUsingDeviceMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceNotUsed, IsXeHpcCore) {
+    testHostSignalScopeDeviceMemoryAppendMultiKernelCopy<gfxCoreFamily>(input);
+}
+
+HWTEST2_F(CommandListAppendLaunchMultiKernelEventEnabledSinglePacketXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
+    testHostSignalScopeHostMemoryAppendMultiKernelCopy<gfxCoreFamily>(input);
+}
+
 } // namespace ult
 } // namespace L0

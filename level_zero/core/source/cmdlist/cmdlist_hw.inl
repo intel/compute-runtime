@@ -303,13 +303,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
         return ret;
     }
 
+    CmdListKernelLaunchParams launchParams = {};
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
+        launchParams.isHostSignalScopeEvent = !!(event->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     appendEventForProfiling(event, true, false);
-    CmdListKernelLaunchParams launchParams = {};
     launchParams.isIndirect = true;
     ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), pDispatchArgumentsBuffer,
                                        nullptr, launchParams);
@@ -332,9 +333,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         return ret;
     }
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isIndirect = true;
+    launchParams.isPredicate = true;
+
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
+        launchParams.isHostSignalScopeEvent = !!(event->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     appendEventForProfiling(event, true, false);
@@ -346,9 +352,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     for (uint32_t i = 0; i < numKernels; i++) {
         NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, alloc->getGpuAddress(), i);
 
-        CmdListKernelLaunchParams launchParams = {};
-        launchParams.isIndirect = true;
-        launchParams.isPredicate = true;
         ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandles[i]),
                                            haveLaunchArguments ? &pLaunchArgumentsBuffer[i] : nullptr,
                                            nullptr, launchParams);
@@ -1183,16 +1186,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         return ret;
     }
 
+    CmdListKernelLaunchParams launchParams = {};
+
     Event *signalEvent = nullptr;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
+        launchParams.isHostSignalScopeEvent = !!(signalEvent->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     uint32_t kernelCounter = leftSize > 0 ? 1 : 0;
     kernelCounter += middleSizeBytes > 0 ? 1 : 0;
     kernelCounter += rightSize > 0 ? 1 : 0;
-
-    CmdListKernelLaunchParams launchParams = {};
 
     launchParams.isKernelSplitOperation = kernelCounter > 1;
     bool singlePipeControlPacket = this->pipeControlMultiKernelEventSync && launchParams.isKernelSplitOperation;
@@ -1544,9 +1548,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
+    CmdListKernelLaunchParams launchParams = {};
+
     Event *signalEvent = nullptr;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
+        launchParams.isHostSignalScopeEvent = !!(signalEvent->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     if (isCopyOnly()) {
@@ -1596,7 +1603,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
     }
 
-    CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
 

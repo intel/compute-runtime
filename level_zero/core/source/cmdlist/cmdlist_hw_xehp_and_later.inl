@@ -167,7 +167,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;
     bool l3FlushEnable = false;
-    bool isHostSignalScopeEvent = false;
+    bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
     if (event) {
         eventAlloc = &event->getAllocation(this->device);
         commandContainer.addToResidencyContainer(eventAlloc);

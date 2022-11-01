@@ -33,6 +33,7 @@ struct CmdListKernelLaunchParams {
     bool isKernelSplitOperation = false;
     bool isBuiltInKernel = false;
     bool isDestinationAllocationInSystemMemory = false;
+    bool isHostSignalScopeEvent = false;
 };
 
 struct CmdListReturnPoint {
