@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 
@@ -129,10 +130,9 @@ static uint64_t convertHexToUint64(std::string strVal) {
 }
 
 static bool getErrorType(std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEvents, std::vector<std::string> &eventList, ze_device_handle_t deviceHandle) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    bool onSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
-    uint32_t subDeviceId = deviceProperties.subdeviceId;
+    ze_bool_t onSubDevice = false;
+    uint32_t subDeviceId = 0;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceId, onSubDevice);
     // Naming convention of files containing config values for errors
     // error--<Name of error> Ex:- error--engine-reset  (config file with no subdevice)
     // error-gt<N>--<Name of error> Ex:- error-gt0--engine-reset (config file with subdevices)

@@ -384,5 +384,41 @@ TEST_F(ZesStandbyMultiDeviceFixture, GivenOnSubdeviceNotSetWhenValidatingosStand
     delete pLinuxStandbyImp;
 }
 
+class StandbyAffinityMaskFixture : public ZesStandbyMultiDeviceFixture {
+    void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        ZesStandbyMultiDeviceFixture::SetUp();
+    }
+
+    void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        ZesStandbyMultiDeviceFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(StandbyAffinityMaskFixture, GivenAffinityMaskIsSetWhenCallingStandbyPropertiesThenProertiesAreReturnedForTheSubDevicesAccordingToAffinityMask) {
+    uint32_t count = 0;
+
+    ze_result_t result = zesDeviceEnumStandbyDomains(device, &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+    zes_standby_properties_t properties = {};
+    auto handles = getStandbyHandles(mockHandleCount);
+
+    for (auto hSysmanStandby : handles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetProperties(hSysmanStandby, &properties));
+        EXPECT_EQ(nullptr, properties.pNext);
+        EXPECT_EQ(ZES_STANDBY_TYPE_GLOBAL, properties.type);
+        EXPECT_TRUE(properties.onSubdevice);
+        EXPECT_EQ(1u, properties.subdeviceId); //Affinity mask 0.1 is set which means only subdevice 1 is exposed
+    }
+}
+
 } // namespace ult
 } // namespace L0

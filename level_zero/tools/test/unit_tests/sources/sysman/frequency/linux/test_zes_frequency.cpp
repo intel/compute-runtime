@@ -857,7 +857,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingFrequencyPropertiesThenValidSchedPropertiesRetrieved) {
+TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingFrequencyPropertiesThenValidFreqPropertiesRetrieved) {
     zes_freq_properties_t properties = {};
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(device)->getProperties(&deviceProperties);
@@ -867,6 +867,71 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingFrequencyProp
     EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
     EXPECT_EQ(properties.onSubdevice, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
     delete pLinuxFrequencyImp;
+}
+
+class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
+  protected:
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Mock<FrequencySysfsAccess>> pSysfsAccess;
+    SysfsAccess *pSysfsAccessOld = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
+
+    void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        SysmanMultiDeviceFixture::SetUp();
+        pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
+        pSysfsAccess = std::make_unique<NiceMock<Mock<FrequencySysfsAccess>>>();
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        // delete handles created in initial SysmanDeviceHandleContext::init() call
+        for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+            delete handle;
+        }
+        pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
+        uint32_t subDeviceCount = 0;
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        getFreqHandles(0);
+    }
+
+    void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        SysmanMultiDeviceFixture::TearDown();
+    }
+
+    std::vector<zes_freq_handle_t> getFreqHandles(uint32_t count) {
+        std::vector<zes_freq_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
+};
+
+TEST_F(FreqMultiDeviceFixture, GivenAffinityMaskIsSetWhenCallingFrequencyPropertiesThenPropertiesAreReturnedForTheSubDevicesAccordingToAffinityMask) {
+    uint32_t count = 0U;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(count, handleComponentCount);
+    auto handles = getFreqHandles(handleComponentCount);
+    for (auto handle : handles) {
+        EXPECT_NE(handle, nullptr);
+        zes_freq_properties_t properties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handle, &properties));
+        EXPECT_EQ(nullptr, properties.pNext);
+        EXPECT_EQ(ZES_FREQ_DOMAIN_GPU, properties.type);
+        EXPECT_TRUE(properties.onSubdevice);
+        EXPECT_EQ(1u, properties.subdeviceId); //Affinity mask 0.1 is set which means only subdevice 1 is exposed
+    }
 }
 
 } // namespace ult

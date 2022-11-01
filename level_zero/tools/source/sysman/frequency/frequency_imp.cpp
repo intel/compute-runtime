@@ -9,6 +9,8 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/tools/source/sysman/sysman_imp.h"
+
 #include <cmath>
 
 namespace L0 {
@@ -114,11 +116,11 @@ void FrequencyImp::init() {
 }
 
 FrequencyImp::FrequencyImp(OsSysman *pOsSysman, ze_device_handle_t handle, zes_freq_domain_t frequencyDomainNumber) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsFrequency = OsFrequency::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId, frequencyDomainNumber);
+    uint32_t subdeviceId = 0;
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+    pOsFrequency = OsFrequency::create(pOsSysman, onSubdevice, subdeviceId, frequencyDomainNumber);
     UNRECOVERABLE_IF(nullptr == pOsFrequency);
-
     init();
 }
 

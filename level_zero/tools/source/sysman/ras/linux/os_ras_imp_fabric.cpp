@@ -8,6 +8,7 @@
 #include "shared/source/device/sub_device.h"
 
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include "sysman/linux/fs_access.h"
 #include "sysman/linux/os_sysman_imp.h"
@@ -68,9 +69,9 @@ void LinuxRasSourceFabric::getNodes(std::vector<std::string> &nodes, uint32_t su
 ze_result_t LinuxRasSourceFabric::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType,
                                                             OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    NEO::Device *neoDevice = static_cast<Device *>(deviceHandle)->getNEODevice();
-    uint32_t subDeviceIndex = neoDevice->isSubDevice() ? static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex() : 0;
-
+    ze_bool_t onSubDevice = false;
+    uint32_t subDeviceIndex = 0;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceIndex, onSubDevice);
     std::vector<std::string> nodes;
     getNodes(nodes, subDeviceIndex, &pLinuxSysmanImp->getFsAccess(), ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
     if (nodes.size()) {

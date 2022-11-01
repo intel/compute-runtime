@@ -9,6 +9,8 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/tools/source/sysman/sysman_imp.h"
+
 namespace L0 {
 
 ze_result_t StandbyImp::standbyGetProperties(zes_standby_properties_t *pProperties) {
@@ -30,9 +32,10 @@ void StandbyImp::init() {
 }
 
 StandbyImp::StandbyImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsStandby = OsStandby::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+    uint32_t subdeviceId = 0;
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+    pOsStandby = OsStandby::create(pOsSysman, onSubdevice, subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsStandby);
     init();
 }
