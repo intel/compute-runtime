@@ -9,6 +9,5 @@ if(WIN32)
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_sysman_scheduler.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/mock_zes_sysman_scheduler.h
   )
 endif()

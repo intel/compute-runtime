@@ -183,7 +183,70 @@ class SchedulerFileProperties {
     }
 };
 
-class SchedulerSysfsAccess : public SysfsAccess {};
+class MockSchedulerProcfsAccess : public ProcfsAccess {
+  public:
+    MockSchedulerProcfsAccess() = default;
+
+    const pid_t pid1 = 1234;
+    const pid_t pid2 = 1235;
+    const pid_t pid3 = 1236;
+    const pid_t pid4 = 1237;
+
+    ze_result_t listProcessesResult = ZE_RESULT_SUCCESS;
+    ze_result_t listProcesses(std::vector<::pid_t> &list) override {
+        if (listProcessesResult != ZE_RESULT_SUCCESS) {
+            return listProcessesResult;
+        }
+        list.push_back(pid1);
+        list.push_back(pid2);
+        list.push_back(pid3);
+        list.push_back(pid4);
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getFileDescriptorsResult;
+    ze_result_t getFileDescriptors(const ::pid_t pid, std::vector<int> &list) override {
+        // push dummy fd numbers in list vector
+        if (pid == pid1) {
+            list.push_back(1);
+            list.push_back(2);
+        } else if (pid == pid2) {
+            list.push_back(1);
+            list.push_back(2);
+        } else if (pid == pid3) {
+            list.push_back(1);
+            list.push_back(2);
+        } else if (pid == pid4) {
+            list.push_back(1);
+            list.push_back(3);
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getFileName(const ::pid_t pid, const int fd, std::string &val) override {
+        if (fd == 1) {
+            val = "/dev/null"; // assuming after opening /dev/null fd received is 1
+            return ZE_RESULT_SUCCESS;
+        }
+        if (fd == 2) {
+            val = "/dev/dri/renderD128"; // assuming after opening /dev/dri/renderD128 fd received is 2
+            return ZE_RESULT_SUCCESS;
+        }
+        if (fd == 3) {
+            val = "/dev/dummy"; // assuming after opening /dev/dummy fd received is 3
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ::pid_t myProcessId() override {
+        return pid2;
+    }
+
+    ADDMETHOD_NOBASE_VOIDRETURN(kill, (const ::pid_t pid));
+};
+
+//class SchedulerSysfsAccess : public SysfsAccess {};
 
 typedef struct SchedulerConfigValues {
     uint64_t defaultVal;
@@ -197,10 +260,21 @@ typedef struct SchedulerConfig {
     uint64_t euDebugEnable;
 } SchedulerConfig_t;
 
-struct MockSchedulerSysfsAccess : public SchedulerSysfsAccess {
+class CalledTimesUpdate {
+  public:
+    CalledTimesUpdate(int &calledTimes) : calledTimesVar(calledTimes) {}
+    ~CalledTimesUpdate() {
+        calledTimesVar++;
+    }
+
+  private:
+    int &calledTimesVar;
+};
+
+struct MockSchedulerSysfsAccess : public SysfsAccess {
+    using SysfsAccess::deviceNames;
 
     ze_result_t mockReadFileFailureError = ZE_RESULT_SUCCESS;
-    ze_result_t mockWriteFileStatus = ZE_RESULT_SUCCESS;
     ze_result_t mockGetScanDirEntryError = ZE_RESULT_SUCCESS;
 
     std::vector<ze_result_t> mockReadReturnValues{ZE_RESULT_SUCCESS, ZE_RESULT_SUCCESS, ZE_RESULT_SUCCESS, ZE_RESULT_ERROR_NOT_AVAILABLE};
@@ -248,6 +322,21 @@ struct MockSchedulerSysfsAccess : public SchedulerSysfsAccess {
         }
         if (engine.empty()) {
             engineSchedFilePropertiesMap[file] = SchedulerFileProperties(isAvailable, mode);
+        }
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    ze_result_t canWrite(const std::string file) override {
+        SchedulerFileProperties fileProperties;
+        ze_result_t result = getFileProperties(file, fileProperties);
+        if (ZE_RESULT_SUCCESS == result) {
+            if (!fileProperties.getAvailability()) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            if (!fileProperties.hasMode(S_IWUSR)) {
+                return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+            }
+            return result;
         }
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -350,10 +439,15 @@ struct MockSchedulerSysfsAccess : public SchedulerSysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
+    int writeCalled = 0;
+    std::vector<ze_result_t> writeResult{ZE_RESULT_SUCCESS};
     ze_result_t write(const std::string file, const uint64_t val) override {
-
-        if (mockWriteFileStatus != ZE_RESULT_SUCCESS) {
-            return mockWriteFileStatus;
+        CalledTimesUpdate update(writeCalled); // increment this method's call count while exiting this method
+        if (writeCalled < static_cast<int>(writeResult.size())) {
+            if (writeResult[writeCalled] != ZE_RESULT_SUCCESS) {
+                // If we are here, it means test simply wants to validate failure values from this method
+                return writeResult[writeCalled];
+            }
         }
 
         if (mockGetValueForErrorWhileWrite == true) {
@@ -499,8 +593,13 @@ struct MockSchedulerSysfsAccess : public SchedulerSysfsAccess {
 
 class PublicLinuxSchedulerImp : public L0::LinuxSchedulerImp {
   public:
+    using LinuxSchedulerImp::isComputeUnitDebugModeEnabled;
     using LinuxSchedulerImp::pDevice;
     using LinuxSchedulerImp::pSysfsAccess;
+    using LinuxSchedulerImp::setExclusiveModeImp;
+    using LinuxSchedulerImp::setHeartbeatInterval;
+    using LinuxSchedulerImp::setPreemptTimeout;
+    using LinuxSchedulerImp::setTimesliceDuration;
     using LinuxSchedulerImp::subdeviceId;
 };
 

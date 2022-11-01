@@ -259,6 +259,43 @@ void LinuxSysmanImp::getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAc
     }
 }
 
+ze_result_t LinuxSysmanImp::gpuProcessCleanup() {
+    ::pid_t myPid = pProcfsAccess->myProcessId();
+    std::vector<::pid_t> processes;
+    std::vector<int> myPidFds;
+    ze_result_t result = pProcfsAccess->listProcesses(processes);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "gpuProcessCleanup: listProcesses() failed with error code: %ld\n", result);
+        return result;
+    }
+
+    for (auto &&pid : processes) {
+        std::vector<int> fds;
+        getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
+        if (pid == myPid) {
+            // L0 is expected to have this file open.
+            // Keep list of fds. Close before unbind.
+            myPidFds = fds;
+            continue;
+        }
+        if (!fds.empty()) {
+            pProcfsAccess->kill(pid);
+        }
+    }
+
+    for (auto &&fd : myPidFds) {
+        // Close open filedescriptors to the device
+        // before unbinding device.
+        // From this point forward, there is no
+        // graceful way to fail the reset call.
+        // All future ze calls by this process for this
+        // device will fail.
+        NEO::SysCalls::close(fd);
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 void LinuxSysmanImp::releaseSysmanDeviceResources() {
     getSysmanDeviceImp()->pEngineHandleContext->releaseEngines();
     getSysmanDeviceImp()->pRasHandleContext->releaseRasHandles();
@@ -326,6 +363,7 @@ ze_result_t LinuxSysmanImp::initDevice() {
 
     return ZE_RESULT_SUCCESS;
 }
+
 // function to clear Hot-Plug interrupt enable bit in the slot control register
 // this is required to prevent interrupts from being raised in the warm reset path.
 void LinuxSysmanImp::clearHPIE(int fd) {

@@ -114,12 +114,13 @@ class SysfsAccess : protected FsAccess {
     bool directoryExists(const std::string path) override;
     bool isRootUser() override;
 
+  protected:
+    std::vector<std::string> deviceNames;
+
   private:
     SysfsAccess(const std::string file);
 
     std::string fullPath(const std::string file);
-
-    std::vector<std::string> deviceNames;
     std::string dirname;
     static const std::string drmPath;
     static const std::string devicesPath;

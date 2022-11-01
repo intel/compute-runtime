@@ -20,6 +20,12 @@ const std::string LinuxSchedulerImp::defaultHeartbeatIntervalMilliSecs(".default
 const std::string LinuxSchedulerImp::enableEuDebug("");
 const std::string LinuxSchedulerImp::engineDir("engine");
 
+static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineTypeToSysfsEngineMap = {
+    {ZES_ENGINE_TYPE_FLAG_RENDER, "rcs"},
+    {ZES_ENGINE_TYPE_FLAG_DMA, "bcs"},
+    {ZES_ENGINE_TYPE_FLAG_MEDIA, "vcs"},
+    {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};
+
 ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProperties) {
     schedProperties.onSubdevice = onSubdevice;
     schedProperties.subdeviceId = subdeviceId;
@@ -27,6 +33,183 @@ ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProper
     schedProperties.engines = this->engineType;
     schedProperties.supportedModes = (1 << ZES_SCHED_MODE_TIMEOUT) | (1 << ZES_SCHED_MODE_TIMESLICE) | (1 << ZES_SCHED_MODE_EXCLUSIVE);
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxSchedulerImp::getCurrentMode(zes_sched_mode_t *pMode) {
+    uint64_t timeout = 0;
+    uint64_t timeslice = 0;
+    uint64_t heartbeat = 0;
+    ze_result_t result = getPreemptTimeout(timeout, false);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    result = getTimesliceDuration(timeslice, false);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    result = getHeartbeatInterval(heartbeat, false);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    if (timeslice > 0) {
+        *pMode = ZES_SCHED_MODE_TIMESLICE;
+    } else {
+        if (timeout > 0) {
+            *pMode = ZES_SCHED_MODE_TIMEOUT;
+        } else {
+            if (heartbeat == 0) {
+                // If we are here, it means heartbeat = 0, timeout = 0, timeslice = 0.
+                if (isComputeUnitDebugModeEnabled()) {
+                    *pMode = ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG;
+                } else {
+                    *pMode = ZES_SCHED_MODE_EXCLUSIVE;
+                }
+            } else {
+                // If we are here it means heartbeat > 0, timeout = 0, timeslice = 0.
+                // And we dont know what that mode is.
+                *pMode = ZES_SCHED_MODE_FORCE_UINT32;
+                result = ZE_RESULT_ERROR_UNKNOWN;
+            }
+        }
+    }
+    return result;
+}
+
+ze_result_t LinuxSchedulerImp::setExclusiveModeImp() {
+    uint64_t timeslice = 0, timeout = 0, heartbeat = 0;
+    ze_result_t result = setPreemptTimeout(timeout);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    result = setTimesliceDuration(timeslice);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    result = setHeartbeatInterval(heartbeat);
+    return result;
+}
+
+ze_result_t LinuxSchedulerImp::setExclusiveMode(ze_bool_t *pNeedReload) {
+    *pNeedReload = false;
+
+    zes_sched_mode_t currMode;
+    ze_result_t result = getCurrentMode(&currMode);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    if (currMode == ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG) {
+        // Unset this mode
+        result = disableComputeUnitDebugMode(pNeedReload);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+
+    return setExclusiveModeImp();
+}
+
+ze_result_t LinuxSchedulerImp::getTimeoutModeProperties(ze_bool_t getDefaults, zes_sched_timeout_properties_t *pConfig) {
+    uint64_t heartbeat = 0;
+    ze_result_t result = getHeartbeatInterval(heartbeat, getDefaults);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    pConfig->watchdogTimeout = heartbeat;
+
+    return result;
+}
+
+ze_result_t LinuxSchedulerImp::getTimesliceModeProperties(ze_bool_t getDefaults, zes_sched_timeslice_properties_t *pConfig) {
+    uint64_t timeout = 0, timeslice = 0;
+    ze_result_t result = getPreemptTimeout(timeout, getDefaults);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    result = getTimesliceDuration(timeslice, getDefaults);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    pConfig->interval = timeslice;
+    pConfig->yieldTimeout = timeout;
+    return result;
+}
+
+ze_result_t LinuxSchedulerImp::setTimeoutMode(zes_sched_timeout_properties_t *pProperties, ze_bool_t *pNeedReload) {
+    *pNeedReload = false;
+    zes_sched_mode_t currMode;
+    ze_result_t result = getCurrentMode(&currMode);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    if (pProperties->watchdogTimeout < minTimeoutModeHeartbeat) {
+        // watchdogTimeout(in usec) less than 5000 would be computed to
+        // 0 milli seconds preempt timeout, and then after returning from
+        // this method, we would end up in EXCLUSIVE mode
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (currMode == ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG) {
+        // Unset this mode
+        result = disableComputeUnitDebugMode(pNeedReload);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+
+    result = setHeartbeatInterval(pProperties->watchdogTimeout);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    uint64_t timeout = (pProperties->watchdogTimeout) / 5;
+    result = setPreemptTimeout(timeout);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    uint64_t timeslice = 0;
+    result = setTimesliceDuration(timeslice);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    return result;
+}
+
+ze_result_t LinuxSchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReload) {
+    if (pProperties->interval < minTimeoutInMicroSeconds) {
+        // interval(in usec) less than 1000 would be computed to
+        // 0 milli seconds interval.
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    *pNeedReload = false;
+
+    zes_sched_mode_t currMode;
+    ze_result_t result = getCurrentMode(&currMode);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    if (currMode == ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG) {
+        // Unset this mode
+        result = disableComputeUnitDebugMode(pNeedReload);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+
+    result = setPreemptTimeout(pProperties->yieldTimeout);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    result = setTimesliceDuration(pProperties->interval);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    uint64_t heartbeat = 2500 * (pProperties->interval);
+    return setHeartbeatInterval(heartbeat);
 }
 
 ze_result_t LinuxSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) {
@@ -176,11 +359,14 @@ ze_result_t LinuxSchedulerImp::setComputeUnitDebugMode(ze_bool_t *pNeedReload) {
     return pSysfsAccess->write(enableEuDebug, 1);
 }
 
-static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineTypeToSysfsEngineMap = {
-    {ZES_ENGINE_TYPE_FLAG_RENDER, "rcs"},
-    {ZES_ENGINE_TYPE_FLAG_DMA, "bcs"},
-    {ZES_ENGINE_TYPE_FLAG_MEDIA, "vcs"},
-    {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};
+bool LinuxSchedulerImp::isComputeUnitDebugModeEnabled() {
+    return false;
+}
+
+ze_result_t LinuxSchedulerImp::disableComputeUnitDebugMode(ze_bool_t *pNeedReload) {
+    *pNeedReload = false;
+    return pSysfsAccess->write(enableEuDebug, 0);
+}
 
 static ze_result_t getNumEngineTypeAndInstancesForDevice(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines, SysfsAccess *pSysfsAccess) {
     std::vector<std::string> localListOfAllEngines = {};

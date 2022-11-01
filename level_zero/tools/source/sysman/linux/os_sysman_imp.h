@@ -71,6 +71,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void getPidFdsForOpenDevice(ProcfsAccess *, SysfsAccess *, const ::pid_t, std::vector<int> &);
     MOCKABLE_VIRTUAL ze_result_t osWarmReset();
     MOCKABLE_VIRTUAL ze_result_t osColdReset();
+    ze_result_t gpuProcessCleanup();
     std::string getAddressFromPath(std::string &rootPortPath);
     decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
     decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;

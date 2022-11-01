@@ -11,32 +11,28 @@
 
 namespace L0 {
 
-ze_result_t WddmSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) {
+ze_result_t WddmSchedulerImp::getCurrentMode(zes_sched_mode_t *pMode) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmSchedulerImp::getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) {
+ze_result_t WddmSchedulerImp::getTimeoutModeProperties(ze_bool_t getDefaults, zes_sched_timeout_properties_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat, ze_bool_t getDefault) {
+ze_result_t WddmSchedulerImp::getTimesliceModeProperties(ze_bool_t getDefaults, zes_sched_timeslice_properties_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmSchedulerImp::setPreemptTimeout(uint64_t timeout) {
+ze_result_t WddmSchedulerImp::setTimeoutMode(zes_sched_timeout_properties_t *pProperties, ze_bool_t *pNeedReload) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
+ze_result_t WddmSchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReload) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
+ze_result_t WddmSchedulerImp::setExclusiveMode(ze_bool_t *pNeedReload) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_bool_t WddmSchedulerImp::canControlScheduler() {
-    return 0;
 }
 
 ze_result_t WddmSchedulerImp::getProperties(zes_sched_properties_t &properties) {
