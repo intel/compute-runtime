@@ -36,7 +36,7 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 
     if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
         interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-        bool adjustTGDispatchSize = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported == hwInfo.gtSystemInfo.DualSubSliceCount;
+        bool adjustTGDispatchSize = true;
         if (DebugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
             adjustTGDispatchSize = !!DebugManager.flags.AdjustThreadGroupDispatchSize.get();
         }
