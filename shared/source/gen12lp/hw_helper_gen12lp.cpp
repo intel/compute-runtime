@@ -15,7 +15,6 @@ using Family = NEO::Gen12LpFamily;
 #include "shared/source/helpers/hw_helper_bdw_and_later.inl"
 #include "shared/source/helpers/hw_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/logical_state_helper.inl"
-#include "shared/source/helpers/supported_media_surface_formats.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include "engine_node.h"
@@ -210,11 +209,6 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
 template <>
 bool HwHelperHw<Family>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
     return false;
-}
-
-template <>
-bool HwHelperHw<Family>::isSurfaceFormatSupportedForMediaBlockOperation(NEO::GFX3DSTATE_SURFACEFORMAT format) const {
-    return SupportedMediaFormatsHelper::isMediaFormatSupported(format);
 }
 
 template class HwHelperHw<Family>;

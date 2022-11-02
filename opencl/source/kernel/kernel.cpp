@@ -1587,12 +1587,6 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
     auto pImage = castToObject<Image>(clMemObj);
 
     if (pImage && argSize == sizeof(cl_mem *)) {
-        auto surfFormat = pImage->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat;
-
-        auto &hwHelper = HwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
-        if (arg.getExtendedTypeInfo().isMediaBlockImage && !hwHelper.isSurfaceFormatSupportedForMediaBlockOperation(surfFormat)) {
-            return CL_INVALID_ARG_VALUE;
-        }
         if (pImage->peekSharingHandler()) {
             usingSharedObjArgs = true;
         }
