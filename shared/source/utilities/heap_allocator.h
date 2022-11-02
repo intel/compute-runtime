@@ -192,6 +192,10 @@ class HeapAllocator {
 
                 auto ptr = freedChunks[bestFitIndex].ptr + sizeDelta;
                 freedChunks[bestFitIndex].size = sizeDelta;
+
+                if (!isAligned(ptr, requiredAlignment)) {
+                    return 0llu;
+                }
                 return ptr;
             }
         }
