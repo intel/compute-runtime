@@ -13,90 +13,74 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_debug_program.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 
 using namespace NEO;
-using namespace ::testing;
 
 typedef EnqueueHandlerTest EnqueueDebugKernelSimpleTest;
 
-class EnqueueDebugKernelTest : public ProgramSimpleFixture,
-                               public ::testing::Test {
+class EnqueueDebugKernelFixture {
   public:
-    void SetUp() override {
-        ProgramSimpleFixture::setUp();
-        device = pClDevice;
-        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(new SourceLevelDebugger(nullptr));
+    void setUp() {
+        clDevice = context.getDevice(0);
+        device = &clDevice->getDevice();
 
-        auto sipType = SipKernel::getSipKernelType(*pDevice);
-        SipKernel::initSipKernel(sipType, *pDevice);
+        device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->debugger.reset(new SourceLevelDebugger(nullptr));
 
-        if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
-            pDevice->deviceInfo.debuggerActive = true;
-            std::string filename;
-            std::string kernelOption(CompilerOptions::debugKernelEnable);
-            KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
+        auto sipType = SipKernel::getSipKernelType(*device);
+        SipKernel::initSipKernel(sipType, *device);
 
-            kbHelper = new KernelBinaryHelper(filename, false);
-            createProgramWithSource(
-                pContext,
-                "copybuffer.cl");
-            pProgram->enableKernelDebug();
+        if (device->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+            const_cast<DeviceInfo &>(device->getDeviceInfo()).debuggerActive = true;
 
-            cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+            program = std::make_unique<MockDebugProgram>(context.getDevices());
+            cl_int retVal = program->build(program->getDevices(), nullptr, false);
             ASSERT_EQ(CL_SUCCESS, retVal);
 
-            // create a kernel
-            pMultiDeviceKernel = MultiDeviceKernel::create(
-                pProgram,
-                pProgram->getKernelInfosForKernel("CopyBuffer"),
+            multiDeviceKernel = MultiDeviceKernel::create(
+                static_cast<NEO::Program *>(program.get()),
+                MockKernel::toKernelInfoContainer(*program->getKernelInfo("kernel", 0), device->getRootDeviceIndex()),
                 &retVal);
-            debugKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+            debugKernel = multiDeviceKernel->getKernel(device->getRootDeviceIndex());
 
             ASSERT_EQ(CL_SUCCESS, retVal);
             ASSERT_NE(nullptr, debugKernel);
-
-            cl_mem src = &bufferSrc;
-            cl_mem dst = &bufferDst;
-            retVal = debugKernel->setArg(
-                0,
-                sizeof(cl_mem),
-                &src);
-            retVal = debugKernel->setArg(
-                1,
-                sizeof(cl_mem),
-                &dst);
         }
     }
 
-    void TearDown() override {
-        if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
-            delete kbHelper;
-            pMultiDeviceKernel->release();
+    void tearDown() {
+        if (multiDeviceKernel != nullptr) {
+            multiDeviceKernel->release();
         }
-        ProgramSimpleFixture::tearDown();
     }
-    cl_device_id device;
+
+    std::unique_ptr<char[]> ssh = nullptr;
+    std::unique_ptr<MockDebugProgram> program = nullptr;
+    NEO::ClDevice *clDevice = nullptr;
+    NEO::Device *device = nullptr;
     Kernel *debugKernel = nullptr;
-    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
-    KernelBinaryHelper *kbHelper = nullptr;
+    MultiDeviceKernel *multiDeviceKernel = nullptr;
     MockContext context;
     MockBuffer bufferSrc;
     MockBuffer bufferDst;
 };
 
+using EnqueueDebugKernelTest = Test<EnqueueDebugKernelFixture>;
+
 HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSSHAndBtiAreCorrectlySet) {
-    if (pDevice->isDebuggerActive()) {
+    if (device->isDebuggerActive()) {
         using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-        std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
+        std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(&context, clDevice, 0));
 
         size_t gws[] = {1, 1, 1};
         auto &ssh = mockCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
@@ -118,10 +102,10 @@ HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSSHAndBtiAreCor
 }
 
 HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSurfaceStateForDebugSurfaceIsSetAtBindlessOffsetZero) {
-    if (pDevice->isDebuggerActive()) {
+    if (device->isDebuggerActive()) {
         using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-        std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
+        std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(&context, clDevice, 0));
 
         size_t gws[] = {1, 1, 1};
         auto &ssh = mockCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
@@ -219,9 +203,9 @@ HWTEST_F(EnqueueDebugKernelSimpleTest, givenKernelFromProgramWithoutDebugEnabled
 using ActiveDebuggerTest = EnqueueDebugKernelTest;
 
 HWTEST_F(ActiveDebuggerTest, givenKernelFromProgramWithoutDebugEnabledAndActiveDebuggerWhenEnqueuedThenDebugSurfaceIsSetup) {
-    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
-    std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
-    std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueHw<FamilyType>(&context, pClDevice, nullptr, false));
+    MockProgram program(&context, false, toClDeviceVector(*clDevice));
+    std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*device, &program));
+    std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueHw<FamilyType>(&context, clDevice, nullptr, false));
 
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);

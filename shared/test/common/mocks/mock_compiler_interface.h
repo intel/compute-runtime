@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -173,7 +173,7 @@ inline std::map<const Device *, MockCompilerInterface::fclDevCtxUptr> &MockCompi
 }
 
 struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
-    TranslationOutput::ErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &) override {
+    TranslationOutput::ErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override {
         buildOptions.clear();
         if ((input.apiOptions.size() > 0) && (input.apiOptions.begin() != nullptr)) {
             buildOptions.assign(input.apiOptions.begin(), input.apiOptions.end());
@@ -182,6 +182,19 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
         if ((input.internalOptions.size() > 0) && (input.internalOptions.begin() != nullptr)) {
             buildInternalOptions.assign(input.internalOptions.begin(), input.internalOptions.end());
         }
+
+        auto copy = [](TranslationOutput::MemAndSize &dst, TranslationOutput::MemAndSize &src) {
+            if (src.size > 0) {
+                dst.size = src.size;
+                dst.mem.reset(new char[src.size]);
+                std::memcpy(dst.mem.get(), src.mem.get(), src.size);
+            }
+        };
+        copy(out.debugData, output.debugData);
+        copy(out.intermediateRepresentation, output.intermediateRepresentation);
+        copy(out.deviceBinary, output.intermediateRepresentation);
+        out.intermediateCodeType = output.intermediateCodeType;
+
         return TranslationOutput::ErrorCode::Success;
     }
 
@@ -195,6 +208,7 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
         return this->MockCompilerInterfaceCaptureBuildOptions::compile(device, input, output);
     }
 
+    TranslationOutput output;
     std::string buildOptions;
     std::string buildInternalOptions;
 };
