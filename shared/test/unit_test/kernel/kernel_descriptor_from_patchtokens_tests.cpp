@@ -853,16 +853,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithByValueArgumentsThenKernelD
     EXPECT_EQ(paramNonArg.Offset, dst.payloadMappings.explicitArgs[2].as<NEO::ArgDescValue>().elements[0].offset);
     EXPECT_EQ(paramNonArg.DataSize, dst.payloadMappings.explicitArgs[2].as<NEO::ArgDescValue>().elements[0].size);
     EXPECT_EQ(paramNonArg.SourceOffset, dst.payloadMappings.explicitArgs[2].as<NEO::ArgDescValue>().elements[0].sourceOffset);
-
-    ASSERT_EQ(2U, dst.kernelMetadata.allByValueKernelArguments.size());
-    EXPECT_EQ(1U, dst.kernelMetadata.allByValueKernelArguments[0].argNum);
-    EXPECT_EQ(paramArg10.Offset, dst.kernelMetadata.allByValueKernelArguments[0].byValueElement.offset);
-    EXPECT_EQ(paramArg10.DataSize, dst.kernelMetadata.allByValueKernelArguments[0].byValueElement.size);
-    EXPECT_EQ(paramArg10.SourceOffset, dst.kernelMetadata.allByValueKernelArguments[0].byValueElement.sourceOffset);
-    EXPECT_EQ(1U, dst.kernelMetadata.allByValueKernelArguments[0].argNum);
-    EXPECT_EQ(paramArg11.Offset, dst.kernelMetadata.allByValueKernelArguments[1].byValueElement.offset);
-    EXPECT_EQ(paramArg11.DataSize, dst.kernelMetadata.allByValueKernelArguments[1].byValueElement.size);
-    EXPECT_EQ(paramArg11.SourceOffset, dst.kernelMetadata.allByValueKernelArguments[1].byValueElement.sourceOffset);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenKernelWithPointerArgumentAndMetadataThenKernelDescriptorIsProperlyPopulated) {

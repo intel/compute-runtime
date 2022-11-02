@@ -307,12 +307,6 @@ struct KernelDescriptor {
         std::string kernelLanguageAttributes;
         StringMap printfStringsMap;
 
-        struct ByValueArgument {
-            ArgDescValue::Element byValueElement;
-            uint16_t argNum;
-        };
-        StackVec<ByValueArgument, 32> allByValueKernelArguments;
-
         uint16_t compiledSubGroupsNumber = 0U;
         uint8_t requiredSubGroupSize = 0U;
     } kernelMetadata;

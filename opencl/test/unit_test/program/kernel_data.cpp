@@ -402,16 +402,6 @@ TEST_P(DataParameterTest, GivenTokenTypeWhenBuildingThenProgramIsCorrect) {
 
     buildAndDecode();
 
-    if (DATA_PARAMETER_KERNEL_ARGUMENT == GetParam()) {
-        ASSERT_NE(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
-        EXPECT_EQ(dataParameterToken.ArgumentNumber, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments[0].argNum);
-        EXPECT_EQ(dataParameterToken.Offset, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments[0].byValueElement.offset);
-        EXPECT_EQ(dataParameterToken.SourceOffset, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments[0].byValueElement.sourceOffset);
-        EXPECT_EQ(dataParameterToken.DataSize, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments[0].byValueElement.size);
-    } else {
-        EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
-    }
-
     if (pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.size() > 0) {
         EXPECT_EQ(dataParameterToken.ArgumentNumber + 1, pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.size());
         const auto &arg = pKernelInfo->getArgDescriptorAt(dataParameterToken.ArgumentNumber);
@@ -445,7 +435,6 @@ TEST_F(KernelDataParameterTest, GivenDataParameterBufferOffsetWhenBuildingThenPr
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.size());
     EXPECT_EQ_VAL(pKernelInfo->getArgDescriptorAt(1).as<ArgDescPointer>().bufferOffset, dataParameterToken.Offset)
 }
@@ -462,29 +451,8 @@ TEST_F(KernelDataParameterTest, givenDataParameterBufferStatefulWhenDecodingThen
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(1).as<ArgDescPointer>().isPureStateful());
-}
-
-TEST_F(KernelDataParameterTest, givenUnknownDataParameterWhenDecodedThenParameterIsIgnored) {
-    SPatchDataParameterBuffer dataParameterToken;
-    dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
-    dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
-    dataParameterToken.Type = NUM_DATA_PARAMETER_TOKENS + 1;
-    dataParameterToken.ArgumentNumber = 1;
-    dataParameterToken.DataSize = sizeof(uint32_t);
-    dataParameterToken.LocationIndex = 0x0;
-    dataParameterToken.LocationIndex2 = 0x0;
-    dataParameterToken.Offset = 0;
-    dataParameterToken.SourceOffset = 8;
-
-    pPatchList = &dataParameterToken;
-    patchListSize = dataParameterToken.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_VAL(0u, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
 }
 
 TEST_F(KernelDataTest, GivenDataParameterSumOfLocalMemoryObjectArgumentSizesWhenBuildingThenProgramIsCorrect) {
@@ -508,7 +476,6 @@ TEST_F(KernelDataTest, GivenDataParameterSumOfLocalMemoryObjectArgumentSizesWhen
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
     const auto &argAsPtr = pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescPointer>();
     EXPECT_EQ(alignment, argAsPtr.requiredSlmAlignment);
@@ -536,7 +503,6 @@ TEST_F(KernelDataTest, GivenDataParameterImageWidthWhenBuildingThenProgramIsCorr
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
     EXPECT_EQ(offsetImgWidth, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescImage>().metadataPayload.imgWidth);
 }
@@ -562,7 +528,6 @@ TEST_F(KernelDataTest, GivenDataParameterImageHeightWhenBuildingThenProgramIsCor
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetImgHeight, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescImage>().metadataPayload.imgHeight);
@@ -589,7 +554,6 @@ TEST_F(KernelDataTest, GivenDataParameterImageDepthWhenBuildingThenProgramIsCorr
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetImgDepth, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescImage>().metadataPayload.imgDepth);
@@ -616,7 +580,6 @@ TEST_F(KernelDataTest, GivenDataParameterImageNumSamplersWhenBuildingThenProgram
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetNumSamples, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescImage>().metadataPayload.numSamples);
@@ -643,7 +606,6 @@ TEST_F(KernelDataTest, GivenDataParameterImageNumMipLevelsWhenBuildingThenProgra
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetNumMipLevels, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescImage>().metadataPayload.numMipLevels);
@@ -678,7 +640,6 @@ TEST_F(KernelDataTest, givenFlatImageDataParamTokenWhenDecodingThenSetAllOffsets
 
         buildAndDecode();
 
-        EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
         ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
     };
 
@@ -716,7 +677,6 @@ TEST_F(KernelDataTest, GivenDataParameterImageDataTypeWhenBuildingThenProgramIsC
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetChannelDataType, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescImage>().metadataPayload.channelDataType);
@@ -743,7 +703,6 @@ TEST_F(KernelDataTest, GivenDataParameterImageChannelOrderWhenBuildingThenProgra
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetChannelOrder, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescImage>().metadataPayload.channelOrder);
@@ -770,7 +729,6 @@ TEST_F(KernelDataTest, GivenDataParameterImageArraySizeWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetImageArraySize, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescImage>().metadataPayload.arraySize);
@@ -797,7 +755,6 @@ TEST_F(KernelDataTest, GivenDataParameterWorkDimensionsWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetWorkDim, pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.workDim);
@@ -824,7 +781,6 @@ TEST_F(KernelDataTest, GivenDataParameterSimdSizeWhenBuildingThenProgramIsCorrec
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetSimdSize, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize);
@@ -851,7 +807,6 @@ TEST_F(KernelDataTest, GivenParameterPrivateMemoryStatelessSizeWhenBuildingThenP
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->getExplicitArgs().size());
 }
 
@@ -876,7 +831,6 @@ TEST_F(KernelDataTest, GivenDataParameterLocalMemoryStatelessWindowSizeWhenBuild
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->getExplicitArgs().size());
 }
 
@@ -901,7 +855,6 @@ TEST_F(KernelDataTest, GivenDataParameterLocalMemoryStatelessWindowStartAddressW
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->getExplicitArgs().size());
 }
 
@@ -926,7 +879,6 @@ TEST_F(KernelDataTest, GivenDataParameterNumWorkGroupsWhenBuildingThenProgramIsC
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetNumWorkGroups[argumentNumber], pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[argumentNumber]);
@@ -953,7 +905,6 @@ TEST_F(KernelDataTest, GivenDataParameterMaxWorkgroupSizeWhenBuildingThenProgram
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(offsetMaxWorkGroupSize, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize);
@@ -981,7 +932,6 @@ TEST_F(KernelDataTest, GivenDataParameterSamplerAddressModeWhenBuildingThenProgr
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(1U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->getArgDescriptorAt(0).as<ArgDescSampler>().metadataPayload.samplerAddressingMode);
@@ -1009,7 +959,6 @@ TEST_F(KernelDataTest, GivenDataParameterSamplerCoordinateSnapWaIsRequiredThenKe
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescSampler>().metadataPayload.samplerSnapWa);
@@ -1037,7 +986,6 @@ TEST_F(KernelDataTest, GivenDataParameterSamplerNormalizedCoordsThenKernelInfoIs
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->getArgDescriptorAt(argumentNumber).as<ArgDescSampler>().metadataPayload.samplerNormalizedCoords);
@@ -1075,7 +1023,6 @@ TEST_F(KernelDataTest, GivenDataParameterKernelArgumentWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    ASSERT_EQ(2U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(1u, pKernelInfo->getExplicitArgs().size());
 
     auto &elements = pKernelInfo->getArgDescriptorAt(0).as<ArgDescValue>().elements;
@@ -1184,7 +1131,6 @@ TEST_F(KernelDataTest, GivenDataParameterVmeMbBlockTypeWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argumentNumber).getExtendedTypeInfo().hasVmeExtendedDescriptor);
@@ -1214,7 +1160,6 @@ TEST_F(KernelDataTest, GivenDataParameterDataVmeSubpixelModeWhenBuildingThenProg
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argumentNumber).getExtendedTypeInfo().hasVmeExtendedDescriptor);
@@ -1244,7 +1189,6 @@ TEST_F(KernelDataTest, GivenDataParameterVmeSadAdjustModeWhenBuildingThenProgram
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argumentNumber).getExtendedTypeInfo().hasVmeExtendedDescriptor);
@@ -1274,7 +1218,6 @@ TEST_F(KernelDataTest, GivenDataParameterVmeSearchPathTypeWhenBuildingThenProgra
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->getExplicitArgs().size());
 
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argumentNumber).getExtendedTypeInfo().hasVmeExtendedDescriptor);
@@ -1295,7 +1238,6 @@ TEST_F(KernelDataTest, GivenPatchTokenStateSipWhenBuildingThenProgramIsCorrect) 
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->getExplicitArgs().size());
     EXPECT_EQ_VAL(token.SystemKernelOffset, pKernelInfo->systemKernelOffset);
 }

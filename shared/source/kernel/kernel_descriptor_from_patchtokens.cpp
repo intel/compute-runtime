@@ -317,10 +317,6 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
     newElement.sourceOffset = token.SourceOffset;
 
     dst.payloadMappings.explicitArgs[argNum].as<ArgDescValue>(true).elements.push_back(newElement);
-
-    if (token.Type == DATA_PARAMETER_KERNEL_ARGUMENT) {
-        dst.kernelMetadata.allByValueKernelArguments.push_back({newElement, static_cast<uint16_t>(argNum)});
-    }
 }
 
 inline CrossThreadDataOffset getOffset(const SPatchDataParameterBuffer *token) {

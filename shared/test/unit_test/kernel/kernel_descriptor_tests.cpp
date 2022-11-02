@@ -84,7 +84,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_TRUE(desc.kernelMetadata.kernelName.empty());
     EXPECT_TRUE(desc.kernelMetadata.kernelLanguageAttributes.empty());
     EXPECT_TRUE(desc.kernelMetadata.printfStringsMap.empty());
-    EXPECT_TRUE(desc.kernelMetadata.allByValueKernelArguments.empty());
     EXPECT_EQ(0U, desc.kernelMetadata.compiledSubGroupsNumber);
     EXPECT_EQ(0U, desc.kernelMetadata.requiredSubGroupSize);
     EXPECT_EQ(nullptr, desc.external.debugData.get());

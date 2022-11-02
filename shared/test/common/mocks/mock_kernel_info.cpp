@@ -63,10 +63,6 @@ void MockKernelInfo::addArgImmediate(uint32_t index, uint16_t size, CrossThreadD
 
     ArgDescValue::Element element{offset, size, sourceOffset};
     argAt(index).as<ArgDescValue>(true).elements.push_back(element);
-
-    if (isDataParameterKernelArgument) {
-        kernelDescriptor.kernelMetadata.allByValueKernelArguments.push_back({element, static_cast<uint16_t>(index)});
-    }
 }
 
 void MockKernelInfo::addArgLocal(uint32_t index, CrossThreadDataOffset slmOffset, uint8_t requiredSlmAlignment) {
