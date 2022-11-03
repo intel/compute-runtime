@@ -457,7 +457,6 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreat
     mock->ioctl_expected.gemClose = 2;
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.execbuffer2 = 0;
-    mock->ioctl_expected.contextGetParam = 5;
 
     // builtins kernels
     mock->ioctl_expected.gemUserptr += 5;

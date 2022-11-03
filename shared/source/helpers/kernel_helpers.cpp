@@ -48,7 +48,7 @@ uint32_t KernelHelper::getMaxWorkGroupCount(uint32_t simd, uint32_t availableThr
 }
 
 KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device) {
-    auto globalMemorySize = device->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
+    auto globalMemorySize = device->getDeviceInfo().globalMemSize;
     uint32_t sizes[] = {attributes.perHwThreadPrivateMemorySize,
                         attributes.perThreadScratchSize[0],
                         attributes.perThreadScratchSize[1]};
