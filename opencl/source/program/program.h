@@ -290,7 +290,7 @@ class Program : public BaseObject<_cl_program> {
     void notifyDebuggerWithDebugData(ClDevice *clDevice);
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
     Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
-    void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);

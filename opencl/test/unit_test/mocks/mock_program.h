@@ -194,6 +194,14 @@ class MockProgram : public Program {
         wasDebuggerNotified = true;
     }
 
+    void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) override {
+        wasPopulateZebinExtendedArgsMetadataOnceCalled = true;
+
+        if (callBasePopulateZebinExtendedArgsMetadataOnce) {
+            return Program::callPopulateZebinExtendedArgsMetadataOnce(rootDeviceIndex);
+        }
+    }
+
     std::vector<NEO::ExternalFunctionInfo> externalFunctions;
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
@@ -204,6 +212,8 @@ class MockProgram : public Program {
     bool wasProcessDebugDataCalled = false;
     bool wasCreateDebugZebinCalled = false;
     bool wasDebuggerNotified = false;
+    bool wasPopulateZebinExtendedArgsMetadataOnceCalled = false;
+    bool callBasePopulateZebinExtendedArgsMetadataOnce = false;
 };
 
 class MockProgramAppendKernelDebugOptions : public Program {
