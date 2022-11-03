@@ -1281,6 +1281,79 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMem
     EXPECT_EQ(expectedOutput, output);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogetherExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledOnlyThenAllocationHappens, IsAtLeastSkl) {
+
+    auto devInfo = device->getNEODevice()->getDeviceInfo();
+    auto kernelsNb = 2u;
+    uint32_t margin1KB = (1 << 10);
+    auto overAllocMinSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) + margin1KB;
+    auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
+
+    auto proxyModuleImpl = static_cast<ModuleFixture::ProxyModuleImp *>(this->module.get());
+    auto &kernelImmDatas = proxyModuleImpl->getKernelImmDatas();
+    for (size_t i = 0; i < kernelsNb; i++) {
+        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
+        kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = overAllocMinSize;
+        kernelDesc.kernelAttributes.flags.usesPrintf = false;
+        kernelDesc.kernelMetadata.kernelName = kernelNames[i];
+    }
+
+    EXPECT_FALSE(this->module->shouldAllocatePrivateMemoryPerDispatch());
+    this->module->checkIfPrivateMemoryPerDispatchIsNeeded();
+    EXPECT_TRUE(this->module->shouldAllocatePrivateMemoryPerDispatch());
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList->device = this->module->getDevice();
+    auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
+    memoryMgr->turnOnFakingBigAllocations();
+
+    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::Kernel>>>();
+    for (size_t i = 0; i < kernelsNb; i++) {
+        EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), i);
+        kernels.push_back(this->createKernelWithName(kernelNames[i]));
+        // This function is called by appendLaunchKernelWithParams
+        pCommandList->allocateKernelPrivateMemoryIfNeeded(kernels[i].get(),
+                                                          kernels[i]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+        EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), i + 1);
+    }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledThenNoAllocationIsDone, IsAtLeastSkl) {
+
+    auto devInfo = device->getNEODevice()->getDeviceInfo();
+    auto kernelsNb = 2u;
+    uint32_t margin128KB = 131072u;
+    auto underAllocSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) - margin128KB;
+    auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
+
+    auto proxyModuleImpl = static_cast<ModuleFixture::ProxyModuleImp *>(this->module.get());
+    auto &kernelImmDatas = proxyModuleImpl->getKernelImmDatas();
+    for (size_t i = 0; i < kernelsNb; i++) {
+        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
+        kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = underAllocSize;
+        kernelDesc.kernelAttributes.flags.usesPrintf = false;
+        kernelDesc.kernelMetadata.kernelName = kernelNames[i];
+    }
+
+    EXPECT_FALSE(this->module->shouldAllocatePrivateMemoryPerDispatch());
+    this->module->checkIfPrivateMemoryPerDispatchIsNeeded();
+    EXPECT_FALSE(this->module->shouldAllocatePrivateMemoryPerDispatch());
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList->device = this->module->getDevice();
+    auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
+    memoryMgr->turnOnFakingBigAllocations();
+
+    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::Kernel>>>();
+    for (size_t i = 0; i < kernelsNb; i++) {
+        EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
+        kernels.push_back(this->createKernelWithName(kernelNames[i]));
+        // This function is called by appendLaunchKernelWithParams
+        pCommandList->allocateKernelPrivateMemoryIfNeeded(kernels[i].get(),
+                                                          kernels[i]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+        EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
+    }
+}
 HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);

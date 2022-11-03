@@ -204,6 +204,28 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 };
 
 struct ModuleFixture : public DeviceFixture {
+
+    struct ProxyModuleImp : public ModuleImp {
+        using ModuleImp::ModuleImp;
+
+        std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmDatas() {
+            return kernelImmDatas;
+        }
+
+        static Module *create(L0::Device *device, const ze_module_desc_t *desc,
+                              ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
+            auto module = new ProxyModuleImp(device, moduleBuildLog, type);
+
+            *result = module->initialize(desc, device->getNEODevice());
+            if (*result != ZE_RESULT_SUCCESS) {
+                module->destroy();
+                return nullptr;
+            }
+
+            return module;
+        }
+    };
+
     void setUp() {
 
         DeviceFixture::setUp();
@@ -221,7 +243,7 @@ struct ModuleFixture : public DeviceFixture {
 
         ModuleBuildLog *moduleBuildLog = nullptr;
         ze_result_t result = ZE_RESULT_SUCCESS;
-        module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type, &result));
+        module.reset(ProxyModuleImp::create(device, &moduleDesc, moduleBuildLog, type, &result));
     }
 
     void createKernel() {
@@ -231,6 +253,16 @@ struct ModuleFixture : public DeviceFixture {
         kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
         kernel->module = module.get();
         kernel->initialize(&desc);
+    }
+
+    std::unique_ptr<WhiteBox<::L0::Kernel>> createKernelWithName(std::string name) {
+        ze_kernel_desc_t desc = {};
+        desc.pKernelName = name.c_str();
+
+        auto kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+        kernel->module = module.get();
+        kernel->initialize(&desc);
+        return kernel;
     }
 
     void tearDown() {

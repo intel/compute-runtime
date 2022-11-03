@@ -155,6 +155,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
 
     kernel->patchGlobalOffset();
+
+    this->allocateKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
+
     if (launchParams.isIndirect && threadGroupDimensions) {
         prepareIndirectParams(threadGroupDimensions);
     }

@@ -30,6 +30,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
     using BaseClass::addFlushRequiredCommand;
+    using BaseClass::allocateKernelPrivateMemoryIfNeeded;
     using BaseClass::appendBlitFill;
     using BaseClass::appendCopyImageBlit;
     using BaseClass::appendEventForProfiling;
@@ -105,6 +106,10 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
         appendEventKernelIndirectEventHandleValue = hEvent;
         return BaseClass::appendLaunchKernelIndirect(kernelHandle, pDispatchArgumentsBuffer,
                                                      hEvent, numWaitEvents, phWaitEvents);
+    }
+
+    size_t getOwnedPrivateAllocationsSize() {
+        return this->ownedPrivateAllocations.size();
     }
 
     CmdListKernelLaunchParams usedKernelLaunchParams;

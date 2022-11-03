@@ -294,6 +294,7 @@ struct CommandListCoreFamily : CommandListImp {
         return (this->pipeControlMultiKernelEventSync && splitKernel) ||
                compactL3FlushEvent(dcFlush);
     }
+    void allocateKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
 
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;

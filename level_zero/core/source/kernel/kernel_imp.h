@@ -154,6 +154,10 @@ struct KernelImp : Kernel {
         return kernelHasIndirectAccess;
     }
 
+    const Module &getParentModule() const {
+        return *this->module;
+    }
+
     NEO::GraphicsAllocation *allocatePrivateMemoryGraphicsAllocation() override;
     void patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) override;
 

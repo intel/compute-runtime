@@ -46,6 +46,7 @@
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/kernel/kernel.h"
+#include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
 
 #include "CL/cl.h"
@@ -2706,6 +2707,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
             args);
     }
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::allocateKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
+    L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
+    if (sizePerHwThread != 0U && kernelImp->getParentModule().shouldAllocatePrivateMemoryPerDispatch()) {
+        auto privateMemoryGraphicsAllocation = kernel->allocatePrivateMemoryGraphicsAllocation();
+        kernel->patchCrossthreadDataWithPrivateAllocation(privateMemoryGraphicsAllocation);
+        this->commandContainer.addToResidencyContainer(privateMemoryGraphicsAllocation);
+        this->ownedPrivateAllocations.push_back(privateMemoryGraphicsAllocation);
+    }
 }
 
 } // namespace L0

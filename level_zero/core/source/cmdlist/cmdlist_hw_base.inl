@@ -63,13 +63,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     kernel->patchGlobalOffset();
 
-    if (kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize != 0U &&
-        nullptr == kernel->getPrivateMemoryGraphicsAllocation()) {
-        auto privateMemoryGraphicsAllocation = kernel->allocatePrivateMemoryGraphicsAllocation();
-        kernel->patchCrossthreadDataWithPrivateAllocation(privateMemoryGraphicsAllocation);
-        this->commandContainer.addToResidencyContainer(privateMemoryGraphicsAllocation);
-        this->ownedPrivateAllocations.push_back(privateMemoryGraphicsAllocation);
-    }
+    this->allocateKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 
     if (!launchParams.isIndirect) {
         kernel->setGroupCount(threadGroupDimensions->groupCountX,
