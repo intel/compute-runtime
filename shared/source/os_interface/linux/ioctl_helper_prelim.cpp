@@ -31,8 +31,11 @@ namespace NEO {
 
 IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelper(drmArg) {
     auto hwHelper = HwInfoConfig::get(this->drm.getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
-    if (hwHelper && hwHelper->isNonBlockingGpuSubmissionSupported()) {
-        handleExecBufferInNonBlockMode = true;
+    handleExecBufferInNonBlockMode = hwHelper && hwHelper->isNonBlockingGpuSubmissionSupported();
+    if (DebugManager.flags.ForceNonblockingExecbufferCalls.get() != -1) {
+        handleExecBufferInNonBlockMode = DebugManager.flags.ForceNonblockingExecbufferCalls.get();
+    }
+    if (handleExecBufferInNonBlockMode) {
         auto fileDescriptor = this->drm.getFileDescriptor();
         SysCalls::fcntl(fileDescriptor, F_SETFL, SysCalls::fcntl(fileDescriptor, F_GETFL) | O_NONBLOCK);
     }

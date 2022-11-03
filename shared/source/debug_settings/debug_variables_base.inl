@@ -223,6 +223,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceStatelessMocsEncryptionBit, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, CopyHostPtrOnCpu, -1, "-1: default, 0: disable, 1:enable, In clCreateBuffer with CL_MEM_COPY_HOST_PTR, copy memory using locked ptr on cpu")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceZeDeviceCanAccessPerReturnValue, -1, "-1: default, 0: zeDeviceCanAccessPeer always return false 1: zeDeviceCanAccessPeer always return true")
 DECLARE_DEBUG_VARIABLE(int32_t, AdjustThreadGroupDispatchSize, -1, "-1: default, 0: do not adjust thread group dispatch size 1: adjust thread group dispatch size (PVC)")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceNonblockingExecbufferCalls, -1, "-1: default, 0: make execbuffer call blocking, 1: make execbuffer call nonblocking. Supported only in prelim i915 kernels.")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

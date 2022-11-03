@@ -465,3 +465,46 @@ HWTEST2_F(IoctlPrelimHelperTests, givenNonXeHpcWhenCreatingIoctlHelperThenProper
     EXPECT_EQ(0, SysCalls::getFileDescriptorFlagsCalled);
     EXPECT_EQ(0, SysCalls::setFileDescriptorFlagsCalled);
 }
+
+TEST_F(IoctlPrelimHelperTests, givenDisabledForceNonblockingExecbufferCallsFlagWhenCreatingIoctlHelperThenExecBufferIsHandledBlocking) {
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.ForceNonblockingExecbufferCalls.set(0);
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+
+    VariableBackup<decltype(SysCalls::getFileDescriptorFlagsCalled)> backupGetFlags(&SysCalls::getFileDescriptorFlagsCalled, 0);
+    VariableBackup<decltype(SysCalls::setFileDescriptorFlagsCalled)> backupSetFlags(&SysCalls::setFileDescriptorFlagsCalled, 0);
+    VariableBackup<decltype(SysCalls::passedFileDescriptorFlagsToSet)> backupPassedFlags(&SysCalls::passedFileDescriptorFlagsToSet, 0);
+
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    EXPECT_EQ(0, SysCalls::getFileDescriptorFlagsCalled);
+    EXPECT_EQ(0, SysCalls::setFileDescriptorFlagsCalled);
+
+    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::GemExecbuffer2));
+    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::GemVmBind));
+    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::GemExecbuffer2));
+}
+
+TEST_F(IoctlPrelimHelperTests, givenEnabledForceNonblockingExecbufferCallsFlagWhenCreatingIoctlHelperThenExecBufferIsHandledNonBlocking) {
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.ForceNonblockingExecbufferCalls.set(1);
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+
+    VariableBackup<decltype(SysCalls::getFileDescriptorFlagsCalled)> backupGetFlags(&SysCalls::getFileDescriptorFlagsCalled, 0);
+    VariableBackup<decltype(SysCalls::setFileDescriptorFlagsCalled)> backupSetFlags(&SysCalls::setFileDescriptorFlagsCalled, 0);
+    VariableBackup<decltype(SysCalls::passedFileDescriptorFlagsToSet)> backupPassedFlags(&SysCalls::passedFileDescriptorFlagsToSet, 0);
+
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    EXPECT_EQ(1, SysCalls::getFileDescriptorFlagsCalled);
+    EXPECT_EQ(1, SysCalls::setFileDescriptorFlagsCalled);
+    EXPECT_EQ((O_RDWR | O_NONBLOCK), SysCalls::passedFileDescriptorFlagsToSet);
+
+    EXPECT_FALSE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::GemExecbuffer2));
+    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::GemVmBind));
+    EXPECT_TRUE(ioctlHelper.checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::GemExecbuffer2));
+}
