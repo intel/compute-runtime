@@ -280,20 +280,9 @@ TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSub
         sizeof(size_t),
         paramValue,
         &paramValueSizeRet);
-
     EXPECT_EQ(CL_SUCCESS, retVal);
-
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-
-    size_t requiredSubGroupSize = 0;
-    auto start = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find("intel_reqd_sub_group_size(");
-    if (start != std::string::npos) {
-        start += strlen("intel_reqd_sub_group_size(");
-        auto stop = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find(")", start);
-        requiredSubGroupSize = stoi(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.substr(start, stop - start));
-    }
-
-    EXPECT_EQ(paramValue[0], requiredSubGroupSize);
+    EXPECT_EQ(pKernel->getDescriptor().kernelMetadata.requiredSubGroupSize, paramValue[0]);
 }
 
 TEST_F(KernelSubGroupInfoTest, GivenNullKernelWhenGettingSubGroupInfoThenInvalidKernelErrorIsReturned) {
