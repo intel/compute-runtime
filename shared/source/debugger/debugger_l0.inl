@@ -41,7 +41,7 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
                             sbaCanonized.IndirectObjectBaseAddress, sbaCanonized.InstructionBaseAddress, sbaCanonized.BindlessSurfaceStateBaseAddress);
 
     if (singleAddressSpaceSbaTracking) {
-        programSbaTrackingCommandsSingleAddressSpace(cmdStream, sba);
+        programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaCanonized);
     } else {
         if (sbaCanonized.GeneralStateBaseAddress) {
             auto generalStateBaseAddress = sbaCanonized.GeneralStateBaseAddress;
