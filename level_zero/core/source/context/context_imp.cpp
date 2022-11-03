@@ -566,6 +566,10 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     size_t numEvents = 0;
     memcpy_s(&numEvents, sizeof(numEvents), hIpc.data + sizeof(int), sizeof(numEvents));
 
+    ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    desc.count = static_cast<uint32_t>(numEvents);
+    auto eventPool = new EventPoolImp(&desc);
+
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     memcpy_s(&rootDeviceIndex, sizeof(rootDeviceIndex),
              hIpc.data + sizeof(int) + sizeof(numEvents), sizeof(rootDeviceIndex));
@@ -590,11 +594,10 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
                                                                                              true);
 
     if (alloc == nullptr) {
+        delete eventPool;
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    ze_event_pool_desc_t desc = {};
-    auto eventPool = new EventPoolImp(&desc);
     eventPool->context = this;
     eventPool->eventPoolAllocations =
         std::make_unique<NEO::MultiGraphicsAllocation>(static_cast<uint32_t>(this->rootDeviceIndices.size()));

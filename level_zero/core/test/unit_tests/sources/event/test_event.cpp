@@ -387,9 +387,10 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsC
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    L0::EventPool *ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
+    auto ipcEventPool = static_cast<L0::EventPoolImp *>(L0::EventPool::fromHandle(ipcEventPoolHandle));
 
     EXPECT_EQ(ipcEventPool->getEventSize(), eventPool->getEventSize());
+    EXPECT_EQ(numEvents, static_cast<uint32_t>(ipcEventPool->getNumEvents()));
 
     res = ipcEventPool->closeIpcHandle();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
