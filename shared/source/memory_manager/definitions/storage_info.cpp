@@ -42,15 +42,12 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
                                           sizeof(storageInfo.resourceTag));
 
     switch (properties.allocationType) {
+    case AllocationType::CONSTANT_SURFACE:
     case AllocationType::KERNEL_ISA:
     case AllocationType::KERNEL_ISA_INTERNAL:
     case AllocationType::DEBUG_MODULE_AREA: {
-        auto placeIsaOnMultiTile = (properties.subDevicesBitfield.count() != 1);
-
-        if (DebugManager.flags.MultiTileIsaPlacement.get() != -1) {
-            placeIsaOnMultiTile = !!DebugManager.flags.MultiTileIsaPlacement.get();
-        }
-        if (placeIsaOnMultiTile) {
+        auto placeAllocOnMultiTile = (properties.subDevicesBitfield.count() != 1);
+        if (placeAllocOnMultiTile) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
             storageInfo.tileInstanced = true;
@@ -182,7 +179,20 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             UNRECOVERABLE_IF(storageInfo.memoryBanks.none());
         }
     }
-
+    if (DebugManager.flags.ForceMultiTileAllocPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceMultiTileAllocPlacement.get()) {
+            storageInfo.cloningOfPageTables = false;
+            storageInfo.memoryBanks = allTilesValue;
+            storageInfo.tileInstanced = true;
+        }
+    }
+    if (DebugManager.flags.ForceSingleTileAllocPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSingleTileAllocPlacement.get()) {
+            storageInfo.cloningOfPageTables = true;
+            storageInfo.memoryBanks = preferredTile;
+            storageInfo.tileInstanced = false;
+        }
+    }
     return storageInfo;
 }
 uint32_t StorageInfo::getNumBanks() const {

@@ -1576,9 +1576,14 @@ struct DrmMemoryManagerToTestCopyMemoryToAllocation : public DrmMemoryManager {
     }
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {
     }
+    bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) override {
+        copyMemoryToAllocationBanksCalled++;
+        return DrmMemoryManager::copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, handleMask);
+    }
     std::array<std::unique_ptr<uint8_t[]>, 4> lockedLocalMemory;
     uint32_t deviceIndex = 3;
     size_t lockedLocalMemorySize = 0;
+    uint32_t copyMemoryToAllocationBanksCalled = 0;
 };
 
 TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationReturnsSuccessThenAllocationIsFilledWithCorrectData) {
@@ -1606,6 +1611,33 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWh
 
     EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManager.lockedLocalMemory[0].get(), offset), dataToCopy.data(), dataToCopy.size()));
 
+    drmMemoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWhenCopyMemoryToMultiTileAllocationThenCallCopyMemoryToAllocationBanks) {
+    size_t sourceAllocationSize = MemoryConstants::pageSize;
+    size_t destinationAllocationSize = sourceAllocationSize;
+
+    DrmMemoryManagerToTestCopyMemoryToAllocation drmMemoryManager(*executionEnvironment, true, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = dataToCopy.size();
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::CONSTANT_SURFACE;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks = 0b11;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    auto allocation = drmMemoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    char data = 0;
+    allocation->setCpuPtrAndGpuAddress(&data, allocation->getGpuAddress());
+
+    auto ret = drmMemoryManager.copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(1u, drmMemoryManager.copyMemoryToAllocationBanksCalled);
     drmMemoryManager.freeGraphicsMemory(allocation);
 }
 
