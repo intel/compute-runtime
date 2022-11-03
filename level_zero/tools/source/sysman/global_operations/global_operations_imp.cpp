@@ -73,7 +73,10 @@ void GlobalOperationsImp::init() {
     pOsGlobalOperations->getDriverVersion(sysmanProperties.driverVersion);
     pOsGlobalOperations->getModelName(sysmanProperties.modelName);
     pOsGlobalOperations->getBrandName(sysmanProperties.brandName);
-    pOsGlobalOperations->getBoardNumber(sysmanProperties.boardNumber);
+    memset(sysmanProperties.boardNumber, 0, ZES_STRING_PROPERTY_SIZE);
+    if (!pOsGlobalOperations->getBoardNumber(sysmanProperties.boardNumber)) {
+        memcpy_s(sysmanProperties.boardNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
+    }
     memset(sysmanProperties.serialNumber, 0, ZES_STRING_PROPERTY_SIZE);
     if (!pOsGlobalOperations->getSerialNumber(sysmanProperties.serialNumber)) {
         memcpy_s(sysmanProperties.serialNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);

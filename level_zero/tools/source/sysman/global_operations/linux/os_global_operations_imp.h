@@ -18,7 +18,7 @@ struct Device;
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMovableClass {
   public:
     bool getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
+    bool getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
     void getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) override;
@@ -54,7 +54,7 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     static const std::string srcVersionFile;
     static const std::string agamaVersionFile;
     static const std::string ueventWedgedFile;
-    static bool readSerialNumber(std::string_view telemDir, std::array<char, NEO::PmtUtil::guidStringSize> &guidString, const uint64_t offset, char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]);
+    bool readTelemData(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE], const ssize_t bytesToRead, const std::string &key);
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex = 0u;

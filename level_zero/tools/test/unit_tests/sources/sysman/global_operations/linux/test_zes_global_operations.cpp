@@ -236,16 +236,16 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesGlobal
     pLinuxSysmanImp->pDrm = pDrmMock.get();
 
     zes_device_properties_t properties;
-    const std::string expectedSerialNumber("0x3e8c9dfe1c2e4d5c");
+    const std::string expectedData("0x3e8c9dfe1c2e4d5c");
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(properties.numSubdevices, 0u);
-    EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
+    EXPECT_TRUE(0 == expectedData.compare(properties.boardNumber));
     EXPECT_TRUE(0 == vendorIntel.compare(properties.brandName));
     EXPECT_TRUE(0 == driverVersion.compare(properties.driverVersion));
     EXPECT_TRUE(0 == expectedModelName.compare(properties.modelName));
-    EXPECT_TRUE(0 == expectedSerialNumber.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == expectedData.compare(properties.serialNumber));
     EXPECT_TRUE(0 == vendorIntel.compare(properties.vendorName));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }

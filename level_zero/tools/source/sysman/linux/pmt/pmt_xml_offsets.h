@@ -240,5 +240,6 @@ const std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap 
       {"VF1_HBM3_READ", 360},
       {"VF1_HBM3_WRITE", 364}}},
     {"0x41fe79a5", // For PVC root device
-     {{"PPIN", 152}}}};
+     {{"PPIN", 152},
+      {"BoardNumber", 72}}}};
 } // namespace L0

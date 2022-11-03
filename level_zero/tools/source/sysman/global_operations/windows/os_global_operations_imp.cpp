@@ -17,7 +17,8 @@ bool WddmGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PR
     return false;
 }
 
-void WddmGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
+bool WddmGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
+    return false;
 }
 
 void WddmGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) {

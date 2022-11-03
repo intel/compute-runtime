@@ -42,25 +42,7 @@ static const std::map<int, zes_engine_type_flags_t> engineMap = {
     {3, ZES_ENGINE_TYPE_FLAG_MEDIA},
     {4, ZES_ENGINE_TYPE_FLAG_COMPUTE}};
 
-bool LinuxGlobalOperationsImp::readSerialNumber(std::string_view telemDir, std::array<char, NEO::PmtUtil::guidStringSize> &guidString, const uint64_t offset, char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
-    std::map<std::string, uint64_t> keyOffsetMap;
-    if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::getKeyOffsetMap(guidString.data(), keyOffsetMap)) {
-        auto ppinOffset = keyOffsetMap.find("PPIN");
-        if (ppinOffset != keyOffsetMap.end()) {
-            uint64_t value;
-            ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), ppinOffset->second + offset, &value);
-            if (bytesRead == sizeof(uint64_t)) {
-                std::ostringstream serialNumberString;
-                serialNumberString << std::hex << std::showbase << value;
-                memcpy_s(serialNumber, ZES_STRING_PROPERTY_SIZE, serialNumberString.str().c_str(), serialNumberString.str().size());
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
+bool LinuxGlobalOperationsImp::readTelemData(char (&data)[ZES_STRING_PROPERTY_SIZE], const ssize_t bytesToRead, const std::string &key) {
     auto pDrm = &pLinuxSysmanImp->getDrm();
     std::optional<std::string> rootPath = NEO::getPciRootPath(pDrm->getFileDescriptor());
     if (!rootPath.has_value()) {
@@ -69,15 +51,14 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
 
     std::map<uint32_t, std::string> telemPciPath;
     NEO::PmtUtil::getTelemNodesInPciPath(rootPath.value(), telemPciPath);
-
     if (telemPciPath.size() < pDevice->getNEODevice()->getNumSubDevices() + 1) {
         return false;
     }
 
     auto iterator = telemPciPath.begin();
-    std::string telemDir = iterator->second;
+    std::string_view telemDir = iterator->second;
 
-    std::array<char, NEO::PmtUtil::guidStringSize> guidString;
+    std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
     if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
         return false;
     }
@@ -87,10 +68,27 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
         return false;
     }
 
-    if (!LinuxGlobalOperationsImp::readSerialNumber(telemDir, guidString, offset, serialNumber)) {
+    std::map<std::string, uint64_t> keyOffsetMap;
+    if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::getKeyOffsetMap(guidString.data(), keyOffsetMap)) {
+        auto keyOffset = keyOffsetMap.find(key.c_str());
+        if (keyOffset != keyOffsetMap.end()) {
+            uint64_t value;
+            ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), bytesToRead, keyOffset->second + offset, &value);
+            if (bytesRead == bytesToRead) {
+                std::ostringstream telemDataString;
+                telemDataString << std::hex << std::showbase << value;
+                memcpy_s(data, ZES_STRING_PROPERTY_SIZE, telemDataString.str().c_str(), telemDataString.str().size());
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
+    if (!LinuxGlobalOperationsImp::readTelemData(serialNumber, sizeof(uint64_t), "PPIN")) {
         return false;
     }
-
     return true;
 }
 
@@ -98,8 +96,13 @@ Device *LinuxGlobalOperationsImp::getDevice() {
     return pDevice;
 }
 
-void LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
-    std::strncpy(boardNumber, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
+    const ssize_t boardNumberSize = 32;
+    if (!LinuxGlobalOperationsImp::readTelemData(boardNumber, boardNumberSize, "BoardNumber")) {
+        return false;
+    }
+
+    return true;
 }
 
 void LinuxGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) {
