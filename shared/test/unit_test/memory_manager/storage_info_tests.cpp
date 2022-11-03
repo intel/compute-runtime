@@ -38,14 +38,14 @@ struct MultiDeviceStorageInfoTest : public ::testing::Test {
     MockMemoryManager *memoryManager;
 };
 
-TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForMultiTileIsaPlacementWhenCreatingStorageInfoForKernelIsaThenAllMemoryBanksAreOnAndPageTableClonningIsNotRequired) {
+TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForMultiTileAllocPlacementWhenCreatingStorageInfoForAllocationThenAllMemoryBanksAreOnAndPageTableClonningIsNotRequired) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MultiTileIsaPlacement.set(1);
+    DebugManager.flags.MultiTileAllocPlacement.set(1);
 
-    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType allocTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL, AllocationType::CONSTANT_SURFACE};
 
     for (uint32_t i = 0; i < 2; i++) {
-        AllocationProperties properties{mockRootDeviceIndex, false, 0u, isaTypes[i], false, false, singleTileMask};
+        AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocTypes[i], false, false, singleTileMask};
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
         EXPECT_FALSE(storageInfo.cloningOfPageTables);
         EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
@@ -61,12 +61,12 @@ TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForMultiTileIsaPlacementWhenC
     }
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenDefaultFlagForMultiTileIsaPlacementWhenCreatingStorageInfoForKernelIsaThenSingleMemoryBanksIsOnAndPageTableClonningIsRequired) {
+TEST_F(MultiDeviceStorageInfoTest, givenDefaultFlagForMultiTileAllocPlacementWhenCreatingStorageInfoForAllocationThenSingleMemoryBanksIsOnAndPageTableClonningIsRequired) {
 
-    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType allocTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL, AllocationType::CONSTANT_SURFACE};
 
     for (uint32_t i = 0; i < 2; i++) {
-        AllocationProperties properties{mockRootDeviceIndex, false, 0u, isaTypes[i], false, false, singleTileMask};
+        AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocTypes[i], false, false, singleTileMask};
 
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
         EXPECT_TRUE(storageInfo.cloningOfPageTables);
@@ -83,14 +83,14 @@ TEST_F(MultiDeviceStorageInfoTest, givenDefaultFlagForMultiTileIsaPlacementWhenC
     }
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenDisabledFlagForMultiTileIsaPlacementWhenCreatingStorageInfoForKernelIsaThenSingleMemoryBanksIsOnAndPageTableClonningIsRequired) {
+TEST_F(MultiDeviceStorageInfoTest, givenDisabledFlagForMultiTileAllocPlacementWhenCreatingStorageInfoForAllocationThenSingleMemoryBanksIsOnAndPageTableClonningIsRequired) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MultiTileIsaPlacement.set(0);
+    DebugManager.flags.MultiTileAllocPlacement.set(0);
 
-    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType allocTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL, AllocationType::CONSTANT_SURFACE};
 
     for (uint32_t i = 0; i < 2; i++) {
-        AllocationProperties properties{mockRootDeviceIndex, false, 0u, isaTypes[i], false, false, singleTileMask};
+        AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocTypes[i], false, false, singleTileMask};
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
         EXPECT_TRUE(storageInfo.cloningOfPageTables);
         EXPECT_EQ(singleTileMask, storageInfo.memoryBanks.to_ulong());

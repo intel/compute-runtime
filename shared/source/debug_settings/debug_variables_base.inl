@@ -143,7 +143,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceStatelessL1CachingPolicy, -1, "-1: default,
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMemoryBankIndexOverride, -1, "-1: default, 0: disable, 1:enable, Force index=1 of memory bank for XEHP")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePrivateScratchSlot1, -1, "-1: default, 0: disable, 1: enable Allows using private scratch space")
 DECLARE_DEBUG_VARIABLE(int32_t, DisablePipeControlPrecedingPostSyncCommand, -1, "-1 default - disabled adding PIPE_CONTROL, 0 - disabled adding PIPE_CONTROL, 1 - enabled adding PIPE_CONTROL")
-DECLARE_DEBUG_VARIABLE(int32_t, MultiTileIsaPlacement, -1, "Place ISA allocation on multi tiles, -1 - default, 0 - disabled, 1 - enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, MultiTileAllocPlacement, -1, "Place ISA or CONSTANT_SURFACE allocation on multi tiles, -1 - default, 0 - disabled, 1 - enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, FormatForStatelessCompressionWithUnifiedMemory, 0xF, "Format for stateless compression with unified memory")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMultiGpuPartialWritesInComputeMode, -1, "-1: default - 0 for multiOsContext capable, 0: program value 0 in MultiGpuPartialWrites bit in STATE_COMPUTE_MODE, 1: program value 1 in MultiGpuPartialWrites bit in STATE_COMPUTE_MODE,")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMultiGpuPartialWrites, -1, "-1: default - 0 for multiOsContext capable, 0: program value 0 in MultiGpuPartialWrites controls 1: program value 1 in MultiGpuPartialWrites controls")
