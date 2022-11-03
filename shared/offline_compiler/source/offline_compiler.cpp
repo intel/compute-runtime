@@ -1178,7 +1178,7 @@ void OfflineCompiler::writeOutAllFiles() {
     if (!elfBinary.empty()) {
         std::string elfOutputFile;
         if (outputNoSuffix) {
-            elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin");
+            elfOutputFile = generateFilePath(outputDirectory, fileBase, "");
         } else {
             elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin") + generateOptsSuffix();
         }
