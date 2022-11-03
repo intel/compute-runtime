@@ -297,7 +297,6 @@ void DebugSessionLinux::createTileSessionsIfEnabled() {
     auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
     if (numTiles > 0 && tileAttachEnabled) {
         tileSessions.resize(numTiles);
-        zet_debug_config_t config = {};
 
         for (uint32_t i = 0; i < numTiles; i++) {
             auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();

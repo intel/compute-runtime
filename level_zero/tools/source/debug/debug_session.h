@@ -46,6 +46,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     MOCKABLE_VIRTUAL bool areRequestedThreadsStopped(ze_device_thread_t thread);
 
     Device *getConnectedDevice() { return connectedDevice; }
+    zet_debug_config_t getDebugConfig() { return config; }
 
     static bool isThreadAll(ze_device_thread_t thread) {
         return thread.slice == UINT32_MAX && thread.subslice == UINT32_MAX && thread.eu == UINT32_MAX && thread.thread == UINT32_MAX;
@@ -129,6 +130,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     NEO::DebugAreaHeader debugArea;
 
     Device *connectedDevice = nullptr;
+    const zet_debug_config_t config;
     std::map<uint64_t, std::unique_ptr<EuThread>> allThreads;
     bool attached = false;
 };

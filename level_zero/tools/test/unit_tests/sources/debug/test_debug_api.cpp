@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -38,6 +39,7 @@ struct DebugApiFixture : public DeviceFixture {
 };
 
 using DebugApiTest = Test<DebugApiFixture>;
+using MultiTileDebugApiTest = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(DebugApiTest, givenDeviceWhenGettingDebugPropertiesThenNoFlagIsSet) {
     zet_device_debug_properties_t debugProperties = {};
@@ -58,6 +60,85 @@ TEST_F(DebugApiTest, givenDeviceWhenCallingDebugAttachThenErrorIsReturned) {
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(nullptr, debugSession);
+}
+
+TEST_F(DebugApiTest, givenDebugAttachSupportedInOsWhenCallingDebugAttachThenSuccessIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto sessionMock = new MockDebugSession(config, device, true);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    zet_debug_session_handle_t debugSession = nullptr;
+    auto result = zetDebugAttach(device->toHandle(), &config, &debugSession);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    zet_debug_session_handle_t debugSession2 = nullptr;
+    result = zetDebugAttach(device->toHandle(), &config, &debugSession2);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(debugSession, debugSession2);
+}
+
+TEST_F(DebugApiTest, givenDebugSessionWithPidWhenCallingDebugAttachForOtherPidThenErrorUnsupportedIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto sessionMock = new MockDebugSession(config, device, true);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    zet_debug_session_handle_t debugSession = nullptr;
+    auto result = zetDebugAttach(device->toHandle(), &config, &debugSession);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    zet_debug_session_handle_t debugSession2 = nullptr;
+    config.pid = 0x1111;
+    result = zetDebugAttach(device->toHandle(), &config, &debugSession2);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, debugSession2);
+}
+
+TEST_F(MultiTileDebugApiTest, givenDebugSessionWithPidWhenCallingDebugAttachForOtherPidThenErrorUnsupportedIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    L0::Device *device = driverHandle->devices[0];
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto neoDevice = device->getNEODevice();
+    auto osInterface = new OsInterfaceWithDebugAttach;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
+    auto subDevice1 = neoDevice->getSubDevice(1)->getSpecializedDevice<Device>();
+
+    auto sessionMock = new MockDebugSession(config, device, false);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    zet_debug_session_handle_t debugSession = nullptr;
+    auto result = zetDebugAttach(subDevice0->toHandle(), &config, &debugSession);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    zet_debug_session_handle_t debugSession2 = nullptr;
+    config.pid = 0x1111;
+    result = zetDebugAttach(subDevice1->toHandle(), &config, &debugSession2);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, debugSession2);
 }
 
 TEST_F(DebugApiTest, givenSubDeviceWhenCallingDebugAttachThenErrorIsReturned) {

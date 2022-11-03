@@ -38,6 +38,18 @@ ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *c
 
     auto rootSession = L0::Device::fromHandle(hDevice)->getNEODevice()->getRootDevice()->getSpecializedDevice<DeviceImp>()->getDebugSession(*config);
 
+    if (session && session->isAttached()) {
+        if (session->getDebugConfig().pid != config->pid) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+
+    if (rootSession) {
+        if (rootSession->getDebugConfig().pid != config->pid) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+
     // If root device with active TileSessions or
     // subdevice with root device attached - fail
     if ((!L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && session && !session->areAllTileDebugSessionDetached()) ||

@@ -19,7 +19,7 @@
 
 namespace L0 {
 
-DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device) {
+DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device), config(config) {
 }
 
 const NEO::TopologyMap &DebugSession::getTopologyMap() {
