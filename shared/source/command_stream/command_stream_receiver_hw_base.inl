@@ -1074,7 +1074,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesCo
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
 
-    getOsContext().ensureContextInitialized();
+    this->initializeResources();
     this->initDirectSubmission();
 
     const auto &hwInfo = this->peekHwInfo();

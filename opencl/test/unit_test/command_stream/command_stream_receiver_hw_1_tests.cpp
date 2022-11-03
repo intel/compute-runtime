@@ -1002,7 +1002,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
 
     uint32_t newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
-    uint32_t expectedResursiveLockCount = 0u;
+    uint32_t expectedResursiveLockCount = csr.resourcesInitialized ? 1u : 0u;
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
     auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                           csr, buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
@@ -1013,12 +1013,16 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     }
 
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
+    bool areResourcesInitialized = csr.resourcesInitialized;
     flushBcsTask(&csr, blitProperties, true, *pDevice);
     EXPECT_EQ(newTaskCount, csr.taskCount);
     EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCountValueDuringFlush);
     expectedResursiveLockCount++;
+    if (areResourcesInitialized != csr.resourcesInitialized) {
+        expectedResursiveLockCount++;
+    }
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
 
     HardwareParse hwParser;

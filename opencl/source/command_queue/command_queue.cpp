@@ -195,7 +195,7 @@ void CommandQueue::initializeGpgpuInternals() const {
         }
     }
 
-    gpgpuEngine->osContext->ensureContextInitialized();
+    gpgpuEngine->commandStreamReceiver->initializeResources();
     gpgpuEngine->commandStreamReceiver->initDirectSubmission();
 
     if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) && !this->gpgpuEngine->commandStreamReceiver->isUpdateTagFromWaitEnabled()) {
@@ -340,7 +340,7 @@ void CommandQueue::constructBcsEnginesForSplit() {
             bcsEngines[i] = neoDevice.tryGetEngine(engineType, EngineUsage::Regular);
             bcsEngineTypes.push_back(engineType);
             if (bcsEngines[i]) {
-                bcsEngines[i]->osContext->ensureContextInitialized();
+                bcsEngines[i]->commandStreamReceiver->initializeResources();
                 bcsEngines[i]->commandStreamReceiver->initDirectSubmission();
             }
         }

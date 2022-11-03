@@ -200,7 +200,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
             return BlitOperationResult::Unsupported;
         }
 
-        bcsEngine->osContext->ensureContextInitialized();
+        bcsEngine->commandStreamReceiver->initializeResources();
         bcsEngine->commandStreamReceiver->initDirectSubmission();
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(

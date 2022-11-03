@@ -324,9 +324,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCommandStr
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     configureCSRtoNonDirtyState<FamilyType>(false);
-
+    auto currlockCounter = commandStreamReceiver.recursiveLockCounter.load();
     commandStreamReceiver.registerInstructionCacheFlush();
-    EXPECT_EQ(1u, commandStreamReceiver.recursiveLockCounter);
+    EXPECT_EQ(currlockCounter + 1, commandStreamReceiver.recursiveLockCounter);
 
     flushTask(commandStreamReceiver);
 

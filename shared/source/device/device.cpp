@@ -349,10 +349,10 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, createAsEngineInstanced);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
-    if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
-        osContext->ensureContextInitialized();
-    }
     commandStreamReceiver->setupContext(*osContext);
+    if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
+        commandStreamReceiver->initializeResources();
+    }
 
     if (!commandStreamReceiver->initializeTagAllocation()) {
         return false;
@@ -383,7 +383,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     if (engineUsage == EngineUsage::Regular) {
         addEngineToEngineGroup(engine);
     }
-    commandStreamReceiver->fillReusableAllocationsList();
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
     return true;

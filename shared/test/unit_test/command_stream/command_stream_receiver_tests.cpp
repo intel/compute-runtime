@@ -88,12 +88,15 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
     EXPECT_FALSE(csr.isPreambleSent);
 }
 
-HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenCallFillReusableAllocationsList) {
-    auto engineType = pDevice->allEngines[0].getEngineType();
-    pDevice->createEngine(0, {engineType, EngineUsage::Regular});
-    auto csrIndex = pDevice->commandStreamReceivers.size() - 1;
-    auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->commandStreamReceivers[csrIndex].get());
-    EXPECT_EQ(1u, csr->fillReusableAllocationsListCalled);
+HWTEST_F(CommandStreamReceiverTest, WhenInitializeResourcesThenCallFillReusableAllocationsListOnce) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.fillReusableAllocationsListCalled = 0u;
+    ultCsr.resourcesInitialized = false;
+
+    commandStreamReceiver->initializeResources();
+    EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
+    commandStreamReceiver->initializeResources();
+    EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCallFillReusableAllocationsListThenAllocateCommandBufferAndMakeItResident) {

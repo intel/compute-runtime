@@ -93,6 +93,10 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         }
     }
 
+    void fillReusableAllocationsList() override {
+        fillReusableAllocationsListCalled++;
+    }
+
     struct WaitUserFenceResult {
         uint32_t called = 0u;
         uint32_t waitValue = 0u;
@@ -125,6 +129,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     }
 
     void *latestReadBackAddress = nullptr;
+    uint32_t fillReusableAllocationsListCalled = 0;
 };
 
 template <typename GfxFamily>

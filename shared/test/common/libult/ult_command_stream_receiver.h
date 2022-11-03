@@ -117,6 +117,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
     using BaseClass::CommandStreamReceiver::requiredPrivateScratchSize;
     using BaseClass::CommandStreamReceiver::requiredScratchSize;
+    using BaseClass::CommandStreamReceiver::resourcesInitialized;
     using BaseClass::CommandStreamReceiver::samplerCacheFlushRequired;
     using BaseClass::CommandStreamReceiver::scratchSpaceController;
     using BaseClass::CommandStreamReceiver::stallingCommandsOnNextFlushRequired;

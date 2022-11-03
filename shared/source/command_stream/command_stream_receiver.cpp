@@ -238,10 +238,21 @@ void CommandStreamReceiver::fillReusableAllocationsList() {
     auto amountToFill = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily).getAmountOfAllocationsToFill();
     for (auto i = 0u; i < amountToFill; i++) {
         const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER,
-                                                                     isMultiOsContextCapable(), false, osContext->getDeviceBitfield()};
+                                                                     isMultiOsContextCapable(), false, deviceBitfield};
         auto allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
         getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
         this->makeResident(*allocation);
+    }
+}
+
+void CommandStreamReceiver::initializeResources() {
+    if (!resourcesInitialized) {
+        auto lock = obtainUniqueOwnership();
+        if (!resourcesInitialized) {
+            osContext->ensureContextInitialized();
+            this->fillReusableAllocationsList();
+            this->resourcesInitialized = true;
+        }
     }
 }
 

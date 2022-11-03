@@ -61,6 +61,7 @@ class WddmCommandStreamFixture {
     void setUp() {
         HardwareInfo *hwInfo = nullptr;
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+        DebugManager.flags.SetAmountOfReusableAllocations.set(0);
         auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
 
         memoryManager = new MockWddmMemoryManager(*executionEnvironment);
@@ -109,6 +110,10 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
     }
 
+    void fillReusableAllocationsList() override {
+        fillReusableAllocationsListCalled++;
+    }
+
     bool initDirectSubmission() override {
         if (callParentInitDirectSubmission) {
             return WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission();
@@ -134,6 +139,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
 
     bool callParentInitDirectSubmission = true;
     bool initBlitterDirectSubmission = false;
+    uint32_t fillReusableAllocationsListCalled = 0;
 };
 
 class WddmCommandStreamMockGdiTest : public ::testing::Test {

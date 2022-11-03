@@ -214,7 +214,7 @@ class CommandStreamReceiver {
     virtual void fillReusableAllocationsList();
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }
-
+    void initializeResources();
     TagAllocatorBase *getEventTsAllocator();
     TagAllocatorBase *getEventPerfCountAllocator(const uint32_t tagSize);
     virtual TagAllocatorBase *getTimestampPacketAllocator() = 0;
@@ -500,6 +500,7 @@ class CommandStreamReceiver {
     bool useNotifyEnableForPostSync = false;
     bool dcFlushSupport = false;
     bool forceSkipResourceCleanupRequired = false;
+    volatile bool resourcesInitialized = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,
