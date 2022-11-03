@@ -228,12 +228,11 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
 
     std::vector<std::tuple<Segment, uint64_t, uint64_t>> segmentsSortedByAddr = {{segments.constData, offsetConstData, fileSzConstData},
                                                                                  {segments.varData, offsetVarData, fileSzVarData},
-                                                                                 {segments.stringData, offsetStringData, fileSzStringData},
                                                                                  {segments.nameToSegMap["kernel"], offsetKernel, fileSzKernel}};
     std::sort(segmentsSortedByAddr.begin(), segmentsSortedByAddr.end(), [](auto seg1, auto seg2) { return std::get<0>(seg1).address < std::get<0>(seg2).address; });
 
-    EXPECT_EQ(4U, debugZebin.programHeaders.size());
-    for (size_t i = 0; i < 4U; i++) {
+    EXPECT_EQ(3U, debugZebin.programHeaders.size());
+    for (size_t i = 0; i < debugZebin.programHeaders.size(); i++) {
         auto &segment = std::get<0>(segmentsSortedByAddr[i]);
         auto &offset = std::get<1>(segmentsSortedByAddr[i]);
         auto &fileSz = std::get<2>(segmentsSortedByAddr[i]);

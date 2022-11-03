@@ -71,7 +71,9 @@ void DebugZebinCreator::createDebugZebin() {
         sectionHeader.flags = section.header->flags;
 
         if (auto segment = getSegmentByName(sectionName)) {
-            elfEncoder.appendProgramHeaderLoad(i, segment->address, segment->size);
+            if (!isCpuSegment(sectionName)) {
+                elfEncoder.appendProgramHeaderLoad(i, segment->address, segment->size);
+            }
             sectionHeader.addr = segment->address;
         }
     }
@@ -156,6 +158,10 @@ const Segments::Segment *DebugZebinCreator::getTextSegmentByName(ConstStringRef 
     auto kernelSegmentIt = segments.nameToSegMap.find(kernelName.str());
     UNRECOVERABLE_IF(kernelSegmentIt == segments.nameToSegMap.end());
     return &kernelSegmentIt->second;
+}
+
+bool DebugZebinCreator::isCpuSegment(ConstStringRef sectionName) {
+    return (sectionName == SectionsNamesZebin::dataConstString);
 }
 
 } // namespace Debug

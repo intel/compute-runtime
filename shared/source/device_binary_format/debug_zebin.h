@@ -51,6 +51,7 @@ class DebugZebinCreator {
     bool isRelocTypeSupported(NEO::Elf::RELOC_TYPE_ZEBIN type);
     const Segments::Segment *getSegmentByName(ConstStringRef sectionName);
     const Segments::Segment *getTextSegmentByName(ConstStringRef textSegmentName);
+    bool isCpuSegment(ConstStringRef sectionName);
 
     const Segments &segments;
     const Elf &zebin;
