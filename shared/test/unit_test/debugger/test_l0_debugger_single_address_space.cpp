@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -242,13 +241,12 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingS
     cmdStream.replaceGraphicsAllocation(streamAllocation);
     cmdStream.replaceBuffer(streamAllocation->getUnderlyingBuffer(), streamAllocation->getUnderlyingBufferSize());
 
-    uint64_t ssba = 0x0000800011112222;
+    uint64_t ssba = 0x1234567000;
 
     NEO::Debugger::SbaAddresses sbaAddresses = {0};
     sbaAddresses.SurfaceStateBaseAddress = ssba;
 
-    debugger->singleAddressSpaceSbaTracking = true;
-    debugger->captureStateBaseAddress(cmdStream, sbaAddresses);
+    debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -291,17 +289,9 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingS
 
     itor = find<MI_STORE_DATA_IMM *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
-    auto lowDword = genCmdCast<MI_STORE_DATA_IMM *>(*itor)->getDataDword0();
-    itor++;
 
     itor = find<MI_STORE_DATA_IMM *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
-    auto highDword = genCmdCast<MI_STORE_DATA_IMM *>(*itor)->getDataDword0();
-
-    uint64_t foundSsba = ((static_cast<uint64_t>(highDword) & 0xffffffff) << 32) | lowDword;
-    const auto gmmHelper = pDevice->getGmmHelper();
-    const auto ssbaCanonized = gmmHelper->canonize(ssba);
-    EXPECT_EQ(ssbaCanonized, foundSsba);
 
     itor = find<MI_ARB_CHECK *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
