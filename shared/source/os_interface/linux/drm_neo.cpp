@@ -370,14 +370,14 @@ void Drm::destroyDrmContext(uint32_t drmContextId) {
     GemContextDestroy destroy{};
     destroy.contextId = drmContextId;
     auto retVal = ioctlHelper->ioctl(DrmIoctl::GemContextDestroy, &destroy);
-    UNRECOVERABLE_IF(retVal != 0);
+    UNRECOVERABLE_IF((retVal != 0) && (errno != ENODEV));
 }
 
 void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
     GemVmControl ctl = {};
     ctl.vmId = drmVmId;
     auto ret = ioctlHelper->ioctl(DrmIoctl::GemVmDestroy, &ctl);
-    UNRECOVERABLE_IF(ret != 0);
+    UNRECOVERABLE_IF((ret != 0) && (errno != ENODEV));
 }
 
 int Drm::queryVmId(uint32_t drmContextId, uint32_t &vmId) {
