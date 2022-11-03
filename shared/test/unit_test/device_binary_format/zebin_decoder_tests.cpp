@@ -596,6 +596,13 @@ kernels_misc_info:
     EXPECT_STREQ(kernel1ArgInfo1.type.c_str(), "'int*;8'");
     EXPECT_STREQ(kernel1ArgInfo1.typeQualifiers.c_str(), "NONE");
 
+    const auto &kernel1ArgTraits1 = kernel1Info->kernelDescriptor.payloadMappings.explicitArgs.at(0).getTraits();
+    EXPECT_EQ(KernelArgMetadata::AccessNone, kernel1ArgTraits1.accessQualifier);
+    EXPECT_EQ(KernelArgMetadata::AddrGlobal, kernel1ArgTraits1.addressQualifier);
+    KernelArgMetadata::TypeQualifiers qual = {};
+    qual.unknownQual = true;
+    EXPECT_EQ(qual.packed, kernel1ArgTraits1.typeQualifiers.packed);
+
     EXPECT_EQ(4u, kernel2Info->kernelDescriptor.explicitArgsExtendedMetadata.size());
     const auto &kernel2ArgInfo1 = kernel2Info->kernelDescriptor.explicitArgsExtendedMetadata.at(0);
     EXPECT_STREQ(kernel2ArgInfo1.argName.c_str(), "a");
@@ -604,12 +611,26 @@ kernels_misc_info:
     EXPECT_STREQ(kernel2ArgInfo1.type.c_str(), "'int*;8'");
     EXPECT_STREQ(kernel2ArgInfo1.typeQualifiers.c_str(), "NONE");
 
+    const auto &kernel2ArgTraits1 = kernel2Info->kernelDescriptor.payloadMappings.explicitArgs.at(0).getTraits();
+    EXPECT_EQ(KernelArgMetadata::AccessNone, kernel2ArgTraits1.accessQualifier);
+    EXPECT_EQ(KernelArgMetadata::AddrGlobal, kernel2ArgTraits1.addressQualifier);
+    qual = {};
+    qual.unknownQual = true;
+    EXPECT_EQ(qual.packed, kernel2ArgTraits1.typeQualifiers.packed);
+
     const auto &kernel2ArgInfo2 = kernel2Info->kernelDescriptor.explicitArgsExtendedMetadata.at(1);
     EXPECT_STREQ(kernel2ArgInfo2.argName.c_str(), "b");
     EXPECT_STREQ(kernel2ArgInfo2.addressQualifier.c_str(), "__private");
     EXPECT_STREQ(kernel2ArgInfo2.accessQualifier.c_str(), "NONE");
     EXPECT_STREQ(kernel2ArgInfo2.type.c_str(), "'int;4'");
     EXPECT_STREQ(kernel2ArgInfo2.typeQualifiers.c_str(), "NONE");
+
+    const auto &kernel2ArgTraits2 = kernel2Info->kernelDescriptor.payloadMappings.explicitArgs.at(1).getTraits();
+    EXPECT_EQ(KernelArgMetadata::AccessNone, kernel2ArgTraits2.accessQualifier);
+    EXPECT_EQ(KernelArgMetadata::AddrPrivate, kernel2ArgTraits2.addressQualifier);
+    qual = {};
+    qual.unknownQual = true;
+    EXPECT_EQ(qual.packed, kernel2ArgTraits2.typeQualifiers.packed);
 
     const auto &kernel2ArgInfo3 = kernel2Info->kernelDescriptor.explicitArgsExtendedMetadata.at(2);
     EXPECT_STREQ(kernel2ArgInfo3.argName.c_str(), "c");
@@ -618,12 +639,26 @@ kernels_misc_info:
     EXPECT_STREQ(kernel2ArgInfo3.type.c_str(), "'uint*;8'");
     EXPECT_STREQ(kernel2ArgInfo3.typeQualifiers.c_str(), "const");
 
+    const auto &kernel2ArgTraits3 = kernel2Info->kernelDescriptor.payloadMappings.explicitArgs.at(2).getTraits();
+    EXPECT_EQ(KernelArgMetadata::AccessNone, kernel2ArgTraits3.accessQualifier);
+    EXPECT_EQ(KernelArgMetadata::AddrGlobal, kernel2ArgTraits3.addressQualifier);
+    qual = {};
+    qual.constQual = true;
+    EXPECT_EQ(qual.packed, kernel2ArgTraits3.typeQualifiers.packed);
+
     const auto &kernel2ArgInfo4 = kernel2Info->kernelDescriptor.explicitArgsExtendedMetadata.at(3);
     EXPECT_STREQ(kernel2ArgInfo4.argName.c_str(), "imageA");
     EXPECT_STREQ(kernel2ArgInfo4.addressQualifier.c_str(), "__global");
     EXPECT_STREQ(kernel2ArgInfo4.accessQualifier.c_str(), "__read_only");
     EXPECT_STREQ(kernel2ArgInfo4.type.c_str(), "'image2d_t;8'");
     EXPECT_STREQ(kernel2ArgInfo4.typeQualifiers.c_str(), "NONE");
+
+    const auto &kernel2ArgTraits4 = kernel2Info->kernelDescriptor.payloadMappings.explicitArgs.at(3).getTraits();
+    EXPECT_EQ(KernelArgMetadata::AccessReadOnly, kernel2ArgTraits4.accessQualifier);
+    EXPECT_EQ(KernelArgMetadata::AddrGlobal, kernel2ArgTraits4.addressQualifier);
+    qual = {};
+    qual.unknownQual = true;
+    EXPECT_EQ(qual.packed, kernel2ArgTraits4.typeQualifiers.packed);
 }
 
 TEST(DecodeKernelMiscInfo, givenUnrecognizedEntryInKernelsMiscInfoSectionWhenDecodingItThenEmitWarning) {
@@ -758,12 +793,13 @@ kernels_misc_info:
     EXPECT_NE(std::string::npos, outErrors.find("DeviceBinaryFormat::Zebin::.ze_info : could not read access_qualifier from : [-] in context of : kernels_misc_info\n"));
 }
 
-TEST(DecodeKernelMiscInfo, givenArgsInfoEntryWithMissingMembersWhenDecodingKernelsMiscInfoSectionThenEmitWarningForEachMissingMember) {
+TEST(DecodeKernelMiscInfo, givenArgsInfoEntryWithMissingMembersOtherThanArgIndexWhenDecodingKernelsMiscInfoSectionThenEmitWarningForEachMissingMember) {
     NEO::ConstStringRef kernelMiscInfoEmptyArgsInfo = R"===(---
 kernels_misc_info:
   - name:            some_kernel
     args_info:
       - index:           0
+        invalid_value:   0
 ...
 )===";
 
@@ -788,6 +824,34 @@ kernels_misc_info:
         auto expectedWarning = "DeviceBinaryFormat::Zebin : KernelMiscInfo : ArgInfo member \"" + missingMember + "\" missing. Ignoring.\n";
         EXPECT_NE(std::string::npos, outWarnings.find(expectedWarning));
     }
+}
+
+TEST(DecodeKernelMiscInfo, givenArgsInfoEntryWithMissingArgIndexWhenDecodingKernelsMiscInfoSectionThenReturnError) {
+    NEO::ConstStringRef kernelMiscInfoEmptyArgsInfo = R"===(---
+kernels_misc_info:
+  - name:            some_kernel
+    args_info:
+      - name:            a
+        address_qualifier: __global
+        access_qualifier: NONE
+        type_name:       'int*;8'
+        type_qualifiers: NONE
+...
+)===";
+
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+
+    NEO::ProgramInfo programInfo;
+    programInfo.kernelMiscInfoPos = 0u;
+    programInfo.kernelInfos.push_back(kernelInfo);
+
+    std::string outWarnings, outErrors;
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoEmptyArgsInfo, outErrors, outWarnings);
+    EXPECT_EQ(DecodeError::InvalidBinary, res);
+
+    auto expectedError{"DeviceBinaryFormat::Zebin : Error : KernelMiscInfo : ArgInfo index missing (has default value -1)"};
+    EXPECT_STREQ(outErrors.c_str(), expectedError);
 }
 
 TEST(DecodeKernelMiscInfo, whenDecodingKernelsMiscInfoSectionAndParsingErrorIsEncounteredThenReturnError) {

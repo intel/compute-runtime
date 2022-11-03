@@ -1583,6 +1583,10 @@ NEO::DecodeError readKernelMiscArgumentInfos(const NEO::Yaml::YamlParser &parser
                 outWarning.append("DeviceBinaryFormat::Zebin : KernelMiscInfo : Unrecognized argsInfo member " + key.str() + "\n");
             }
         }
+        if (-1 == metadataExtended.index) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Error : KernelMiscInfo : ArgInfo index missing (has default value -1)");
+            return DecodeError::InvalidBinary;
+        }
     }
     return validArgInfo ? DecodeError::Success : DecodeError::InvalidBinary;
 }
@@ -1605,6 +1609,12 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
         populateIfNotEmpty(srcMetadata.typeName, dstMetadata.type, Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::typeName, outWarning);
         populateIfNotEmpty(srcMetadata.typeQualifiers, dstMetadata.typeQualifiers, Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::typeQualifiers, outWarning);
 
+        ArgTypeTraits dstTypeTraits = {};
+        dstTypeTraits.accessQualifier = KernelArgMetadata::parseAccessQualifier(dstMetadata.accessQualifier);
+        dstTypeTraits.addressQualifier = KernelArgMetadata::parseAddressSpace(dstMetadata.addressQualifier);
+        dstTypeTraits.typeQualifiers = KernelArgMetadata::parseTypeQualifiers(dstMetadata.typeQualifiers);
+
+        dst.payloadMappings.explicitArgs.at(srcMetadata.index).getTraits() = std::move(dstTypeTraits);
         dst.explicitArgsExtendedMetadata.at(srcMetadata.index) = std::move(dstMetadata);
     }
 }

@@ -790,9 +790,9 @@ using namespace Kernel::ExecutionEnv;
 } // namespace Function
 
 namespace Miscellaneous {
-using ArgIndexT = uint32_t;
+using ArgIndexT = int32_t;
 struct KernelArgMiscInfoT {
-    ArgIndexT index;
+    ArgIndexT index = -1;
     std::string kernelName;
     std::string argName;
     std::string accessQualifier;

@@ -3426,3 +3426,100 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationMode
     CompilerOptions::applyAdditionalOptions(internalOptions);
     EXPECT_EQ(internalOptionsSize, internalOptions.size());
 }
+
+TEST(ProgramPopulateZebinExtendedArgsMetadataTests, givenNonZebinaryFormatWhenCallingPopulateZebinExtendedArgsMetadataThenMetadataIsNotPopulated) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    program.callBasePopulateZebinExtendedArgsMetadataOnce = true;
+
+    constexpr auto mockBinarySize = 0x10;
+    const auto &rootDeviceIndex = device.getRootDeviceIndex();
+    auto &buildInfo = program.buildInfos[rootDeviceIndex];
+    buildInfo.unpackedDeviceBinary.reset(new char[mockBinarySize]{0});
+    buildInfo.unpackedDeviceBinarySize = mockBinarySize;
+
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+    buildInfo.kernelInfoArray.push_back(&kernelInfo);
+
+    ASSERT_TRUE(kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty());
+    program.callPopulateZebinExtendedArgsMetadataOnce(rootDeviceIndex);
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty());
+    buildInfo.kernelInfoArray.clear();
+}
+
+TEST(ProgramPopulateZebinExtendedArgsMetadataTests, givenZebinaryFormatAndDecodeErrorOnDecodingArgsMetadataWhenCallingPopulateZebinExtendedArgsMetadataThenMetadataIsNotPopulated) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    program.callBasePopulateZebinExtendedArgsMetadataOnce = true;
+
+    const auto &rootDeviceIndex = device.getRootDeviceIndex();
+    auto &buildInfo = program.buildInfos[rootDeviceIndex];
+
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+    buildInfo.kernelInfoArray.push_back(&kernelInfo);
+
+    NEO::ConstStringRef invalidZeInfo = R"===(
+kernels:
+  - name:            some_kernel
+    simd_size:       32
+...
+)===";
+
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    MockElfEncoder<numBits> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_REL;
+    elfEncoder.appendSection(Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(invalidZeInfo.data(), invalidZeInfo.size()));
+    auto storage = elfEncoder.encode();
+    buildInfo.unpackedDeviceBinary.reset(reinterpret_cast<char *>(storage.data()));
+    buildInfo.unpackedDeviceBinarySize = storage.size();
+
+    ASSERT_TRUE(kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty());
+    ASSERT_EQ(std::string::npos, buildInfo.kernelMiscInfoPos);
+    program.callPopulateZebinExtendedArgsMetadataOnce(rootDeviceIndex);
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty());
+    buildInfo.kernelInfoArray.clear();
+    buildInfo.unpackedDeviceBinary.release();
+}
+
+TEST(ProgramPopulateZebinExtendedArgsMetadataTests, givenZebinaryFormatWithValidZeInfoWhenCallingPopulateExtendedArgsMetadataThenMetadataIsPopulated) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    program.callBasePopulateZebinExtendedArgsMetadataOnce = true;
+
+    const auto &rootDeviceIndex = device.getRootDeviceIndex();
+    auto &buildInfo = program.buildInfos[rootDeviceIndex];
+
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+    buildInfo.kernelInfoArray.push_back(&kernelInfo);
+
+    NEO::ConstStringRef zeInfo = R"===(
+kernels:
+  - name:            some_kernel
+    simd_size:       32
+kernels_misc_info:
+  - name:            some_kernel
+    args_info:
+      - name:            a
+        index:           0
+        address_qualifier: __global
+...
+)===";
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    MockElfEncoder<numBits> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_REL;
+    elfEncoder.appendSection(Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+    auto storage = elfEncoder.encode();
+    buildInfo.unpackedDeviceBinary.reset(reinterpret_cast<char *>(storage.data()));
+    buildInfo.unpackedDeviceBinarySize = storage.size();
+    buildInfo.kernelMiscInfoPos = zeInfo.str().find(Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str());
+    ASSERT_NE(std::string::npos, buildInfo.kernelMiscInfoPos);
+
+    ASSERT_TRUE(kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty());
+    program.callPopulateZebinExtendedArgsMetadataOnce(rootDeviceIndex);
+    EXPECT_EQ(1u, kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.size());
+    buildInfo.kernelInfoArray.clear();
+    buildInfo.unpackedDeviceBinary.release();
+}
