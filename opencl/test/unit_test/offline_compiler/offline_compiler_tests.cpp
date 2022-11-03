@@ -2597,7 +2597,7 @@ TEST(OfflineCompilerTest, givenOutputNoSuffixFlagAndNonEmptyOutputFileNameAndNon
 
     mockOfflineCompiler.writeOutAllFiles();
 
-    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename");
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.bin");
     ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
 
     EXPECT_EQ("12345678", outputFileIt->second);
@@ -2613,7 +2613,7 @@ TEST(OfflineCompilerTest, givenInputFileNameAndOutputNoSuffixFlagAndEmptyOutputF
 
     mockOfflineCompiler.writeOutAllFiles();
 
-    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("important_file");
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("important_file.bin");
     ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
 
     EXPECT_EQ("12345678", outputFileIt->second);
@@ -2637,7 +2637,7 @@ TEST(OfflineCompilerTest, givenNonEmptyOutputDirectoryWhenWritingOutAllFilesTheD
     EXPECT_EQ("/home/important", mockOfflineCompiler.createdDirs[1]);
     EXPECT_EQ("/home/important/compilation", mockOfflineCompiler.createdDirs[2]);
 
-    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("/home/important/compilation/some_output_filename");
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("/home/important/compilation/some_output_filename.bin");
     ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
 
     EXPECT_EQ("12345678", outputFileIt->second);
