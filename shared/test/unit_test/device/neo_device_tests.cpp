@@ -98,6 +98,26 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsA
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
 }
 
+HWTEST2_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledAndRTStackAllocationFailsRTDispatchGlobalsIsNotAllocated, IsPVC) {
+    DebugManagerStateRestore dbgRestorer;
+
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    pDevice->deviceBitfield = 3;
+
+    pDevice->subdevices.push_back(new SubDevice(pDevice->executionEnvironment, 0, *pDevice));
+    pDevice->subdevices.push_back(new SubDevice(pDevice->executionEnvironment, 1, *pDevice));
+
+    std::unique_ptr<NEO::MemoryManager> otherMemoryManager;
+    otherMemoryManager = std::make_unique<NEO::MockMemoryManagerWithCapacity>(*pDevice->executionEnvironment);
+    static_cast<NEO::MockMemoryManagerWithCapacity &>(*otherMemoryManager).capacity = 50000000;
+    pDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
+
+    pDevice->initializeRayTracing(5);
+    EXPECT_EQ(nullptr, pDevice->getRTDispatchGlobals(3));
+
+    pDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
+}
+
 TEST_F(DeviceTest, givenDispatchGlobalsAllocationFailsThenRTDispatchGlobalsInfoIsNull) {
     std::unique_ptr<NEO::MemoryManager> otherMemoryManager;
     otherMemoryManager = std::make_unique<NEO::FailMemoryManager>(1, *pDevice->getExecutionEnvironment());

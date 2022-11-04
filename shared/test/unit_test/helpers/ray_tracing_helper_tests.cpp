@@ -29,17 +29,16 @@ TEST(RayTracingHelperTests, whenMemoryBackedFifoSizeIsRequestedThenCorrectValueI
     EXPECT_EQ(expectedSize, size);
 }
 
-TEST(RayTracingHelperTests, whenGlobalDispatchSizeIsRequestedThenCorrectValueIsReturned) {
+TEST(RayTracingHelperTests, whenRTStackSizeIsRequestedThenCorrectValueIsReturned) {
     MockDevice device;
 
     uint32_t maxBvhLevel = 2;
     uint32_t extraBytesLocal = 20;
     uint32_t extraBytesGlobal = 100;
+    uint32_t tiles = 2;
 
-    size_t expectedSize = alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize) +
-                          (RayTracingHelper::hitInfoSize + RayTracingHelper::bvhStackSize * maxBvhLevel + extraBytesLocal) * RayTracingHelper::getNumRtStacks(device) +
-                          extraBytesGlobal;
-    size_t size = RayTracingHelper::getDispatchGlobalSize(device, maxBvhLevel, extraBytesLocal, extraBytesGlobal);
+    size_t expectedSize = alignUp(RayTracingHelper::getStackSizePerRay(maxBvhLevel, extraBytesLocal) * RayTracingHelper::getNumRtStacks(device) + extraBytesGlobal, MemoryConstants::cacheLineSize);
+    size_t size = RayTracingHelper::getRTStackSizePerTile(device, tiles, maxBvhLevel, extraBytesLocal, extraBytesGlobal);
     EXPECT_EQ(expectedSize, size);
 }
 
