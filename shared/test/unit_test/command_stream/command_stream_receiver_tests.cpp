@@ -2321,3 +2321,27 @@ HWTEST_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerfor
 
     EXPECT_FALSE(scratchController->setRequiredScratchSpaceCalled);
 }
+
+TEST(CommandStreamReceiverSimpleTest, whenTranslatingSubmissionStatusToTaskCountValueThenProperValueIsReturned) {
+    EXPECT_EQ(0u, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::SUCCESS));
+    EXPECT_EQ(CompletionStamp::outOfHostMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::OUT_OF_HOST_MEMORY));
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::OUT_OF_MEMORY));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThenErrorIsPropagated) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                                          commandStreamReceiver, commandStreamReceiver.getTagAllocation(), nullptr,
+                                                                          commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(),
+                                                                          commandStreamReceiver.getTagAllocation()->getGpuAddress(), 0,
+                                                                          0, 0, 0, 0, 0, 0, 0);
+
+    BlitPropertiesContainer container;
+    container.push_back(blitProperties);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    EXPECT_EQ(CompletionStamp::outOfHostMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
+}

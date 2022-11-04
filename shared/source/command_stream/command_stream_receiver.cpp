@@ -928,4 +928,15 @@ LogicalStateHelper *CommandStreamReceiver::getLogicalStateHelper() const {
     return logicalStateHelper.get();
 }
 
+uint32_t CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus status) {
+    switch (status) {
+    case SubmissionStatus::OUT_OF_HOST_MEMORY:
+        return CompletionStamp::outOfHostMemory;
+    case SubmissionStatus::OUT_OF_MEMORY:
+        return CompletionStamp::outOfDeviceMemory;
+    default:
+        return 0;
+    }
+}
+
 } // namespace NEO

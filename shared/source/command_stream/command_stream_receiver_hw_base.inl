@@ -1164,7 +1164,10 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesCo
     commandStream.getGraphicsAllocation()->updateTaskCount(newTaskCount, this->osContext->getContextId());
     commandStream.getGraphicsAllocation()->updateResidencyTaskCount(newTaskCount, this->osContext->getContextId());
 
-    flush(batchBuffer, getResidencyAllocations());
+    auto flushSubmissionStatus = flush(batchBuffer, getResidencyAllocations());
+    if (flushSubmissionStatus != SubmissionStatus::SUCCESS) {
+        return CompletionStamp::getTaskCountFromSubmissionStatusError(flushSubmissionStatus);
+    }
     makeSurfacePackNonResident(getResidencyAllocations(), true);
 
     if (updateTag) {

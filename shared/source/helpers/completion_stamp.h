@@ -11,7 +11,10 @@
 
 namespace NEO {
 using FlushStamp = uint64_t;
+enum class SubmissionStatus : uint32_t;
 struct CompletionStamp {
+    static uint32_t getTaskCountFromSubmissionStatusError(SubmissionStatus submissionStatus);
+
     uint32_t taskCount;
     uint32_t taskLevel;
     FlushStamp flushStamp;

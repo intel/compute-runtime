@@ -163,6 +163,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
 
     NEO::SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        if (flushReturnValue) {
+            return *flushReturnValue;
+        }
         if (recordFlusheBatchBuffer) {
             latestFlushedBatchBuffer = batchBuffer;
         }
@@ -393,6 +396,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     bool callBaseFlushBcsTask{true};
     uint32_t flushBcsTaskReturnValue{};
+    std::optional<SubmissionStatus> flushReturnValue{};
 };
 
 } // namespace NEO
