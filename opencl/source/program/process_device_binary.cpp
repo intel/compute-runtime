@@ -21,7 +21,6 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/program/program.h"
 
 #include "program_debug_data.h"

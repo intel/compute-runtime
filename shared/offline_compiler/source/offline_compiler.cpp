@@ -20,18 +20,13 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
-#include "shared/source/os_interface/os_inc_base.h"
-#include "shared/source/os_interface/os_library.h"
 
-#include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
-#include "cif/import/library_api.h"
 #include "igfxfmid.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
@@ -40,7 +35,6 @@
 
 #include <algorithm>
 #include <iomanip>
-#include <iostream>
 #include <list>
 
 #ifdef _WIN32

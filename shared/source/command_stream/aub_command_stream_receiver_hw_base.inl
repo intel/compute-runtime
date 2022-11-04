@@ -22,7 +22,6 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/neo_driver_version.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -32,12 +31,9 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/os_context.h"
 
-#include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 
-#include <algorithm>
 #include <cstring>
 
 namespace NEO {

@@ -8,7 +8,6 @@
 #include "level_zero/tools/source/sysman/engine/engine.h"
 
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/tools/source/sysman/engine/engine_imp.h"
 class OsEngine;

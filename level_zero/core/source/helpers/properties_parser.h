@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
 
 #include <level_zero/ze_api.h>

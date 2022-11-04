@@ -5,9 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/debug_helpers.h"
-
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include "level_zero/tools/source/sysman/scheduler/scheduler_imp.h"
 

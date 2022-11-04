@@ -6,12 +6,10 @@
  */
 
 #include "shared/source/helpers/vec.h"
-#include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <array>
 #include <mutex>
-#include <vector>
 
 namespace NEO {
 

@@ -7,7 +7,6 @@
 
 #include "global_operations_imp.h"
 
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 

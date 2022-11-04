@@ -11,6 +11,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 
+#include <cinttypes>
 #include <string>
 #include <utility>
 

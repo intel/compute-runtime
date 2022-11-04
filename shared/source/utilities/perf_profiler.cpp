@@ -9,8 +9,6 @@
 
 #include "shared/source/utilities/stackvec.h"
 
-#include "os_inc.h"
-
 #include <atomic>
 #include <cstring>
 #include <sstream>

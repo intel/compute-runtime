@@ -11,8 +11,6 @@
 
 #include "os_diagnostics.h"
 
-#include <cmath>
-
 namespace L0 {
 
 ze_result_t DiagnosticsImp::diagnosticsGetProperties(zes_diag_properties_t *pProperties) {

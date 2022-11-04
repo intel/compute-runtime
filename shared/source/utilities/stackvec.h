@@ -10,7 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <algorithm>
-#include <cinttypes>
 #include <cstddef>
 #include <iterator>
 #include <limits>

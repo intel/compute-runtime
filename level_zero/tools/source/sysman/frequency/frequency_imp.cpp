@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "level_zero/tools/source/sysman/frequency/frequency_imp.h"
 
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <cmath>
