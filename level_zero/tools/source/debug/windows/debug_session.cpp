@@ -217,7 +217,7 @@ ze_result_t DebugSessionWindows::handleModuleCreateEvent(uint32_t seqNo, DBGUMD_
 
     zet_debug_event_t debugEvent = {};
     debugEvent.type = moduleCreateParams.IsModuleCreate ? ZET_DEBUG_EVENT_TYPE_MODULE_LOAD : ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
-    debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+    debugEvent.flags = moduleCreateParams.IsModuleCreate ? ZET_DEBUG_EVENT_FLAG_NEED_ACK : 0;
     debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
     debugEvent.info.module.load = moduleCreateParams.LoadAddress;
     debugEvent.info.module.moduleBegin = moduleCreateParams.hElfAddressPtr;

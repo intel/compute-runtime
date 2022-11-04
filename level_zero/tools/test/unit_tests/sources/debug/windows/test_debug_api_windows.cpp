@@ -992,7 +992,7 @@ TEST_F(DebugApiWindowsTest, givenModuleCreateNotificationeEventTypeWhenReadAndHa
     EXPECT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ACKNOWLEDGE_EVENT]);
 }
 
-TEST_F(DebugApiWindowsTest, givenModuleDestroyNotificationeEventTypeWhenReadAndHandleEventCalledThenModuleIsUnregisteredAndEventIsQueuedForAcknowledge) {
+TEST_F(DebugApiWindowsTest, givenModuleDestroyNotificationeEventTypeWhenReadAndHandleEventCalledThenModuleIsUnregisteredAndEventIsNotQueuedForAcknowledge) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -1016,16 +1016,13 @@ TEST_F(DebugApiWindowsTest, givenModuleDestroyNotificationeEventTypeWhenReadAndH
     EXPECT_EQ(1u, session->apiEvents.size());
     auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
-    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+    EXPECT_NE(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
     EXPECT_EQ(ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF, event.info.module.format);
     EXPECT_EQ(0x80000000u, event.info.module.load);
     EXPECT_EQ(0x12345678u, event.info.module.moduleBegin);
     EXPECT_EQ(0x12345678u + 0x1000, event.info.module.moduleEnd);
 
-    EXPECT_EQ(1u, session->eventsToAck.size());
-    EXPECT_EQ(123, session->eventsToAck[0].second.first);
-    EXPECT_EQ(DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION, session->eventsToAck[0].second.second);
-    EXPECT_EQ(0u, memcmp(&event, &session->eventsToAck[0].first, sizeof(event)));
+    EXPECT_EQ(0u, session->eventsToAck.size());
 
     EXPECT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ACKNOWLEDGE_EVENT]);
 }
