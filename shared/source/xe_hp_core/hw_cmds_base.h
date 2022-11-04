@@ -12,7 +12,6 @@
 
 #include "igfxfmid.h"
 
-#include <cstddef>
 #include <type_traits>
 
 template <class T>

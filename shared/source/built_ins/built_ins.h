@@ -12,7 +12,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <cstdint>
-#include <fstream>
 #include <memory>
 #include <mutex>
 #include <string>

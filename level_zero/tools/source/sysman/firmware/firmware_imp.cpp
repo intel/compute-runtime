@@ -11,8 +11,6 @@
 
 #include "os_firmware.h"
 
-#include <cmath>
-
 namespace L0 {
 
 ze_result_t FirmwareImp::firmwareGetProperties(zes_firmware_properties_t *pProperties) {

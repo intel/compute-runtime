@@ -7,7 +7,6 @@
 
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"

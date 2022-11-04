@@ -15,20 +15,16 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
-#include "shared/source/utilities/spinlock.h"
 
 #include "sku_info.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <memory>
-#include <mutex>
 
 struct _SYSTEM_INFO;
 typedef struct _SYSTEM_INFO SYSTEM_INFO;

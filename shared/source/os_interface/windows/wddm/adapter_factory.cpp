@@ -8,13 +8,10 @@
 #include "shared/source/os_interface/windows/wddm/adapter_factory.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include <cstdlib>
 #include <cstring>
-#include <memory>
 
 namespace NEO {
 

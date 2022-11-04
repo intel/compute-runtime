@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/helpers/array_count.h"
 
 #include "opencl/source/context/context.inl"
 #include "opencl/source/os_interface/windows/d3d_sharing_functions.h"

@@ -10,11 +10,9 @@
 #include "shared/source/debug_settings/debug_variables_helper.h"
 #include "shared/source/debug_settings/definitions/translate_debug_settings.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
-#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <sstream>

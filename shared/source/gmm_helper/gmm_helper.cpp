@@ -13,8 +13,6 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/os_interface/os_library.h"
-#include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 #include <algorithm>
 

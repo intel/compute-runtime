@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "shared/source/helpers/timestamp_packet.h"
 
 #include "opencl/source/api/cl_types.h"
-#include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
 
 namespace NEO {

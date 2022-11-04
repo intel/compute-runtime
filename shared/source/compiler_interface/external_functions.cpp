@@ -7,7 +7,6 @@
 
 #include "shared/source/compiler_interface/external_functions.h"
 
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
 #include <algorithm>

@@ -7,7 +7,6 @@
 
 #include "level_zero/tools/source/sysman/engine/engine_imp.h"
 
-#include "shared/source/helpers/debug_helpers.h"
 namespace L0 {
 
 ze_result_t EngineImp::engineGetActivity(zes_engine_stats_t *pStats) {
