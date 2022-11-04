@@ -40,6 +40,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2_or_below.cpp
 )
 
 if(MSVC OR COMPILER_SUPPORTS_SSE42)
@@ -62,6 +63,7 @@ if(TESTS_PVC_AND_LATER)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_pvc_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_pvc_and_later.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_pvc_and_later.cpp
   )
 endif()
 

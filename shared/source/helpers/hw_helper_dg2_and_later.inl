@@ -65,5 +65,4 @@ template <>
 bool HwHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
     return true;
 }
-
 } // namespace NEO

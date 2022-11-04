@@ -47,6 +47,11 @@ uint32_t HwHelperHw<Family>::getDefaultRevisionId(const HardwareInfo &hwInfo) co
 template <>
 bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) { return true; }
 
+template <>
+bool HwHelperHw<Family>::isTimestampShiftRequired() const {
+    return false;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

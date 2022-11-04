@@ -18,7 +18,6 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_ocl_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_default_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2_or_below.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mipmap_tests.cpp
@@ -37,21 +36,14 @@ if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_helpers
        ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_hw_tests_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_and_later.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_tests_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xehp_and_later.cpp
   )
 endif()
 
 if(TESTS_DG2_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_helpers
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_dg2_and_later.cpp
-  )
-endif()
-
-if(TESTS_PVC_AND_LATER)
-  list(APPEND IGDRCL_SRCS_tests_helpers
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_pvc_and_later.cpp
   )
 endif()
 

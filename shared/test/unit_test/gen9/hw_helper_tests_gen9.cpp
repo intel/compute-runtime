@@ -47,6 +47,11 @@ GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     EXPECT_EQ(3u, pDevice->allEngines.size());
 }
 
+GEN9TEST_F(HwHelperTestGen9, givenGen9WhenCallIsTimestampShiftRequiredThenFalseIsReturned) {
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(hwHelper.isTimestampShiftRequired());
+}
+
 using MemorySynchronizatiopCommandsTestsGen9 = ::testing::Test;
 GEN9TEST_F(MemorySynchronizatiopCommandsTestsGen9, WhenProgrammingCacheFlushThenExpectConstantCacheFieldSet) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
