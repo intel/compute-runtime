@@ -265,52 +265,6 @@ function(neo_gen_kernels_with_internal_options platform_name_with_type platform_
   set(kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
-set(TEST_KERNEL_kernel_debug_enable
-    "-cl-kernel-debug-enable"
-)
-
-function(neo_gen_kernel_with_kernel_debug_options platform_name_with_type platform_name revision_id suffix filepath)
-  get_filename_component(filename ${filepath} NAME)
-  get_filename_component(basename ${filepath} NAME_WE)
-  get_filename_component(base_workdir ${filepath} DIRECTORY)
-  get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
-
-  set(outputdir "${TargetDir}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
-  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
-
-  string(REPLACE " " "_" argwospaces ${TEST_KERNEL_kernel_debug_enable})
-
-  set(outputpath_base "${outputdir}/${argwospaces}_${suffix}")
-
-  if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-    set(output_files
-        ${outputpath_base}.spv
-        ${outputpath_base}.bin
-        ${outputpath_base}.dbg
-    )
-
-    add_custom_command(
-                       OUTPUT ${output_files}
-                       COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
-                       WORKING_DIRECTORY ${workdir}
-                       DEPENDS ${filepath} ocloc
-    )
-    list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${output_files})
-  else()
-    foreach(extension "spv" "bin" "dbg")
-      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/${argwospaces}_${suffix}.${extension}")
-      add_custom_command(
-                         OUTPUT ${outputpath_base}.${extension}
-                         COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
-                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
-      )
-
-      list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${outputpath_base}.${extension})
-    endforeach()
-  endif()
-  set(kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
-endfunction()
-
 set(TEST_KERNEL test_files/CopyBuffer_simd16.cl)
 
 set(TEST_KERNEL_options
@@ -318,7 +272,6 @@ set(TEST_KERNEL_options
     "-cl-finite-math-only"
     "-cl-kernel-arg-info"
     "-x spir -spir-std=1.2"
-    "-g"
 )
 
 set(TEST_KERNEL_2_0_options
@@ -345,14 +298,6 @@ set(TEST_KERNEL_VME
     ${CMAKE_CURRENT_SOURCE_DIR}/test_files/vme_kernels.cl
     ${CMAKE_CURRENT_SOURCE_DIR}/test_files/media_kernels_backend.cl
     ${CMAKE_CURRENT_SOURCE_DIR}/test_files/media_kernels_frontend.cl
-)
-
-set(TEST_KERNEL_SIP_DEBUG_options
-    "-cl-include-sip-kernel-debug -cl-include-sip-csr -cl-set-bti:0"
-)
-
-set(TEST_KERNEL_SIP_DEBUG_LOCAL_options
-    "-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0"
 )
 
 set(TEST_KERNEL_BINDLESS_internal_options
