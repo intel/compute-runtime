@@ -127,8 +127,12 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
 )
 
-function(neo_gen_kernels platform_name_with_type platform_name revision_id suffix)
+function(neo_gen_kernels platform_name_with_type platform_name revision_id suffix forcePatchtokenFormat)
   set(outputdir "${TargetDir}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
+
+  if(forcePatchtokenFormat)
+    set(formatArgument "--format" "patchtokens")
+  endif()
 
   set(kernels_to_compile)
   foreach(filepath ${ARGN})
@@ -146,7 +150,7 @@ function(neo_gen_kernels platform_name_with_type platform_name revision_id suffi
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir}
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -351,7 +355,7 @@ macro(macro_for_each_core_type)
 
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
         foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
-          neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${PLATFORM_TEST_KERNELS})
+          neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} FALSE ${PLATFORM_TEST_KERNELS})
           neo_gen_kernels_with_options(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
         endforeach()
 
@@ -359,7 +363,7 @@ macro(macro_for_each_core_type)
         file(GLOB_RECURSE ${CORE_TYPE_LOWER}_TEST_KERNELS test_files/*.${CORE_TYPE_LOWER})
         if(NOT "${${CORE_TYPE_LOWER}_TEST_KERNELS}" STREQUAL "")
           foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
-            neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${${CORE_TYPE_LOWER}_TEST_KERNELS})
+            neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} FALSE ${${CORE_TYPE_LOWER}_TEST_KERNELS})
           endforeach()
         endif()
 
@@ -367,7 +371,7 @@ macro(macro_for_each_core_type)
         file(GLOB_RECURSE ${PLATFORM_LOWER}_TEST_KERNELS test_files/*.${PLATFORM_LOWER})
         if(NOT "${${PLATFORM_LOWER}_TEST_KERNELS}" STREQUAL "")
           foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
-            neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${${PLATFORM_LOWER}_TEST_KERNELS})
+            neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} FALSE ${${PLATFORM_LOWER}_TEST_KERNELS})
           endforeach()
         endif()
 
@@ -404,7 +408,7 @@ macro(macro_for_each_core_type)
         endif()
         if(PLATFORM_VME_LOWER)
           foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
-            neo_gen_kernels(${family_name_with_type} ${PLATFORM_VME_LOWER} ${REVISION_ID} ${family_name_with_type} ${TEST_KERNEL_VME})
+            neo_gen_kernels(${family_name_with_type} ${PLATFORM_VME_LOWER} ${REVISION_ID} ${family_name_with_type} TRUE ${TEST_KERNEL_VME})
           endforeach()
         endif()
       endif()
