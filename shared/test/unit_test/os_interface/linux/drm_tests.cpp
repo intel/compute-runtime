@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -36,6 +37,15 @@ std::string getLinuxDevicesPath(const char *file) {
     resultString += file;
 
     return resultString;
+}
+
+TEST(DrmTest, whenGettingSubmissionStatusFromReturnCodeThenProperValueIsReturned) {
+    EXPECT_EQ(SubmissionStatus::SUCCESS, Drm::getSubmissionStatusFromReturnCode(0));
+    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, Drm::getSubmissionStatusFromReturnCode(EWOULDBLOCK));
+    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, Drm::getSubmissionStatusFromReturnCode(ENOSPC));
+    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, Drm::getSubmissionStatusFromReturnCode(ENOMEM));
+    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, Drm::getSubmissionStatusFromReturnCode(ENXIO));
+    EXPECT_EQ(SubmissionStatus::FAILED, Drm::getSubmissionStatusFromReturnCode(EBUSY));
 }
 
 TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned) {

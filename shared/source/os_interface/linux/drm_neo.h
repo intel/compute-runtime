@@ -42,6 +42,8 @@ namespace NEO {
 constexpr uint32_t contextPrivateParamBoost = 0x80000000;
 
 enum class AllocationType;
+enum class SubmissionStatus : uint32_t;
+
 class BufferObject;
 class DeviceFactory;
 class OsContext;
@@ -66,6 +68,8 @@ class Drm : public DriverModel {
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::DRM;
     static constexpr size_t completionFenceOffset = 1024;
+
+    static SubmissionStatus getSubmissionStatusFromReturnCode(int32_t retCode);
 
     struct QueryTopologyData {
         int sliceCount;

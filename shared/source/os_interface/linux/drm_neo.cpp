@@ -7,6 +7,7 @@
 
 #include "drm_neo.h"
 
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -49,6 +50,21 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
       hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
     fenceVal.fill(0u);
+}
+
+SubmissionStatus Drm::getSubmissionStatusFromReturnCode(int32_t retCode) {
+    switch (retCode) {
+    case 0:
+        return SubmissionStatus::SUCCESS;
+    case EWOULDBLOCK:
+    case ENOMEM:
+    case ENOSPC:
+        return SubmissionStatus::OUT_OF_HOST_MEMORY;
+    case ENXIO:
+        return SubmissionStatus::OUT_OF_MEMORY;
+    default:
+        return SubmissionStatus::FAILED;
+    }
 }
 
 void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
