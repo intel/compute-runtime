@@ -141,6 +141,9 @@ struct HardwareIpVersion {
     uint8_t architecture;
     uint8_t release;
     uint8_t revision;
+
+  protected:
+    uint8_t reserved[5]{};
 };
 
 struct HardwareInfo {
@@ -153,7 +156,7 @@ struct HardwareInfo {
     WorkaroundTable workaroundTable{};
     alignas(4) GT_SYSTEM_INFO gtSystemInfo{};
     alignas(8) RuntimeCapabilityTable capabilityTable{};
-    HardwareIpVersion ipVersion{};
+    alignas(8) HardwareIpVersion ipVersion{};
 };
 
 template <PRODUCT_FAMILY product>
