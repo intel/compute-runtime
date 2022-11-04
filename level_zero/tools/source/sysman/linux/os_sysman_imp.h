@@ -14,6 +14,7 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
+#include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <linux/pci_regs.h>
@@ -44,6 +45,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
     ze_result_t init() override;
 
+    L0::UdevLib *getUdevLibHandle();
     PmuInterface *getPmuInterface();
     FirmwareUtil *getFwUtilInterface();
     FsAccess &getFsAccess();
@@ -88,6 +90,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Drm *pDrm = nullptr;
     PmuInterface *pPmuInterface = nullptr;
     FirmwareUtil *pFwUtilInterface = nullptr;
+    L0::UdevLib *pUdevLib = nullptr;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     ze_result_t initLocalDeviceAndDrmHandles();
 

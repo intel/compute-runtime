@@ -15,6 +15,8 @@ These instructions have been tested on Ubuntu* and complement those existing for
 To use Fabric related APIs, please build and/or install [libnl-3.7.0](https://www.linuxfromscratch.org/blfs/view/svn/basicnet/libnl.html).
 If installing to a local folder, `-DLIBGENL_INCLUDE_DIR=<local install folder path>/libnl/include/libnl3/` could be passed to the cmake line of NEO build(Please refer top-level BUILD.md).
 
+To use Sysman events API, please build and/or install libudev-dev 
+
 2. Install/build Level Zero loader and Level Zero headers
 
 Install Level Zero loader and headers from [https://github.com/oneapi-src/level-zero/releases](https://github.com/oneapi-src/level-zero/releases).

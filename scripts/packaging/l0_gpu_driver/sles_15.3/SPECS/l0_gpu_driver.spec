@@ -94,9 +94,6 @@ cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu%
 %files -n intel-level-zero-gpu%{?name_suffix}
 %defattr(-,root,root)
 %{_libdir}/libze_intel_gpu.so.*
-%{_sharedstatedir}/libze_intel_gpu/pci_bind_status_file
-%{_sharedstatedir}/libze_intel_gpu/wedged_file
-%{_sysconfdir}/udev/rules.d/99-drm_ze_intel_gpu.rules
 /usr/share/doc/intel-level-zero-gpu%{?name_suffix}/copyright
 %config(noreplace)
 

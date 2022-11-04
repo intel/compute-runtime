@@ -26,7 +26,9 @@ void EventsImp::initEvents() {
     });
 }
 void EventsImp::init() {
-    pOsEvents = OsEvents::create(pOsSysman);
+    if (pOsEvents == nullptr) {
+        pOsEvents = OsEvents::create(pOsSysman);
+    }
     UNRECOVERABLE_IF(nullptr == pOsEvents);
 }
 

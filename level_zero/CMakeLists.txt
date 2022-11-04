@@ -75,6 +75,18 @@ if(BUILD_WITH_L0)
     endif()
   endif()
 
+  if(UNIX)
+    # Udev library interface
+    find_path(LIBUDEV_INCLUDE_DIR libudev.h)
+    if(LIBUDEV_INCLUDE_DIR)
+      message(STATUS "libudev headers directory: ${LIBUDEV_INCLUDE_DIR}")
+      include_directories(SYSTEM ${LIBUDEV_INCLUDE_DIR})
+      set(LIBUDEV_FOUND TRUE)
+    else()
+      message(STATUS "libudev headers not available. Building without")
+    endif()
+  endif()
+
   # Firmware Update Library
   get_filename_component(IGSC_DIR_tmp "${NEO_SOURCE_DIR}/../igsc" ABSOLUTE)
   if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
