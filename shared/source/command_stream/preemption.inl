@@ -58,7 +58,7 @@ void PreemptionHelper::programStateSipCmd(LinearStream &preambleCmdStream, Graph
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programStateSipEndWa(LinearStream &cmdStream, Device &device) {}
+void PreemptionHelper::programStateSipEndWa(LinearStream &cmdStream, const HardwareInfo &hwInfo, bool debuggerActive) {}
 
 template <typename GfxFamily>
 void PreemptionHelper::programCmdStream(LinearStream &cmdStream, PreemptionMode newPreemptionMode,

@@ -82,7 +82,7 @@ XEHPTEST_F(PreemptionXeHPTest, givenRevisionA0toBWhenProgrammingSipEndWaThenGlob
         StackVec<char, 1024> streamStorage(1024);
         LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
 
-        PreemptionHelper::programStateSipEndWa<FamilyType>(cmdStream, *mockDevice);
+        PreemptionHelper::programStateSipEndWa<FamilyType>(cmdStream, hwInfo, true);
         EXPECT_NE(0U, cmdStream.getUsed());
 
         GenCmdList cmdList;

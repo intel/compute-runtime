@@ -676,8 +676,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAvailableWhenProgrammingEndi
     uint8_t buffer[128];
     mockCsr->commandStream.replaceBuffer(&buffer[0], 128u);
     mockCsr->commandStream.replaceGraphicsAllocation(&mockAllocation);
-    auto &device = *pDevice;
-    mockCsr->programEndingCmd(mockCsr->commandStream, device, &location, ret);
+    mockCsr->programEndingCmd(mockCsr->commandStream, &location, ret, true);
     EXPECT_EQ(sizeof(MI_BATCH_BUFFER_START), mockCsr->commandStream.getUsed());
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -711,7 +710,6 @@ HWTEST_F(DirectSubmissionTest, givenDebugFlagSetWhenProgrammingEndingCommandThen
     auto &cmdStream = mockCsr->commandStream;
     cmdStream.replaceBuffer(&buffer[0], 256);
     cmdStream.replaceGraphicsAllocation(&mockAllocation);
-    auto &device = *pDevice;
 
     for (int32_t value : {-1, 0, 1}) {
         DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.set(value);
@@ -719,7 +717,7 @@ HWTEST_F(DirectSubmissionTest, givenDebugFlagSetWhenProgrammingEndingCommandThen
         auto currectBbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(cmdStream.getSpace(0));
         uint64_t expectedGpuVa = cmdStream.getGraphicsAllocation()->getGpuAddress() + cmdStream.getUsed();
 
-        mockCsr->programEndingCmd(cmdStream, device, &location, ret);
+        mockCsr->programEndingCmd(cmdStream, &location, ret, true);
         EncodeNoop<FamilyType>::alignToCacheLine(cmdStream);
 
         if (value == 0) {

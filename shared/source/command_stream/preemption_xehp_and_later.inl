@@ -43,13 +43,12 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
 }
 
 template <>
-void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, Device &device) {
+void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const HardwareInfo &hwInfo, bool debuggerActive) {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-    bool debuggingEnabled = device.getDebugger() != nullptr;
 
-    if (debuggingEnabled) {
-        HwHelper &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
-        if (hwHelper.isSipWANeeded(device.getHardwareInfo())) {
+    if (debuggerActive) {
+        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        if (hwHelper.isSipWANeeded(hwInfo)) {
 
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
