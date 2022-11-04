@@ -18,6 +18,8 @@ struct CompletionStamp {
 
     static constexpr uint32_t notReady = 0xFFFFFFF0;
     static constexpr uint32_t gpuHang = 0xFFFFFFFA;
+    static constexpr uint32_t outOfDeviceMemory = 0xFFFFFFFB;
+    static constexpr uint32_t outOfHostMemory = 0xFFFFFFFC;
 };
 
 } // namespace NEO

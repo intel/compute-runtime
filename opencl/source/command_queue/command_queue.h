@@ -58,6 +58,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                 bool internalUsage,
                                 cl_int &errcodeRet);
 
+    static cl_int getErrorCodeFromTaskCount(uint32_t taskCount);
+
     CommandQueue() = delete;
 
     CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage);

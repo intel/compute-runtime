@@ -183,7 +183,7 @@ HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessComp
     auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     bcsCsr->callBaseFlushBcsTask = false;
-    bcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    bcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     EXPECT_FALSE(printfHandler->printEnqueueOutput());
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);

@@ -650,12 +650,12 @@ HWTEST_F(BcsTests, GivenNoneGpuHangWhenBlitFromHostPtrCalledThenCallWaitWithKmdF
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     const auto taskCount1 = flushBcsTask(myMockCsr.get(), blitProperties, false, *pDevice);
-    EXPECT_TRUE(taskCount1.has_value());
+    EXPECT_NE(CompletionStamp::gpuHang, taskCount1);
 
     EXPECT_EQ(0u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
 
     const auto taskCount2 = flushBcsTask(myMockCsr.get(), blitProperties, true, *pDevice);
-    EXPECT_TRUE(taskCount2.has_value());
+    EXPECT_NE(CompletionStamp::gpuHang, taskCount2);
 
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);
@@ -687,14 +687,14 @@ HWTEST_F(BcsTests, GivenGpuHangWhenBlitFromHostPtrCalledThenCallWaitWithKmdFallb
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     const auto taskCount1 = flushBcsTask(myMockCsr.get(), blitProperties, false, *pDevice);
-    EXPECT_TRUE(taskCount1.has_value());
+    EXPECT_NE(CompletionStamp::gpuHang, taskCount1);
 
     EXPECT_EQ(0u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
 
     myMockCsr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
 
     const auto taskCount2 = flushBcsTask(myMockCsr.get(), blitProperties, true, *pDevice);
-    EXPECT_FALSE(taskCount2.has_value());
+    EXPECT_EQ(CompletionStamp::gpuHang, taskCount2);
 
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);

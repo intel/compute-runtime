@@ -597,7 +597,7 @@ void Event::submitCommand(bool abortTasks) {
             setEndTimeStamp();
         }
 
-        if (complStamp.taskCount == CompletionStamp::gpuHang) {
+        if (complStamp.taskCount > CompletionStamp::notReady) {
             abortExecutionDueToGpuHang();
             return;
         }

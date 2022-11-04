@@ -98,7 +98,7 @@ bool PrintfHandler::printEnqueueOutput() {
                                                             0, 0, 0, Vec3<size_t>(printfOutputSize, 0, 0), 0, 0, 0, 0));
 
         const auto newTaskCount = bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, device);
-        if (!newTaskCount) {
+        if (newTaskCount > CompletionStamp::notReady) {
             return false;
         }
     }

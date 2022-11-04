@@ -335,8 +335,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         this->latestSentEnqueueType = enqueueProperties.operation;
     }
 
-    if (completionStamp.taskCount == CompletionStamp::gpuHang) {
-        return CL_OUT_OF_RESOURCES;
+    if (completionStamp.taskCount > CompletionStamp::notReady) {
+        return CommandQueue::getErrorCodeFromTaskCount(completionStamp.taskCount);
     }
 
     updateFromCompletionStamp(completionStamp, eventBuilder.getEvent());
@@ -825,14 +825,14 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (enqueueProperties.blitPropertiesContainer->size() > 0) {
         auto bcsCsr = getBcsForAuxTranslation();
         const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
-        if (!newTaskCount) {
+        if (newTaskCount > CompletionStamp::notReady) {
             CompletionStamp completionStamp{};
-            completionStamp.taskCount = CompletionStamp::gpuHang;
+            completionStamp.taskCount = newTaskCount;
 
             return completionStamp;
         }
 
-        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), *newTaskCount);
+        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
         dispatchFlags.implicitFlush = true;
     }
 
@@ -1063,14 +1063,14 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
         const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
-        if (!newTaskCount) {
+        if (newTaskCount > CompletionStamp::notReady) {
             CompletionStamp completionStamp{};
-            completionStamp.taskCount = CompletionStamp::gpuHang;
+            completionStamp.taskCount = newTaskCount;
 
             return completionStamp;
         }
 
-        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), *newTaskCount);
+        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
     }
 
     return completionStamp;
@@ -1276,8 +1276,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking,
                                                       enqueueProperties, timestampPacketDependencies, eventsRequest,
                                                       eventBuilder, taskLevel, csrDeps, &bcsCsr);
-        if (completionStamp.taskCount == CompletionStamp::gpuHang) {
-            return CL_OUT_OF_RESOURCES;
+        if (completionStamp.taskCount > CompletionStamp::notReady) {
+            return CommandQueue::getErrorCodeFromTaskCount(completionStamp.taskCount);
         }
 
         if (gpgpuSubmission) {

@@ -128,6 +128,13 @@ INSTANTIATE_TEST_CASE_P(CommandQueue,
                         CommandQueueTest,
                         ::testing::ValuesIn(AllCommandQueueProperties));
 
+TEST(CommandQueue, WhenGettingErrorCodeFromTaskCountThenProperValueIsReturned) {
+    EXPECT_EQ(CL_SUCCESS, CommandQueue::getErrorCodeFromTaskCount(0));
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::outOfHostMemory));
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::outOfDeviceMemory));
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::gpuHang));
+}
+
 TEST(CommandQueue, WhenConstructingCommandQueueThenTaskLevelAndTaskCountAreZero) {
     MockCommandQueue cmdQ(nullptr, nullptr, 0, false);
     EXPECT_EQ(0u, cmdQ.taskLevel);

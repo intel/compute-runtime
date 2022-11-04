@@ -60,6 +60,18 @@ CommandQueue *CommandQueue::create(Context *context,
     return funcCreate(context, device, properties, internalUsage);
 }
 
+cl_int CommandQueue::getErrorCodeFromTaskCount(uint32_t taskCount) {
+    switch (taskCount) {
+    case CompletionStamp::gpuHang:
+    case CompletionStamp::outOfDeviceMemory:
+        return CL_OUT_OF_RESOURCES;
+    case CompletionStamp::outOfHostMemory:
+        return CL_OUT_OF_HOST_MEMORY;
+    default:
+        return CL_SUCCESS;
+    }
+}
+
 CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage)
     : context(context), device(device), isInternalUsage(internalUsage) {
     if (context) {

@@ -113,7 +113,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenGpuHangOnFlushBcsAndBlitAuxTran
 
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
     ultBcsCsr->callBaseFlushBcsTask = false;
-    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    ultBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
 
@@ -666,7 +666,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenGpuHangOnFlushBcsTaskAndBlitTra
 
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
     ultBcsCsr->callBaseFlushBcsTask = false;
-    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    ultBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     UserEvent userEvent;
     cl_event waitlist[] = {&userEvent};
@@ -943,7 +943,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetWhenDis
 HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenGpuHangOnFlushBcsTaskAndDebugFlagSetWhenDispatchingBlitEnqueueThenOutOfResourcesIsReturned) {
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
     ultBcsCsr->callBaseFlushBcsTask = false;
-    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    ultBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
@@ -1194,7 +1194,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenGpuHangOnFlushBcsTaskAndBlockedQu
     auto myUltBcsCsr = static_cast<MyUltCsr<FamilyType> *>(bcsCsr);
     myUltBcsCsr->flushCounter = &flushCounter;
     myUltBcsCsr->callBaseFlushBcsTask = false;
-    myUltBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    myUltBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     UserEvent userEvent;
     cl_event waitlist[] = {&userEvent};

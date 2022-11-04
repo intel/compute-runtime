@@ -559,7 +559,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenGpuHangOnFlushBcsTaskAndLo
 
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
     ultBcsCsr->callBaseFlushBcsTask = false;
-    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    ultBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     EXPECT_EQ(BlitOperationResult::GpuHang, BlitHelper::blitMemoryToAllocation(buffer->getContext()->getDevice(0)->getDevice(), memory, buffer->getOffset(), hostMemory, {1, 1, 1}));
 }

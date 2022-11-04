@@ -258,14 +258,12 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.clearLastBcsPackets();
     }
 
-    bool isGpuHangDetected{false};
-
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
         const auto newTaskCount = bcsCsrForAuxTranslation->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
-        if (newTaskCount) {
-            commandQueue.updateBcsTaskCount(bcsCsrForAuxTranslation->getOsContext().getEngineType(), *newTaskCount);
+        if (newTaskCount <= CompletionStamp::notReady) {
+            commandQueue.updateBcsTaskCount(bcsCsrForAuxTranslation->getOsContext().getEngineType(), newTaskCount);
         } else {
-            isGpuHangDetected = true;
+            completionStamp.taskCount = newTaskCount;
         }
     }
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
@@ -277,11 +275,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (printfHandler) {
         const auto waitStatus = commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
         if (waitStatus == WaitStatus::GpuHang) {
-            isGpuHangDetected = true;
+            completionStamp.taskCount = CompletionStamp::gpuHang;
         }
 
         if (!printfHandler->printEnqueueOutput()) {
-            isGpuHangDetected = true;
+            completionStamp.taskCount = CompletionStamp::gpuHang;
         }
     }
 
@@ -290,14 +288,10 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
     surfaces.clear();
 
-    if (isGpuHangDetected) {
-        completionStamp.taskCount = CompletionStamp::gpuHang;
-    }
-
     return completionStamp;
 }
 
-bool CommandWithoutKernel::dispatchBlitOperation() {
+uint32_t CommandWithoutKernel::dispatchBlitOperation() {
     auto bcsCsr = kernelOperation->bcsCsr;
     UNRECOVERABLE_IF(bcsCsr == nullptr);
 
@@ -314,14 +308,14 @@ bool CommandWithoutKernel::dispatchBlitOperation() {
     }
 
     const auto newTaskCount = bcsCsr->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
-    if (!newTaskCount) {
-        return false;
+    if (newTaskCount > CompletionStamp::notReady) {
+        return newTaskCount;
     }
 
-    commandQueue.updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), *newTaskCount);
+    commandQueue.updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
     commandQueue.setLastBcsPacket(bcsCsr->getOsContext().getEngineType());
 
-    return true;
+    return newTaskCount;
 }
 
 CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {
@@ -420,8 +414,9 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (kernelOperation->blitEnqueue) {
-        if (!dispatchBlitOperation()) {
-            completionStamp.taskCount = CompletionStamp::gpuHang;
+        auto taskCount = dispatchBlitOperation();
+        if (taskCount > CompletionStamp::notReady) {
+            completionStamp.taskCount = taskCount;
         }
     }
 
