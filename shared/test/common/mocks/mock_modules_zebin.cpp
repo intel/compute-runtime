@@ -223,4 +223,27 @@ void ZebinWithL0TestCommonModule::recalcPtr() {
     elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> *>(storage.data());
 }
 
+template ZebinCopyBufferSimdModule<ELF_IDENTIFIER_CLASS::EI_CLASS_32>::ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize);
+template ZebinCopyBufferSimdModule<ELF_IDENTIFIER_CLASS::EI_CLASS_64>::ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize);
+
+template <ELF_IDENTIFIER_CLASS numBits>
+ZebinCopyBufferSimdModule<numBits>::ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize) {
+    zeInfoSize = static_cast<size_t>(snprintf(nullptr, 0, zeInfoCopyBufferSimdPlaceholder.c_str(), simdSize, simdSize, getLocalIdSize(hwInfo, simdSize)) + 1);
+    zeInfoCopyBuffer.resize(zeInfoSize);
+    snprintf(zeInfoCopyBuffer.data(), zeInfoSize, zeInfoCopyBufferSimdPlaceholder.c_str(), simdSize, simdSize, getLocalIdSize(hwInfo, simdSize));
+
+    MockElfEncoder<numBits> elfEncoder;
+    auto &elfHeader = elfEncoder.getElfFileHeader();
+    elfHeader.type = NEO::Elf::ET_ZEBIN_EXE;
+    elfHeader.machine = hwInfo.platform.eProductFamily;
+
+    const uint8_t testKernelData[0x2c0] = {0u};
+
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "CopyBuffer", testKernelData);
+    elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, zeInfoCopyBuffer);
+
+    storage = elfEncoder.encode();
+    this->elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<numBits> *>(storage.data());
+}
+
 }; // namespace ZebinTestData

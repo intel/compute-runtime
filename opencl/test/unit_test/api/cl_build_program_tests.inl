@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/program.h"
@@ -75,19 +76,17 @@ TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
 TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    std::unique_ptr<char[]> pBinary = nullptr;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
-    pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
+    const auto &src = zebinData->storage;
 
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
+    ASSERT_NE(nullptr, src.data());
+    ASSERT_NE(0u, src.size());
 
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
+    const size_t binarySize = src.size();
+
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
@@ -96,8 +95,6 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
         binaries,
         &binaryStatus,
         &retVal);
-
-    pBinary.reset();
 
     EXPECT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -120,21 +117,18 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMu
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    std::unique_ptr<char[]> pBinary = nullptr;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
-    pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
+    const auto &src = zebinData->storage;
 
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
+    ASSERT_NE(nullptr, src.data());
+    ASSERT_NE(0u, src.size());
+    const size_t binarySize = src.size();
 
     const size_t numBinaries = 6;
     const unsigned char *binaries[numBinaries];
-    std::fill(binaries, binaries + numBinaries, reinterpret_cast<const unsigned char *>(pBinary.get()));
+    std::fill(binaries, binaries + numBinaries, reinterpret_cast<const unsigned char *>(src.data()));
     cl_device_id devicesForProgram[] = {context.pRootDevice0, context.pSubDevice00, context.pSubDevice01, context.pRootDevice1, context.pSubDevice10, context.pSubDevice11};
     size_t sizeBinaries[numBinaries];
     std::fill(sizeBinaries, sizeBinaries + numBinaries, binarySize);
@@ -147,8 +141,6 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMu
         binaries,
         &binaryStatus,
         &retVal);
-
-    pBinary.reset();
 
     EXPECT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -170,17 +162,16 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMu
 TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOptionsIsCalledThenStoredOptionsAreUsed) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
-    auto pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
+    const auto &src = zebinData->storage;
 
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
+    ASSERT_NE(nullptr, src.data());
+    ASSERT_NE(0u, src.size());
+    const size_t binarySize = src.size();
+
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
@@ -192,7 +183,6 @@ TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
 
     auto pInternalProgram = castToObject<Program>(pProgram);
 
-    pBinary.reset();
     auto storedOptionsSize = pInternalProgram->getOptions().size();
 
     EXPECT_NE(nullptr, pProgram);
@@ -316,17 +306,16 @@ TEST_F(clBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalid
 TEST_F(clBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackIsInvoked) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
-    auto pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
+    const auto &src = zebinData->storage;
 
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
+    ASSERT_NE(nullptr, src.data());
+    ASSERT_NE(0u, src.size());
+    const size_t binarySize = src.size();
+
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
