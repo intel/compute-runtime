@@ -42,16 +42,15 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
                                           sizeof(storageInfo.resourceTag));
 
     switch (properties.allocationType) {
-    case AllocationType::CONSTANT_SURFACE:
     case AllocationType::KERNEL_ISA:
     case AllocationType::KERNEL_ISA_INTERNAL:
     case AllocationType::DEBUG_MODULE_AREA: {
-        auto placeAllocOnMultiTile = (properties.subDevicesBitfield.count() != 1);
+        auto placeIsaOnMultiTile = (properties.subDevicesBitfield.count() != 1);
 
-        if (DebugManager.flags.MultiTileAllocPlacement.get() != -1) {
-            placeAllocOnMultiTile = !!DebugManager.flags.MultiTileAllocPlacement.get();
+        if (DebugManager.flags.MultiTileIsaPlacement.get() != -1) {
+            placeIsaOnMultiTile = !!DebugManager.flags.MultiTileIsaPlacement.get();
         }
-        if (placeAllocOnMultiTile) {
+        if (placeIsaOnMultiTile) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
             storageInfo.tileInstanced = true;
