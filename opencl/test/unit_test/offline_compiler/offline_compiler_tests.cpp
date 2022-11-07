@@ -1486,6 +1486,15 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentAndExcludeIrFromZebinInternal
     EXPECT_EQ(firstExcludeIrFromZebin, lastExcludeIrFromZebin);
 }
 
+bool containsAnyIRSection(ArrayRef<const uint8_t> elfBinary, std::string &outErrors, std::string &outWarnings) {
+    if (Elf::isElf<Elf::EI_CLASS_32>(elfBinary)) {
+        auto elf = Elf::decodeElf<Elf::EI_CLASS_32>(elfBinary, outErrors, outWarnings);
+        return isAnyIrSectionDefined(elf.sectionHeaders);
+    }
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(elfBinary, outErrors, outWarnings);
+    return isAnyIrSectionDefined(elf.sectionHeaders);
+}
+
 TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenGeneratingElfBinaryFromPatchtokensThenIrSectionIsNotPresent) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -1514,12 +1523,10 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenGeneratingElfBinaryFromPa
 
     std::string errorReason{};
     std::string warning{};
-
-    const auto elf{Elf::decodeElf(mockOfflineCompiler.elfBinary, errorReason, warning)};
+    auto hasIR = containsAnyIRSection(mockOfflineCompiler.elfBinary, errorReason, warning);
     ASSERT_TRUE(errorReason.empty());
     ASSERT_TRUE(warning.empty());
-
-    EXPECT_FALSE(isAnyIrSectionDefined(elf.sectionHeaders));
+    EXPECT_FALSE(hasIR);
 }
 
 TEST_F(OfflineCompilerTests, givenLackOfExcludeIrArgumentWhenCompilingKernelThenIrShouldBeIncluded) {
@@ -1538,12 +1545,10 @@ TEST_F(OfflineCompilerTests, givenLackOfExcludeIrArgumentWhenCompilingKernelThen
 
     std::string errorReason{};
     std::string warning{};
-
-    const auto elf{Elf::decodeElf(mockOfflineCompiler.elfBinary, errorReason, warning)};
+    auto hasIR = containsAnyIRSection(mockOfflineCompiler.elfBinary, errorReason, warning);
     ASSERT_TRUE(errorReason.empty());
     ASSERT_TRUE(warning.empty());
-
-    EXPECT_TRUE(isAnyIrSectionDefined(elf.sectionHeaders));
+    EXPECT_TRUE(hasIR);
 }
 
 TEST_F(OfflineCompilerTests, givenZeroSizeInputFileWhenInitializationIsPerformedThenInvalidFileIsReturned) {
