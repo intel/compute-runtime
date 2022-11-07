@@ -19,7 +19,7 @@ constexpr static auto gfxProduct = IGFX_SKYLAKE;
 #include "shared/source/gen9/skl/os_agnostic_hw_info_config_skl.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (nullptr == osIface) {
         return 0;
     }

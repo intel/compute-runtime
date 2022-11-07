@@ -29,10 +29,10 @@ DG2TEST_F(HwInfoConfigTestLinuxDg2, WhenConfiguringHwInfoThenZeroIsReturned) {
 }
 
 DG2TEST_F(HwInfoConfigTestLinuxDg2, GivenDg2WhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
-    HwInfoConfig *hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
 
     OSInterface osIface;
-    hwInfoConfig->configureHardwareCustom(&pInHwInfo, &osIface);
+    hwInfoConfig.configureHardwareCustom(&pInHwInfo, &osIface);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);

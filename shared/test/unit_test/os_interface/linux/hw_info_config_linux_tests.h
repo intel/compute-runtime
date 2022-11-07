@@ -55,6 +55,10 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
         HwInfoConfigTest::TearDown();
     }
 
+    const HwInfoConfig &getHwInfoConfig() {
+        return executionEnvironment->rootDeviceEnvironments[0]->getHwInfoConfig();
+    }
+
     OSInterface *osInterface;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     DrmMock *drm;

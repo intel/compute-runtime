@@ -31,7 +31,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
 #include "shared/source/xe_hp_core/os_agnostic_hw_info_config_xe_hp_core.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (allowCompression(*hwInfo)) {
         enableCompression(hwInfo);
     }

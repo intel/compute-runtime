@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -1047,16 +1048,16 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsS
     EXPECT_TRUE(pipeControl->getTlbInvalidate());
 }
 
-using HwInfoConfigCommonTest = ::testing::Test;
+using HwInfoConfigCommonTest = Test<DeviceFixture>;
 
 HWTEST2_F(HwInfoConfigCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, IsAtLeastGen12lp) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
-    auto hwInfoConfig = HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
 
-    hwInfoConfig->configureHardwareCustom(&hardwareInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
 
-    const auto expectedBlitterSupport = hwInfoConfig->obtainBlitterPreference(hardwareInfo);
+    const auto expectedBlitterSupport = hwInfoConfig.obtainBlitterPreference(hardwareInfo);
     EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
@@ -1092,15 +1093,14 @@ TEST_F(HwHelperTest, givenInvalidEngineTypeWhenGettingEngineGroupTypeThenThrow) 
 HWTEST2_F(HwInfoConfigCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, IsAtLeastGen12lp) {
     DebugManagerStateRestore restore{};
     HardwareInfo hardwareInfo = *defaultHwInfo;
-
-    auto hwInfoConfig = HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    hwInfoConfig->configureHardwareCustom(&hardwareInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
     EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-    hwInfoConfig->configureHardwareCustom(&hardwareInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 

@@ -34,6 +34,7 @@ class OSInterface;
 class OSTime;
 class SipKernel;
 class SWTagsManager;
+class HwInfoConfig;
 struct HardwareInfo;
 
 struct RootDeviceEnvironment {
@@ -66,6 +67,7 @@ struct RootDeviceEnvironment {
     void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     void limitNumberOfCcs(uint32_t numberOfCcs);
     bool isNumberOfCcsLimited() const;
+    const HwInfoConfig &getHwInfoConfig() const;
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
     std::unique_ptr<GmmHelper> gmmHelper;

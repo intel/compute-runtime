@@ -124,6 +124,11 @@ BindlessHeapsHelper *RootDeviceEnvironment::getBindlessHeapsHelper() const {
     return bindlessHeapsHelper.get();
 }
 
+const HwInfoConfig &RootDeviceEnvironment::getHwInfoConfig() const {
+    auto &hwInfoConfig = *HwInfoConfig::get(this->getHardwareInfo()->platform.eProductFamily);
+    return hwInfoConfig;
+}
+
 void RootDeviceEnvironment::createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
     bindlessHeapsHelper = std::make_unique<BindlessHeapsHelper>(memoryManager, availableDevices, rootDeviceIndex, deviceBitfield);
 }

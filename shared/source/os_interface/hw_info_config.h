@@ -50,7 +50,7 @@ class HwInfoConfig {
     static constexpr uint32_t luidSize = 8u;
     int configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
     int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
-    virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) = 0;
+    virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const = 0;
     virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
     virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) = 0;
     virtual uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) = 0;
@@ -186,7 +186,7 @@ class HwInfoConfigHw : public HwInfoConfig {
         static HwInfoConfigHw<gfxProduct> instance;
         return &instance;
     }
-    int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override;
+    int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
     void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
     void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) override;
     uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) override;
@@ -307,8 +307,8 @@ class HwInfoConfigHw : public HwInfoConfig {
   protected:
     HwInfoConfigHw() = default;
 
-    void enableCompression(HardwareInfo *hwInfo);
-    void enableBlitterOperationsSupport(HardwareInfo *hwInfo);
+    void enableCompression(HardwareInfo *hwInfo) const;
+    void enableBlitterOperationsSupport(HardwareInfo *hwInfo) const;
     bool getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability);
     uint64_t getHostMemCapabilitiesValue();
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo);

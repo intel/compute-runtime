@@ -8,6 +8,7 @@
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -16,7 +17,7 @@
 
 using namespace NEO;
 
-using Dg1HwInfoConfig = ::testing::Test;
+using Dg1HwInfoConfig = Test<DeviceFixture>;
 
 DG1TEST_F(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -32,20 +33,20 @@ DG1TEST_F(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpe
 }
 
 DG1TEST_F(Dg1HwInfoConfig, givenA0SteppingAndDg1PlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
     std::array<std::pair<uint32_t, bool>, 2> revisions = {
         {{REVISION_A0, true},
          {REVISION_B, false}}};
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
 
-        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, hwInfoConfig->pipeControlWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig->imagePitchAlignmentWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig->isForceEmuInt32DivRemSPWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig.pipeControlWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig.imagePitchAlignmentWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo));
     }
 }
 
@@ -109,8 +110,8 @@ DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
 }
 
-DG1TEST_F(Dg1HwInfo, whenConfigureHwInfoThenBlitterSupportIsEnabled) {
-    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+DG1TEST_F(Dg1HwInfoConfig, whenConfigureHwInfoThenBlitterSupportIsEnabled) {
+    auto &hwInfoConfig = getHwInfoConfig();
     auto hardwareInfo = *defaultHwInfo;
 
     hardwareInfo.capabilityTable.blitterOperationsSupported = false;

@@ -9,24 +9,25 @@
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
-using HwInfoConfigTestLinuxDg1 = ::testing::Test;
+using HwInfoConfigTestLinuxDg1 = Test<DeviceFixture>;
 using namespace NEO;
 
 DG1TEST_F(HwInfoConfigTestLinuxDg1, GivenDG1WhenConfigureHardwareCustomThenMTPIsNotSet) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
-    HwInfoConfig *hwInfoConfig = HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
 
     OSInterface osIface;
     hardwareInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
     PreemptionHelper::adjustDefaultPreemptionMode(hardwareInfo.capabilityTable, true, true, true);
 
-    hwInfoConfig->configureHardwareCustom(&hardwareInfo, &osIface);
+    hwInfoConfig.configureHardwareCustom(&hardwareInfo, &osIface);
     EXPECT_FALSE(hardwareInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
 }
 

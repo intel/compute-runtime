@@ -22,7 +22,7 @@ constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);

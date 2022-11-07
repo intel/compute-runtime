@@ -9,6 +9,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -18,7 +19,7 @@
 
 using namespace NEO;
 
-using PvcHwInfoConfig = ::testing::Test;
+using PvcHwInfoConfig = Test<DeviceFixture>;
 
 PVCTEST_F(PvcHwInfoConfig, givenPVCRevId3AndAboveWhenGettingThreadEuRatioForScratchThen16IsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
@@ -185,10 +186,10 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramExtendedPipeControlPriorTo
 }
 
 PVCTEST_F(PvcHwInfoConfig, givenPvcWhenConfiguringThenDisableCccs) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
@@ -196,10 +197,10 @@ PVCTEST_F(PvcHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableCccs) {
     DebugManagerStateRestore restore;
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
 
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 

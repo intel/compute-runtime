@@ -19,7 +19,7 @@ constexpr static auto gfxProduct = IGFX_ELKHARTLAKE;
 #include "shared/source/gen11/ehl/os_agnostic_hw_info_config_ehl.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (nullptr == osIface) {
         return 0;
     }

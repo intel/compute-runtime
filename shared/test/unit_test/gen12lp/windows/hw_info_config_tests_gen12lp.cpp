@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
@@ -17,15 +18,15 @@ using HwInfoConfigTestWindowsGen12lp = HwInfoConfigTestWindows;
 GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenE2ECSetByKmdWhenConfiguringHwThenAdjustInternalImageFlag) {
     FeatureTable &localFeatureTable = outHwInfo.featureTable;
 
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = rootDeviceEnvironment->getHwInfoConfig();
 
     localFeatureTable.flags.ftrE2ECompression = true;
-    hwInfoConfig->configureHardwareCustom(&outHwInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&outHwInfo, nullptr);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 
     localFeatureTable.flags.ftrE2ECompression = false;
-    hwInfoConfig->configureHardwareCustom(&outHwInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&outHwInfo, nullptr);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 }

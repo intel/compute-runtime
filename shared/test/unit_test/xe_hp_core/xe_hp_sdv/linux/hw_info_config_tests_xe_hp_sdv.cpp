@@ -29,9 +29,9 @@ XEHPTEST_F(HwInfoConfigTestLinuxXeHp, WhenConfiguringHwInfoThenZeroIsReturned) {
 }
 
 XEHPTEST_F(HwInfoConfigTestLinuxXeHp, GivenXeHpSdvWhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
-    HwInfoConfig *hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
 
-    hwInfoConfig->configureHardwareCustom(&pInHwInfo, osInterface);
+    hwInfoConfig.configureHardwareCustom(&pInHwInfo, osInterface);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);

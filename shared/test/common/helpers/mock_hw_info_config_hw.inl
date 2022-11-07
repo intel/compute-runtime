@@ -25,7 +25,7 @@ uint32_t MockHwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareIn
 }
 
 template <>
-int MockHwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int MockHwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     FeatureTable *featureTable = &hwInfo->featureTable;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 0;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 0;

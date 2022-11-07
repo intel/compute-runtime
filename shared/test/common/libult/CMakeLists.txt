@@ -66,10 +66,13 @@ apply_macro_for_each_core_type("TESTED")
 append_sources_from_properties(neo_libult_common_SRCS_ENABLE_TESTED_HW NEO_SRCS_ENABLE_CORE)
 
 set(neo_libult_common_SRCS_LIB_ULT
+    ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info_impl.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/base_ult_config_listener.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/base_ult_config_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/aub_command_stream_receiver_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/gmm_callbacks_fixture.h
@@ -83,11 +86,12 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_helpers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper_hash_value.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper_hash_value.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_filename_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
@@ -115,15 +119,11 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_aub_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_page_table_mngr.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/base_ult_config_listener.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/base_ult_config_listener.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_helpers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/utilities/cpuintrinsics.cpp
-    ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info_impl.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)

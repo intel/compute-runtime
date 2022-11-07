@@ -21,7 +21,7 @@ constexpr static auto gfxProduct = IGFX_PVC;
 #include "shared/source/xe_hpc_core/pvc/os_agnostic_hw_info_config_pvc.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     enableCompression(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 

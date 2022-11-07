@@ -20,7 +20,7 @@ constexpr static auto gfxProduct = IGFX_TIGERLAKE_LP;
 #include "shared/source/gen12lp/tgllp/os_agnostic_hw_info_config_tgllp.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
     hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = false;

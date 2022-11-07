@@ -37,4 +37,9 @@ MockDevice *DeviceFixture::createWithUsDeviceIdRevId(unsigned short usDeviceId, 
     hardwareInfo.platform.usRevId = usRevId;
     return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo);
 }
+
+const HwInfoConfig &DeviceFixture::getHwInfoConfig() const {
+    return this->pDevice->getRootDeviceEnvironment().getHwInfoConfig();
+}
+
 } // namespace NEO

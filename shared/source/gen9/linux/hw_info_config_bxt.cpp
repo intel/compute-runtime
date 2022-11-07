@@ -21,7 +21,7 @@ constexpr static auto gfxProduct = IGFX_BROXTON;
 #include "shared/source/gen9/bxt/os_agnostic_hw_info_config_bxt.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (nullptr == osIface) {
         return 0;
     }

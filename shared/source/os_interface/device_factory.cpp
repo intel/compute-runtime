@@ -50,7 +50,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     DebugManager.getHardwareInfoOverride(hwInfoConfigStr);
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
+        auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
         *hardwareInfo = *hwInfoConst;
 
         if (hwInfoConfigStr == "default") {
@@ -62,8 +63,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 
-        HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-        hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
+        auto &hwConfig = rootDeviceEnvironment.getHwInfoConfig();
+        hwConfig.configureHardwareCustom(hardwareInfo, nullptr);
 
         if (productConfigFound) {
             const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hardwareInfo->platform.eProductFamily);
@@ -83,17 +84,17 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             hardwareInfo->platform.usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }
 
-        [[maybe_unused]] bool result = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAilConfiguration();
+        [[maybe_unused]] bool result = rootDeviceEnvironment.initAilConfiguration();
         DEBUG_BREAK_IF(!result);
 
         auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
         if (csrType > 0) {
             auto &hwHelper = HwHelper::get(hardwareInfo->platform.eRenderCoreFamily);
             auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hardwareInfo);
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(csrType));
-            auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+            rootDeviceEnvironment.initGmm();
+            rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(csrType));
+            auto aubCenter = rootDeviceEnvironment.aubCenter.get();
+            rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
         }
     }
 

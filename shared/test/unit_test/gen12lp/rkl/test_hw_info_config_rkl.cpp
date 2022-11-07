@@ -9,6 +9,7 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -118,10 +119,10 @@ RKLTEST_F(RklHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThen
     EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
 }
 
-using RklHwInfoConfig = ::testing::Test;
+using RklHwInfoConfig = Test<DeviceFixture>;
 
 RKLTEST_F(RklHwInfoConfig, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
     std::array<std::pair<uint32_t, bool>, 3> revisions = {
         {{REVISION_A0, true},
          {REVISION_B, true},
@@ -129,11 +130,11 @@ RKLTEST_F(RklHwInfoConfig, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequi
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
 
-        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, hwInfoConfig->isForceEmuInt32DivRemSPWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo));
     }
 }
 

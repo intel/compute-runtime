@@ -10,6 +10,7 @@
 #include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -118,7 +119,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamilyType
                 EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
             } else if (stepping == REVISION_A1) {
                 EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-            } else if (stepping == REVISION_C || stepping == REVISION_D) { //undefined
+            } else if (stepping == REVISION_C || stepping == REVISION_D) { // undefined
                 EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
             }
         } else {
@@ -197,31 +198,31 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHPAndLaterPlatformWhenCheckAssi
     EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
 }
 
-using HwInfoConfigTestXE_HP_CORE = ::testing::Test;
+using HwInfoConfigTestXE_HP_CORE = Test<DeviceFixture>;
 
 XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
 
 XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
     for (uint32_t tileCount = 0; tileCount <= 4; tileCount++) {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
-        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
 
         EXPECT_EQ(true, hwInfo.capabilityTable.blitterOperationsSupported);
     }

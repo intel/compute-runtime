@@ -16,7 +16,7 @@ constexpr static auto gfxProduct = IGFX_COFFEELAKE;
 
 namespace NEO {
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (nullptr == osIface) {
         return 0;
     }

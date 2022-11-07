@@ -8,6 +8,7 @@
 #include "shared/source/gen12lp/hw_cmds_tgllp.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -18,7 +19,7 @@
 
 using namespace NEO;
 
-using HwInfoConfigTestTgllp = ::testing::Test;
+using HwInfoConfigTestTgllp = Test<DeviceFixture>;
 
 TGLLPTEST_F(HwInfoConfigTestTgllp, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -90,7 +91,7 @@ TGLLPTEST_F(HwInfoConfigTestTgllp, whenUsingCorrectConfigValueThenCorrectHwInfoI
 }
 
 TGLLPTEST_F(HwInfoConfigTestTgllp, givenA0SteppingAndTgllpPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = getHwInfoConfig();
     std::array<std::pair<uint32_t, bool>, 3> revisions = {
         {{REVISION_A0, true},
          {REVISION_B, false},
@@ -98,13 +99,12 @@ TGLLPTEST_F(HwInfoConfigTestTgllp, givenA0SteppingAndTgllpPlatformWhenAskingIfWA
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
 
-        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
-
-        EXPECT_EQ(paramBool, hwInfoConfig->pipeControlWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig->imagePitchAlignmentWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig->isForceEmuInt32DivRemSPWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig.pipeControlWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig.imagePitchAlignmentWARequired(hwInfo));
+        EXPECT_EQ(paramBool, hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo));
     }
 }
 

@@ -26,7 +26,7 @@ constexpr static auto gfxProduct = IGFX_DG2;
 #include "os_agnostic_hw_info_config_dg2_extra.inl"
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (allowCompression(*hwInfo)) {
         enableCompression(hwInfo);
     }
