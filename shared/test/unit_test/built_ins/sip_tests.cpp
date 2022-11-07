@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -370,4 +371,58 @@ TEST(DebugBindlessSip, givenActiveDebuggerAndUseBindlessDebugSipWhenGettingSipTy
     auto sipType = NEO::SipKernel::getSipKernelType(*mockDevice);
 
     EXPECT_EQ(SipKernelType::DbgBindless, sipType);
+}
+TEST(Sip, WhenGettingTypeThenCorrectTypeIsReturned) {
+    std::vector<char> ssaHeader;
+    SipKernel csr{SipKernelType::Csr, nullptr, ssaHeader};
+    EXPECT_EQ(SipKernelType::Csr, csr.getType());
+
+    SipKernel dbgCsr{SipKernelType::DbgCsr, nullptr, ssaHeader};
+    EXPECT_EQ(SipKernelType::DbgCsr, dbgCsr.getType());
+
+    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, nullptr, ssaHeader};
+    EXPECT_EQ(SipKernelType::DbgCsrLocal, dbgCsrLocal.getType());
+
+    SipKernel undefined{SipKernelType::COUNT, nullptr, ssaHeader};
+    EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
+}
+
+TEST(Sip, givenDebuggingInactiveWhenSipTypeIsQueriedThenCsrSipTypeIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
+    EXPECT_EQ(SipKernelType::Csr, sipType);
+}
+
+TEST(DebugSip, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrSipTypeIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+    mockDevice->setDebuggerActive(true);
+
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
+    EXPECT_LE(SipKernelType::DbgCsr, sipType);
+}
+
+TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThenCorrectSipKernelIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &builtins = *mockDevice->getBuiltIns();
+    auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsr, *mockDevice);
+
+    EXPECT_NE(nullptr, &sipKernel);
+    EXPECT_EQ(SipKernelType::DbgCsr, sipKernel.getType());
+}
+
+TEST(DebugBindlessSip, givenBindlessDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice);
+
+    EXPECT_NE(nullptr, &sipKernel);
+    EXPECT_EQ(SipKernelType::DbgBindless, sipKernel.getType());
+
+    EXPECT_FALSE(sipKernel.getStateSaveAreaHeader().empty());
 }
