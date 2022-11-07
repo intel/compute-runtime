@@ -141,32 +141,6 @@ HWTEST_F(HwHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIs
     alignedFree(stateBuffer);
 }
 
-HWTEST_F(HwHelperTest, WhenGettingBindingTableStateSurfaceStatePointerThenCorrectPointerIsReturned) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    BINDING_TABLE_STATE bindingTableState[4];
-
-    bindingTableState[2].getRawData(0) = 0x00123456;
-
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    auto pointer = helper.getBindingTableStateSurfaceStatePointer(bindingTableState, 2);
-    EXPECT_EQ(0x00123456u, pointer);
-}
-
-HWTEST_F(HwHelperTest, WhenGettingBindingTableStateSizeThenCorrectSizeIsReturned) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    auto pointer = helper.getBindingTableStateSize();
-    EXPECT_EQ(sizeof(BINDING_TABLE_STATE), pointer);
-}
-
-TEST_F(HwHelperTest, WhenGettingBindingTableStateAlignementThenCorrectSizeIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_NE(0u, helper.getBindingTableStateAlignement());
-}
-
 HWTEST_F(HwHelperTest, WhenGettingInterfaceDescriptorDataSizeThenCorrectSizeIsReturned) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     auto &helper = HwHelper::get(renderCoreFamily);
