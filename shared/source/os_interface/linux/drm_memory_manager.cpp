@@ -730,7 +730,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         sizes.push_back(bo->peekSize());
     }
 
-    auto heapIndex = HeapIndex::HEAP_STANDARD2MB;
+    auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
+    auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0);
+    auto heapIndex = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
     auto gpuRange = acquireGpuRange(totalSize, properties.rootDeviceIndex, heapIndex);
 
     lock.unlock();
@@ -812,10 +814,25 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
             return nullptr;
         }
 
-        auto heapIndex = isLocalMemorySupported(properties.rootDeviceIndex) ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD;
-        if (requireSpecificBitness && this->force32bitAllocations) {
-            heapIndex = HeapIndex::HEAP_EXTERNAL;
-        }
+        auto getHeapIndex = [&] {
+            if (requireSpecificBitness && this->force32bitAllocations) {
+                return HeapIndex::HEAP_EXTERNAL;
+            }
+
+            auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
+            auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0);
+            if (prefer57bitAddressing) {
+                return HeapIndex::HEAP_EXTENDED;
+            }
+
+            if (isLocalMemorySupported(properties.rootDeviceIndex)) {
+                return HeapIndex::HEAP_STANDARD2MB;
+            }
+
+            return HeapIndex::HEAP_STANDARD;
+        };
+
+        auto heapIndex = getHeapIndex();
         auto gpuRange = acquireGpuRange(size, properties.rootDeviceIndex, heapIndex);
 
         bo->setAddress(gpuRange);

@@ -1731,7 +1731,7 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
     memoryManager->freeGraphicsMemory(graphicsAllocationFromReferencedHandle);
 }
 
-TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesWithOneHandleThenAllocationSucceeds) {
+TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesWithOneHandleThenAllocationSucceedsAndGpuAddressIsFromTheExpectedHeap) {
     mock->ioctl_expected.primeFdToHandle = 1;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -1743,6 +1743,15 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
     memoryManager->failOnfindAndReferenceSharedBufferObject = false;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
     ASSERT_NE(nullptr, graphicsAllocation);
+
+    const bool prefer57bitAddressing = memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0;
+    const auto expectedHeap = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
+
+    auto gpuAddress = graphicsAllocation->getGpuAddress();
+    auto gmmHelper = device->getGmmHelper();
+
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(expectedHeap)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(expectedHeap)), gpuAddress);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     auto bo = drmAllocation->getBO();

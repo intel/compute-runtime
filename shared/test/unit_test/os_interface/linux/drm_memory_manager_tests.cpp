@@ -1480,7 +1480,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledT
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenAcquireGpuAddressFromStandardHeap64KB) {
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenAcquireGpuAddressFromExpectedHeap) {
     mock->ioctl_expected.primeFdToHandle = 1;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -1498,18 +1498,23 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, graphicsAllocation->getMemoryPool());
     EXPECT_EQ(this->mock->inputFd, static_cast<int32_t>(handle));
 
+    const bool prefer57bitAddressing = memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0;
+    const auto expectedHeap = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
+
     auto gpuAddress = graphicsAllocation->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_STANDARD2MB)), gpuAddress);
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_STANDARD2MB)), gpuAddress);
+
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(expectedHeap)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(expectedHeap)), gpuAddress);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     auto bo = drmAllocation->getBO();
     EXPECT_EQ(this->mock->outputHandle, static_cast<uint32_t>(bo->peekHandle()));
     EXPECT_EQ(gpuAddress, bo->peekAddress());
     EXPECT_EQ(size, bo->peekSize());
-    EXPECT_EQ(alignUp(size, 2 * MemoryConstants::megaByte), bo->peekUnmapSize());
 
+    const auto expectedUnmapSize = prefer57bitAddressing ? alignUp(size, MemoryConstants::pageSize) : alignUp(size, 2 * MemoryConstants::megaByte);
+    EXPECT_EQ(expectedUnmapSize, bo->peekUnmapSize());
     EXPECT_EQ(handle, graphicsAllocation->peekSharedHandle());
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
