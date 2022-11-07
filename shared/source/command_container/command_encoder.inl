@@ -542,9 +542,7 @@ template <typename Family>
 void EncodeSurfaceState<Family>::encodeImplicitScalingParams(const EncodeSurfaceStateArgs &args) {}
 
 template <typename Family>
-void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset, const HardwareInfo &hwInfo) {
-
-    using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
+void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {
         if (ApiSpecificConfig::getBindlessConfiguration()) {
@@ -556,26 +554,6 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
                                                                   sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock()));
         }
         container.nextIddInBlock = 0;
-
-        if (container.isHeapDirty(HeapType::DYNAMIC_STATE)) {
-            PipeControlArgs syncArgs;
-            syncArgs.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
-            syncArgs.hdcPipelineFlush = true;
-            MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
-
-            STATE_BASE_ADDRESS sba;
-            EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
-                &container,
-                sba,
-                0,
-                false,
-                false,
-                false};
-            EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
-            container.setDirtyStateForAllHeaps(false);
-        }
-
-        EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
     }
 
     iddOffset = container.nextIddInBlock;

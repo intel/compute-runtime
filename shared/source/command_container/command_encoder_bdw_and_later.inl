@@ -167,6 +167,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  args.dispatchInterface->getPerThreadData(), sizePerThreadDataForWholeGroup);
     }
 
+    uint32_t numIDD = 0u;
+    void *iddPtr = getInterfaceDescriptor(container, numIDD);
+
     auto slmSizeNew = args.dispatchInterface->getSlmTotalSize();
     bool dirtyHeaps = container.isAnyHeapDirty();
     bool flush = container.slmSize != slmSizeNew || dirtyHeaps || args.requiresUncachedMocs;
@@ -200,15 +203,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         if (container.slmSize != slmSizeNew) {
             EncodeL3State<Family>::encode(container, slmSizeNew != 0u);
             container.slmSize = slmSizeNew;
-
-            if (container.nextIddInBlock != container.getNumIddPerBlock()) {
-                EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
-            }
         }
     }
 
-    uint32_t numIDD = 0u;
-    void *iddPtr = getInterfaceDescriptor(container, numIDD, hwInfo);
+    if (numIDD == 0 || flush) {
+        EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
+    }
 
     cmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
     cmd.setIndirectDataLength(sizeThreadData);
