@@ -78,7 +78,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hw_info_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_walk_order.h
     ${CMAKE_CURRENT_SOURCE_DIR}/interlocked_max.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers.cpp
