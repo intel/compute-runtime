@@ -9,11 +9,9 @@
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-using AubHelperHwTestXeHPAndLater = Test<ClDeviceFixture>;
+using AubHelperHwTestXeHPAndLater = ::testing::Test;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPAndLater, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel4IsReturned) {
     AubHelperHw<FamilyType> aubHelper(true);

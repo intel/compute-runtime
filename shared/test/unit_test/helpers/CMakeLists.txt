@@ -22,17 +22,22 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/flattened_id_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_shared_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_default_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2_or_below.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/local_id_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/l3_range_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/matcher_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
@@ -40,7 +45,6 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2_or_below.cpp
 )
 
 if(MSVC OR COMPILER_SUPPORTS_SSE42)
@@ -52,7 +56,11 @@ if(COMPILER_SUPPORTS_NEON)
 endif()
 
 if(TESTS_XEHP_AND_LATER)
-  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_xehp_and_later.cpp)
+  target_sources(neo_shared_tests PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_hw_tests_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_xehp_and_later.cpp
+  )
 endif()
 
 if(TESTS_DG2_AND_LATER)

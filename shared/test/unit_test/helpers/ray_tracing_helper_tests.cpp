@@ -10,9 +10,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-
 using namespace NEO;
 
 TEST(RayTracingHelperTests, whenGetMemoryBackedFifoSizeToPatchIsCalledCorrectValueIsReturned) {
@@ -33,17 +30,16 @@ TEST(RayTracingHelperTests, whenMemoryBackedFifoSizeIsRequestedThenCorrectValueI
 }
 
 TEST(RayTracingHelperTests, whenGlobalDispatchSizeIsRequestedThenCorrectValueIsReturned) {
-    MockClDevice device{new MockDevice};
-    MockContext context(&device);
+    MockDevice device;
 
     uint32_t maxBvhLevel = 2;
     uint32_t extraBytesLocal = 20;
     uint32_t extraBytesGlobal = 100;
 
     size_t expectedSize = alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize) +
-                          (RayTracingHelper::hitInfoSize + RayTracingHelper::bvhStackSize * maxBvhLevel + extraBytesLocal) * RayTracingHelper::getNumRtStacks(device.getDevice()) +
+                          (RayTracingHelper::hitInfoSize + RayTracingHelper::bvhStackSize * maxBvhLevel + extraBytesLocal) * RayTracingHelper::getNumRtStacks(device) +
                           extraBytesGlobal;
-    size_t size = RayTracingHelper::getDispatchGlobalSize(device.getDevice(), maxBvhLevel, extraBytesLocal, extraBytesGlobal);
+    size_t size = RayTracingHelper::getDispatchGlobalSize(device, maxBvhLevel, extraBytesLocal, extraBytesGlobal);
     EXPECT_EQ(expectedSize, size);
 }
 
