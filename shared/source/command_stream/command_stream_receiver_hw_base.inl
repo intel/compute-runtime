@@ -608,7 +608,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (submitCSR || submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            flushHandler(batchBuffer, this->getResidencyAllocations());
+            auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
+            if (submissionStatus != SubmissionStatus::SUCCESS) {
+                CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
+                return completionStamp;
+            }
             if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
                 this->latestFlushedTaskCount = this->taskCount + 1;
             }
@@ -1273,9 +1277,10 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    flush(batchBuffer, allocationsForResidency);
+inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    auto status = flush(batchBuffer, allocationsForResidency);
     makeSurfacePackNonResident(allocationsForResidency, true);
+    return status;
 }
 
 template <typename GfxFamily>

@@ -104,7 +104,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void flushPipeControl();
     void flushSmallTask(LinearStream &commandStreamTask,
                         size_t commandStreamStartTask);
-    void flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
+    SubmissionStatus flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
 
     bool isUpdateTagFromWaitEnabled() override;
     void updateTagFromWait() override;

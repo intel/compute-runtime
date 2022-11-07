@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/logical_state_helper.h"
@@ -188,6 +189,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         this->csr->peekTaskLevel(),
         dispatchFlags,
         *(this->device->getNEODevice()));
+
+    if (completionStamp.taskCount > NEO::CompletionStamp::notReady) {
+        if (completionStamp.taskCount == NEO::CompletionStamp::outOfHostMemory) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
 
     if (this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;

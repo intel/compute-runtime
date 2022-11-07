@@ -2345,3 +2345,36 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThen
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
     EXPECT_EQ(CompletionStamp::outOfDeviceMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, givenOutOfHostMemoryFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+
+    auto completionStamp = commandStreamReceiver.flushTask(commandStream,
+                                                           0,
+                                                           &dsh,
+                                                           &ioh,
+                                                           nullptr,
+                                                           taskLevel,
+                                                           flushTaskFlags,
+                                                           *pDevice);
+    EXPECT_EQ(CompletionStamp::outOfHostMemory, completionStamp.taskCount);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenOutOfDeviceMemoryFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+
+    auto completionStamp = commandStreamReceiver.flushTask(commandStream,
+                                                           0,
+                                                           &dsh,
+                                                           &ioh,
+                                                           nullptr,
+                                                           taskLevel,
+                                                           flushTaskFlags,
+                                                           *pDevice);
+
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, completionStamp.taskCount);
+}
