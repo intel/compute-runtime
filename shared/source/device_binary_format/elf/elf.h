@@ -347,13 +347,57 @@ struct ElfSymbolEntryTypes<EI_CLASS_64> {
 };
 
 template <ELF_IDENTIFIER_CLASS NumBits>
-struct ElfSymbolEntry {
-    using Name = typename ElfSymbolEntryTypes<NumBits>::Name;
-    using Value = typename ElfSymbolEntryTypes<NumBits>::Value;
-    using Size = typename ElfSymbolEntryTypes<NumBits>::Size;
-    using Info = typename ElfSymbolEntryTypes<NumBits>::Info;
-    using Other = typename ElfSymbolEntryTypes<NumBits>::Other;
-    using Shndx = typename ElfSymbolEntryTypes<NumBits>::Shndx;
+struct ElfSymbolEntry;
+
+template <>
+struct ElfSymbolEntry<EI_CLASS_32> {
+    using Name = typename ElfSymbolEntryTypes<EI_CLASS_32>::Name;
+    using Value = typename ElfSymbolEntryTypes<EI_CLASS_32>::Value;
+    using Size = typename ElfSymbolEntryTypes<EI_CLASS_32>::Size;
+    using Info = typename ElfSymbolEntryTypes<EI_CLASS_32>::Info;
+    using Other = typename ElfSymbolEntryTypes<EI_CLASS_32>::Other;
+    using Shndx = typename ElfSymbolEntryTypes<EI_CLASS_32>::Shndx;
+    Name name = 0U;
+    Value value = 0U;
+    Size size = 0U;
+    Info info = 0U;
+    Other other = 0U;
+    Shndx shndx = SHN_UNDEF;
+
+    Info getBinding() const {
+        return info >> 4;
+    }
+
+    Info getType() const {
+        return info & 0xF;
+    }
+
+    Other getVisibility() const {
+        return other & 0x3;
+    }
+
+    void setBinding(Info binding) {
+        info = (info & 0xF) | (binding << 4);
+    }
+
+    void setType(Info type) {
+        info = (info & (~0xF)) | (type & 0xF);
+    }
+
+    void setVisibility(Other visibility) {
+        other = (other & (~0x3)) | (visibility & 0x3);
+    }
+};
+static_assert(sizeof(ElfSymbolEntry<EI_CLASS_32>) == 0x10, "");
+
+template <>
+struct ElfSymbolEntry<EI_CLASS_64> {
+    using Name = typename ElfSymbolEntryTypes<EI_CLASS_64>::Name;
+    using Value = typename ElfSymbolEntryTypes<EI_CLASS_64>::Value;
+    using Size = typename ElfSymbolEntryTypes<EI_CLASS_64>::Size;
+    using Info = typename ElfSymbolEntryTypes<EI_CLASS_64>::Info;
+    using Other = typename ElfSymbolEntryTypes<EI_CLASS_64>::Other;
+    using Shndx = typename ElfSymbolEntryTypes<EI_CLASS_64>::Shndx;
     Name name = 0U;
     Info info = 0U;
     Other other = 0U;
@@ -385,8 +429,6 @@ struct ElfSymbolEntry {
         other = (other & (~0x3)) | (visibility & 0x3);
     }
 };
-
-static_assert(sizeof(ElfSymbolEntry<EI_CLASS_32>) == 0x10, "");
 static_assert(sizeof(ElfSymbolEntry<EI_CLASS_64>) == 0x18, "");
 
 template <int NumBits>

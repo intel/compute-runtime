@@ -125,7 +125,6 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     NEO::Debug::Segments segments;
     segments.constData = {0x10000000, 0x10000};
     segments.varData = {0x20000000, 0x20000};
-    segments.stringData = {0x30000000, 0x30000};
     segments.nameToSegMap["kernel"] = {0x40000000, 0x50000};
 
     auto zebinBin = elfEncoder.encode();
@@ -148,10 +147,10 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
 
     EXPECT_EQ(zebin.sectionHeaders.size(), debugZebin.sectionHeaders.size());
 
-    uint64_t offsetKernel, offsetConstData, offsetVarData, offsetStringData;
-    uint64_t fileSzKernel, fileSzConstData, fileSzVarData, fileSzStringData;
-    offsetKernel = offsetConstData = offsetVarData = offsetStringData = std::numeric_limits<uint64_t>::max();
-    fileSzKernel = fileSzConstData = fileSzVarData = fileSzStringData = 0;
+    uint64_t offsetKernel, offsetConstData, offsetVarData;
+    uint64_t fileSzKernel, fileSzConstData, fileSzVarData;
+    offsetKernel = offsetConstData = offsetVarData = std::numeric_limits<uint64_t>::max();
+    fileSzKernel = fileSzConstData = fileSzVarData = 0;
     for (uint32_t i = 0; i < zebin.sectionHeaders.size(); ++i) {
         EXPECT_EQ(zebin.sectionHeaders[i].header->type, debugZebin.sectionHeaders[i].header->type);
         EXPECT_EQ(zebin.sectionHeaders[i].header->link, debugZebin.sectionHeaders[i].header->link);
@@ -175,10 +174,6 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
             offsetVarData = sectionHeader->offset;
             fileSzVarData = sectionHeader->size;
             EXPECT_EQ(segments.varData.address, sectionHeader->addr);
-        } else if (refSectionName == SectionsNamesZebin::dataConstString) {
-            offsetStringData = sectionHeader->offset;
-            fileSzStringData = sectionHeader->size;
-            EXPECT_EQ(segments.stringData.address, sectionHeader->addr);
         } else if (refSectionName == SectionsNamesZebin::debugInfo) {
             auto ptrDebugInfo = sectionData.begin();
             EXPECT_EQ(segments.nameToSegMap["kernel"].address + symbols[0].value + debugRelocations[0].addend,
