@@ -158,7 +158,7 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
     std::string queryAcronym = allArgs[2];
     ProductConfigHelper::adjustDeviceName(queryAcronym);
 
-    auto enabledDevices = helper->productConfigHelper->getDeviceAotInfo();
+    auto &enabledDevices = helper->productConfigHelper->getDeviceAotInfo();
     std::vector<std::string> matchedVersions{};
 
     if (helper->productConfigHelper->isFamily(queryAcronym)) {

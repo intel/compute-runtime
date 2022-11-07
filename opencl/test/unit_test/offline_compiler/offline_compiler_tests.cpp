@@ -189,7 +189,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuc
 }
 
 TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuildingMultiCommandThenSuccessIsReturned) {
-    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    auto &allEnabledDeviceConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
@@ -526,7 +526,7 @@ TEST(MultiCommandWhiteboxTest, GivenInvalidArgsWhenInitializingThenErrorIsReturn
 using MockOfflineCompilerTests = ::testing::Test;
 TEST_F(MockOfflineCompilerTests, givenProductConfigValueAndRevisionIdWhenInitHwInfoThenTheseValuesAreSet) {
     MockOfflineCompiler mockOfflineCompiler;
-    auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
@@ -550,7 +550,7 @@ TEST_F(MockOfflineCompilerTests, givenProductConfigValueAndRevisionIdWhenInitHwI
 
 TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHardwareInfoValuesAreSet) {
     MockOfflineCompiler mockOfflineCompiler;
-    auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
@@ -639,7 +639,7 @@ TEST_F(MockOfflineCompilerTests, givenHwInfoConfigWhenSetHwInfoForDeprecatedAcro
 
 TEST_F(MockOfflineCompilerTests, givenAcronymWithUppercaseWhenInitHwInfoThenSuccessIsReturned) {
     MockOfflineCompiler mockOfflineCompiler;
-    auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
@@ -676,7 +676,7 @@ TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithUppercaseWhenInitHwI
 
 HWTEST2_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenMaxDualSubSlicesSupportedIsSet, IsAtLeastGen12lp) {
     MockOfflineCompiler mockOfflineCompiler;
-    auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
@@ -736,7 +736,7 @@ TEST_F(OfflineCompilerTests, givenFamilyAcronymWhenIdsCommandIsInvokeThenSuccess
     if (enabledFamilies.empty()) {
         GTEST_SKIP();
     }
-    auto supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    auto &supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     for (const auto &familyAcronym : enabledFamilies) {
         std::vector<std::string> expected{};
         auto family = ProductConfigHelper::getFamilyForAcronym(familyAcronym.str());
@@ -770,7 +770,7 @@ TEST_F(OfflineCompilerTests, givenReleaseAcronymWhenIdsCommandIsInvokeThenSucces
     if (enabledReleases.empty()) {
         GTEST_SKIP();
     }
-    auto supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    auto &supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     for (const auto &releaseAcronym : enabledReleases) {
         std::vector<std::string> expected{};
         auto release = ProductConfigHelper::getReleaseForAcronym(releaseAcronym.str());
@@ -804,7 +804,7 @@ TEST_F(OfflineCompilerTests, givenProductAcronymWhenIdsCommandIsInvokeThenSucces
     if (enabledProducts.empty()) {
         GTEST_SKIP();
     }
-    auto supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    auto &supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     for (const auto &productAcronym : enabledProducts) {
         std::vector<std::string> expected{};
         auto product = ProductConfigHelper::getProductConfigForAcronym(productAcronym.str());
@@ -1757,7 +1757,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
 }
 
 TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuildSucceeds) {
-    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    auto &allEnabledDeviceConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         return;
     }

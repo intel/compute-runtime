@@ -431,7 +431,7 @@ TEST_F(AotDeviceInfoTests, givenDeprecatedAcronymsWhenSearchingPresenceInNewName
 }
 
 TEST_F(AotDeviceInfoTests, givenNotFullConfigWhenGetProductConfigThenUnknownIsaIsReturned) {
-    auto allEnabledDeviceConfigs = productConfigHelper->getDeviceAotInfo();
+    auto &allEnabledDeviceConfigs = productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
@@ -449,7 +449,7 @@ TEST_F(AotDeviceInfoTests, givenNotFullConfigWhenGetProductConfigThenUnknownIsaI
 }
 
 TEST_F(AotDeviceInfoTests, givenEnabledProductsAcronymsAndVersionsWhenCheckIfProductConfigThenTrueIsReturned) {
-    auto enabledProducts = productConfigHelper->getDeviceAotInfo();
+    auto &enabledProducts = productConfigHelper->getDeviceAotInfo();
     for (const auto &product : enabledProducts) {
         auto configStr = ProductConfigHelper::parseMajorMinorRevisionValue(product.aotConfig);
         EXPECT_FALSE(configStr.empty());

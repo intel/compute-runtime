@@ -25,7 +25,7 @@ struct PrepareDeviceEnvironmentsTest : ::testing::Test {
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
         productConfigHelper = std::make_unique<ProductConfigHelper>();
 
-        auto aotInfos = productConfigHelper->getDeviceAotInfo();
+        auto &aotInfos = productConfigHelper->getDeviceAotInfo();
         for (const auto &aotInfo : aotInfos) {
             if (aotInfo.hwInfo->platform.eProductFamily == productFamily && !aotInfo.acronyms.empty()) {
                 deviceAot = aotInfo;

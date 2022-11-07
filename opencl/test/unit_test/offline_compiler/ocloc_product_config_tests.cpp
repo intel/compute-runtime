@@ -13,7 +13,7 @@ namespace NEO {
 TEST_P(OclocProductConfigTests, GivenProductConfigValuesWhenInitHardwareInfoThenCorrectValuesAreSet) {
     auto deviceId = 0u;
     auto revId = 0u;
-    auto allSupportedConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
+    auto &allSupportedConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
 
     for (const auto &deviceConfig : allSupportedConfigs) {
         if (aotConfig.ProductConfig == deviceConfig.aotConfig.ProductConfig) {

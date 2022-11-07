@@ -47,7 +47,7 @@ bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *he
 
 template <>
 void getProductsAcronymsForTarget<AOT::FAMILY>(std::vector<NEO::ConstStringRef> &out, AOT::FAMILY target, OclocArgHelper *argHelper) {
-    auto allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
+    auto &allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
     for (const auto &device : allSuppportedProducts) {
         if (device.family == target && !device.acronyms.empty()) {
             if (std::find(out.begin(), out.end(), device.acronyms.front()) == out.end()) {
@@ -59,7 +59,7 @@ void getProductsAcronymsForTarget<AOT::FAMILY>(std::vector<NEO::ConstStringRef> 
 
 template <>
 void getProductsAcronymsForTarget<AOT::RELEASE>(std::vector<NEO::ConstStringRef> &out, AOT::RELEASE target, OclocArgHelper *argHelper) {
-    auto allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
+    auto &allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
     for (const auto &device : allSuppportedProducts) {
         if (device.release == target && !device.acronyms.empty()) {
             if (std::find(out.begin(), out.end(), device.acronyms.front()) == out.end()) {
@@ -83,7 +83,7 @@ void getProductsForTargetRange(T targetFrom, T targetTo, std::vector<ConstString
 
 void getProductsForRange(unsigned int productFrom, unsigned int productTo, std::vector<ConstStringRef> &out,
                          OclocArgHelper *argHelper) {
-    auto allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
+    auto &allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
 
     for (const auto &device : allSuppportedProducts) {
         auto validAcronym = device.aotConfig.ProductConfig >= productFrom;
