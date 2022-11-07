@@ -26,20 +26,20 @@ class Device;
 class MemoryManager;
 struct EncodeSurfaceStateArgs;
 
-using BufferCreatFunc = Buffer *(*)(Context *context,
-                                    const MemoryProperties &memoryProperties,
-                                    cl_mem_flags flags,
-                                    cl_mem_flags_intel flagsIntel,
-                                    size_t size,
-                                    void *memoryStorage,
-                                    void *hostPtr,
-                                    MultiGraphicsAllocation &&multiGraphicsAllocation,
-                                    bool zeroCopy,
-                                    bool isHostPtrSVM,
-                                    bool isImageRedescribed);
+using BufferCreateFunc = Buffer *(*)(Context *context,
+                                     const MemoryProperties &memoryProperties,
+                                     cl_mem_flags flags,
+                                     cl_mem_flags_intel flagsIntel,
+                                     size_t size,
+                                     void *memoryStorage,
+                                     void *hostPtr,
+                                     MultiGraphicsAllocation &&multiGraphicsAllocation,
+                                     bool zeroCopy,
+                                     bool isHostPtrSVM,
+                                     bool isImageRedescribed);
 
 struct BufferFactoryFuncs {
-    BufferCreatFunc createBufferFunction;
+    BufferCreateFunc createBufferFunction;
 };
 
 extern BufferFactoryFuncs bufferFactory[IGFX_MAX_CORE];
@@ -137,7 +137,7 @@ class Buffer : public MemObj {
 
     static void provideCompressionHint(bool compressionEnabled, Context *context, Buffer *buffer);
 
-    BufferCreatFunc createFunction = nullptr;
+    BufferCreateFunc createFunction = nullptr;
     bool isSubBuffer();
     bool isValidSubBufferOffset(size_t offset);
     uint64_t setArgStateless(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex, bool set32BitAddressing);

@@ -110,7 +110,7 @@ struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
     std::unique_ptr<MockImage<FamilyType>> createMockImage() {
         auto eRenderCoreFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
 
-        VariableBackup<ImageCreatFunc> backup(&imageFactory[eRenderCoreFamily].createImageFunction);
+        VariableBackup<ImageCreateFunc> backup(&imageFactory[eRenderCoreFamily].createImageFunction);
         imageFactory[eRenderCoreFamily].createImageFunction = MockImage<FamilyType>::createMockImage;
 
         auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);

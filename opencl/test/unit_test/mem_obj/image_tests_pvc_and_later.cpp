@@ -64,7 +64,7 @@ HWTEST2_F(PvcAndLaterImageTests, givenNoImagesSupportLocalMemoryEnabledAndCopyHo
     DebugManager.flags.EnableLocalMemory.set(true);
     auto eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
     VariableBackup<bool> supportsImagesBackup{&defaultHwInfo->capabilityTable.supportsImages, false};
-    VariableBackup<ImageCreatFunc> createImageFunctionBackup{&imageFactory[eRenderCoreFamily].createImageFunction};
+    VariableBackup<ImageCreateFunc> createImageFunctionBackup{&imageFactory[eRenderCoreFamily].createImageFunction};
     createImageFunctionBackup = MockImage<FamilyType>::createMockImage;
 
     uint32_t devicesCount = 1;
