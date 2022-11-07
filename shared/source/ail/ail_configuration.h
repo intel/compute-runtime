@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/helpers/hw_info.h"
+#include "igfxfmid.h"
 
 #include <string>
 
@@ -26,6 +26,8 @@
  */
 
 namespace NEO {
+
+struct RuntimeCapabilityTable;
 
 enum class AILEnumeration : uint32_t {
     DISABLE_BLITTER,

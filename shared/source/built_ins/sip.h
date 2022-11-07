@@ -10,7 +10,6 @@
 #include "shared/source/built_ins/sip_kernel_type.h"
 
 #include <cstddef>
-#include <memory>
 #include <string>
 #include <vector>
 

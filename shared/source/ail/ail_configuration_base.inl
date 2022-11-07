@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/ail/ail_configuration.h"
+
 #include <string>
 
 namespace NEO {

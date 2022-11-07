@@ -6,14 +6,13 @@
  */
 
 #include "shared/source/ail/ail_configuration.h"
-#include "shared/source/ail/ail_configuration_base.inl"
+#include "shared/source/helpers/hw_info.h"
 
 #include <algorithm>
 #include <map>
-#include <string>
-#include <vector>
 
 namespace NEO {
+
 static EnableAIL<IGFX_DG2> enableAILDG2;
 
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMapDG2 = {

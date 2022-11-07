@@ -7,6 +7,7 @@
 
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include <map>
 #include <string_view>

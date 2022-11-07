@@ -23,12 +23,10 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/utilities/spinlock.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 
 namespace NEO {
 class AllocationsList;
