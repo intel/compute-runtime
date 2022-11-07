@@ -435,7 +435,7 @@ void OfflineCompiler::setFamilyType() {
     familyNameWithType.append(hwInfo.capabilityTable.platformType);
 }
 
-int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId) {
+int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceName) {
     std::vector<PRODUCT_FAMILY> allSupportedProduct{ALL_SUPPORTED_PRODUCT_FAMILIES};
     std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
 
@@ -444,9 +444,6 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             hwInfo = *hardwareInfoTable[product];
             if (revisionId != -1) {
                 hwInfo.platform.usRevId = revisionId;
-            }
-            if (deviceId != -1) {
-                hwInfo.platform.usDeviceID = deviceId;
             }
             uint64_t config = hwInfoConfig ? hwInfoConfig : defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
             setHwInfoValuesFromConfig(config, hwInfo);
@@ -459,31 +456,44 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
     return INVALID_DEVICE;
 }
 
+bool OfflineCompiler::isArgumentDeviceId(const std::string &argument) const {
+    const char hexPrefixLength = 2;
+    return argument.substr(0, hexPrefixLength) == "0x" && std::all_of(argument.begin() + hexPrefixLength, argument.end(), (::isxdigit));
+}
+
 int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
     AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
     ProductConfigHelper::adjustDeviceName(deviceName);
+    int deviceId = -1;
 
     if (deviceName.find(".") != std::string::npos) {
         productConfig = argHelper->productConfigHelper->getProductConfigForVersionValue(deviceName);
-        if (productConfig == AOT::UNKNOWN_ISA) {
-            argHelper->printf("Could not determine device target: %s\n", deviceName.c_str());
-        }
+    } else if (isArgumentDeviceId(deviceName)) {
+        deviceId = std::stoi(deviceName, 0, 16);
+        productConfig = argHelper->productConfigHelper->getProductConfigForDeviceId(deviceId);
     } else if (argHelper->productConfigHelper->isProductConfig(deviceName)) {
         productConfig = ProductConfigHelper::getProductConfigForAcronym(deviceName);
+    } else {
+        return INVALID_DEVICE;
     }
 
-    if (productConfig != AOT::UNKNOWN_ISA) {
-        if (argHelper->getHwInfoForProductConfig(productConfig, hwInfo, hwInfoConfig)) {
-            if (revisionId != -1) {
-                hwInfo.platform.usRevId = revisionId;
-            }
-            deviceConfig = productConfig;
-            setFamilyType();
-            return SUCCESS;
+    if (argHelper->getHwInfoForProductConfig(productConfig, hwInfo, hwInfoConfig)) {
+        if (revisionId != -1) {
+            hwInfo.platform.usRevId = revisionId;
         }
-        argHelper->printf("Could not determine target based on product config: %s\n", deviceName.c_str());
+        if (deviceId != -1) {
+            auto product = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
+            argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
+            hwInfo.platform.usDeviceID = deviceId;
+        }
+        deviceConfig = productConfig;
+        setFamilyType();
+        return SUCCESS;
+
+    } else {
+        argHelper->printf("Could not determine device target: %s\n", deviceName.c_str());
+        return INVALID_DEVICE;
     }
-    return INVALID_DEVICE;
 }
 
 int OfflineCompiler::initHardwareInfo(std::string deviceName) {
@@ -492,21 +502,12 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
         return retVal;
     }
 
-    const char hexPrefix = 2;
-    int deviceId = -1;
-
     retVal = initHardwareInfoForProductConfig(deviceName);
     if (retVal == SUCCESS) {
         return retVal;
     }
 
-    if (deviceName.substr(0, hexPrefix) == "0x" && std::all_of(deviceName.begin() + hexPrefix, deviceName.end(), (::isxdigit))) {
-        deviceId = std::stoi(deviceName, 0, 16);
-        if (!argHelper->setAcronymForDeviceId(deviceName)) {
-            return retVal;
-        }
-    }
-    retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, deviceId);
+    retVal = initHardwareInfoForDeprecatedAcronyms(deviceName);
 
     return retVal;
 }

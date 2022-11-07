@@ -505,3 +505,63 @@ TEST_F(AotDeviceInfoTests, givenUnknownIsaWhenGetDeviceAotInfoThenFalseIsReturne
     EXPECT_FALSE(productConfigHelper->getDeviceAotInfoForProductConfig(AOT::UNKNOWN_ISA, aotInfo));
     EXPECT_TRUE(aotInfo == emptyInfo);
 }
+
+TEST_F(AotDeviceInfoTests, givenDeviceIdWhenSearchForProductConfigAndAcronymThenCorrectResultsAreReturned) {
+    auto deviceAot = productConfigHelper->getDeviceAotInfo();
+    if (deviceAot.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &device : deviceAot) {
+        for (const auto &deviceId : *device.deviceIds) {
+            auto config = productConfigHelper->getProductConfigForDeviceId(deviceId);
+            EXPECT_NE(config, AOT::UNKNOWN_ISA);
+            auto name = productConfigHelper->getAcronymForProductConfig(config);
+            EXPECT_FALSE(name.empty());
+        }
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenDeviceIdWhenThereAreNoAcronymsThenMajorMinorRevisionIsReturned) {
+    auto &deviceAot = productConfigHelper->getDeviceAotInfo();
+    if (deviceAot.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (auto &device : deviceAot) {
+        for (const auto &deviceId : *device.deviceIds) {
+            auto config = productConfigHelper->getProductConfigForDeviceId(deviceId);
+            EXPECT_NE(config, AOT::UNKNOWN_ISA);
+
+            device.acronyms.clear();
+            auto name = productConfigHelper->getAcronymForProductConfig(config);
+            auto expected = productConfigHelper->parseMajorMinorRevisionValue(config);
+            EXPECT_STREQ(name.c_str(), expected.c_str());
+        }
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenInvalidDeviceIdWhenSearchForProductConfigAndAcronymThenUnknownIsaIsReturned) {
+    auto config = productConfigHelper->getProductConfigForDeviceId(0x0);
+    EXPECT_EQ(config, AOT::UNKNOWN_ISA);
+    auto name = productConfigHelper->getAcronymForProductConfig(config);
+    EXPECT_TRUE(name.empty());
+}
+
+TEST_F(AotDeviceInfoTests, givenDeviceIdsFromDevicesFileWhenGetProductConfigThenValueIsExpectedToBeFound) {
+    std::vector<unsigned short> deviceIds{
+#define NAMEDDEVICE(devId, ignored_product, ignored_devName) devId,
+#define DEVICE(devId, ignored_product) devId,
+#include "devices.inl"
+#undef DEVICE
+#undef NAMEDDEVICE
+    };
+
+    if (deviceIds.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &deviceId : deviceIds) {
+        EXPECT_NE(productConfigHelper->getProductConfigForDeviceId(deviceId), AOT::UNKNOWN_ISA);
+    }
+}
