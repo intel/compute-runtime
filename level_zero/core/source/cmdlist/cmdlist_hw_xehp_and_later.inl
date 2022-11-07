@@ -142,7 +142,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         auto kernelInfo = kernelImmutableData->getKernelInfo();
         size_t dshSize = 0;
         if constexpr (GfxFamily::supportsSampler) {
-            dshSize = NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(*kernelInfo);
+            dshSize = NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, commandContainer.getNumIddPerBlock());
         }
         commandContainer.ensureHeapSizePrepared(
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),

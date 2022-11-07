@@ -775,7 +775,7 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh() {
+uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t) {
     return 0u;
 }
 

@@ -89,7 +89,7 @@ struct EncodeDispatchKernel {
     static void setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData,
                            const size_t &sizePerThreadData, const HardwareInfo &hwInfo);
 
-    static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset, const HardwareInfo &hwInfo);
+    static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     const size_t *lws,
@@ -128,9 +128,9 @@ struct EncodeDispatchKernel {
 
     static constexpr bool shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent);
 
-    static size_t getSizeRequiredDsh(const KernelInfo &kernelInfo);
+    static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t numIddsPerBlock);
     static size_t getSizeRequiredSsh(const KernelInfo &kernelInfo);
-    inline static uint32_t additionalSizeRequiredDsh();
+    inline static uint32_t additionalSizeRequiredDsh(uint32_t numIddsPerBlock);
 };
 
 template <typename GfxFamily>
