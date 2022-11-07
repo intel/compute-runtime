@@ -518,7 +518,9 @@ template <typename Family>
 void EncodeSurfaceState<Family>::encodeImplicitScalingParams(const EncodeSurfaceStateArgs &args) {}
 
 template <typename Family>
-void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
+void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset, const HardwareInfo &hwInfo) {
+
+    using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {
         if (ApiSpecificConfig::getBindlessConfiguration()) {
@@ -530,6 +532,26 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
                                                                   sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock()));
         }
         container.nextIddInBlock = 0;
+
+        if (container.isHeapDirty(HeapType::DYNAMIC_STATE)) {
+            PipeControlArgs syncArgs;
+            syncArgs.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
+            syncArgs.hdcPipelineFlush = true;
+            MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
+
+            STATE_BASE_ADDRESS sba;
+            EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
+                &container,
+                sba,
+                0,
+                false,
+                false,
+                false};
+            EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
+            container.setDirtyStateForAllHeaps(false);
+        }
+
+        EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
     }
 
     iddOffset = container.nextIddInBlock;
@@ -698,17 +720,17 @@ template <typename Family>
 constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent) { return false; }
 
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t numIddsPerBlock) {
+size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelInfo &kernelInfo) {
     using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);
-    const auto numSamplers = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
-    const auto additionalDshSize = additionalSizeRequiredDsh(numIddsPerBlock);
+    const auto numSamplers = kernelInfo.kernelDescriptor.payloadMappings.samplerTable.numSamplers;
+    const auto additionalDshSize = additionalSizeRequiredDsh();
     if (numSamplers == 0U) {
         return alignUp(additionalDshSize, EncodeStates<Family>::alignInterfaceDescriptorData);
     }
 
-    size_t size = kernelDescriptor.payloadMappings.samplerTable.tableOffset -
-                  kernelDescriptor.payloadMappings.samplerTable.borderColor;
+    size_t size = kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset -
+                  kernelInfo.kernelDescriptor.payloadMappings.samplerTable.borderColor;
     size = alignUp(size, EncodeStates<Family>::alignIndirectStatePointer);
 
     size += numSamplers * samplerStateSize;

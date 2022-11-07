@@ -48,7 +48,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         auto kernelInfo = kernelImmutableData->getKernelInfo();
         commandContainer.ensureHeapSizePrepared(
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, commandContainer.getNumIddPerBlock()));
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(*kernelInfo));
     }
     appendEventForProfiling(event, true, false);
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
