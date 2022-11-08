@@ -35,27 +35,27 @@ PVCTEST_F(HwInfoConfigTestLinuxPvc, WhenConfiguringHwInfoThenZeroIsReturned) {
 }
 
 PVCTEST_F(HwInfoConfigTestLinuxPvc, given57bAddressSpaceWhenConfiguringHwInfoThenSetFtrFlag) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     outHwInfo.featureTable.flags.ftr57bGPUAddressing = false;
     outHwInfo.platform.eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
 
     outHwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
-    int ret = hwInfoConfig.configureHardwareCustom(&outHwInfo, osInterface);
+    int ret = productHelper.configureHardwareCustom(&outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftr57bGPUAddressing);
 
     outHwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
-    ret = hwInfoConfig.configureHardwareCustom(&outHwInfo, osInterface);
+    ret = productHelper.configureHardwareCustom(&outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     auto value = outHwInfo.featureTable.flags.ftr57bGPUAddressing;
     EXPECT_EQ(1u, value);
 }
 
 PVCTEST_F(HwInfoConfigTestLinuxPvc, GivenPvcWhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
     OSInterface osIface;
-    hwInfoConfig.configureHardwareCustom(&pInHwInfo, &osIface);
+    productHelper.configureHardwareCustom(&pInHwInfo, &osIface);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);

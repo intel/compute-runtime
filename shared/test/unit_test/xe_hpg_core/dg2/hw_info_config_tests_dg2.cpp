@@ -123,7 +123,7 @@ DG2TEST_F(HwInfoConfigTestDg2, whenAdjustingDefaultEngineTypeThenSelectEngineTyp
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenA0OrA1SteppingWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 4> revisions = {
         {{REVISION_A0, true},
          {REVISION_A1, true},
@@ -132,13 +132,13 @@ DG2TEST_F(HwInfoConfigTestDg2, givenA0OrA1SteppingWhenAskingIfWAIsRequiredThenRe
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
 
-        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, hwInfoConfig.isDefaultEngineTypeAdjustmentRequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig.isAllocationSizeAdjustmentRequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig.isPrefetchDisablingRequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.isDefaultEngineTypeAdjustmentRequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.isAllocationSizeAdjustmentRequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.isPrefetchDisablingRequired(hwInfo));
     }
 }
 
@@ -238,7 +238,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDg2WhenIsBlitterForImagesSupportedIsCalledTh
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenB0rCSteppingWhenAskingIfTile64With3DSurfaceOnBCSIsSupportedThenReturnTrue) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 4> revisions = {
         {{REVISION_A0, false},
          {REVISION_A1, false},
@@ -247,32 +247,32 @@ DG2TEST_F(HwInfoConfigTestDg2, givenB0rCSteppingWhenAskingIfTile64With3DSurfaceO
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
 
-        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, hwInfoConfig.isTile64With3DSurfaceOnBCSSupported(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.isTile64With3DSurfaceOnBCSSupported(hwInfo));
     }
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenA0SteppingAnd128EuWhenConfigureCalledThenDisableCompression) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
     for (uint8_t revision : {REVISION_A0, REVISION_A1}) {
         for (uint32_t euCount : {127, 128, 129}) {
             HardwareInfo hwInfo = *defaultHwInfo;
             hwInfo.featureTable.flags.ftrE2ECompression = true;
 
-            hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.gtSystemInfo.EUCount = euCount;
 
-            hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+            productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
             auto compressionExpected = (euCount == 128) ? true : (revision != REVISION_A0);
 
             EXPECT_EQ(compressionExpected, hwInfo.capabilityTable.ftrRenderCompressedBuffers);
             EXPECT_EQ(compressionExpected, hwInfo.capabilityTable.ftrRenderCompressedImages);
-            EXPECT_EQ(compressionExpected, hwInfoConfig.allowCompression(hwInfo));
+            EXPECT_EQ(compressionExpected, productHelper.allowCompression(hwInfo));
         }
     }
 }

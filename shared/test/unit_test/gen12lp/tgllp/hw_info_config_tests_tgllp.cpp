@@ -91,7 +91,7 @@ TGLLPTEST_F(HwInfoConfigTestTgllp, whenUsingCorrectConfigValueThenCorrectHwInfoI
 }
 
 TGLLPTEST_F(HwInfoConfigTestTgllp, givenA0SteppingAndTgllpPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 3> revisions = {
         {{REVISION_A0, true},
          {REVISION_B, false},
@@ -99,12 +99,12 @@ TGLLPTEST_F(HwInfoConfigTestTgllp, givenA0SteppingAndTgllpPlatformWhenAskingIfWA
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
-        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, hwInfoConfig.pipeControlWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig.imagePitchAlignmentWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.pipeControlWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.imagePitchAlignmentWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.isForceEmuInt32DivRemSPWARequired(hwInfo));
     }
 }
 

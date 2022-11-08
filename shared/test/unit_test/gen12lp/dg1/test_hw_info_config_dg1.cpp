@@ -33,20 +33,20 @@ DG1TEST_F(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpe
 }
 
 DG1TEST_F(Dg1HwInfoConfig, givenA0SteppingAndDg1PlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 2> revisions = {
         {{REVISION_A0, true},
          {REVISION_B, false}}};
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
 
-        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, hwInfoConfig.pipeControlWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig.imagePitchAlignmentWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.pipeControlWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.imagePitchAlignmentWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.isForceEmuInt32DivRemSPWARequired(hwInfo));
     }
 }
 
@@ -111,11 +111,11 @@ DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
 }
 
 DG1TEST_F(Dg1HwInfoConfig, whenConfigureHwInfoThenBlitterSupportIsEnabled) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     auto hardwareInfo = *defaultHwInfo;
 
     hardwareInfo.capabilityTable.blitterOperationsSupported = false;
-    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
+    productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
 
     EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }

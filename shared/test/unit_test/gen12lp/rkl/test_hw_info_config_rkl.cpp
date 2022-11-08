@@ -122,7 +122,7 @@ RKLTEST_F(RklHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThen
 using RklHwInfoConfig = Test<DeviceFixture>;
 
 RKLTEST_F(RklHwInfoConfig, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 3> revisions = {
         {{REVISION_A0, true},
          {REVISION_B, true},
@@ -130,11 +130,11 @@ RKLTEST_F(RklHwInfoConfig, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequi
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
 
-        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.isForceEmuInt32DivRemSPWARequired(hwInfo));
     }
 }
 

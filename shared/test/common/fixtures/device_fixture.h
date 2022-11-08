@@ -23,6 +23,9 @@ struct DeviceFixture {
     HardwareInfo hardwareInfo = {};
     PLATFORM platformHelper = {};
     const uint32_t rootDeviceIndex = 0u;
-    const HwInfoConfig &getHwInfoConfig() const;
+
+    template <typename HelperType>
+    HelperType &getHelper() const;
 };
+
 } // namespace NEO

@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -33,10 +34,10 @@ size_t Device::getMaxParameterSizeFromIGC() const {
 
 void Device::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto addressing32bitAllowed = is64bit;
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &productHelper = this->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    auto &coreHelper = this->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
 
     bool ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
     if (DebugManager.flags.ForceOCLVersion.get() != 0) {
@@ -57,7 +58,7 @@ void Device::initializeCaps() {
     deviceInfo.addressBits = 64;
     deviceInfo.ilVersion = spirvWithVersion;
 
-    //copy system info to prevent misaligned reads
+    // copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;
 
     deviceInfo.globalMemCachelineSize = 64;
@@ -78,8 +79,9 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
 
-    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
-    bool platformImplicitScaling = hwHelper.platformSupportsImplicitScaling(hwInfo);
+    uint32_t subDeviceCount = coreHelper.getSubDevicesCount(&getHardwareInfo());
+
+    bool platformImplicitScaling = coreHelper.platformSupportsImplicitScaling(hwInfo);
 
     if (((NEO::ImplicitScalingHelper::isImplicitScalingEnabled(
             getDeviceBitfield(), platformImplicitScaling))) &&
@@ -89,7 +91,7 @@ void Device::initializeCaps() {
 
     if (!areSharedSystemAllocationsAllowed()) {
         deviceInfo.maxMemAllocSize = ApiSpecificConfig::getReducedMaxAllocSize(deviceInfo.maxMemAllocSize);
-        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, hwHelper.getMaxMemAllocSize());
+        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, coreHelper.getMaxMemAllocSize());
     }
 
     // Some specific driver model configurations may impose additional limitations
@@ -116,7 +118,7 @@ void Device::initializeCaps() {
     deviceInfo.numThreadsPerEU = 0;
     auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
                             ? CommonConstants::maximalSimdSize
-                            : hwHelper.getMinimalSIMDSize();
+                            : coreHelper.getMinimalSIMDSize();
 
     deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.flags.ftrPooledEuEnabled == 0)
                                           ? (systemInfo.EUCount / systemInfo.SubSliceCount)
@@ -130,8 +132,8 @@ void Device::initializeCaps() {
         deviceInfo.maxNumEUsPerDualSubSlice = deviceInfo.maxNumEUsPerSubSlice;
     }
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
-    deviceInfo.threadsPerEUConfigs = hwHelper.getThreadsPerEUConfigs();
-    auto maxWS = hwInfoConfig->getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
+    deviceInfo.threadsPerEUConfigs = coreHelper.getThreadsPerEUConfigs();
+    auto maxWS = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
 
     maxWS = Math::prevPowerOfTwo(maxWS);
     deviceInfo.maxWorkGroupSize = std::min(maxWS, 1024u);
@@ -143,10 +145,10 @@ void Device::initializeCaps() {
     deviceInfo.maxWorkItemSizes[0] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxWorkItemSizes[1] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxWorkItemSizes[2] = deviceInfo.maxWorkGroupSize;
-    deviceInfo.maxSamplers = hwHelper.getMaxNumSamplers();
+    deviceInfo.maxSamplers = coreHelper.getMaxNumSamplers();
 
-    deviceInfo.computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
-    deviceInfo.maxFrontEndThreads = HwHelper::getMaxThreadsForVfe(hwInfo);
+    deviceInfo.computeUnitsUsedForScratch = coreHelper.getComputeUnitsUsedForScratch(&hwInfo);
+    deviceInfo.maxFrontEndThreads = coreHelper.getMaxThreadsForVfe(hwInfo);
 
     deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;
     if (DebugManager.flags.OverrideSlmSize.get() != -1) {
@@ -162,7 +164,7 @@ void Device::initializeCaps() {
     deviceInfo.printfBufferSize = 4 * MB;
     deviceInfo.maxClockFrequency = hwInfo.capabilityTable.maxRenderFrequency;
 
-    deviceInfo.maxSubGroups = hwHelper.getDeviceSubGroupSizes();
+    deviceInfo.maxSubGroups = coreHelper.getDeviceSubGroupSizes();
 
     deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
 

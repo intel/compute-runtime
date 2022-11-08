@@ -1040,11 +1040,11 @@ using HwInfoConfigCommonTest = Test<DeviceFixture>;
 HWTEST2_F(HwInfoConfigCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, IsAtLeastGen12lp) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
-    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
+    productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
 
-    const auto expectedBlitterSupport = hwInfoConfig.obtainBlitterPreference(hardwareInfo);
+    const auto expectedBlitterSupport = productHelper.obtainBlitterPreference(hardwareInfo);
     EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
@@ -1080,14 +1080,14 @@ TEST_F(HwHelperTest, givenInvalidEngineTypeWhenGettingEngineGroupTypeThenThrow) 
 HWTEST2_F(HwInfoConfigCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, IsAtLeastGen12lp) {
     DebugManagerStateRestore restore{};
     HardwareInfo hardwareInfo = *defaultHwInfo;
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
+    productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
     EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
+    productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 

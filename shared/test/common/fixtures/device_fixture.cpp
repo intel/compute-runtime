@@ -8,6 +8,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 
 #include "gtest/gtest.h"
 
@@ -38,8 +39,13 @@ MockDevice *DeviceFixture::createWithUsDeviceIdRevId(unsigned short usDeviceId, 
     return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo);
 }
 
-const HwInfoConfig &DeviceFixture::getHwInfoConfig() const {
-    return this->pDevice->getRootDeviceEnvironment().getHwInfoConfig();
+template <typename HelperType>
+HelperType &DeviceFixture::getHelper() const {
+    auto &helper = this->pDevice->getRootDeviceEnvironment().getHelper<HelperType>();
+    return helper;
 }
+
+template ProductHelper &DeviceFixture::getHelper<ProductHelper>() const;
+template CoreHelper &DeviceFixture::getHelper<CoreHelper>() const;
 
 } // namespace NEO

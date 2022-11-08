@@ -35,7 +35,11 @@ class OSTime;
 class SipKernel;
 class SWTagsManager;
 class HwInfoConfig;
+class HwHelper;
 struct HardwareInfo;
+
+using CoreHelper = HwHelper;
+using ProductHelper = HwInfoConfig;
 
 struct RootDeviceEnvironment {
   protected:
@@ -69,6 +73,9 @@ struct RootDeviceEnvironment {
     bool isNumberOfCcsLimited() const;
     const HwInfoConfig &getHwInfoConfig() const;
 
+    template <typename HelperType>
+    HelperType &getHelper() const;
+
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
     std::unique_ptr<GmmHelper> gmmHelper;
     std::unique_ptr<OSInterface> osInterface;
@@ -91,4 +98,5 @@ struct RootDeviceEnvironment {
   private:
     std::mutex mtx;
 };
+
 } // namespace NEO

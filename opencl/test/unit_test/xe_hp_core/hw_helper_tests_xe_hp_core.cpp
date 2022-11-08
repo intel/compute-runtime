@@ -202,27 +202,27 @@ using HwInfoConfigTestXE_HP_CORE = Test<DeviceFixture>;
 
 XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
 
 XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
     for (uint32_t tileCount = 0; tileCount <= 4; tileCount++) {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
-        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
         EXPECT_EQ(true, hwInfo.capabilityTable.blitterOperationsSupported);
     }

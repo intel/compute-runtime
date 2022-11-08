@@ -163,4 +163,21 @@ void RootDeviceEnvironment::limitNumberOfCcs(uint32_t numberOfCcs) {
 bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
     return limitedNumberOfCcs;
 }
+
+template <typename HelperType>
+HelperType &RootDeviceEnvironment::getHelper() const {
+    if constexpr (std::is_same_v<HelperType, ProductHelper>) {
+        auto &hwInfoConfig = *HwInfoConfig::get(this->getHardwareInfo()->platform.eProductFamily);
+        return hwInfoConfig;
+    }
+
+    if constexpr (std::is_same_v<HelperType, CoreHelper>) {
+        auto &hwHelper = HwHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
+        return hwHelper;
+    }
+}
+
+template ProductHelper &RootDeviceEnvironment::getHelper() const;
+template CoreHelper &RootDeviceEnvironment::getHelper() const;
+
 } // namespace NEO

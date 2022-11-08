@@ -55,8 +55,10 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
         HwInfoConfigTest::TearDown();
     }
 
-    const HwInfoConfig &getHwInfoConfig() {
-        return executionEnvironment->rootDeviceEnvironments[0]->getHwInfoConfig();
+    template <typename HelperType>
+    HelperType &getHelper() const {
+        auto &helper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<HelperType>();
+        return helper;
     }
 
     OSInterface *osInterface;

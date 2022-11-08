@@ -24,26 +24,26 @@ using namespace NEO;
 using XeHPHwInfoConfig = Test<DeviceFixture>;
 
 XEHPTEST_F(XeHPHwInfoConfig, givenXeHPMultiConfigWhenConfigureHardwareCustomIsCalledThenCapabilityTableIsSetProperly) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrE2ECompression = true;
 
     hwInfo.gtSystemInfo.EUCount = 256u;
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedImages);
 
     hwInfo.gtSystemInfo.EUCount = 512u;
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_TRUE(hwInfo.capabilityTable.ftrRenderCompressedImages);
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenXeHPWhenConfiguringThenDisableRcs) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
@@ -51,10 +51,10 @@ XEHPTEST_F(XeHPHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableRcs) 
     DebugManagerStateRestore restore;
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
 
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
@@ -65,7 +65,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenXeHpWhenCallingGetDeviceMemoryNameThenHbmIsRet
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenA0OrA1SteppingWhenAskingIfExtraParametersAreInvalidThenReturnTrue) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 4> revisions = {
         {{REVISION_A0, true},
          {REVISION_A1, true},
@@ -74,11 +74,11 @@ XEHPTEST_F(XeHPHwInfoConfig, givenA0OrA1SteppingWhenAskingIfExtraParametersAreIn
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
 
-        hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, hwInfoConfig.extraParametersInvalid(hwInfo));
+        EXPECT_EQ(paramBool, productHelper.extraParametersInvalid(hwInfo));
     }
 }
 

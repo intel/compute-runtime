@@ -21,13 +21,13 @@ using namespace NEO;
 
 DG1TEST_F(HwInfoConfigTestLinuxDg1, GivenDG1WhenConfigureHardwareCustomThenMTPIsNotSet) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
     OSInterface osIface;
     hardwareInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
     PreemptionHelper::adjustDefaultPreemptionMode(hardwareInfo.capabilityTable, true, true, true);
 
-    hwInfoConfig.configureHardwareCustom(&hardwareInfo, &osIface);
+    productHelper.configureHardwareCustom(&hardwareInfo, &osIface);
     EXPECT_FALSE(hardwareInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
 }
 

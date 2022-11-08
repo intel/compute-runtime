@@ -186,10 +186,10 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramExtendedPipeControlPriorTo
 }
 
 PVCTEST_F(PvcHwInfoConfig, givenPvcWhenConfiguringThenDisableCccs) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
@@ -197,10 +197,10 @@ PVCTEST_F(PvcHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableCccs) {
     DebugManagerStateRestore restore;
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
 
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 

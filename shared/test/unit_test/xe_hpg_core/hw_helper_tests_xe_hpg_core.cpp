@@ -23,19 +23,18 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStat
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &coreHelper = getHelper<CoreHelper>();
 
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
     for (size_t size : sizesToCheck) {
-        EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+        EXPECT_TRUE(coreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
     }
 }
 
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBufferIsSuitableThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
-    auto &helper = HwHelper::get(renderCoreFamily);
-
+    auto &coreHelper = getHelper<CoreHelper>();
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
 
     for (int32_t debugFlag : {-1, 0, 1}) {
@@ -43,9 +42,9 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBufferIsSui
 
         for (size_t size : sizesToCheck) {
             if (debugFlag == 1) {
-                EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+                EXPECT_TRUE(coreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
             } else {
-                EXPECT_FALSE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+                EXPECT_FALSE(coreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
             }
         }
     }
@@ -55,16 +54,16 @@ using HwInfoConfigTestXeHpgCore = Test<DeviceFixture>;
 
 XE_HPG_CORETEST_F(HwInfoConfigTestXeHpgCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    hwInfoConfig.configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
 

@@ -23,15 +23,15 @@ struct HwInfoConfigTestLinuxXeHp : HwInfoConfigTestLinux {
 };
 
 XEHPTEST_F(HwInfoConfigTestLinuxXeHp, WhenConfiguringHwInfoThenZeroIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 }
 
 XEHPTEST_F(HwInfoConfigTestLinuxXeHp, GivenXeHpSdvWhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
-    auto &hwInfoConfig = getHwInfoConfig();
+    auto &productHelper = getHelper<ProductHelper>();
 
-    hwInfoConfig.configureHardwareCustom(&pInHwInfo, osInterface);
+    productHelper.configureHardwareCustom(&pInHwInfo, osInterface);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
