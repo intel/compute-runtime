@@ -39,7 +39,6 @@ struct PipeControlArgs;
 class HwHelper {
   public:
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
-    virtual size_t getInterfaceDescriptorDataSize() const = 0;
     virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
     virtual size_t getPaddingForISAAllocation() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const = 0;
@@ -169,11 +168,6 @@ class HwHelperHw : public HwHelper {
     static HwHelperHw<GfxFamily> &get() {
         static HwHelperHw<GfxFamily> hwHelper;
         return hwHelper;
-    }
-
-    size_t getInterfaceDescriptorDataSize() const override {
-        using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-        return sizeof(INTERFACE_DESCRIPTOR_DATA);
     }
 
     size_t getRenderSurfaceStateSize() const override {
