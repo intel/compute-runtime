@@ -1,15 +1,26 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/helpers/cl_helper.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/program/kernel_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
-#include "gtest/gtest.h"
+#include "opencl/source/helpers/cl_helper.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include <array>
+using namespace NEO;
 
 TEST(ClHelper, whenCallGetStringWithCmdTypeFunctionThenGetProperCmdTypeAsString) {
     std::array<std::string, 31> expected = {{"CL_COMMAND_NDRANGE_KERNEL",
@@ -54,4 +65,92 @@ TEST(ClHelper, whenCallGetStringWithCmdTypeFunctionThenGetProperCmdTypeAsString)
     EXPECT_STREQ(stream.str().c_str(), NEO::cmdTypetoString(-1).c_str());
 
     EXPECT_STREQ("CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR", NEO::cmdTypetoString(CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR).c_str());
+}
+
+HWTEST_F(HwHelperTest, givenHwHelperWhenIsLinearStoragePreferredThenReturnValidValue) {
+    bool tilingSupported = UnitTestHelper<FamilyType>::tiledImagesSupported;
+
+    const uint32_t numImageTypes = 6;
+    const cl_mem_object_type imgTypes[numImageTypes] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER,
+                                                        CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
+    cl_image_desc imgDesc = {};
+    MockContext context;
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, 0, 1, nullptr, retVal));
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    for (uint32_t i = 0; i < numImageTypes; i++) {
+        imgDesc.image_type = imgTypes[i];
+        imgDesc.buffer = nullptr;
+
+        bool allowedType = imgTypes[i] == (CL_MEM_OBJECT_IMAGE2D) || (imgTypes[i] == CL_MEM_OBJECT_IMAGE3D) ||
+                           (imgTypes[i] == CL_MEM_OBJECT_IMAGE2D_ARRAY);
+
+        // non shared context, dont force linear storage
+        EXPECT_EQ((tilingSupported & allowedType), !helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+        {
+            DebugManagerStateRestore restore;
+            DebugManager.flags.ForceLinearImages.set(true);
+            // non shared context, dont force linear storage + debug flag
+            EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+        }
+        // shared context, dont force linear storage
+        EXPECT_TRUE(helper.isLinearStoragePreferred(true, Image::isImage1d(imgDesc), false));
+        // non shared context,  force linear storage
+        EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), true));
+
+        // non shared context, dont force linear storage + create from buffer
+        imgDesc.buffer = buffer.get();
+        EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+    }
+}
+
+using ClHwHelperTest = ::testing::Test;
+HWTEST_F(ClHwHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned) {
+    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    KernelInfo kernelInfo{};
+
+    ArgDescriptor argDescriptorValue(ArgDescriptor::ArgType::ArgTValue);
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorValue);
+    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, hwInfo));
+
+    ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
+    argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
+    EXPECT_TRUE(clHwHelper.requiresAuxResolves(kernelInfo, hwInfo));
+}
+
+TEST_F(ClHwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
+    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+
+    for (auto isPureStateful : {false, true}) {
+        ArgDescPointer argAsPtr{};
+        argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
+
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
+    }
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, ClHwHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
+    static const cl_image_format redescribeFormats[] = {
+        {CL_R, CL_UNSIGNED_INT8},
+        {CL_R, CL_UNSIGNED_INT16},
+        {CL_R, CL_UNSIGNED_INT32},
+        {CL_RG, CL_UNSIGNED_INT32},
+        {CL_RGBA, CL_UNSIGNED_INT32},
+    };
+
+    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+
+    const ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::readWrite();
+    for (const auto &format : formats) {
+        const cl_image_format oclFormat = format.OCLImageFormat;
+        bool expectedResult = true;
+        for (const auto &nonRedescribableFormat : redescribeFormats) {
+            expectedResult &= (memcmp(&oclFormat, &nonRedescribableFormat, sizeof(cl_image_format)) != 0);
+        }
+        EXPECT_EQ(expectedResult, clHwHelper.isFormatRedescribable(oclFormat));
+    }
 }

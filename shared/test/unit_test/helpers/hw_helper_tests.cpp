@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,40 +7,20 @@
 
 #include "shared/test/common/helpers/hw_helper_tests.h"
 
-#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/resource_info.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/logical_state_helper.h"
-#include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
-#include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-
 #include "test_traits_common.h"
 
-#include <chrono>
-#include <iostream>
 #include <numeric>
-#include <vector>
-
-using namespace NEO;
 
 TEST(HwHelperSimpleTest, givenDebugVariableWhenAskingForCompressionThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
@@ -839,21 +819,6 @@ HWTEST_F(HwHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
     EXPECT_EQ(16u, helper.getMaxNumSamplers());
 }
 
-HWTEST_F(HwHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    KernelInfo kernelInfo{};
-
-    ArgDescriptor argDescriptorValue(ArgDescriptor::ArgType::ArgTValue);
-    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorValue);
-    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, hwInfo));
-
-    ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
-    argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
-    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
-    EXPECT_TRUE(clHwHelper.requiresAuxResolves(kernelInfo, hwInfo));
-}
-
 HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
@@ -897,45 +862,6 @@ HWTEST_F(HwHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForCompressio
     EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(0, *defaultHwInfo));
     EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(KB, *defaultHwInfo));
     EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(KB + 1, *defaultHwInfo));
-}
-
-HWTEST_F(HwHelperTest, givenHwHelperWhenIsLinearStoragePreferredThenReturnValidValue) {
-    bool tilingSupported = UnitTestHelper<FamilyType>::tiledImagesSupported;
-
-    const uint32_t numImageTypes = 6;
-    const cl_mem_object_type imgTypes[numImageTypes] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER,
-                                                        CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
-    cl_image_desc imgDesc = {};
-    MockContext context;
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, 0, 1, nullptr, retVal));
-
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    for (uint32_t i = 0; i < numImageTypes; i++) {
-        imgDesc.image_type = imgTypes[i];
-        imgDesc.buffer = nullptr;
-
-        bool allowedType = imgTypes[i] == (CL_MEM_OBJECT_IMAGE2D) || (imgTypes[i] == CL_MEM_OBJECT_IMAGE3D) ||
-                           (imgTypes[i] == CL_MEM_OBJECT_IMAGE2D_ARRAY);
-
-        // non shared context, dont force linear storage
-        EXPECT_EQ((tilingSupported & allowedType), !helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
-        {
-            DebugManagerStateRestore restore;
-            DebugManager.flags.ForceLinearImages.set(true);
-            // non shared context, dont force linear storage + debug flag
-            EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
-        }
-        // shared context, dont force linear storage
-        EXPECT_TRUE(helper.isLinearStoragePreferred(true, Image::isImage1d(imgDesc), false));
-        // non shared context,  force linear storage
-        EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), true));
-
-        // non shared context, dont force linear storage + create from buffer
-        imgDesc.buffer = buffer.get();
-        EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
-    }
 }
 
 HWTEST_F(HwHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturned) {
@@ -1032,9 +958,7 @@ using HwInfoConfigCommonTest = Test<DeviceFixture>;
 
 HWTEST2_F(HwInfoConfigCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, IsAtLeastGen12lp) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
-
     auto &productHelper = getHelper<ProductHelper>();
-
     productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
 
     const auto expectedBlitterSupport = productHelper.obtainBlitterPreference(hardwareInfo);
@@ -1220,17 +1144,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, whenCheckingForSmallKernelPreferenceTh
     EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(20000u, this->pDevice->getHardwareInfo()));
 }
 
-TEST_F(HwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
-
-    for (auto isPureStateful : {false, true}) {
-        ArgDescPointer argAsPtr{};
-        argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
-
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
-    }
-}
-
 HWTEST_F(HwHelperTest, whenSetCompressedFlagThenProperFlagSet) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -1306,28 +1219,6 @@ HWTEST_F(HwHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValueIsRe
     renderSurfaceState.setSurfacePitch(expectedPitch);
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(expectedPitch, hwHelper.getRenderSurfaceStatePitch(&renderSurfaceState));
-}
-
-HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
-    static const cl_image_format redescribeFormats[] = {
-        {CL_R, CL_UNSIGNED_INT8},
-        {CL_R, CL_UNSIGNED_INT16},
-        {CL_R, CL_UNSIGNED_INT32},
-        {CL_RG, CL_UNSIGNED_INT32},
-        {CL_RGBA, CL_UNSIGNED_INT32},
-    };
-    MockContext context;
-    auto &clHwHelper = ClHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
-
-    const ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::readWrite();
-    for (const auto &format : formats) {
-        const cl_image_format oclFormat = format.OCLImageFormat;
-        bool expectedResult = true;
-        for (const auto &nonRedescribableFormat : redescribeFormats) {
-            expectedResult &= (memcmp(&oclFormat, &nonRedescribableFormat, sizeof(cl_image_format)) != 0);
-        }
-        EXPECT_EQ(expectedResult, clHwHelper.isFormatRedescribable(oclFormat));
-    }
 }
 
 TEST(HwHelperTests, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {

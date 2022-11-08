@@ -16,7 +16,6 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_ocl_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mipmap_tests.cpp
