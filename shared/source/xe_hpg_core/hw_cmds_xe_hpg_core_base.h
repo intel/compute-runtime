@@ -32,6 +32,7 @@ struct XeHpgCore {
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = false;
+    static constexpr bool isUsingMiSetPredicate = true;
 
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;

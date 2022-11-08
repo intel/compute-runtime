@@ -32,6 +32,7 @@ struct XeHpcCore {
     static constexpr bool supportsSampler = false;
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = true;
+    static constexpr bool isUsingMiSetPredicate = true;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

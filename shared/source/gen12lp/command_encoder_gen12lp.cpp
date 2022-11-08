@@ -124,6 +124,7 @@ template struct EncodeAtomic<Family>;
 template struct EncodeSempahore<Family>;
 template struct EncodeBatchBufferStartOrEnd<Family>;
 template struct EncodeMiFlushDW<Family>;
+template struct EncodeMiPredicate<Family>;
 template struct EncodeWA<Family>;
 template struct EncodeMemoryPrefetch<Family>;
 template struct EncodeMiArbCheck<Family>;

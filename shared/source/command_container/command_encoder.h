@@ -55,6 +55,12 @@ struct EncodeDispatchKernelArgs {
     bool dcFlushEnable = false;
 };
 
+enum class MiPredicateType : uint32_t {
+    Disable = 0,
+    NoopOnResult2Clear = 1,
+    NoopOnResult2Set = 2
+};
+
 struct EncodeWalkerArgs {
     KernelExecutionType kernelExecutionType = KernelExecutionType::Default;
     bool requiredSystemFence = false;
@@ -163,6 +169,19 @@ struct EncodeMath {
                            AluRegisters firstOperandRegister,
                            AluRegisters secondOperandRegister,
                            AluRegisters finalResultRegister);
+};
+
+template <typename GfxFamily>
+struct EncodeMiPredicate {
+    static void encode(LinearStream &cmdStream, MiPredicateType predicateType);
+
+    static constexpr size_t getCmdSize() {
+        if constexpr (GfxFamily::isUsingMiSetPredicate) {
+            return sizeof(typename GfxFamily::MI_SET_PREDICATE);
+        } else {
+            return 0;
+        }
+    }
 };
 
 template <typename GfxFamily>

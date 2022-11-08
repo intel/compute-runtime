@@ -975,4 +975,16 @@ size_t EncodeKernelArgsBuffer<Family>::getKernelArgsBufferCmdsSize(const Graphic
 template <typename Family>
 void EncodeKernelArgsBuffer<Family>::encodeKernelArgsBufferCmds(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper) {}
 
+template <typename Family>
+void EncodeMiPredicate<Family>::encode(LinearStream &cmdStream, [[maybe_unused]] MiPredicateType predicateType) {
+    if constexpr (Family::isUsingMiSetPredicate) {
+        using MI_SET_PREDICATE = typename Family::MI_SET_PREDICATE;
+        using PREDICATE_ENABLE = typename MI_SET_PREDICATE::PREDICATE_ENABLE;
+
+        auto miSetPredicate = Family::cmdInitSetPredicate;
+        miSetPredicate.setPredicateEnable(static_cast<PREDICATE_ENABLE>(predicateType));
+
+        *cmdStream.getSpaceForCmd<MI_SET_PREDICATE>() = miSetPredicate;
+    }
+}
 } // namespace NEO
