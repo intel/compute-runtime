@@ -187,6 +187,7 @@ void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfo
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 const std::string getFamilyNameWithType(const HardwareInfo &hwInfo);
+bool haveSameCore(PRODUCT_FAMILY productFamilyLeft, PRODUCT_FAMILY productFamilyRight);
 
 // Utility conversion
 template <PRODUCT_FAMILY productFamily>

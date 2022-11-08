@@ -130,4 +130,12 @@ const std::string getFamilyNameWithType(const HardwareInfo &hwInfo) {
     platformName.append(hwInfo.capabilityTable.platformType);
     return platformName;
 }
+
+bool haveSameCore(PRODUCT_FAMILY productFamilyLeft, PRODUCT_FAMILY productFamilyRight) {
+    UNRECOVERABLE_IF(productFamilyLeft >= IGFX_MAX_PRODUCT || productFamilyRight >= IGFX_MAX_PRODUCT);
+    auto hwInfoLeft = NEO::hardwareInfoTable[productFamilyLeft];
+    auto hwInfoRight = NEO::hardwareInfoTable[productFamilyRight];
+    UNRECOVERABLE_IF(hwInfoLeft == nullptr || hwInfoRight == nullptr);
+    return hwInfoLeft->platform.eRenderCoreFamily == hwInfoRight->platform.eRenderCoreFamily;
+}
 } // namespace NEO

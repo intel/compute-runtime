@@ -6201,19 +6201,17 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidTargetDeviceAn
     std::vector<uint8_t *> descData;
 
     uint8_t platformData[4];
-    auto invalidPlatform = productFamily + 1;
-    memcpy_s(platformData, 4, &invalidPlatform, 4);
+    memcpy_s(platformData, 4, &productFamily, 4);
     descData.push_back(platformData);
 
     uint8_t coreData[4];
-    auto invalidCore = renderCoreFamily + 1;
-    memcpy_s(coreData, 4, &invalidCore, 4);
+    memcpy_s(coreData, 4, &renderCoreFamily, 4);
     descData.push_back(coreData);
 
     Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
     targetMetadata.minHwRevisionId = targetDevice.stepping + 1;
-    targetMetadata.maxHwRevisionId = targetDevice.stepping + 3;
+    targetMetadata.maxHwRevisionId = targetDevice.stepping + 1;
 
     uint8_t metadataPackedData[4];
     memcpy_s(metadataPackedData, 4, &targetMetadata.packed, 4);
