@@ -2040,6 +2040,90 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     EXPECT_EQ(sbaExpected[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU], sba[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU]);
 }
 
+TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipWhenCheckingDifferentSipVersionsThenExpectedResultIsReturned) {
+    session->debugArea.reserved1 = 1u;
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, thread);
+    session->allThreads[threadId]->stopThread(1u);
+
+    dumpRegisterState();
+    session->minSlmSipVersion = {2, 2, 2};
+    // test tssarea version
+    // Major version cases
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 2;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 1;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, false);
+
+    // Minor version cases
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 1;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, false);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 3;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 1;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 3;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 2;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+
+    // patch version cases
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 1;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, false);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 3;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 1;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 3;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 2;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 3;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 1;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 3;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 2;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 3;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 3;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 1;
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+}
+
 TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSlmReadIsSuccessful) {
 
     zet_debug_config_t config = {};
@@ -2067,29 +2151,30 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
 
     sessionMock->slmTesting = true;
+    sessionMock->sipSupportsSlm = true;
 
     int readSize = 7;
-    auto retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    auto retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(memcmp(output, sessionMock->slmMemory, readSize), 0);
     memset(output, 0, readSize);
 
     int offset = 0x05;
     desc.address = 0x10000000 + offset;
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(memcmp(output, sessionMock->slmMemory + offset, readSize), 0);
     memset(output, 0, readSize);
 
     offset = 0x0f;
     desc.address = 0x10000000 + offset;
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(memcmp(output, sessionMock->slmMemory + offset, readSize), 0);
     memset(output, 0, readSize);
 
     readSize = 132;
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(memcmp(output, sessionMock->slmMemory + offset, readSize), 0);
     memset(output, 0, readSize);
@@ -2097,7 +2182,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     readSize = 230;
     offset = 0x0a;
     desc.address = 0x10000000 + offset;
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(memcmp(output, sessionMock->slmMemory + offset, readSize), 0);
 
@@ -2118,21 +2203,29 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmReadFa
     EuThread::ThreadId threadId(0, 0, 0, 0, 0);
     sessionMock->allThreads[threadId]->stopThread(1u);
 
-    sessionMock->slmTesting = true;
+    sessionMock->skipWriteResumeCommand = false;
 
     zet_debug_memory_space_desc_t desc;
     desc.address = 0x10000000;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
 
-    sessionMock->skipWriteResumeCommand = false;
-    memcpy_s(sessionMock->originalSlmMemory, sessionMock->slmSize, sessionMock->slmMemory, sessionMock->slmSize);
-
     constexpr int readSize = EXCHANGE_BUFFER_SIZE * 2;
     char output[readSize];
     ze_result_t retVal;
 
+    sessionMock->slmTesting = true;
+
+    memcpy_s(sessionMock->originalSlmMemory, sessionMock->slmSize, sessionMock->slmMemory, sessionMock->slmSize);
+
+    sessionMock->sipSupportsSlm = false;
+
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, retVal);
+
+    sessionMock->sipSupportsSlm = true;
+
     sessionMock->resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
     sessionMock->resumeImpResult = ZE_RESULT_SUCCESS;
 
@@ -2140,24 +2233,24 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmReadFa
     sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
 
     sessionMock->forceCmdAccessFail = true;
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_FORCE_UINT32, retVal);
     sessionMock->forceCmdAccessFail = false;
 
     memcpy_s(sessionMock->slmMemory, strlen("FailReadingData"), "FailReadingData", strlen("FailReadingData"));
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_FORCE_UINT32, retVal);
     memcpy_s(sessionMock->slmMemory, strlen("FailReadingData"), sessionMock->originalSlmMemory, strlen("FailReadingData"));
 
     sessionMock->slmCmdRegisterAccessReadyCount = 13;
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
     sessionMock->slmCmdRegisterAccessReadyCount = 2;
     sessionMock->slmCmdRegisterAccessCount = 0;
     sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
 
     memcpy_s(sessionMock->slmMemory, strlen("FailWaiting"), "FailWaiting", strlen("FailWaiting"));
-    retVal = sessionMock->readSLMMemory(threadId, &desc, readSize, output);
+    retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_FORCE_UINT32, retVal);
     memcpy_s(sessionMock->slmMemory, strlen("FailWaiting"), sessionMock->originalSlmMemory, strlen("FailWaiting"));
 
@@ -2179,6 +2272,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     sessionMock->allThreads[threadId]->stopThread(1u);
 
     sessionMock->slmTesting = true;
+    sessionMock->sipSupportsSlm = true;
 
     int i;
     for (i = 0; i < sessionMock->slmSize; i++) {
@@ -2197,7 +2291,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     int inputSize = 7;
     memset(input1, 0xff, inputSize);
 
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, inputSize, input1);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, inputSize, input1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(memcmp(sessionMock->slmMemory, input1, inputSize), 0);
     EXPECT_EQ(memcmp(sessionMock->slmMemory + inputSize + 1, sessionMock->originalSlmMemory + inputSize + 1, sessionMock->slmSize - inputSize - 1), 0);
@@ -2205,7 +2299,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     memset(input2, 0xbb, inputSize);
     int offset = 0x05;
     desc.address = 0x10000000 + offset;
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, inputSize, input2);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, inputSize, input2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 
     EXPECT_EQ(memcmp(sessionMock->slmMemory, input1, offset), 0);
@@ -2217,7 +2311,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     desc.address = 0x10000000;
     memset(input1, 0x0a, inputSize);
 
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, inputSize, input1);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, inputSize, input1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 
     EXPECT_EQ(memcmp(sessionMock->slmMemory, input1, inputSize), 0);
@@ -2227,7 +2321,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     offset = 0x07;
     desc.address = 0x10000000 + offset;
 
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, inputSize, input2);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, inputSize, input2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 
     EXPECT_EQ(memcmp(sessionMock->slmMemory, input1, offset), 0);
@@ -2242,7 +2336,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     offset = 0x0f;
     desc.address = 0x10000000 + offset;
 
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, inputSize, input1);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, inputSize, input1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 
     EXPECT_EQ(memcmp(sessionMock->slmMemory, sessionMock->originalSlmMemory, offset), 0);
@@ -2255,7 +2349,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     offset = 0x0a;
     desc.address = 0x10000000 + offset;
 
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, inputSize, input2);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, inputSize, input2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 
     EXPECT_EQ(memcmp(sessionMock->slmMemory, sessionMock->originalSlmMemory, offset), 0);
@@ -2291,28 +2385,35 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
     char input[writeSize];
     ze_result_t retVal;
 
+    sessionMock->sipSupportsSlm = false;
+
+    retVal = sessionMock->slmMemoryAccess<void *, true>(threadId, &desc, writeSize, input);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_VERSION, retVal);
+
+    sessionMock->sipSupportsSlm = true;
+
     sessionMock->resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, writeSize, input);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
     sessionMock->resumeImpResult = ZE_RESULT_SUCCESS;
 
     sessionMock->forceCmdAccessFail = true;
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, writeSize, input);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_FORCE_UINT32, retVal);
     sessionMock->forceCmdAccessFail = false;
 
     sessionMock->slmCmdRegisterAccessReadyCount = 13;
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, writeSize, input);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 
     sessionMock->slmCmdRegisterAccessCount = 0;
     sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
 
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, writeSize, input);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 
-    desc.address = 0x1000000f; // force a read
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, writeSize, input);
+    desc.address = 0x1000000f; //force a read
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
     sessionMock->slmCmdRegisterAccessReadyCount = 2;
     sessionMock->slmCmdRegisterAccessCount = 0;
@@ -2320,7 +2421,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
 
     desc.address = 0x10000000;
     memcpy_s(sessionMock->slmMemory, strlen("FailWaiting"), "FailWaiting", strlen("FailWaiting"));
-    retVal = sessionMock->writeSLMMemory(threadId, &desc, writeSize, input);
+    retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_FORCE_UINT32, retVal);
     memcpy_s(sessionMock->slmMemory, strlen("FailWaiting"), sessionMock->originalSlmMemory, strlen("FailWaiting"));
 

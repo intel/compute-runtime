@@ -781,14 +781,8 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
         if (totalSize < headerSize) {
             PRINT_DEBUGGER_ERROR_LOG("Context State Save Area size incorrect\n", "");
             return;
-        }
-        std::vector<char> data(headerSize);
-        auto retVal = readGpuMemory(vm, data.data(), headerSize, gpuVa);
-
-        if (retVal != 0) {
-            PRINT_DEBUGGER_ERROR_LOG("Reading Context State Save Area failed, error = %d\n", retVal);
         } else {
-            validateAndSetStateSaveAreaHeader(data);
+            validateAndSetStateSaveAreaHeader(vm, gpuVa);
         }
     }
 }
@@ -1610,7 +1604,7 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
         status = readDefaultMemory(thread, desc, size, buffer);
     } else {
         auto threadId = convertToThreadId(thread);
-        status = readSLMMemory(threadId, desc, size, buffer);
+        status = slmMemoryAccess<void *, false>(threadId, desc, size, buffer);
     }
 
     return status;
@@ -1652,7 +1646,7 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
         status = writeDefaultMemory(thread, desc, size, buffer);
     } else {
         auto threadId = convertToThreadId(thread);
-        status = writeSLMMemory(threadId, desc, size, buffer);
+        status = slmMemoryAccess<const void *, true>(threadId, desc, size, buffer);
     }
 
     return status;

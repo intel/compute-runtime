@@ -459,7 +459,7 @@ ze_result_t DebugSessionWindows::readMemory(ze_device_thread_t thread, const zet
         status = readDefaultMemory(thread, desc, size, buffer);
     } else {
         auto threadId = convertToThreadId(thread);
-        status = readSLMMemory(threadId, desc, size, buffer);
+        status = slmMemoryAccess<void *, false>(threadId, desc, size, buffer);
     }
 
     return status;
@@ -504,7 +504,7 @@ ze_result_t DebugSessionWindows::writeMemory(ze_device_thread_t thread, const ze
         status = writeDefaultMemory(thread, desc, size, buffer);
     } else {
         auto threadId = convertToThreadId(thread);
-        status = writeSLMMemory(threadId, desc, size, buffer);
+        status = slmMemoryAccess<const void *, true>(threadId, desc, size, buffer);
     }
 
     return status;
@@ -714,16 +714,7 @@ void DebugSessionWindows::readStateSaveAreaHeader() {
         memoryHandle = *allContexts.begin();
     }
 
-    auto headerSize = sizeof(SIP::StateSaveAreaHeader);
-    std::vector<char> data(headerSize);
-    auto retVal = readGpuMemory(memoryHandle, data.data(), headerSize, gpuVa);
-
-    if (retVal != ZE_RESULT_SUCCESS) {
-        PRINT_DEBUGGER_ERROR_LOG("Reading Context State Save Area failed, error = %d\n", retVal);
-        return;
-    }
-
-    validateAndSetStateSaveAreaHeader(data);
+    validateAndSetStateSaveAreaHeader(memoryHandle, gpuVa);
 }
 
 } // namespace L0

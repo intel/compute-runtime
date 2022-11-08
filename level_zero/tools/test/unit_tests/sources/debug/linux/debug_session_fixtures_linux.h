@@ -243,6 +243,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::isValidGpuAddress;
     using L0::DebugSessionImp::newAttentionRaised;
+    using L0::DebugSessionImp::sipSupportsSlm;
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::tileAttachEnabled;
     using L0::DebugSessionImp::tileSessions;

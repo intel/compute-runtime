@@ -64,6 +64,7 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::isValidGpuAddress;
+    using L0::DebugSessionImp::sipSupportsSlm;
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::triggerEvents;
     using L0::DebugSessionWindows::newlyStoppedThreads;
@@ -1654,6 +1655,8 @@ TEST_F(DebugApiWindowsTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFailsGracefu
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     session->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+
+    session->sipSupportsSlm = true;
 
     zet_debug_memory_space_desc_t desc;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;

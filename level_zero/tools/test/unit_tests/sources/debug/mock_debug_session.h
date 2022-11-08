@@ -162,13 +162,15 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::interruptMutex;
     using L0::DebugSessionImp::interruptRequests;
     using L0::DebugSessionImp::isValidGpuAddress;
+    using L0::DebugSessionImp::minSlmSipVersion;
     using L0::DebugSessionImp::newlyStoppedThreads;
     using L0::DebugSessionImp::pendingInterrupts;
-    using L0::DebugSessionImp::readSLMMemory;
     using L0::DebugSessionImp::readStateSaveAreaHeader;
+    using L0::DebugSessionImp::sipSupportsSlm;
+    using L0::DebugSessionImp::slmMemoryAccess;
+    using L0::DebugSessionImp::slmSipVersionCheck;
     using L0::DebugSessionImp::tileAttachEnabled;
     using L0::DebugSessionImp::tileSessions;
-    using L0::DebugSessionImp::writeSLMMemory;
 
     MockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device, true) {}
 

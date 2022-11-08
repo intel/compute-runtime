@@ -6533,6 +6533,8 @@ TEST_F(DebugApiRegistersAccessTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFail
     char output[bufferSize];
     session->ensureThreadStopped(thread);
 
+    session->sipSupportsSlm = true;
+
     auto retVal = session->readMemory(thread, &desc, bufferSize, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 
