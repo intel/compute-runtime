@@ -372,8 +372,8 @@ TEST(DiscoverDevices, whenDiscoverDevicesAndFilterDifferentFromTheExistingDevice
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.FilterDeviceId.set("invalid");
     DebugManager.flags.FilterBdfPath.set("invalid");
-    ExecutionEnvironment executionEnviornment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnviornment);
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
@@ -381,9 +381,9 @@ TEST(DiscoverDevices, whenDiscoverDevicesAndFilterDifferentFromTheExistingDevice
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.FilterDeviceId.set("invalid");
     DebugManager.flags.FilterBdfPath.set("invalid");
-    ExecutionEnvironment executionEnviornment;
+    ExecutionEnvironment executionEnvironment;
 
-    auto result = DeviceFactory::prepareDeviceEnvironments(executionEnviornment);
+    auto result = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     EXPECT_FALSE(result);
 }
 
