@@ -55,11 +55,6 @@ bool HwHelperHw<Family>::isStatelessToStatefulWithOffsetSupported() const {
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::isL3Configurable(const HardwareInfo &hwInfo) {
-    return PreambleHelper<Family>::isL3Configurable(hwInfo);
-}
-
-template <typename Family>
 SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
     if (!debuggingActive) {
         return SipKernelType::Csr;

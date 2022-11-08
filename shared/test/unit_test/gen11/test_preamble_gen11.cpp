@@ -42,13 +42,6 @@ GEN11TEST_F(IclSlm, givenGen11WhenProgramingL3ThenErrorDetectionBehaviorControlB
     EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
-GEN11TEST_F(IclSlm, WhenCheckingL3IsConfigurableThenExpectItToBeFalse) {
-    bool isL3Programmable =
-        PreambleHelper<FamilyType>::isL3Configurable(*defaultHwInfo);
-
-    EXPECT_FALSE(isL3Programmable);
-}
-
 typedef PreambleFixture Gen11UrbEntryAllocationSize;
 GEN11TEST_F(Gen11UrbEntryAllocationSize, WhenPreambleRetrievesUrbEntryAllocationSizeThenValueIsCorrect) {
     uint32_t actualVal = PreambleHelper<FamilyType>::getUrbEntryAllocationSize();

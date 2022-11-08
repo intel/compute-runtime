@@ -44,7 +44,8 @@ GEN9TEST_F(CommandEncoderTest, givenNoSlmThenCorrectMmioIsSet) {
     auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end());
     ASSERT_NE(itorLRI, commands.end());
     auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
-    auto expectedData = PreambleHelper<FamilyType>::isL3Configurable(cmdContainer.getDevice()->getHardwareInfo()) ? 0x80000340u : 0x60000321u;
+    auto isL3Configurable = (PreambleHelper<FamilyType>::getL3Config(pDevice->getHardwareInfo(), true) != PreambleHelper<FamilyType>::getL3Config(pDevice->getHardwareInfo(), false));
+    auto expectedData = isL3Configurable ? 0x80000340u : 0x60000321u;
     EXPECT_EQ(cmd->getRegisterOffset(), 0x7034u);
     EXPECT_EQ(cmd->getDataDword(), expectedData);
 }

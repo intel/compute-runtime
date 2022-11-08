@@ -32,13 +32,6 @@ HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitration
     EXPECT_EQ(0U, countMmio<FamilyType>(cmdList.begin(), cmdList.end(), 0xE404));
 }
 
-HWTEST2_F(TglLpSlm, WhenCheckingL3IsConfigurableThenExpectItToBeFalse, IsTGLLP) {
-    bool isL3Programmable =
-        PreambleHelper<Gen12LpFamily>::isL3Configurable(*defaultHwInfo);
-
-    EXPECT_FALSE(isL3Programmable);
-}
-
 HWTEST2_F(TglLpSlm, WhenPreambleIsCreatedThenSlmIsDisabled, IsTGLLP) {
     typedef Gen12LpFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;

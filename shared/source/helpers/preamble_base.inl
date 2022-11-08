@@ -102,11 +102,6 @@ size_t PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(bool debuggingA
 }
 
 template <typename GfxFamily>
-bool PreambleHelper<GfxFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
-    return false;
-}
-
-template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {}
 
 template <typename GfxFamily>

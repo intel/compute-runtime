@@ -57,19 +57,6 @@ BDWTEST_F(Gen8L3Config, GivenlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
-BDWTEST_F(Gen8L3Config, WhenPreambleIsCreatedThenL3ProgrammingIsCorrect) {
-    bool l3ConfigDifference;
-    bool isL3Programmable;
-
-    l3ConfigDifference =
-        PreambleHelper<Gen8Family>::getL3Config(*defaultHwInfo, true) !=
-        PreambleHelper<Gen8Family>::getL3Config(*defaultHwInfo, false);
-    isL3Programmable =
-        PreambleHelper<Gen8Family>::isL3Configurable(*defaultHwInfo);
-
-    EXPECT_EQ(l3ConfigDifference, isL3Programmable);
-}
-
 typedef PreambleFixture ThreadArbitrationGen8;
 BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
     typedef Gen8Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;

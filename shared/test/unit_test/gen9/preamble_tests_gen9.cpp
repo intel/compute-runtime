@@ -51,19 +51,6 @@ GEN9TEST_F(PreambleTestGen9, givenKernelDebuggingActiveAndDisabledPreemptionWhen
     SourceLevelDebuggerPreambleTest<FamilyType>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcudedTest();
 }
 
-GEN9TEST_F(PreambleTestGen9, givenGen9ThenL3IsProgrammed) {
-    bool l3ConfigDifference;
-    bool isL3Programmable;
-
-    l3ConfigDifference =
-        PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true) !=
-        PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, false);
-    isL3Programmable =
-        PreambleHelper<FamilyType>::isL3Configurable(*defaultHwInfo);
-
-    EXPECT_EQ(l3ConfigDifference, isL3Programmable);
-}
-
 using ThreadArbitrationGen9 = PreambleFixture;
 GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsNotSet) {
     DebugManagerStateRestore dbgRestore;

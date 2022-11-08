@@ -32,11 +32,6 @@ uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool us
 }
 
 template <>
-bool PreambleHelper<Family>::isL3Configurable(const HardwareInfo &hwInfo) {
-    return getL3Config(hwInfo, true) != getL3Config(hwInfo, false);
-}
-
-template <>
 void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
                                                    const PipelineSelectArgs &pipelineSelectArgs,
                                                    const HardwareInfo &hwInfo) {

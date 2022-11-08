@@ -46,7 +46,6 @@ class HwHelper {
     virtual uint32_t getPitchAlignmentForImage(const HardwareInfo *hwInfo) const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
-    virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
@@ -215,8 +214,6 @@ class HwHelperHw : public HwHelper {
     uint32_t getMaxNumSamplers() const override;
 
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
-
-    bool isL3Configurable(const HardwareInfo &hwInfo) override;
 
     SipKernelType getSipKernelType(bool debuggingActive) const override;
 
