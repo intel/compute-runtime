@@ -55,9 +55,6 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
         bool querySystemInfo() override { return false; }
     };
 
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
@@ -68,12 +65,17 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     ::testing::internal::CaptureStdout();
+    ::testing::internal::CaptureStderr();
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
 
     int ret = drm.setupHardwareInfo(&device, false);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
     EXPECT_TRUE(isEmpty(::testing::internal::GetCapturedStdout()));
+    EXPECT_TRUE(isEmpty(::testing::internal::GetCapturedStderr()));
 }
 
 TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsNonZeros) {
@@ -122,9 +124,6 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
 }
 
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystemInfoIsNotCreatedAndDebugMessageIsPrinted) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
@@ -135,6 +134,8 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     ::testing::internal::CaptureStdout();
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
 
     drm.failQueryDeviceBlob = true;
 
