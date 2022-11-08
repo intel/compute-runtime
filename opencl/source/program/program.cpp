@@ -280,23 +280,16 @@ cl_int Program::getSource(std::string &binary) const {
 
 void Program::updateBuildLog(uint32_t rootDeviceIndex, const char *pErrorString,
                              size_t errorStringSize) {
-    if ((pErrorString == nullptr) || (errorStringSize == 0) || (pErrorString[0] == '\0')) {
+    ConstStringRef errorString(pErrorString, errorStringSize);
+    if (errorString.empty()) {
         return;
     }
 
-    if (pErrorString[errorStringSize - 1] == '\0') {
-        --errorStringSize;
+    auto &buildLog = buildInfos[rootDeviceIndex].buildLog;
+    if (false == buildLog.empty()) {
+        buildLog.append("\n");
     }
-
-    auto &currentLog = buildInfos[rootDeviceIndex].buildLog;
-
-    if (currentLog.empty()) {
-        currentLog.assign(pErrorString, pErrorString + errorStringSize);
-        return;
-    }
-
-    currentLog.append("\n");
-    currentLog.append(pErrorString, pErrorString + errorStringSize);
+    buildLog.append(errorString.begin(), errorString.end());
 }
 
 const char *Program::getBuildLog(uint32_t rootDeviceIndex) const {

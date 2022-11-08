@@ -352,259 +352,137 @@ TEST_F(ProgramFromBinaryTest, WhenGettingProgramScopeGlobalCtorsAndDtorsPresentI
     EXPECT_EQ(expectedParam, paramRet);
 }
 
-TEST_F(ProgramFromBinaryTest, GivenNullDeviceWhenGettingBuildStatusThenBuildNoneIsReturned) {
-    cl_device_id device = pClDevice;
-    cl_build_status buildStatus = 0;
-    size_t paramValueSize = sizeof(buildStatus);
-    size_t paramValueSizeRet = 0;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_STATUS,
-        paramValueSize,
-        &buildStatus,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(paramValueSize, paramValueSizeRet);
-    EXPECT_EQ(CL_BUILD_NONE, buildStatus);
-}
-
-TEST_F(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingBuildInfoThenValueSizeRetIsNotUpdated) {
-    cl_device_id device = pClDevice;
-    cl_build_status buildStatus = 0;
-    size_t paramValueSize = sizeof(buildStatus);
-    size_t paramValueSizeRet = 0x1234;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        0,
-        paramValueSize,
-        &buildStatus,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    EXPECT_EQ(0x1234u, paramValueSizeRet);
-}
-
-TEST_F(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingBuildOptionsThenBuildOptionsAreEmpty) {
-    cl_device_id device = pClDevice;
-    size_t paramValueSizeRet = 0u;
-    size_t paramValueSize = 0u;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_OPTIONS,
-        0,
-        nullptr,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(paramValueSizeRet, 0u);
-
-    auto paramValue = std::make_unique<char[]>(paramValueSizeRet);
-    paramValueSize = paramValueSizeRet;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_OPTIONS,
-        paramValueSize,
-        paramValue.get(),
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_STREQ("", (char *)paramValue.get());
-}
-
-TEST_F(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingLogThenLogEmpty) {
-    cl_device_id device = pClDevice;
-    size_t paramValueSizeRet = 0u;
-    size_t paramValueSize = 0u;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_LOG,
-        0,
-        nullptr,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(paramValueSizeRet, 0u);
-
-    auto paramValue = std::make_unique<char[]>(paramValueSizeRet);
-    paramValueSize = paramValueSizeRet;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_LOG,
-        paramValueSize,
-        paramValue.get(),
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_STREQ("", (char *)paramValue.get());
-}
-
-TEST_F(ProgramFromBinaryTest, GivenLogEntriesWhenGetBuildLogThenLogIsApended) {
-    cl_device_id device = pClDevice;
-    size_t paramValueSizeRet = 0u;
-    size_t paramValueSize = 0u;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_LOG,
-        0,
-        nullptr,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(paramValueSizeRet, 0u);
-
-    auto paramValue = std::make_unique<char[]>(paramValueSizeRet);
-    paramValueSize = paramValueSizeRet;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_LOG,
-        paramValueSize,
-        paramValue.get(),
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_STREQ("", (char *)paramValue.get());
-
-    // Add more text to the log
-    pProgram->updateBuildLog(pClDevice->getRootDeviceIndex(), "testing", 8);
-    pProgram->updateBuildLog(pClDevice->getRootDeviceIndex(), "several", 8);
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_LOG,
-        0,
-        nullptr,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_GE(paramValueSizeRet, 16u);
-    paramValue = std::make_unique<char[]>(paramValueSizeRet);
-
-    paramValueSize = paramValueSizeRet;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_LOG,
-        paramValueSize,
-        paramValue.get(),
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_NE(nullptr, strstr(paramValue.get(), "testing"));
-
-    const char *paramValueContinued = strstr(paramValue.get(), "testing") + 7;
-    ASSERT_NE(nullptr, strstr(paramValueContinued, "several"));
-}
-
-TEST_F(ProgramFromBinaryTest, GivenNullParamValueWhenGettingProgramBinaryTypeThenParamValueSizeIsReturned) {
-    cl_device_id device = pClDevice;
-    size_t paramValueSizeRet = 0u;
-    size_t paramValueSize = 0u;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BINARY_TYPE,
-        paramValueSize,
-        nullptr,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(paramValueSizeRet, 0u);
-}
-
-TEST_F(ProgramFromBinaryTest, WhenGettingProgramBinaryTypeThenCorrectProgramTypeIsReturned) {
-    cl_device_id device = pClDevice;
-    cl_program_binary_type programType = 0;
-    char *paramValue = (char *)&programType;
-    size_t paramValueSizeRet = 0u;
-    size_t paramValueSize = 0u;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BINARY_TYPE,
-        paramValueSize,
-        nullptr,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(paramValueSizeRet, 0u);
-
-    paramValueSize = paramValueSizeRet;
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BINARY_TYPE,
-        paramValueSize,
-        paramValue,
-        &paramValueSizeRet);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ((cl_program_binary_type)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, programType);
-}
-
-TEST_F(ProgramFromBinaryTest, GivenInvalidParamWhenGettingBuildInfoThenInvalidValueErrorIsReturned) {
-    cl_device_id device = pClDevice;
-    size_t paramValueSizeRet = 0u;
-
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_KERNEL_NAMES,
-        0,
-        nullptr,
-        &paramValueSizeRet);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-}
-
-TEST_F(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlobalVariableTotalSizeThenCorrectSizeIsReturned) {
-    cl_device_id device = pClDevice;
-    size_t globalVarSize = 22;
-    size_t paramValueSize = sizeof(globalVarSize);
-    size_t paramValueSizeRet = 0;
-    char *paramValue = (char *)&globalVarSize;
-
-    // get build info as is
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE,
-        paramValueSize,
-        paramValue,
-        &paramValueSizeRet);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(paramValueSizeRet, sizeof(globalVarSize));
-    EXPECT_EQ(globalVarSize, 0u);
-
-    // Set GlobalVariableTotalSize as 1024
-    createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
-    MockProgram *p = pProgram;
-    ProgramInfo programInfo;
-
-    char constantData[1024] = {};
-    programInfo.globalVariables.initData = constantData;
-    programInfo.globalVariables.size = sizeof(constantData);
-    p->processProgramInfo(programInfo, *pClDevice);
-
-    // get build info once again
-    retVal = pProgram->getBuildInfo(
-        device,
-        CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE,
-        paramValueSize,
-        paramValue,
-        &paramValueSizeRet);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(paramValueSizeRet, sizeof(globalVarSize));
-    if (castToObject<ClDevice>(pClDevice)->areOcl21FeaturesEnabled()) {
-        EXPECT_EQ(globalVarSize, 1024u);
-    } else {
-        EXPECT_EQ(globalVarSize, 0u);
+class MinimalProgramFixture {
+  public:
+    void setUp() {
+        clDevice = context.getDevice(0);
+        program = std::make_unique<MockProgram>(toClDeviceVector(*clDevice));
     }
+
+    void tearDown() {}
+
+    MockContext context;
+    std::unique_ptr<MockProgram> program = nullptr;
+    NEO::ClDevice *clDevice = nullptr;
+};
+
+using ProgramGetBuildInfoTest = Test<MinimalProgramFixture>;
+TEST_F(ProgramGetBuildInfoTest, WhenGettingBuildStatusThenBuildStatusIsReturned) {
+    constexpr cl_build_status expectedBuildStatus = CL_BUILD_SUCCESS;
+    program->deviceBuildInfos.at(clDevice).buildStatus = expectedBuildStatus;
+
+    cl_build_status paramValue = 0;
+    size_t paramValueSizeRet = 0;
+    auto retVal = program->getBuildInfo(
+        clDevice,
+        CL_PROGRAM_BUILD_STATUS,
+        sizeof(cl_build_status),
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_build_status), paramValueSizeRet);
+    EXPECT_EQ(expectedBuildStatus, paramValue);
+}
+
+TEST_F(ProgramGetBuildInfoTest, WhenGettingBuildOptionsThenBuildOptionsAreReturned) {
+    constexpr ConstStringRef expectedBuildOptions = "Expected build options";
+    program->options = expectedBuildOptions.str();
+
+    size_t paramValueSizeRet = 0u;
+    char paramValue[expectedBuildOptions.length() + 1]{};
+    auto retVal = program->getBuildInfo(
+        clDevice,
+        CL_PROGRAM_BUILD_OPTIONS,
+        expectedBuildOptions.length() + 1,
+        paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedBuildOptions.length() + 1, paramValueSizeRet);
+    EXPECT_STREQ(expectedBuildOptions.data(), paramValue);
+}
+
+TEST_F(ProgramGetBuildInfoTest, WhenGettingBuildLogThenBuildLogIsReturned) {
+    constexpr ConstStringRef expectedBuildLog = "Expected build log";
+    program->buildInfos[0].buildLog = expectedBuildLog.str();
+
+    size_t paramValueSizeRet = 0u;
+    char paramValue[expectedBuildLog.length() + 1]{};
+    auto retVal = program->getBuildInfo(
+        clDevice,
+        CL_PROGRAM_BUILD_LOG,
+        expectedBuildLog.length() + 1,
+        paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedBuildLog.length() + 1, paramValueSizeRet);
+    EXPECT_STREQ(expectedBuildLog.data(), paramValue);
+}
+
+TEST_F(ProgramGetBuildInfoTest, WhenGettingBinaryTypeThenBinaryTypeIsReturned) {
+    cl_program_binary_type expectedBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    program->deviceBuildInfos.at(clDevice).programBinaryType = expectedBinaryType;
+
+    size_t paramValueSizeRet = 0u;
+    cl_program_binary_type paramValue{};
+    auto retVal = program->getBuildInfo(
+        clDevice,
+        CL_PROGRAM_BINARY_TYPE,
+        sizeof(cl_program_binary_type),
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_program_binary_type), paramValueSizeRet);
+    EXPECT_EQ(expectedBinaryType, paramValue);
+}
+
+TEST_F(ProgramGetBuildInfoTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlobalVariableTotalSizeThenCorrectSizeIsReturned) {
+    constexpr size_t expectedGlobalVarSize = 256U;
+    program->buildInfos[0].globalVarTotalSize = expectedGlobalVarSize;
+
+    size_t paramValueSizeRet = 0;
+    size_t paramValue{};
+    auto retVal = program->getBuildInfo(
+        clDevice,
+        CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE,
+        sizeof(size_t),
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
+    EXPECT_EQ(expectedGlobalVarSize, paramValue);
+}
+
+TEST_F(ProgramGetBuildInfoTest, GivenInvalidParamWhenGettingBuildInfoThenInvalidValueErrorIsReturned) {
+    auto retVal = program->getBuildInfo(
+        clDevice,
+        0,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+using ProgramUpdateBuildLogTest = Test<MinimalProgramFixture>;
+
+TEST_F(ProgramUpdateBuildLogTest, GivenEmptyBuildLogWhenUpdatingBuildLogThenBuildLogIsSet) {
+    constexpr ConstStringRef expectedBuildLog = "build log update";
+    program->buildInfos[0].buildLog = "";
+    program->updateBuildLog(0, expectedBuildLog.data(), expectedBuildLog.size());
+    EXPECT_STREQ(expectedBuildLog.data(), program->buildInfos[0].buildLog.c_str());
+}
+
+TEST_F(ProgramUpdateBuildLogTest, GivenNonEmptyBuildLogWhenUpdatingBuildLogThenBuildLogIsUpdated) {
+    constexpr ConstStringRef buildLogMessage = "build log update";
+    program->buildInfos[0].buildLog = "current build log";
+    const std::string expectedBuildLog = program->buildInfos[0].buildLog + "\n" + buildLogMessage.str();
+
+    program->updateBuildLog(0, buildLogMessage.data(), buildLogMessage.size());
+    EXPECT_STREQ(expectedBuildLog.c_str(), program->buildInfos[0].buildLog.c_str());
 }
 
 TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphicsAllocationInKernelInfo) {
