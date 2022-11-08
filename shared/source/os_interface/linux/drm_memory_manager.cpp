@@ -1347,7 +1347,15 @@ uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner 
     default:
         AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(sizeAllocated);
         if (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !resource48Bit) {
-            alignment.alignment = Math::nextPowerOfTwo(sizeAllocated);
+            auto alignSize = true;
+            if (DebugManager.flags.UseHighAlignmentForHeapExtended.get() != -1) {
+                alignSize = !!DebugManager.flags.UseHighAlignmentForHeapExtended.get();
+            }
+
+            if (alignSize) {
+                alignment.alignment = Math::nextPowerOfTwo(sizeAllocated);
+            }
+
             alignment.heap = HeapIndex::HEAP_EXTENDED;
         }
         gpuAddress = gmmHelper.canonize(gfxPartition->heapAllocateWithCustomAlignment(alignment.heap, sizeAllocated, alignment.alignment));
