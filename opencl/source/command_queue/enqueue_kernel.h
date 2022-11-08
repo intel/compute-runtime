@@ -131,13 +131,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
         return CL_INVALID_WORK_GROUP_SIZE;
     }
 
-    for (auto i = 0u; i < workDim; i++) {
-        uint64_t dimension = static_cast<uint64_t>(region[i]) / workGroupSize[i];
-        if (dimension > std::numeric_limits<uint32_t>::max()) {
-            return CL_INVALID_GLOBAL_WORK_SIZE;
-        }
-    }
-
     return enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(
         surfaces,
         false,
