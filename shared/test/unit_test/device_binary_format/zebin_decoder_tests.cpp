@@ -593,7 +593,7 @@ kernels_misc_info:
     EXPECT_STREQ(kernel1ArgInfo1.argName.c_str(), "a");
     EXPECT_STREQ(kernel1ArgInfo1.addressQualifier.c_str(), "__global");
     EXPECT_STREQ(kernel1ArgInfo1.accessQualifier.c_str(), "NONE");
-    EXPECT_STREQ(kernel1ArgInfo1.type.c_str(), "'int*;8'");
+    EXPECT_STREQ(kernel1ArgInfo1.type.c_str(), "int*");
     EXPECT_STREQ(kernel1ArgInfo1.typeQualifiers.c_str(), "NONE");
 
     const auto &kernel1ArgTraits1 = kernel1Info->kernelDescriptor.payloadMappings.explicitArgs.at(0).getTraits();
@@ -608,7 +608,7 @@ kernels_misc_info:
     EXPECT_STREQ(kernel2ArgInfo1.argName.c_str(), "a");
     EXPECT_STREQ(kernel2ArgInfo1.addressQualifier.c_str(), "__global");
     EXPECT_STREQ(kernel2ArgInfo1.accessQualifier.c_str(), "NONE");
-    EXPECT_STREQ(kernel2ArgInfo1.type.c_str(), "'int*;8'");
+    EXPECT_STREQ(kernel2ArgInfo1.type.c_str(), "int*");
     EXPECT_STREQ(kernel2ArgInfo1.typeQualifiers.c_str(), "NONE");
 
     const auto &kernel2ArgTraits1 = kernel2Info->kernelDescriptor.payloadMappings.explicitArgs.at(0).getTraits();
@@ -622,7 +622,7 @@ kernels_misc_info:
     EXPECT_STREQ(kernel2ArgInfo2.argName.c_str(), "b");
     EXPECT_STREQ(kernel2ArgInfo2.addressQualifier.c_str(), "__private");
     EXPECT_STREQ(kernel2ArgInfo2.accessQualifier.c_str(), "NONE");
-    EXPECT_STREQ(kernel2ArgInfo2.type.c_str(), "'int;4'");
+    EXPECT_STREQ(kernel2ArgInfo2.type.c_str(), "int");
     EXPECT_STREQ(kernel2ArgInfo2.typeQualifiers.c_str(), "NONE");
 
     const auto &kernel2ArgTraits2 = kernel2Info->kernelDescriptor.payloadMappings.explicitArgs.at(1).getTraits();
@@ -636,7 +636,7 @@ kernels_misc_info:
     EXPECT_STREQ(kernel2ArgInfo3.argName.c_str(), "c");
     EXPECT_STREQ(kernel2ArgInfo3.addressQualifier.c_str(), "__global");
     EXPECT_STREQ(kernel2ArgInfo3.accessQualifier.c_str(), "NONE");
-    EXPECT_STREQ(kernel2ArgInfo3.type.c_str(), "'uint*;8'");
+    EXPECT_STREQ(kernel2ArgInfo3.type.c_str(), "uint*");
     EXPECT_STREQ(kernel2ArgInfo3.typeQualifiers.c_str(), "const");
 
     const auto &kernel2ArgTraits3 = kernel2Info->kernelDescriptor.payloadMappings.explicitArgs.at(2).getTraits();
@@ -650,7 +650,7 @@ kernels_misc_info:
     EXPECT_STREQ(kernel2ArgInfo4.argName.c_str(), "imageA");
     EXPECT_STREQ(kernel2ArgInfo4.addressQualifier.c_str(), "__global");
     EXPECT_STREQ(kernel2ArgInfo4.accessQualifier.c_str(), "__read_only");
-    EXPECT_STREQ(kernel2ArgInfo4.type.c_str(), "'image2d_t;8'");
+    EXPECT_STREQ(kernel2ArgInfo4.type.c_str(), "image2d_t");
     EXPECT_STREQ(kernel2ArgInfo4.typeQualifiers.c_str(), "NONE");
 
     const auto &kernel2ArgTraits4 = kernel2Info->kernelDescriptor.payloadMappings.explicitArgs.at(3).getTraits();

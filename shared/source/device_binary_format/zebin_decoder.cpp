@@ -1576,7 +1576,8 @@ NEO::DecodeError readKernelMiscArgumentInfos(const NEO::Yaml::YamlParser &parser
             } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::index) {
                 validArgInfo &= parser.readValueChecked(singleArgInfoMember, metadataExtended.index);
             } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::typeName) {
-                validArgInfo &= readZeInfoValueChecked(parser, singleArgInfoMember, metadataExtended.typeName, Elf::ZebinKernelMetadata::Tags::kernelMiscInfo, outErrReason);
+                metadataExtended.typeName = parser.readValueNoQuotes(singleArgInfoMember).str();
+                validArgInfo &= (false == metadataExtended.typeName.empty());
             } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::typeQualifiers) {
                 validArgInfo &= readZeInfoValueChecked(parser, singleArgInfoMember, metadataExtended.typeQualifiers, Elf::ZebinKernelMetadata::Tags::kernelMiscInfo, outErrReason);
             } else {
@@ -1613,8 +1614,9 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
         dstTypeTraits.accessQualifier = KernelArgMetadata::parseAccessQualifier(dstMetadata.accessQualifier);
         dstTypeTraits.addressQualifier = KernelArgMetadata::parseAddressSpace(dstMetadata.addressQualifier);
         dstTypeTraits.typeQualifiers = KernelArgMetadata::parseTypeQualifiers(dstMetadata.typeQualifiers);
-
         dst.payloadMappings.explicitArgs.at(srcMetadata.index).getTraits() = std::move(dstTypeTraits);
+
+        dstMetadata.type = dstMetadata.type.substr(0U, dstMetadata.type.find(";"));
         dst.explicitArgsExtendedMetadata.at(srcMetadata.index) = std::move(dstMetadata);
     }
 }
