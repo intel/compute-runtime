@@ -99,11 +99,11 @@ class LinuxRasSourceFabric : public LinuxRasSources {
     ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
 
   private:
-    FsAccess *fsAccess = nullptr;
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     std::vector<std::string> errorNodes = {};
     uint64_t baseComputeErrorCount = 0;
     uint64_t getComputeErrorCount();
-    static void getNodes(std::vector<std::string> &nodes, uint32_t subdeviceId, FsAccess *fsAccess, const zes_ras_error_type_t &type);
+    static void getNodes(std::vector<std::string> &nodes, uint32_t subdeviceId, LinuxSysmanImp *pSysmanImp, const zes_ras_error_type_t &type);
 };
 
 class LinuxRasSourceHbm : public LinuxRasSources {
