@@ -110,8 +110,8 @@ struct UltCommandStreamReceiverTest
     }
 
     template <typename CommandStreamReceiverType>
-    void flushSmallTask(CommandStreamReceiverType &commandStreamReceiver,
-                        size_t startOffset = 0) {
+    SubmissionStatus flushSmallTask(CommandStreamReceiverType &commandStreamReceiver,
+                                    size_t startOffset = 0) {
         return commandStreamReceiver.flushSmallTask(
             commandStream,
             startOffset);

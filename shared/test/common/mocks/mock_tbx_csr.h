@@ -98,8 +98,9 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
         flushBatchedSubmissionsCalled = true;
         return true;
     }
-    void flushTagUpdate() override {
+    SubmissionStatus flushTagUpdate() override {
         flushTagCalled = true;
+        return SubmissionStatus::SUCCESS;
     }
 
     std::unique_lock<CommandStreamReceiver::MutexType> obtainUniqueOwnership() override {

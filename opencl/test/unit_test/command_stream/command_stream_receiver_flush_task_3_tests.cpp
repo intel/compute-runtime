@@ -157,7 +157,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenFlushSmallTaskThenCommandStrea
 
     auto &stream = csr.getCS(2 * MemoryConstants::cacheLineSize);
     stream.getSpace(MemoryConstants::cacheLineSize - sizeof(MI_BATCH_BUFFER_END) - 2);
-    csr.flushSmallTask(stream, stream.getUsed());
+    EXPECT_EQ(SubmissionStatus::SUCCESS, csr.flushSmallTask(stream, stream.getUsed()));
 
     auto used = csr.commandStream.getUsed();
     auto expected = 2 * MemoryConstants::cacheLineSize;

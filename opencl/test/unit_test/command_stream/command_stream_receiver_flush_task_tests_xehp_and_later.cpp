@@ -972,7 +972,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     commandStreamReceiver.taskCount = 3;
     EXPECT_TRUE(commandStreamReceiver.staticWorkPartitioningEnabled);
     flushTask(commandStreamReceiver, true);
-    commandStreamReceiver.flushTagUpdate();
+    EXPECT_EQ(SubmissionStatus::SUCCESS, commandStreamReceiver.flushTagUpdate());
     EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
 
     prepareLinearStream<FamilyType>(commandStream, 0);
@@ -1065,7 +1065,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
     commandStreamReceiver.staticWorkPartitioningEnabled = false;
-    commandStreamReceiver.flushTagUpdate();
+    EXPECT_EQ(SubmissionStatus::SUCCESS, commandStreamReceiver.flushTagUpdate());
 
     prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
     verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);

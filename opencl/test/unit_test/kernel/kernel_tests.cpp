@@ -504,7 +504,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     TagAllocatorBase *getTimestampPacketAllocator() override { return nullptr; }
 
-    void flushTagUpdate() override{};
+    SubmissionStatus flushTagUpdate() override { return SubmissionStatus::SUCCESS; };
     void updateTagFromWait() override{};
     bool isUpdateTagFromWaitEnabled() override { return false; };
     void createKernelArgsBufferAllocation() override {}

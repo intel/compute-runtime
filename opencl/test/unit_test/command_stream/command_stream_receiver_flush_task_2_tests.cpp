@@ -558,7 +558,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
     EXPECT_FALSE(csr.isMadeResident(csr.globalFenceAllocation));
     EXPECT_FALSE(csr.isMadeNonResident(csr.globalFenceAllocation));
 
-    flushSmallTask(csr);
+    EXPECT_EQ(SubmissionStatus::SUCCESS, flushSmallTask(csr));
 
     EXPECT_TRUE(csr.isMadeResident(csr.globalFenceAllocation));
     EXPECT_TRUE(csr.isMadeNonResident(csr.globalFenceAllocation));
@@ -575,7 +575,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
 
     EXPECT_EQ(nullptr, csr.globalFenceAllocation);
 
-    flushSmallTask(csr);
+    EXPECT_EQ(SubmissionStatus::SUCCESS, flushSmallTask(csr));
 
     ASSERT_EQ(nullptr, csr.globalFenceAllocation);
 }

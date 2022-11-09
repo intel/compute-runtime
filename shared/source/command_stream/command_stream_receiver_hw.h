@@ -99,11 +99,11 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
 
-    void flushTagUpdate() override;
-    void flushMiFlushDW();
-    void flushPipeControl();
-    void flushSmallTask(LinearStream &commandStreamTask,
-                        size_t commandStreamStartTask);
+    SubmissionStatus flushTagUpdate() override;
+    SubmissionStatus flushMiFlushDW();
+    SubmissionStatus flushPipeControl();
+    SubmissionStatus flushSmallTask(LinearStream &commandStreamTask,
+                                    size_t commandStreamStartTask);
     SubmissionStatus flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
 
     bool isUpdateTagFromWaitEnabled() override;

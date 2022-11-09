@@ -1195,18 +1195,19 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesCo
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
+inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
     if (this->osContext != nullptr) {
         if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
-            this->flushMiFlushDW();
+            return this->flushMiFlushDW();
         } else {
-            this->flushPipeControl();
+            return this->flushPipeControl();
         }
     }
+    return SubmissionStatus::DEVICE_UNINITIALIZED;
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
+inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
     auto lock = obtainUniqueOwnership();
 
     auto &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
@@ -1220,12 +1221,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
 
     makeResident(*tagAllocation);
 
-    this->flushSmallTask(commandStream, commandStreamStart);
+    auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     this->latestFlushedTaskCount = taskCount.load();
+    return submissionStatus;
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
+SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
     auto lock = obtainUniqueOwnership();
 
     const auto &hwInfo = peekHwInfo();
@@ -1247,12 +1249,13 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
 
     makeResident(*tagAllocation);
 
-    this->flushSmallTask(commandStream, commandStreamStart);
+    auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     this->latestFlushedTaskCount = taskCount.load();
+    return submissionStatus;
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStreamTask, size_t commandStreamStartTask) {
+SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStreamTask, size_t commandStreamStartTask) {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
@@ -1272,8 +1275,9 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
                             commandStreamTask.getUsed(), &commandStreamTask, endingCmdPtr, false};
 
     this->latestSentTaskCount = taskCount + 1;
-    flushHandler(batchBuffer, getResidencyAllocations());
+    auto submissionStatus = flushHandler(batchBuffer, getResidencyAllocations());
     taskCount++;
+    return submissionStatus;
 }
 
 template <typename GfxFamily>
