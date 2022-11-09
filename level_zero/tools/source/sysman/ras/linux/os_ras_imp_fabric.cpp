@@ -17,7 +17,7 @@
 #include <regex>
 namespace L0 {
 
-void LinuxRasSourceFabric::getNodes(std::vector<std::string> &nodes, uint32_t subdeviceId, FsAccess *fsAccess, const zes_ras_error_type_t &type) {
+void LinuxRasSourceFabric::getNodes(std::vector<std::string> &nodes, uint32_t subdeviceId, LinuxSysmanImp *pSysmanImp, const zes_ras_error_type_t &type) {
     const uint32_t minBoardStrappedNumber = 0;
     const uint32_t maxBoardStrappedNumber = 31;
     const uint32_t minPortId = 1;
@@ -28,10 +28,15 @@ void LinuxRasSourceFabric::getNodes(std::vector<std::string> &nodes, uint32_t su
     const std::string iafPathStringAuxillary("/sys/module/iaf/drivers/auxiliary:iaf/");
     std::string iafPathString("");
 
-    if (fsAccess->directoryExists(iafPathStringMfd)) {
-        iafPathString = iafPathStringMfd + "iaf.";
-    } else if (fsAccess->directoryExists(iafPathStringAuxillary)) {
-        iafPathString = iafPathStringAuxillary + "i915.iaf.";
+    if (pSysmanImp->getSysfsAccess().getRealPath("device/", iafPathString) != ZE_RESULT_SUCCESS) {
+        return;
+    }
+
+    auto &fsAccess = pSysmanImp->getFsAccess();
+    if (fsAccess.directoryExists(iafPathStringMfd)) {
+        iafPathString = iafPathString + "/iaf.";
+    } else if (fsAccess.directoryExists(iafPathStringAuxillary)) {
+        iafPathString = iafPathString + "/i915.iaf.";
     } else {
         return;
     }
@@ -39,7 +44,7 @@ void LinuxRasSourceFabric::getNodes(std::vector<std::string> &nodes, uint32_t su
     for (auto boardStrappedNumber = minBoardStrappedNumber; boardStrappedNumber <= maxBoardStrappedNumber; boardStrappedNumber++) {
 
         const auto boardStrappedString(iafPathString + std::to_string(boardStrappedNumber));
-        if (!fsAccess->directoryExists(boardStrappedString)) {
+        if (!fsAccess.directoryExists(boardStrappedString)) {
             continue;
         }
         const auto subDeviceString(boardStrappedString + "/sd." + std::to_string(subdeviceId));
@@ -59,7 +64,7 @@ void LinuxRasSourceFabric::getNodes(std::vector<std::string> &nodes, uint32_t su
         }
 
         for (auto &subDeviceErrorNode : subDeviceErrorNodes) {
-            if (ZE_RESULT_SUCCESS == fsAccess->canRead(subDeviceErrorNode)) {
+            if (ZE_RESULT_SUCCESS == fsAccess.canRead(subDeviceErrorNode)) {
                 nodes.push_back(subDeviceErrorNode);
             }
         }
@@ -73,11 +78,11 @@ ze_result_t LinuxRasSourceFabric::getSupportedRasErrorTypes(std::set<zes_ras_err
     uint32_t subDeviceIndex = 0;
     SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceIndex, onSubDevice);
     std::vector<std::string> nodes;
-    getNodes(nodes, subDeviceIndex, &pLinuxSysmanImp->getFsAccess(), ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
+    getNodes(nodes, subDeviceIndex, pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
     if (nodes.size()) {
         errorType.insert(ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
     }
-    getNodes(nodes, subDeviceIndex, &pLinuxSysmanImp->getFsAccess(), ZES_RAS_ERROR_TYPE_CORRECTABLE);
+    getNodes(nodes, subDeviceIndex, pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE);
     if (nodes.size()) {
         errorType.insert(ZES_RAS_ERROR_TYPE_CORRECTABLE);
     }
@@ -87,15 +92,16 @@ ze_result_t LinuxRasSourceFabric::getSupportedRasErrorTypes(std::set<zes_ras_err
 
 LinuxRasSourceFabric::LinuxRasSourceFabric(OsSysman *pOsSysman, zes_ras_error_type_t type, uint32_t subDeviceId) {
 
-    fsAccess = &static_cast<LinuxSysmanImp *>(pOsSysman)->getFsAccess();
-    getNodes(errorNodes, subDeviceId, fsAccess, type);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    getNodes(errorNodes, subDeviceId, pLinuxSysmanImp, type);
 }
 
 uint64_t LinuxRasSourceFabric::getComputeErrorCount() {
     uint64_t currentErrorCount = 0;
+    auto &fsAccess = pLinuxSysmanImp->getFsAccess();
     for (const auto &node : errorNodes) {
         uint64_t errorCount = 0;
-        fsAccess->read(node, errorCount);
+        fsAccess.read(node, errorCount);
         currentErrorCount += errorCount;
     }
     return currentErrorCount;
