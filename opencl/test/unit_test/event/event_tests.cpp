@@ -1843,9 +1843,8 @@ TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabled
 
     {
         DebugManager.flags.EnableTimestampWaitForEvents.set(-1);
-        const auto &hwInfo = mockDevice->getHardwareInfo();
-        const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        EXPECT_EQ(event.isWaitForTimestampsEnabled(), hwHelper.isTimestampWaitSupportedForEvents(hwInfo));
+        const auto &productHelper = mockDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
+        EXPECT_EQ(event.isWaitForTimestampsEnabled(), productHelper.isTimestampWaitSupportedForEvents());
     }
 
     {

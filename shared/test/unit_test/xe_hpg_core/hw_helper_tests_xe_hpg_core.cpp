@@ -18,6 +18,7 @@
 #include "hw_cmds_xe_hpg_core_base.h"
 
 using HwHelperTestXeHpgCore = HwHelperTest;
+using ProductHelperTestXeHpgCore = Test<DeviceFixture>;
 
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
     DebugManagerStateRestore restore;
@@ -154,10 +155,14 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenXeHPAndLaterPlatformWhenCheckAssig
     EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCheckTimestampWaitSupportThenReturnFalse) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimestampWaitSupportForEventsThenReturnFalse) {
+    auto &helper = getHelper<ProductHelper>();
+    EXPECT_FALSE(helper.isTimestampWaitSupportedForEvents());
+}
+
+XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenCoreHelperWhenCheckTimestampWaitSupportForQueuesThenReturnFalse) {
+    auto &helper = getHelper<CoreHelper>();
     EXPECT_FALSE(helper.isTimestampWaitSupportedForQueues());
-    EXPECT_FALSE(helper.isTimestampWaitSupportedForEvents(*defaultHwInfo));
 }
 
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {

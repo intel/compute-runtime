@@ -142,12 +142,6 @@ bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo) cons
     return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
-template <>
-bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const {
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return hwInfoConfig.isTimestampWaitSupportedForEvents();
-}
-
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

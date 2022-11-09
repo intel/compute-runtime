@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
@@ -21,6 +22,7 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
+using ProductHelperTest = Test<DeviceFixture>;
 
 HWTEST_F(HwInfoConfigTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
@@ -405,9 +407,9 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSuppor
     EXPECT_FALSE(hwInfoConfig.isVmBindPatIndexProgrammingSupported());
 }
 
-HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfIsTimestampWaitSupportedForEventsThenFalseIsReturned, IsNotXeHpgCore) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
-    EXPECT_FALSE(hwInfoConfig.isTimestampWaitSupportedForEvents());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTimestampWaitSupportedForEventsThenFalseIsReturned, IsNotXeHpgOrXeHpcCore) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.isTimestampWaitSupportedForEvents());
 }
 
 HWTEST_F(HwInfoConfigTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {

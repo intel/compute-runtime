@@ -26,6 +26,11 @@ bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
 }
 
 template <>
+bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
+    return true;
+}
+
+template <>
 std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     auto isBasicWARequired = false;
     auto isExtendedWARequired = false;

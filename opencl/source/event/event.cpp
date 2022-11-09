@@ -688,10 +688,9 @@ bool Event::isCompleted() {
 }
 
 bool Event::isWaitForTimestampsEnabled() const {
-    const auto &hwInfo = cmdQueue->getDevice().getHardwareInfo();
-    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &productHelper = cmdQueue->getDevice().getRootDeviceEnvironment().getHelper<ProductHelper>();
     auto enabled = cmdQueue->isTimestampWaitEnabled();
-    enabled &= hwHelper.isTimestampWaitSupportedForEvents(hwInfo);
+    enabled &= productHelper.isTimestampWaitSupportedForEvents();
 
     switch (DebugManager.flags.EnableTimestampWaitForEvents.get()) {
     case 0:

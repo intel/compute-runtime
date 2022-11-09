@@ -61,11 +61,6 @@ bool HwHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
     return false;
 }

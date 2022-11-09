@@ -19,6 +19,7 @@
 using namespace NEO;
 
 using HwInfoConfigTestDg2 = Test<DeviceFixture>;
+using ProductHelperTestDg2 = Test<DeviceFixture>;
 
 DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -412,13 +413,9 @@ DG2TEST_F(HwInfoConfigTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScratc
     EXPECT_THROW(hwHelper.getComputeUnitsUsedForScratch(&hwInfo), std::exception);
 }
 
-HWTEST_EXCLUDE_PRODUCT(HwHelperTestXeHpgCore, givenHwHelperWhenCheckTimestampWaitSupportThenReturnFalse, IGFX_DG2);
-DG2TEST_F(HwInfoConfigTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    EXPECT_TRUE(hwInfoConfig.isTimestampWaitSupportedForEvents());
-    EXPECT_TRUE(hwHelper.isTimestampWaitSupportedForEvents(hwInfo));
+DG2TEST_F(ProductHelperTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
+    auto &helper = getHelper<ProductHelper>();
+    EXPECT_TRUE(helper.isTimestampWaitSupportedForEvents());
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdsWhenConfigIsCheckedThenCorrectValueIsReturned) {

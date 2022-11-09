@@ -60,7 +60,6 @@ class HwHelper {
     static uint32_t getHighestEnabledSlice(const HardwareInfo &hwInfo);
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual bool isTimestampWaitSupportedForQueues() const = 0;
-    virtual bool isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const = 0;
     virtual bool isUpdateTaskCountFromWaitSupported() const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
     virtual void setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
@@ -222,9 +221,6 @@ class HwHelperHw : public HwHelper {
     bool timestampPacketWriteSupported() const override;
 
     bool isTimestampWaitSupportedForQueues() const override;
-
-    bool isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const override;
-
     bool isUpdateTaskCountFromWaitSupported() const override;
 
     bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override;

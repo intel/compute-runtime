@@ -407,11 +407,6 @@ bool HwHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     /*
     PAT Index  CLOS   MemType
