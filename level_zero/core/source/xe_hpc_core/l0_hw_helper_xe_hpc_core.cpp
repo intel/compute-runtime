@@ -39,11 +39,6 @@ bool L0HwHelperHw<Family>::platformSupportsStateComputeModeTracking(const NEO::H
 }
 
 template <>
-bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const {
     return true;
 }

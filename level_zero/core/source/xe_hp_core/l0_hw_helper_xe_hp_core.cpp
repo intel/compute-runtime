@@ -37,11 +37,6 @@ void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_pro
 }
 
 template <>
-bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const {
     return true;
 }

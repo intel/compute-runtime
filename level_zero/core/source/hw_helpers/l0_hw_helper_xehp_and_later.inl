@@ -33,7 +33,7 @@ bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking(const NEO::HardwareI
 
 template <typename Family>
 bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const {
-    return false;
+    return true;
 }
 
 template <typename Family>
