@@ -879,3 +879,26 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWor
         EXPECT_EQ(initialCounterValue + expectedCount, CpuIntrinsicsTests::sfenceCounter);
     }
 }
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbufferThenProgramSfenceInstruction) {
+    DebugManagerStateRestore restorer{};
+
+    using Dispatcher = BlitterDispatcher<FamilyType>;
+
+    FlushStampTracker flushStamp(true);
+
+    for (int32_t debugFlag : {-1, 0, 1, 2}) {
+        DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
+
+        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        EXPECT_TRUE(directSubmission.initialize(true, true));
+
+        auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
+
+        EXPECT_TRUE(directSubmission.stopRingBuffer());
+
+        uint32_t expectedCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
+
+        EXPECT_EQ(initialCounterValue + expectedCount, CpuIntrinsicsTests::sfenceCounter);
+    }
+}
