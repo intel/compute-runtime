@@ -552,7 +552,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     // If the CSR has work in its CS, flush it before the task
     bool submitTask = commandStreamStartTask != commandStreamTask.getUsed();
-    bool submitCSR = (commandStreamStartCSR != commandStreamCSR.getUsed()) || this->isMultiOsContextCapable();
+    bool submitCSR = (commandStreamStartCSR != commandStreamCSR.getUsed());
     bool submitCommandStreamFromCsr = false;
     void *bbEndLocation = nullptr;
     auto bbEndPaddingSize = this->dispatchMode == DispatchMode::ImmediateDispatch ? 0 : sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
