@@ -18,7 +18,7 @@ bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
 
 template <typename Family>
 bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const {
-    return false;
+    return true;
 }
 
 template <typename Family>

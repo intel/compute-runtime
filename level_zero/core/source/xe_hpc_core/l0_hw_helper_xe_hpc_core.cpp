@@ -34,11 +34,6 @@ bool L0HwHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
 }
 
 template <>
-bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 bool L0HwHelperHw<Family>::platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const {
     return true;
 }
