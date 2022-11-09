@@ -248,6 +248,9 @@ void CommandContainer::createAndAssignNewHeap(HeapType heapType, size_t size) {
 }
 
 void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
+    if (immediateReusableAllocationList != nullptr && !immediateReusableAllocationList->peekIsEmpty() && reusableAllocationList != nullptr) {
+        reusableAllocationList->splice(*immediateReusableAllocationList->detachNodes());
+    }
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
         if (this->reusableAllocationList) {
 
@@ -331,7 +334,11 @@ void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t dsh
 
 GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
     size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
-    auto cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+    auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+    if (!cmdBufferAllocation) {
+        this->reusableAllocationList->detachAllocation(alignedSize, nullptr, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+    }
+
     if (cmdBufferAllocation) {
         this->cmdBufferAllocations.push_back(cmdBufferAllocation);
     }
@@ -367,6 +374,7 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
 }
 
 void CommandContainer::fillReusableAllocationLists() {
+    this->immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
     const auto &hardwareInfo = device->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     auto amountToFill = hwHelper.getAmountOfAllocationsToFill();
@@ -376,7 +384,7 @@ void CommandContainer::fillReusableAllocationLists() {
 
     for (auto i = 0u; i < amountToFill; i++) {
         auto allocToReuse = this->allocateCommandBuffer();
-        this->reusableAllocationList->pushTailOne(*allocToReuse);
+        this->immediateReusableAllocationList->pushTailOne(*allocToReuse);
         this->getResidencyContainer().push_back(allocToReuse);
     }
 
@@ -414,7 +422,7 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
     allocation->updateTaskCount(taskCount, osContextId);
     allocation->updateResidencyTaskCount(taskCount, osContextId);
     if (allocation->getAllocationType() == AllocationType::COMMAND_BUFFER) {
-        this->reusableAllocationList->pushTailOne(*allocation);
+        this->immediateReusableAllocationList->pushTailOne(*allocation);
     } else {
         getHeapHelper()->storeHeapAllocation(allocation);
     }

@@ -28,6 +28,7 @@ class MyMockCommandContainer : public CommandContainer {
     using CommandContainer::allocationIndirectHeaps;
     using CommandContainer::dirtyHeaps;
     using CommandContainer::getTotalCmdBufferSize;
+    using CommandContainer::immediateReusableAllocationList;
 };
 
 struct CommandContainerHeapStateTests : public ::testing::Test {
@@ -867,11 +868,12 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenSetCmdBufferThenCmdBufferSetCo
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithoutAnyAllocationInListThenReturnNullptr) {
-    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, false);
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     cmdContainer->setImmediateCmdListCsr(csr);
+    cmdContainer->immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
 
     EXPECT_EQ(cmdContainer->reuseExistingCmdBuffer(), nullptr);
 
@@ -880,13 +882,15 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithoutA
 }
 
 HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAllocationInListAndCsrTaskCountLowerThanAllocationThenReturnNullptr) {
-    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     *csr.tagAddress = 0u;
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, false);
     cmdContainer->setImmediateCmdListCsr(&csr);
+    cmdContainer->immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
+
     cmdContainer->getCmdBufferAllocations()[0]->updateTaskCount(10, 0);
     auto currectContainerSize = cmdContainer->getCmdBufferAllocations().size();
     cmdContainer->addCurrentCommandBufferToReusableAllocationList();
@@ -899,13 +903,14 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAl
 }
 
 HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAllocationInListAndCsrTaskCountSameAsAllocationThenReturnAlloc) {
-    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     *csr.tagAddress = 10u;
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, false);
     cmdContainer->setImmediateCmdListCsr(&csr);
+    cmdContainer->immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
 
     cmdContainer->getCmdBufferAllocations()[0]->updateTaskCount(10, 0);
     cmdContainer->addCurrentCommandBufferToReusableAllocationList();
@@ -927,9 +932,11 @@ TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurf
 }
 
 HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWithoutEnsuringSpaceThenExpectNullptrReturnedOrUnrecoverable) {
-    CommandContainer cmdContainer;
+    MyMockCommandContainer cmdContainer;
     cmdContainer.enableHeapSharing();
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
+    cmdContainer.immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
+
     cmdContainer.setNumIddPerBlock(1);
     auto code = cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
@@ -999,19 +1006,21 @@ struct MockHeapHelper : public HeapHelper {
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThenAllocListsNotEmptyAndMadeResident) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
-    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, true);
     cmdContainer->setImmediateCmdListCsr(csr);
+
     auto heapHelper = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper());
 
-    EXPECT_TRUE(allocList.peekIsEmpty());
+    EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
     EXPECT_TRUE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
     auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
     cmdContainer->fillReusableAllocationLists();
-    EXPECT_FALSE(allocList.peekIsEmpty());
+    ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
     EXPECT_FALSE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(heapHelper->storageForReuse->getAllocationsForReuse().peekHead()->getResidencyTaskCount(csr->getOsContext().getContextId()), 1u);
     EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + 1);
@@ -1067,30 +1076,68 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithoutHeapsThenAllocListNotEmpty) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
-    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, false);
 
-    EXPECT_TRUE(allocList.peekIsEmpty());
+    EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
     cmdContainer->fillReusableAllocationLists();
-    EXPECT_FALSE(allocList.peekIsEmpty());
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAndDestroyCmdContainerThenGlobalAllocListNotEmpty) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, false);
+
+    EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
+    EXPECT_TRUE(allocList.peekIsEmpty());
+
+    cmdContainer->fillReusableAllocationLists();
+
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+    EXPECT_TRUE(allocList.peekIsEmpty());
+
+    cmdContainer.reset();
+
+    EXPECT_FALSE(allocList.peekIsEmpty());
+
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWithoutGlobalListWhenFillReusableAllocationListsAndDestroyCmdContainerThenImmediateListUnused) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    cmdContainer->initialize(pDevice, nullptr, false);
+
+    EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
+    cmdContainer->fillReusableAllocationLists();
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+    cmdContainer->handleCmdBufferAllocations(0);
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+
+    cmdContainer->immediateReusableAllocationList->freeAllGraphicsAllocations(pDevice);
+    cmdContainer->getCmdBufferAllocations().pop_back();
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithSpecifiedAmountThenAllocationsCreated) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(10);
-    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, false);
     cmdContainer->setImmediateCmdListCsr(csr);
 
-    EXPECT_TRUE(allocList.peekIsEmpty());
+    EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
     cmdContainer->fillReusableAllocationLists();
-    EXPECT_EQ(allocList.peekHead()->countThisAndAllConnected(), 10u);
+    EXPECT_EQ(cmdContainer->immediateReusableAllocationList->peekHead()->countThisAndAllConnected(), 10u);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1123,15 +1170,14 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAndFlagDisabledThenAllocListEmpty) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(0);
-    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, false);
     cmdContainer->setImmediateCmdListCsr(csr);
 
-    EXPECT_TRUE(allocList.peekIsEmpty());
     cmdContainer->fillReusableAllocationLists();
-    EXPECT_TRUE(allocList.peekIsEmpty());
+    EXPECT_TRUE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);

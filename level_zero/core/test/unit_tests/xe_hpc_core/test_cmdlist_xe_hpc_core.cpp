@@ -1332,7 +1332,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandLis
     EXPECT_EQ(commandListImmediate->isFlushTaskSubmissionEnabled, commandListImmediate->immediateCmdListHeapSharing);
 }
 
-HWTEST2_F(CreateCommandListXeHpcTest, whenCreateImmediateCommandListThenAllocationListFilledWithCommandBuffer, IsXeHpcCore) {
+HWTEST2_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThenGlobalAllocationListFilledWithCommandBuffer, IsXeHpcCore) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -1344,6 +1344,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenCreateImmediateCommandListThenAllocati
                                                                               NEO::EngineGroupType::RenderCompute,
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
+    commandList.reset();
     EXPECT_FALSE(static_cast<DeviceImp *>(device)->allocationsForReuse->peekIsEmpty());
 }
 

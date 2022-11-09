@@ -146,6 +146,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void *iddBlock = nullptr;
     Device *device = nullptr;
     AllocationsList *reusableAllocationList = nullptr;
+    std::unique_ptr<AllocationsList> immediateReusableAllocationList;
     size_t reservedSshSize = 0;
     CommandStreamReceiver *immediateCmdListCsr = nullptr;
     IndirectHeap *sharedSshCsrHeap = nullptr;
