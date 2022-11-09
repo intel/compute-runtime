@@ -138,9 +138,9 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
 }
 
 struct HardwareIpVersion {
-    uint8_t architecture;
-    uint8_t release;
-    uint8_t revision;
+    uint8_t architecture{};
+    uint8_t release{};
+    uint8_t revision{};
 
   protected:
     uint8_t reserved[5]{};
