@@ -160,6 +160,19 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::makeResourcesResident(DirectSubm
 }
 
 template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
+    if (sfenceMode >= DirectSubmissionSfenceMode::BeforeSemaphoreOnly) {
+        CpuIntrinsics::sfence();
+    }
+
+    semaphoreData->QueueWorkCount = currentQueueWorkCount;
+
+    if (sfenceMode == DirectSubmissionSfenceMode::BeforeAndAfterSemaphore) {
+        CpuIntrinsics::sfence();
+    }
+}
+
+template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::cpuCachelineFlush(void *ptr, size_t size) {
     if (disableCpuCacheFlush) {
         return;
@@ -273,8 +286,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     EncodeNoop<GfxFamily>::alignToCacheLine(ringCommandStream);
 
     cpuCachelineFlush(flushPtr, getSizeEnd());
-
-    semaphoreData->QueueWorkCount = currentQueueWorkCount;
+    this->unblockGpu();
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
 
     this->handleStopRingBuffer();
@@ -478,16 +490,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         reserved = *ringBufferStart;
     }
 
-    if (sfenceMode >= DirectSubmissionSfenceMode::BeforeSemaphoreOnly) {
-        CpuIntrinsics::sfence();
-    }
-
-    //unblock GPU
-    semaphoreData->QueueWorkCount = currentQueueWorkCount;
-
-    if (sfenceMode == DirectSubmissionSfenceMode::BeforeAndAfterSemaphore) {
-        CpuIntrinsics::sfence();
-    }
+    this->unblockGpu();
 
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
     currentQueueWorkCount++;
