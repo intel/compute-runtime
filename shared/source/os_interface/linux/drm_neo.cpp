@@ -1283,7 +1283,11 @@ void Drm::waitForBind(uint32_t vmHandleId) {
         return;
     }
     auto lock = this->lockBindFenceMutex();
-    waitUserFence(0u, castToUint64(&this->pagingFence[vmHandleId]), this->fenceVal[vmHandleId], ValueWidth::U64, -1, ioctlHelper->getWaitUserFenceSoftFlag());
+    auto fenceAddress = castToUint64(&this->pagingFence[vmHandleId]);
+    auto fenceValue = this->fenceVal[vmHandleId];
+    lock.unlock();
+
+    waitUserFence(0u, fenceAddress, fenceValue, ValueWidth::U64, -1, ioctlHelper->getWaitUserFenceSoftFlag());
 }
 
 bool Drm::isSetPairAvailable() {
