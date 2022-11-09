@@ -305,6 +305,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
     }
 
     if (nullptr == this->unpackedDeviceBinary) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", NEO::CompilerWarnings::recompiledFromIr.data());
         if (!shouldSuppressRebuildWarning) {
             updateBuildLog(NEO::CompilerWarnings::recompiledFromIr.str());
         }
