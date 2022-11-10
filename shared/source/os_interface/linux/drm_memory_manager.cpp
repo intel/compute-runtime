@@ -1353,7 +1353,7 @@ uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner 
             }
 
             if (alignSize) {
-                alignment.alignment = Math::nextPowerOfTwo(sizeAllocated);
+                alignment.alignment = Math::prevPowerOfTwo(sizeAllocated);
             }
 
             alignment.heap = HeapIndex::HEAP_EXTENDED;

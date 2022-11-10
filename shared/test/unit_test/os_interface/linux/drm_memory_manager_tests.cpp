@@ -4986,7 +4986,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenOversize
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenHeapExtendedWhenAllocationsAreMadeTheyAreAlignedToNextPowerOfTwo) {
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenHeapExtendedWhenAllocationsAreMadeTheyAreAlignedToPreviousPowerOfTwo) {
     if (!memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED)) {
         GTEST_SKIP();
     }
@@ -5005,14 +5005,14 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenHeapExte
     EXPECT_EQ(allocData.size, static_cast<DrmAllocation *>(allocation)->getBO()->peekSize());
     EXPECT_TRUE(allocation->getGpuAddress() % size == 0u);
 
-    size = 32 * MemoryConstants::megaByte;
+    size = 33 * MemoryConstants::megaByte;
     allocData.size = size;
     auto allocation2 = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     ASSERT_NE(nullptr, allocation2);
     EXPECT_EQ(allocData.size, allocation2->getUnderlyingBufferSize());
     EXPECT_EQ(allocData.size, static_cast<DrmAllocation *>(allocation2)->getBO()->peekSize());
-    EXPECT_TRUE(allocation2->getGpuAddress() % size == 0u);
+    EXPECT_TRUE(allocation2->getGpuAddress() % Math::prevPowerOfTwo(size) == 0u);
 
     memoryManager->freeGraphicsMemory(allocation);
     memoryManager->freeGraphicsMemory(allocation2);
