@@ -132,6 +132,46 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAndMemoryInfoWhenCreateMultiGraphicsAllocationAndObtainFdFromHandleFailsThenNullptrIsReturned) {
+    uint32_t rootDevicesNumber = 3u;
+    MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
+    RootDeviceIndicesContainer rootDeviceIndices;
+    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
+
+    executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
+    for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
+
+        std::vector<MemoryRegion> regionInfo(2);
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+        mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+        mock->queryEngineInfo();
+        mock->ioctlCallsCount = 0;
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+
+        rootDeviceIndices.push_back(i);
+    }
+
+    memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::BUFFER_HOST_MEMORY, false, {});
+
+    memoryManager->failOnObtainFdFromHandle = true;
+    auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
+    EXPECT_EQ(ptr, nullptr);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAndMemoryInfoWhenCreateMultiGraphicsAllocationAndImportFailsThenNullptrIsReturned) {
     uint32_t rootDevicesNumber = 3u;
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);

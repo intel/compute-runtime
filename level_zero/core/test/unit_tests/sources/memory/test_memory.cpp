@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -1799,6 +1800,53 @@ TEST_F(MemoryExportImportTest,
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndNoFdHandleThenErrorIsReturned) {
+    class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
+      public:
+        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+
+        int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
+            return -1;
+        }
+    };
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_external_memory_export_fd_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+    extendedProperties.fd = std::numeric_limits<int>::max();
+    memoryProperties.pNext = &extendedProperties;
+
+    ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
+    ExportImportMockGraphicsAllocation alloc;
+    ze_result_t result = context->handleAllocationExtensions(&alloc, type, &extendedProperties, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndNoFdHandleForWin32FormatThenErrorIsReturned) {
+    class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
+      public:
+        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+
+        int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
+            return -1;
+        }
+    };
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_external_memory_export_fd_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_WIN32;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    extendedProperties.fd = std::numeric_limits<int>::max();
+    memoryProperties.pNext = &extendedProperties;
+
+    ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
+    ExportImportMockGraphicsAllocation alloc;
+    ze_result_t result = context->handleAllocationExtensions(&alloc, type, &extendedProperties, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
 }
 
 TEST_F(MemoryExportImportTest,
