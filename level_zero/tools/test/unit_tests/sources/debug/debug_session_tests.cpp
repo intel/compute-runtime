@@ -182,7 +182,7 @@ TEST(DebugSessionTest, givenInterruptRequestWhenInterruptImpFailsInSendInterrupt
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
 }
 
-TEST(DebugSessionTest, givenPendingInteruptWhenHadnlingThreadWithAttentionThenPendingInterruptIsMarkedComplete) {
+TEST(DebugSessionTest, givenPendingInteruptWhenHandlingThreadWithAttentionThenPendingInterruptIsMarkedComplete) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -205,6 +205,44 @@ TEST(DebugSessionTest, givenPendingInteruptWhenHadnlingThreadWithAttentionThenPe
 
     EXPECT_TRUE(sessionMock->pendingInterrupts[0].second);
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+}
+
+TEST(DebugSessionTest, givenPreviouslyStoppedThreadAndPendingInterruptWhenHandlingThreadWithAttentionThenPendingInterruptIsNotMarkedCompleteAndInterruptGeneratesUnavailableEvent) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    ze_device_thread_t apiThread = {0, 0, 0, 0};
+    EuThread::ThreadId thread(0, 0, 0, 0, 0);
+
+    auto result = sessionMock->interrupt(apiThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    sessionMock->sendInterrupts();
+
+    // stop thread for a reason different than interrupt exception (forceException)
+    sessionMock->onlyForceException = false;
+    sessionMock->allThreads[thread]->stopThread(1u);
+
+    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+
+    EXPECT_TRUE(sessionMock->allThreads[thread]->isStopped());
+
+    EXPECT_FALSE(sessionMock->pendingInterrupts[0].second);
+    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+
+    sessionMock->expectedAttentionEvents = 0;
+    sessionMock->checkTriggerEventsForAttention();
+    sessionMock->generateEventsAndResumeStoppedThreads();
+
+    EXPECT_EQ(1u, sessionMock->events.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[0].type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
 }
 
 TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAdded) {

@@ -698,7 +698,10 @@ void DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentio
         auto isInterrupted = checkSingleThreadWithinDeviceThread(apiThread, request.first);
 
         if (isInterrupted) {
-            request.second = true;
+            // mark pending interrupt as completed successfully only when new thread has been stopped
+            if (!wasStopped) {
+                request.second = true;
+            }
             threadWasInterrupted = true;
         }
     }
