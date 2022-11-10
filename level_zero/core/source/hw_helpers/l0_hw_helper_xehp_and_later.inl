@@ -23,7 +23,7 @@ bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing(const NEO::Hardwar
 
 template <typename Family>
 bool L0HwHelperHw<Family>::platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const {
-    return false;
+    return true;
 }
 
 template <typename Family>
