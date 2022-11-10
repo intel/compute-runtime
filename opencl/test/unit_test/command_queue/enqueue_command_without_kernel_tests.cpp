@@ -167,6 +167,8 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
     EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
+    DebugManagerStateRestore dbgState;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
     ev->queueTimeStamp.GPUTimeStamp = 1000;
     ev->calculateSubmitTimestampData();
 
@@ -205,6 +207,8 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
     EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
+    DebugManagerStateRestore dbgState;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
     ev->queueTimeStamp.GPUTimeStamp = 1000;
     ev->calculateSubmitTimestampData();
 

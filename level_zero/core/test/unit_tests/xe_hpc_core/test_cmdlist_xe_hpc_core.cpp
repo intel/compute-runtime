@@ -1280,10 +1280,10 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagS
     auto result = event->queryKernelTimestamp(&resultTimestamp);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    EXPECT_EQ(resultTimestamp.context.kernelStart, NEO::MockDeviceTimeWithConstTimestamp::gpuTimestamp);
-    EXPECT_EQ(resultTimestamp.global.kernelStart, NEO::MockDeviceTimeWithConstTimestamp::gpuTimestamp);
-    EXPECT_EQ(resultTimestamp.context.kernelEnd, NEO::MockDeviceTimeWithConstTimestamp::gpuTimestamp);
-    EXPECT_EQ(resultTimestamp.global.kernelEnd, NEO::MockDeviceTimeWithConstTimestamp::gpuTimestamp);
+    EXPECT_EQ(resultTimestamp.context.kernelStart, NEO::MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP);
+    EXPECT_EQ(resultTimestamp.global.kernelStart, NEO::MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP);
+    EXPECT_EQ(resultTimestamp.context.kernelEnd, NEO::MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP);
+    EXPECT_EQ(resultTimestamp.global.kernelEnd, NEO::MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP);
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagNotSetWhenCpuMemcpyThenDontSetGpuTimestamps, IsXeHpcCore) {
@@ -1308,7 +1308,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagN
     auto result = event->queryKernelTimestamp(&resultTimestamp);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    EXPECT_NE(resultTimestamp.context.kernelEnd, NEO::MockDeviceTimeWithConstTimestamp::gpuTimestamp);
+    EXPECT_NE(resultTimestamp.context.kernelEnd, NEO::MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP);
 }
 
 using CreateCommandListXeHpcTest = Test<DeviceFixture>;
