@@ -9,3 +9,4 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_memory.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_memory_${DRIVER_MODEL}.cpp
 )
+add_subdirectories()

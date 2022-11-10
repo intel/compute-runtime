@@ -978,7 +978,11 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         properties.size = defaultAlloc->getUnderlyingBufferSize();
         properties.gpuAddress = castToUint64(ptr);
 
-        auto internalHandle = defaultAlloc->peekInternalHandle(this);
+        uint64_t internalHandle = 0;
+        int ret = defaultAlloc->peekInternalHandle(this, internalHandle);
+        if (ret < 0) {
+            return nullptr;
+        }
         return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, true);
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
@@ -1114,7 +1118,10 @@ int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceIndex)
     openFd.flags = ioctlHelper->getFlagsForPrimeHandleToFd();
     openFd.handle = boHandle;
 
-    ioctlHelper->ioctl(DrmIoctl::PrimeHandleToFd, &openFd);
+    int ret = ioctlHelper->ioctl(DrmIoctl::PrimeHandleToFd, &openFd);
+    if (ret < 0) {
+        return -1;
+    }
 
     return openFd.fileDescriptor;
 }
