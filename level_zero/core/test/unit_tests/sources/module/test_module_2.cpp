@@ -60,6 +60,17 @@ TEST_F(ModuleTests, WhenCreatingBuildOptionsThenOptionsParsedCorrectly) {
     delete module;
 }
 
+TEST_F(ModuleTests, whenCreatingAutoGrfBuildOptionsThenOptionsParsedCorrectly) {
+    ModuleImp module(device, nullptr, ModuleType::User);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module.createBuildOptions(BuildOptions::optAutoGrf.data(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::autoGrf));
+}
+
 TEST(ModuleBuildLog, WhenCreatingModuleBuildLogThenNonNullPointerReturned) {
     auto moduleBuildLog = ModuleBuildLog::create();
     ASSERT_NE(nullptr, moduleBuildLog);
@@ -297,6 +308,35 @@ TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFl
 
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
     EXPECT_EQ(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-128-GRF-per-thread"), std::string::npos);
+}
+
+TEST_F(ModuleTests, givenAutoGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceAutoGrfCompilationMode.set(1);
+
+    auto pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
+
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = src.data();
+    moduleDesc.inputSize = src.size();
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    Module module(device, nullptr, ModuleType::User);
+
+    module.translationUnit.reset(mockTranslationUnit);
+
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_NE(pMockCompilerInterface->receivedApiOptions.find("-cl-intel-enable-auto-large-GRF-mode"), std::string::npos);
+    EXPECT_EQ(pMockCompilerInterface->receivedApiOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
 }
 
 TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {

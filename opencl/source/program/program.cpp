@@ -493,6 +493,7 @@ void Program::prependFilePathToOptions(const std::string &filename) {
 const std::vector<ConstStringRef> Program::internalOptionsToExtract = {CompilerOptions::gtpinRera,
                                                                        CompilerOptions::defaultGrf,
                                                                        CompilerOptions::largeGrf,
+                                                                       CompilerOptions::autoGrf,
                                                                        CompilerOptions::greaterThan4gbBuffersRequired,
                                                                        CompilerOptions::numThreadsPerEu};
 

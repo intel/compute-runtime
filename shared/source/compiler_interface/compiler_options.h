@@ -42,6 +42,7 @@ constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
 constexpr ConstStringRef noRecompiledFromIr = "-Wno-recompiled-from-ir";
 constexpr ConstStringRef defaultGrf = "-cl-intel-128-GRF-per-thread";
 constexpr ConstStringRef largeGrf = "-cl-intel-256-GRF-per-thread";
+constexpr ConstStringRef autoGrf = "-cl-intel-enable-auto-large-GRF-mode";
 constexpr ConstStringRef numThreadsPerEu = "-cl-intel-reqd-eu-thread-count";
 constexpr ConstStringRef useCMCompiler = "-cmc";
 
@@ -183,6 +184,7 @@ std::string wrapInQuotes(const std::string &stringToWrap);
 using TokenizedString = StackVec<ConstStringRef, 32>;
 TokenizedString tokenize(ConstStringRef src, char sperator = ' ');
 
-void applyAdditionalOptions(std::string &internalOptions);
+void applyAdditionalInternalOptions(std::string &internalOptions);
+void applyAdditionalApiOptions(std::string &apiOptions);
 } // namespace CompilerOptions
 } // namespace NEO

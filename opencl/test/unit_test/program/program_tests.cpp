@@ -3262,12 +3262,28 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenForceLargeGrfCompilationModeIs
     MockProgram program(toClDeviceVector(device));
     auto internalOptions = program.getInternalOptions();
     EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::largeGrf)) << internalOptions;
-    CompilerOptions::applyAdditionalOptions(internalOptions);
+    CompilerOptions::applyAdditionalInternalOptions(internalOptions);
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::largeGrf)) << internalOptions;
 
     size_t internalOptionsSize = internalOptions.size();
-    CompilerOptions::applyAdditionalOptions(internalOptions);
+    CompilerOptions::applyAdditionalInternalOptions(internalOptions);
     EXPECT_EQ(internalOptionsSize, internalOptions.size());
+}
+
+TEST(ProgramInternalOptionsTests, givenProgramWhenForceAutoGrfCompilationModeIsSetThenBuildOptionIsAdded) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceAutoGrfCompilationMode.set(1);
+
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    auto options = program.getOptions();
+    EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::autoGrf)) << options;
+    CompilerOptions::applyAdditionalApiOptions(options);
+    EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::autoGrf)) << options;
+
+    size_t optionsSize = options.size();
+    CompilerOptions::applyAdditionalApiOptions(options);
+    EXPECT_EQ(optionsSize, options.size());
 }
 
 TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationModeIsSetThenBuildOptionIsAdded) {
@@ -3278,11 +3294,11 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationMode
     MockProgram program(toClDeviceVector(device));
     auto internalOptions = program.getInternalOptions();
     EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::defaultGrf)) << internalOptions;
-    CompilerOptions::applyAdditionalOptions(internalOptions);
+    CompilerOptions::applyAdditionalInternalOptions(internalOptions);
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::defaultGrf)) << internalOptions;
 
     size_t internalOptionsSize = internalOptions.size();
-    CompilerOptions::applyAdditionalOptions(internalOptions);
+    CompilerOptions::applyAdditionalInternalOptions(internalOptions);
     EXPECT_EQ(internalOptionsSize, internalOptions.size());
 }
 
@@ -3297,12 +3313,12 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationMode
     EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::defaultGrf)) << internalOptions;
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::largeGrf)) << internalOptions;
 
-    CompilerOptions::applyAdditionalOptions(internalOptions);
+    CompilerOptions::applyAdditionalInternalOptions(internalOptions);
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::defaultGrf)) << internalOptions;
     EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::largeGrf)) << internalOptions;
 
     size_t internalOptionsSize = internalOptions.size();
-    CompilerOptions::applyAdditionalOptions(internalOptions);
+    CompilerOptions::applyAdditionalInternalOptions(internalOptions);
     EXPECT_EQ(internalOptionsSize, internalOptions.size());
 }
 

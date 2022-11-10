@@ -34,6 +34,7 @@ extern NEO::ConstStringRef hasBufferOffsetArg;
 extern NEO::ConstStringRef debugKernelEnable;
 extern NEO::ConstStringRef profileFlags;
 extern NEO::ConstStringRef optLargeRegisterFile;
+extern NEO::ConstStringRef optAutoGrf;
 
 } // namespace BuildOptions
 

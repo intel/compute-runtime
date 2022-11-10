@@ -52,6 +52,7 @@ NEO::ConstStringRef hasBufferOffsetArg = "-ze-intel-has-buffer-offset-arg";
 NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
 NEO::ConstStringRef profileFlags = "-zet-profile-flags";
 NEO::ConstStringRef optLargeRegisterFile = "-ze-opt-large-register-file";
+NEO::ConstStringRef optAutoGrf = "-ze-intel-enable-auto-large-GRF-mode";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -691,12 +692,15 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         std::string buildFlags(pBuildFlags);
 
         apiOptions = pBuildFlags;
+        NEO::CompilerOptions::applyAdditionalApiOptions(apiOptions);
+
         moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::allowZebin);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::largeGrf, BuildOptions::optLargeRegisterFile);
+        moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::autoGrf, BuildOptions::optAutoGrf);
 
-        NEO::CompilerOptions::applyAdditionalOptions(internalBuildOptions);
+        NEO::CompilerOptions::applyAdditionalInternalOptions(internalBuildOptions);
 
         moveOptLevelOption(apiOptions, apiOptions);
         moveProfileFlagsOption(apiOptions, apiOptions);
