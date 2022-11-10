@@ -6035,7 +6035,8 @@ typedef struct tagMI_BATCH_BUFFER_START {
             uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
             uint32_t Reserved_10 : BITFIELD_RANGE(10, 14);
             uint32_t PredicationEnable : BITFIELD_RANGE(15, 15);
-            uint32_t Reserved_16 : BITFIELD_RANGE(16, 18);
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 17);
+            uint32_t IndirectAddressEnable : BITFIELD_RANGE(18, 18);
             uint32_t EnableCommandCache : BITFIELD_RANGE(19, 19);
             uint32_t PoshEnable : BITFIELD_RANGE(20, 20);
             uint32_t PoshStart : BITFIELD_RANGE(21, 21);
@@ -6143,6 +6144,12 @@ typedef struct tagMI_BATCH_BUFFER_START {
     }
     inline uint32_t getEnableCommandCache() const {
         return TheStructure.Common.EnableCommandCache;
+    }
+    inline void setIndirectAddressEnable(const uint32_t value) {
+        TheStructure.Common.IndirectAddressEnable = value;
+    }
+    inline uint32_t getIndirectAddressEnable() const {
+        return TheStructure.Common.IndirectAddressEnable;
     }
     inline void setPoshEnable(const uint32_t value) {
         TheStructure.Common.PoshEnable = value;

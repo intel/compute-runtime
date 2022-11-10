@@ -244,6 +244,31 @@ void EncodeMathMMIO<Family>::encodeAluAnd(MI_MATH_ALU_INST_INLINE *pAluParam,
     encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, AluRegisters::OPCODE_AND, finalResultRegister, AluRegisters::R_ACCU);
 }
 
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeIncrementOrDecrement(LinearStream &cmdStream, AluRegisters operandRegister, IncrementOrDecrementOperation operationType) {
+    LriHelper<Family>::program(&cmdStream, CS_GPR_R7, 1, true);
+    LriHelper<Family>::program(&cmdStream, CS_GPR_R7 + 4, 0, true);
+
+    EncodeAluHelper<Family, 4> aluHelper;
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, operandRegister);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7);
+    aluHelper.setNextAlu((operationType == IncrementOrDecrementOperation::Increment) ? AluRegisters::OPCODE_ADD
+                                                                                     : AluRegisters::OPCODE_SUB);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, operandRegister, AluRegisters::R_ACCU);
+
+    aluHelper.copyToCmdStream(cmdStream);
+}
+
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeIncrement(LinearStream &cmdStream, AluRegisters operandRegister) {
+    encodeIncrementOrDecrement(cmdStream, operandRegister, IncrementOrDecrementOperation::Increment);
+}
+
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeDecrement(LinearStream &cmdStream, AluRegisters operandRegister) {
+    encodeIncrementOrDecrement(cmdStream, operandRegister, IncrementOrDecrementOperation::Decrement);
+}
+
 /*
  * greaterThan() tests if firstOperandRegister is greater than
  * secondOperandRegister.
@@ -798,11 +823,6 @@ void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
 }
 
 template <typename Family>
-inline size_t EncodeSempahore<Family>::getSizeMiSemaphoreWait() {
-    return sizeof(MI_SEMAPHORE_WAIT);
-}
-
-template <typename Family>
 inline void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress) {
     atomic.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
     atomic.setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
@@ -848,17 +868,84 @@ void EncodeAtomic<Family>::programMiAtomic(LinearStream &commandStream,
 }
 
 template <typename Family>
-void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *commandStream,
-                                                                  uint64_t address,
-                                                                  bool secondLevel) {
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress,
+                                                                                    uint32_t compareData, CompareOperation compareOperation, bool indirect) {
+    EncodeSetMMIO<Family>::encodeMEM(commandStream, CS_GPR_R7, compareAddress);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
+
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8, compareData, true);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, 0, true);
+
+    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg,
+                                                                                    uint32_t compareData, CompareOperation compareOperation, bool indirect) {
+    EncodeSetMMIO<Family>::encodeREG(commandStream, CS_GPR_R7, compareReg);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
+
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8, compareData, true);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, 0, true);
+
+    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalRegRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, AluRegisters compareReg0,
+                                                                                   AluRegisters compareReg1, CompareOperation compareOperation, bool indirect) {
+
+    programConditionalBatchBufferStartBase(commandStream, startAddress, compareReg0, compareReg1, compareOperation, indirect);
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase(LinearStream &commandStream, uint64_t startAddress, AluRegisters regA, AluRegisters regB,
+                                                                                 CompareOperation compareOperation, bool indirect) {
+    EncodeAluHelper<Family, 4> aluHelper;
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, regA);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, regB);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_SUB);
+
+    if ((compareOperation == CompareOperation::Equal) || (compareOperation == CompareOperation::NotEqual)) {
+        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ZF);
+    } else {
+        UNRECOVERABLE_IF(compareOperation != CompareOperation::GreaterOrEqual);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_CF);
+    }
+
+    aluHelper.copyToCmdStream(commandStream);
+
+    EncodeSetMMIO<Family>::encodeREG(commandStream, CS_PREDICATE_RESULT_2, CS_GPR_R7);
+
+    MiPredicateType predicateType = MiPredicateType::NoopOnResult2Clear; // Equal
+    if ((compareOperation == CompareOperation::NotEqual) || (compareOperation == CompareOperation::GreaterOrEqual)) {
+        predicateType = MiPredicateType::NoopOnResult2Set;
+    }
+
+    EncodeMiPredicate<Family>::encode(commandStream, predicateType);
+
+    programBatchBufferStart(&commandStream, startAddress, false, indirect, true);
+
+    EncodeMiPredicate<Family>::encode(commandStream, MiPredicateType::Disable);
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *commandStream, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
     MI_BATCH_BUFFER_START cmd = Family::cmdInitBatchBufferStart;
     if (secondLevel) {
         cmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
     }
     cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     cmd.setBatchBufferStartAddress(address);
+
+    appendBatchBufferStart(cmd, indirect, predicate);
+
     auto buffer = commandStream->getSpaceForCmd<MI_BATCH_BUFFER_START>();
     *buffer = cmd;
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
 }
 
 template <typename Family>

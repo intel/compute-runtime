@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_container/encode_alu_helper.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
@@ -59,6 +60,12 @@ enum class MiPredicateType : uint32_t {
     Disable = 0,
     NoopOnResult2Clear = 1,
     NoopOnResult2Set = 2
+};
+
+enum class CompareOperation : uint32_t {
+    Equal = 0,
+    NotEqual = 1,
+    GreaterOrEqual = 2
 };
 
 struct EncodeWalkerArgs {
@@ -215,6 +222,20 @@ struct EncodeMathMMIO {
                              AluRegisters firstOperandRegister,
                              AluRegisters secondOperandRegister,
                              AluRegisters finalResultRegister);
+
+    static void encodeIncrement(LinearStream &cmdStream, AluRegisters operandRegister);
+    static void encodeDecrement(LinearStream &cmdStream, AluRegisters operandRegister);
+    static constexpr size_t getCmdSizeForIncrementOrDecrement() {
+        return (EncodeAluHelper<GfxFamily, 4>::getCmdsSize() + (2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));
+    }
+
+  protected:
+    enum class IncrementOrDecrementOperation {
+        Increment = 0,
+        Decrement = 1,
+    };
+
+    static void encodeIncrementOrDecrement(LinearStream &cmdStream, AluRegisters operandRegister, IncrementOrDecrementOperation operationType);
 };
 
 template <typename GfxFamily>
@@ -397,7 +418,7 @@ struct EncodeSempahore {
                                           uint32_t compareData,
                                           COMPARE_OPERATION compareMode);
 
-    static size_t getSizeMiSemaphoreWait();
+    static constexpr size_t getSizeMiSemaphoreWait() { return sizeof(MI_SEMAPHORE_WAIT); }
 };
 
 template <typename GfxFamily>
@@ -440,11 +461,34 @@ struct EncodeBatchBufferStartOrEnd {
         return sizeof(MI_BATCH_BUFFER_END);
     }
 
-    static void programBatchBufferStart(LinearStream *commandStream,
-                                        uint64_t address,
-                                        bool secondLevel);
+    static void programBatchBufferStart(LinearStream *commandStream, uint64_t address, bool secondLevel, bool indirect, bool predicate);
     static void programBatchBufferEnd(CommandContainer &container);
     static void programBatchBufferEnd(LinearStream &commandStream);
+
+    static void programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint32_t compareData, CompareOperation compareOperation, bool indirect);
+    static void programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg, uint32_t compareData, CompareOperation compareOperation, bool indirect);
+    static void programConditionalRegRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, AluRegisters compareReg0, AluRegisters compareReg1, CompareOperation compareOperation, bool indirect);
+
+    static size_t constexpr getCmdSizeConditionalDataMemBatchBufferStart() {
+        return (getCmdSizeConditionalBufferStartBase() + sizeof(typename GfxFamily::MI_LOAD_REGISTER_MEM) + (3 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));
+    }
+
+    static size_t constexpr getCmdSizeConditionalDataRegBatchBufferStart() {
+        return (getCmdSizeConditionalBufferStartBase() + sizeof(typename GfxFamily::MI_LOAD_REGISTER_REG) + (3 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));
+    }
+
+    static size_t constexpr getCmdSizeConditionalRegRegBatchBufferStart() {
+        return getCmdSizeConditionalBufferStartBase();
+    }
+
+  protected:
+    static void appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate);
+    static void programConditionalBatchBufferStartBase(LinearStream &commandStream, uint64_t startAddress, AluRegisters regA, AluRegisters regB, CompareOperation compareOperation, bool indirect);
+
+    static size_t constexpr getCmdSizeConditionalBufferStartBase() {
+        return (EncodeAluHelper<GfxFamily, 4>::getCmdsSize() + sizeof(typename GfxFamily::MI_LOAD_REGISTER_REG) +
+                (2 * EncodeMiPredicate<GfxFamily>::getCmdSize()) + sizeof(MI_BATCH_BUFFER_START));
+    }
 };
 
 template <typename GfxFamily>

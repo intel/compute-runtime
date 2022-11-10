@@ -896,7 +896,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
         if (isCommandListImmediate && (iter == (cmdBufferCount - 1))) {
             startOffset = ptrOffset(allocation->getGpuAddress(), commandList->commandContainer.currentLinearStreamStartOffset);
         }
-        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream, startOffset, true);
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream, startOffset, true, false, false);
         if (returnPointsSize > 0) {
             bool cmdBufferHasRestarts = std::find_if(
                                             std::next(returnPoints.begin(), returnPointIdx),
@@ -914,7 +914,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
                                     ctx.cmdListBeginState);
                     NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream,
                                                                                          returnPoints[returnPointIdx].gpuAddress,
-                                                                                         true);
+                                                                                         true, false, false);
                     returnPointIdx++;
                 }
             }
@@ -1041,7 +1041,7 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
         }
 
         endingCmd = innerCommandStream.getSpace(0);
-        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&innerCommandStream, startAddress, false);
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&innerCommandStream, startAddress, false, false, false);
     } else {
         auto buffer = innerCommandStream.getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,18 +39,28 @@ constexpr uint32_t CS_GPR_R14 = 0x2670;
 constexpr uint32_t CS_GPR_R15 = 0x2678;
 
 constexpr uint32_t CS_PREDICATE_RESULT = 0x2418;
+constexpr uint32_t CS_PREDICATE_RESULT_2 = 0x23BC;
 
 constexpr uint32_t SEMA_WAIT_POLL = 0x0224c;
 //Alu opcodes
 constexpr uint32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 
 enum class AluRegisters : uint32_t {
+    OPCODE_NONE = 0x000,
+    OPCODE_FENCE_RD = 0x001,
+    OPCODE_FENCE_WR = 0x002,
+
     OPCODE_LOAD = 0x080,
+    OPCODE_LOAD0 = 0x081,
+    OPCODE_LOADIND = 0x082,
     OPCODE_STORE = 0x180,
     OPCODE_ADD = 0x100,
     OPCODE_SUB = 0x101,
     OPCODE_AND = 0x102,
     OPCODE_OR = 0x103,
+
+    OPCODE_SHL = 0x105,
+    OPCODE_STOREIND = 0x181,
 
     R_0 = 0x0,
     R_1 = 0x1,

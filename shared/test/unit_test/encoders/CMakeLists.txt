@@ -66,6 +66,7 @@ if(TESTS_PVC_AND_LATER)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_3dstate_btd_pvc_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_pvc_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_pvc_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_pvc_and_later.cpp
   )
 endif()
