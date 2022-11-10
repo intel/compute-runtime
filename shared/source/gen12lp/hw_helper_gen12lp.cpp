@@ -56,11 +56,12 @@ bool HwHelperHw<Family>::isAdditionalFeatureFlagRequired(const FeatureTable *fea
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
+uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     /* For ICL+ maxThreadCount equals (EUCount * 8).
      ThreadCount/EUCount=7 is no longer valid, so we have to force 8 in below formula.
      This is required to allocate enough scratch space. */
-    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
 }
 
 template <>
@@ -82,8 +83,10 @@ bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphics
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) const {
-    if (HwInfoConfig::get(hwInfo->platform.eProductFamily)->imagePitchAlignmentWARequired(*hwInfo)) {
+uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (productHelper.imagePitchAlignmentWARequired(hwInfo)) {
         return 64u;
     }
     return 4u;

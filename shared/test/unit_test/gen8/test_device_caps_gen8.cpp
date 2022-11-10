@@ -26,12 +26,12 @@ GEN8TEST_F(Gen8DeviceCaps, BdwProfilingTimerResolution) {
 
 GEN8TEST_F(Gen8DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &coreHelper = getHelper<CoreHelper>();
 
     uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
                              hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
 
-    EXPECT_EQ(expectedValue, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(expectedValue, coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }
 

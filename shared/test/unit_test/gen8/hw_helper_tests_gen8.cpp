@@ -22,8 +22,8 @@ GEN8TEST_F(HwHelperTestGen8, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsRetu
 }
 
 GEN8TEST_F(HwHelperTestGen8, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
+    auto &coreHelper = getHelper<CoreHelper>();
+    EXPECT_EQ(4u, coreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
 }
 
 GEN8TEST_F(HwHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {

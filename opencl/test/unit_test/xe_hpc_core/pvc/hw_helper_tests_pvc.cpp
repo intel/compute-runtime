@@ -90,8 +90,8 @@ PVCTEST_F(HwHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSi
 }
 
 PVCTEST_F(HwHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {
-    auto &helper = HwHelper::get(IGFX_XE_HPC_CORE);
-    auto hwInfo = *defaultHwInfo;
+    auto &coreHelper = pDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.gtSystemInfo.EUCount *= 2;
 
     uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
@@ -110,7 +110,7 @@ PVCTEST_F(HwHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThen
 
     for (auto &testInput : testInputs) {
         hwInfo.platform.usRevId = testInput.revId;
-        EXPECT_EQ(expectedValue * testInput.expectedRatio, helper.getComputeUnitsUsedForScratch(&hwInfo));
+        EXPECT_EQ(expectedValue * testInput.expectedRatio, coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
     }
 }
 

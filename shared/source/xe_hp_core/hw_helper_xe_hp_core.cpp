@@ -30,13 +30,14 @@ uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
+uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
 
-    // XeHP and later products return physical threads
-    return std::max(pHwInfo->gtSystemInfo.MaxSubSlicesSupported, static_cast<uint32_t>(32)) * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * (pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount);
+    // XeHP products return physical threads
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    return std::max(hwInfo->gtSystemInfo.MaxSubSlicesSupported, static_cast<uint32_t>(32)) * hwInfo->gtSystemInfo.MaxEuPerSubSlice * (hwInfo->gtSystemInfo.ThreadCount / hwInfo->gtSystemInfo.EUCount);
 }
 
 template <>

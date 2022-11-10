@@ -76,7 +76,7 @@ size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
 }
 
 template <typename Family>
-uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) const {
+uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return 4u;
 }
 

@@ -42,11 +42,10 @@ GEN11TEST_F(Gen11DeviceCaps, WhenCheckingCompressionThenItIsDisabled) {
 
 GEN11TEST_F(Gen11DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
+    auto &coreHelper = getHelper<CoreHelper>();
     uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice * 8;
 
-    EXPECT_EQ(expectedValue, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(expectedValue, coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }
 

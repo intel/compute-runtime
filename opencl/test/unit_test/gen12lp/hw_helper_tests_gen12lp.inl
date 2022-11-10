@@ -40,13 +40,13 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingMaxBarriersPerSliceThenCorrectSize
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &coreHelper = getHelper<CoreHelper>();
     auto stepping = hardwareInfo.platform.usRevId;
 
     if (SpecialUltHelperGen12lp::shouldPerformimagePitchAlignment(hardwareInfo.platform.eProductFamily) && stepping == 0) {
-        EXPECT_EQ(64u, helper.getPitchAlignmentForImage(&hardwareInfo));
+        EXPECT_EQ(64u, coreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
     } else {
-        EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
+        EXPECT_EQ(4u, coreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
     }
 }
 

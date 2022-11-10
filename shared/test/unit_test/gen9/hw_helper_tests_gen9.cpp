@@ -24,8 +24,8 @@ GEN9TEST_F(HwHelperTestGen9, givenGen9WhenCallIsPackedSupportedThenReturnFalse) 
 }
 
 GEN9TEST_F(HwHelperTestGen9, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
+    auto &coreHelper = getHelper<CoreHelper>();
+    EXPECT_EQ(4u, coreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
 }
 
 GEN9TEST_F(HwHelperTestGen9, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {

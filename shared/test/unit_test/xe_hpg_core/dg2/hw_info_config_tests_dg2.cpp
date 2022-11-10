@@ -381,7 +381,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDg2WhenSetForceNonCoherentThenProperFlagSet)
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeUnitsUsedForScratchThenProperCalculationIsReturned) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.IsDynamicallyPopulated = true;
     for (int i = 0; i < GT_MAX_SLICE; i++) {
@@ -393,24 +393,24 @@ DG2TEST_F(HwInfoConfigTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeUn
     auto subSlicesPerSlice = testSysInfo.MaxSubSlicesSupported / testSysInfo.MaxSlicesSupported;
     auto maxSubSlice = highestEnabledSlice * subSlicesPerSlice;
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &coreHelper = getHelper<CoreHelper>();
 
     uint32_t expectedCalculation = maxSubSlice * testSysInfo.MaxEuPerSubSlice * (testSysInfo.ThreadCount / testSysInfo.EUCount);
 
-    EXPECT_EQ(expectedCalculation, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(expectedCalculation, coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScratchThenThrowUnrecoverableIf) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.IsDynamicallyPopulated = true;
     for (int i = 0; i < GT_MAX_SLICE; i++) {
         testSysInfo.SliceInfo[i].Enabled = false;
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &coreHelper = getHelper<CoreHelper>();
 
-    EXPECT_THROW(hwHelper.getComputeUnitsUsedForScratch(&hwInfo), std::exception);
+    EXPECT_THROW(coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {

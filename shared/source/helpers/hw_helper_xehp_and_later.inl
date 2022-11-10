@@ -26,13 +26,16 @@ void HwHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
+uint32_t HwHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
-    auto maxSubSlice = HwInfoConfig::get(pHwInfo->platform.eProductFamily)->computeMaxNeededSubSliceSpace(*pHwInfo);
+
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto maxSubSlice = productHelper.computeMaxNeededSubSliceSpace(*hwInfo);
     // XeHP and later products return physical threads
-    return maxSubSlice * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * (pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount);
+    return maxSubSlice * hwInfo->gtSystemInfo.MaxEuPerSubSlice * (hwInfo->gtSystemInfo.ThreadCount / hwInfo->gtSystemInfo.EUCount);
 }
 
 template <typename GfxFamily>

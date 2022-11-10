@@ -15,9 +15,10 @@ void HwHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
-    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice *
-           pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount;
+uint32_t HwHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice *
+           hwInfo->gtSystemInfo.ThreadCount / hwInfo->gtSystemInfo.EUCount;
 }
 
 template <typename GfxFamily>

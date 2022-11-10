@@ -329,7 +329,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.image3DMaxHeight = coreHelper.getMax3dImageWidthOrHeight();
 
     // cl_khr_image2d_from_buffer
-    deviceInfo.imagePitchAlignment = coreHelper.getPitchAlignmentForImage(&hwInfo);
+    deviceInfo.imagePitchAlignment = coreHelper.getPitchAlignmentForImage(this->getRootDeviceEnvironment());
     deviceInfo.imageBaseAddressAlignment = 4;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 

@@ -139,23 +139,23 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenDeviceThatHasHighNumberOfExecutionU
 }
 
 XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchAndMaxSubSlicesSupportedIsSmallerThanMinMaxSubSlicesSupportedThenReturnValidValue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.MaxSubSlicesSupported = 24;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &coreHelper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
     uint32_t minMaxSubSlicesSupported = 32;
     uint32_t minCalculation = minMaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
                               hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
 
     EXPECT_LE(testSysInfo.MaxSubSlicesSupported, minMaxSubSlicesSupported);
-    EXPECT_EQ(minCalculation, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(minCalculation, coreHelper.getComputeUnitsUsedForScratch(pClDevice->getRootDeviceEnvironment()));
 }
 XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchAndMaxSubSlicesSupportedIsGreaterThanMinMaxSubSlicesSupportedThenReturnValidValue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.MaxSubSlicesSupported = 40;
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &coreHelper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
     uint32_t minMaxSubSlicesSupported = 32;
     uint32_t minCalculation = minMaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
                               hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
@@ -164,7 +164,7 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsed
 
     EXPECT_GT(testSysInfo.MaxSubSlicesSupported, minMaxSubSlicesSupported);
     EXPECT_GT(properCalculation, minCalculation);
-    EXPECT_EQ(properCalculation, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(properCalculation, coreHelper.getComputeUnitsUsedForScratch(pClDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_EXCLUDE_PRODUCT(DeviceGetCapsTest, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin, IGFX_XE_HP_CORE);

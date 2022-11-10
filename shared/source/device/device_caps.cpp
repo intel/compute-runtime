@@ -147,7 +147,7 @@ void Device::initializeCaps() {
     deviceInfo.maxWorkItemSizes[2] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxSamplers = coreHelper.getMaxNumSamplers();
 
-    deviceInfo.computeUnitsUsedForScratch = coreHelper.getComputeUnitsUsedForScratch(&hwInfo);
+    deviceInfo.computeUnitsUsedForScratch = coreHelper.getComputeUnitsUsedForScratch(this->getRootDeviceEnvironment());
     deviceInfo.maxFrontEndThreads = coreHelper.getMaxThreadsForVfe(hwInfo);
 
     deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;

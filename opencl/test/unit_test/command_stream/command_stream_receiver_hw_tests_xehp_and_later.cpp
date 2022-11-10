@@ -165,7 +165,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     using CFE_STATE = typename FamilyType::CFE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    const HardwareInfo &hwInfo = *defaultHwInfo;
     size_t gws = 1;
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
@@ -177,8 +176,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 0x1000;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    uint32_t computeUnits = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
+    auto &coreHelper = pDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    uint32_t computeUnits = coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment());
     size_t scratchSpaceSize = kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] * computeUnits;
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);

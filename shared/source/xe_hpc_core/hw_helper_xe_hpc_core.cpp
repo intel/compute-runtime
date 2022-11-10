@@ -370,15 +370,16 @@ bool HwHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
+uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
-    uint32_t threadEuRatio = hwInfoConfig.getThreadEuRatioForScratch(*pHwInfo);
+    auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    uint32_t threadEuRatio = helper.getThreadEuRatioForScratch(*hwInfo);
 
-    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * threadEuRatio;
+    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice * threadEuRatio;
 }
 
 template <>

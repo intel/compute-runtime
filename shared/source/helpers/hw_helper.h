@@ -41,8 +41,8 @@ class HwHelper {
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
     virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
     virtual size_t getPaddingForISAAllocation() const = 0;
-    virtual uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const = 0;
-    virtual uint32_t getPitchAlignmentForImage(const HardwareInfo *hwInfo) const = 0;
+    virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
@@ -200,9 +200,9 @@ class HwHelperHw : public HwHelper {
 
     size_t getPaddingForISAAllocation() const override;
 
-    uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const override;
+    uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
-    uint32_t getPitchAlignmentForImage(const HardwareInfo *hwInfo) const override;
+    uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     uint32_t getMaxNumSamplers() const override;
 
