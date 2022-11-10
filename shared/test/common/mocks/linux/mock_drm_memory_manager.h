@@ -160,6 +160,15 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
 
     bool failOnfindAndReferenceSharedBufferObject = false;
 
+    bool failOnObtainFdFromHandle = false;
+
+    int obtainFdFromHandle(int boHandle, uint32_t rootDeviceIndex) override {
+        if (failOnObtainFdFromHandle) {
+            return -1;
+        }
+        return DrmMemoryManager::obtainFdFromHandle(boHandle, rootDeviceIndex);
+    }
+
     ExecutionEnvironment *executionEnvironment = nullptr;
 
   protected:

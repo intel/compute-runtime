@@ -16,7 +16,6 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
-#include "level_zero/core/source/helpers/allocation_extensions.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
@@ -443,7 +442,12 @@ ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
                                         ze_ipc_mem_handle_t *pIpcHandle) {
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (allocData) {
-        uint64_t handle = allocData->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager());
+        uint64_t handle = 0;
+        int ret = allocData->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager(), handle);
+        if (ret < 0) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+
         memcpy_s(reinterpret_cast<void *>(pIpcHandle->data),
                  sizeof(ze_ipc_mem_handle_t),
                  &handle,
@@ -472,11 +476,15 @@ ze_result_t ContextImp::getIpcMemHandles(const void *ptr,
         }
 
         for (uint32_t i = 0; i < *numIpcHandles; i++) {
-            int handle = static_cast<int>(allocData->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager(), i));
+            uint64_t handle = 0;
+            int ret = allocData->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager(), i, handle);
+            if (ret < 0) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
             memcpy_s(reinterpret_cast<void *>(pIpcHandles[i].data),
                      sizeof(ze_ipc_mem_handle_t),
                      &handle,
-                     sizeof(handle));
+                     sizeof(int));
         }
 
         return ZE_RESULT_SUCCESS;
@@ -545,7 +553,8 @@ ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    uint64_t handle = this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager());
+    uint64_t handle = 0;
+    this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), handle);
 
     memcpy_s(pIpcHandle->data, sizeof(int), &handle, sizeof(int));
 
@@ -631,6 +640,44 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     }
 
     *phEventPool = eventPool;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type, void *pNext, struct DriverHandleImp *driverHandle) {
+    if (pNext != nullptr) {
+        ze_base_properties_t *extendedProperties =
+            reinterpret_cast<ze_base_properties_t *>(pNext);
+        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
+            ze_external_memory_export_fd_t *extendedMemoryExportProperties =
+                reinterpret_cast<ze_external_memory_export_fd_t *>(extendedProperties);
+            if (extendedMemoryExportProperties->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+            if (type != ZE_MEMORY_TYPE_DEVICE) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+            uint64_t handle = 0;
+            int ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle);
+            if (ret < 0) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+            extendedMemoryExportProperties->fd = static_cast<int>(handle);
+        } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_WIN32) {
+            ze_external_memory_export_win32_handle_t *exportStructure = reinterpret_cast<ze_external_memory_export_win32_handle_t *>(extendedProperties);
+            if (exportStructure->flags != ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+            uint64_t handle = 0;
+            int ret = alloc->peekInternalHandle(driverHandle->getMemoryManager(), handle);
+            if (ret < 0) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+            exportStructure->handle = reinterpret_cast<void *>(handle);
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+        }
+    }
 
     return ZE_RESULT_SUCCESS;
 }

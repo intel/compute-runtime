@@ -449,7 +449,25 @@ TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturned) {
     mock->outputFd = 1337;
     auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
     ASSERT_NE(allocation->getBO(), nullptr);
-    ASSERT_EQ(allocation->peekInternalHandle(this->memoryManager), static_cast<uint64_t>(1337));
+    uint64_t handle = 0;
+    int ret = allocation->peekInternalHandle(this->memoryManager, handle);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(handle, static_cast<uint64_t>(1337));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledAndObtainFdFromHandleFailsThenErrorIsReturned) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+    mock->outputFd = 1337;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    memoryManager->failOnObtainFdFromHandle = true;
+    uint64_t handle = 0;
+    int ret = allocation->peekInternalHandle(this->memoryManager, handle);
+    ASSERT_EQ(ret, -1);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -466,11 +484,18 @@ TEST_F(DrmMemoryManagerTest, whenCallingPeekInternalHandleSeveralTimesThenSameHa
     ASSERT_NE(allocation->getBO(), nullptr);
 
     EXPECT_EQ(mock->outputFd, static_cast<int32_t>(expectedFd));
-    uint64_t handle0 = allocation->peekInternalHandle(this->memoryManager);
+    uint64_t handle0 = 0;
+    int ret = allocation->peekInternalHandle(this->memoryManager, handle0);
+    ASSERT_EQ(ret, 0);
     EXPECT_NE(mock->outputFd, static_cast<int32_t>(expectedFd));
 
-    uint64_t handle1 = allocation->peekInternalHandle(this->memoryManager);
-    uint64_t handle2 = allocation->peekInternalHandle(this->memoryManager);
+    uint64_t handle1 = 0;
+    uint64_t handle2 = 0;
+
+    ret = allocation->peekInternalHandle(this->memoryManager, handle1);
+    ASSERT_EQ(ret, 0);
+    ret = allocation->peekInternalHandle(this->memoryManager, handle2);
+    ASSERT_EQ(ret, 0);
 
     ASSERT_EQ(handle0, expectedFd);
     ASSERT_EQ(handle1, expectedFd);
@@ -488,8 +513,11 @@ TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleWithHandleIdIsCalledThenBoIsR
     auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
     ASSERT_NE(allocation->getBO(), nullptr);
 
+    uint64_t handle = 0;
     uint32_t handleId = 0;
-    ASSERT_EQ(allocation->peekInternalHandle(this->memoryManager, handleId), static_cast<uint64_t>(1337));
+    int ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(handle, static_cast<uint64_t>(1337));
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -507,11 +535,17 @@ TEST_F(DrmMemoryManagerTest, whenCallingPeekInternalHandleWithIdSeveralTimesThen
 
     EXPECT_EQ(mock->outputFd, static_cast<int32_t>(expectedFd));
     uint32_t handleId = 0;
-    uint64_t handle0 = allocation->peekInternalHandle(this->memoryManager, handleId);
+    uint64_t handle0 = 0;
+    int ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle0);
+    ASSERT_EQ(ret, 0);
     EXPECT_NE(mock->outputFd, static_cast<int32_t>(expectedFd));
 
-    uint64_t handle1 = allocation->peekInternalHandle(this->memoryManager, handleId);
-    uint64_t handle2 = allocation->peekInternalHandle(this->memoryManager, handleId);
+    uint64_t handle1 = 0;
+    uint64_t handle2 = 0;
+    ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle1);
+    ASSERT_EQ(ret, 0);
+    ret = allocation->peekInternalHandle(this->memoryManager, handleId, handle2);
+    ASSERT_EQ(ret, 0);
 
     ASSERT_EQ(handle0, expectedFd);
     ASSERT_EQ(handle1, expectedFd);
@@ -3152,6 +3186,29 @@ TEST(DrmMemoryManagerWithExplicitExpectationsTest2, whenObtainFdFromHandleIsCall
         EXPECT_EQ(mock->inputHandle, static_cast<uint32_t>(boHandle));
         EXPECT_EQ(mock->inputFlags, DRM_CLOEXEC | DRM_RDWR);
         EXPECT_EQ(1337, fdHandle);
+    }
+}
+
+TEST(DrmMemoryManagerWithExplicitExpectationsTest2, whenFailingToObtainFdFromHandleThenErrorIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(4u);
+    for (auto i = 0u; i < 4u; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        auto mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
+    for (auto i = 0u; i < 4u; i++) {
+        auto mock = executionEnvironment->rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<DrmMockCustom>();
+
+        int boHandle = 3;
+        mock->outputFd = -1;
+        mock->ioctl_res = -1;
+        mock->ioctl_expected.handleToPrimeFd = 1;
+        auto fdHandle = memoryManager->obtainFdFromHandle(boHandle, i);
+        EXPECT_EQ(-1, fdHandle);
     }
 }
 
