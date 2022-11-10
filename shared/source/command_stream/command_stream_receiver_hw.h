@@ -138,7 +138,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdsSizeForComputeBarrierCommand() const override {
         return getCmdSizeForStallingNoPostSyncCommands();
     }
-    void initializeDeviceWithFirstSubmission() override;
+    SubmissionStatus initializeDeviceWithFirstSubmission() override;
 
     HeapDirtyState &getDshState() {
         return dshState;

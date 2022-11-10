@@ -1476,12 +1476,12 @@ void CommandStreamReceiverHw<GfxFamily>::createKernelArgsBufferAllocation() {
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
+SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
     auto lock = obtainUniqueOwnership();
 
     auto &commandStream = getCS(EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize());
     auto commandStreamStart = commandStream.getUsed();
-    this->flushSmallTask(commandStream, commandStreamStart);
+    return this->flushSmallTask(commandStream, commandStreamStart);
 }
 
 template <typename GfxFamily>

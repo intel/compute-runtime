@@ -580,7 +580,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     }
 
     void postInitFlagsSetup() override {}
-    void initializeDeviceWithFirstSubmission() override {}
+    SubmissionStatus initializeDeviceWithFirstSubmission() override { return SubmissionStatus::SUCCESS; }
 
     std::map<const void *, size_t> residency;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;

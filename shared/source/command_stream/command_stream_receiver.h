@@ -360,7 +360,7 @@ class CommandStreamReceiver {
         lastPreemptionMode = value;
     }
 
-    virtual void initializeDeviceWithFirstSubmission() = 0;
+    virtual SubmissionStatus initializeDeviceWithFirstSubmission() = 0;
 
     uint32_t getNumClients() {
         return this->numClients.load();
