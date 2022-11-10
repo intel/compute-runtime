@@ -500,5 +500,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideDrmRegion, -1, "-1: disable, 0+: overrid
 DECLARE_DEBUG_VARIABLE(int32_t, EnableFrontEndTracking, -1, "-1: default: disabled, 0: disabled, 1: enabled. This flag creates multiple return point from List to Queue for Front End reconfiguration on Queue buffer for single List")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePipelineSelectTracking, -1, "-1: default: disabled, 0: disabled, 1: enabled. This flag enables optimization that limits number of pipeline select dispatched by command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStateComputeModeTracking, -1, "-1: default: disabled, 0: disabled, 1: enabled. This flag enables tracking state compute mode changes in command lists")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableSetPair, -1, "Use SET_PAIR to pair two buffer objects behind the same file descriptor, -1: default, 0: disabled, 1: enabled")
 /* Binary Cache */
 DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")
