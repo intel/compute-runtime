@@ -214,8 +214,8 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
 }
 
-//if not in use destroy in place
-//if in use pass to temporary allocation list that is cleaned on blocking calls
+// if not in use destroy in place
+// if in use pass to temporary allocation list that is cleaned on blocking calls
 void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation) {
     if (gfxAllocation->isUsed()) {
         if (gfxAllocation->isUsedByManyOsContexts()) {
@@ -288,8 +288,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
     UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
 
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &rootDeviceEnvironments = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
+    auto &hwInfo = *rootDeviceEnvironments.getHardwareInfo();
+    auto &helper = rootDeviceEnvironments.getHelper<CoreHelper>();
 
     bool allow64KbPages = false;
     bool allow32Bit = false;
@@ -378,7 +379,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     if (GraphicsAllocation::isIsaAllocationType(properties.allocationType)) {
-        allocationData.flags.useSystemMemory = hwHelper.useSystemMemoryPlacementForISA(*hwInfo);
+        allocationData.flags.useSystemMemory = helper.useSystemMemoryPlacementForISA(hwInfo);
     }
 
     switch (properties.allocationType) {
@@ -420,7 +421,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.flushL3 =
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferCompressed = properties.flags.preferCompressed;
-    allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties, *hwInfo);
+    allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties, hwInfo);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
 
@@ -438,7 +439,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.hostPtr = hostPtr;
     if (properties.allocationType == AllocationType::KERNEL_ISA ||
         properties.allocationType == AllocationType::KERNEL_ISA_INTERNAL) {
-        allocationData.size = properties.size + hwHelper.getPaddingForISAAllocation();
+        allocationData.size = properties.size + helper.getPaddingForISAAllocation();
     } else {
         allocationData.size = properties.size;
     }
@@ -459,7 +460,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.crossRootDeviceAccess = properties.flags.crossRootDeviceAccess;
     allocationData.flags.useSystemMemory |= properties.flags.crossRootDeviceAccess;
 
-    hwHelper.setExtraAllocationData(allocationData, properties, *hwInfo);
+    helper.setExtraAllocationData(allocationData, properties, hwInfo);
     allocationData.flags.useSystemMemory |= properties.flags.forceSystemMemory;
 
     overrideAllocationData(allocationData, properties);

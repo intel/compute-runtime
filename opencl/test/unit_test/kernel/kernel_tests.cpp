@@ -2334,18 +2334,18 @@ TEST(KernelInfoTest, GivenArgNameWhenGettingArgNumberByNameThenCorrectValueIsRet
 
 TEST(KernelInfoTest, givenHwHelperWhenCreatingKernelAllocationThenCorrectPaddingIsAdded) {
 
-    std::unique_ptr<MockClDevice> clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), mockRootDeviceIndex));
-    std::unique_ptr<MockContext> context = std::make_unique<MockContext>(clDevice.get());
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), mockRootDeviceIndex));
+    auto context = std::make_unique<MockContext>(clDevice.get());
 
-    std::unique_ptr<MockKernelWithInternals> mockKernel = std::make_unique<MockKernelWithInternals>(*clDevice, context.get());
+    auto mockKernel = std::make_unique<MockKernelWithInternals>(*clDevice, context.get());
     uint32_t kernelHeap = 0;
     mockKernel->kernelInfo.heapInfo.KernelHeapSize = 1;
     mockKernel->kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
     mockKernel->kernelInfo.createKernelAllocation(clDevice->getDevice(), false);
 
     auto graphicsAllocation = mockKernel->kernelInfo.getGraphicsAllocation();
-    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    size_t isaPadding = hwHelper.getPaddingForISAAllocation();
+    auto &helper = clDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), mockKernel->kernelInfo.heapInfo.KernelHeapSize + isaPadding);
     clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getGraphicsAllocation());
 }

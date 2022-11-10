@@ -14,7 +14,7 @@
 using HwHelperTestGen9 = HwHelperTest;
 
 GEN9TEST_F(HwHelperTestGen9, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &helper = getHelper<CoreHelper>();
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 

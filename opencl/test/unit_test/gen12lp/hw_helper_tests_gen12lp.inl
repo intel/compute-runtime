@@ -35,7 +35,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &helper = getHelper<CoreHelper>();
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
@@ -359,9 +359,9 @@ HWTEST2_F(HwHelperTestGen12Lp, givenRevisionEnumThenProperValueForIsWorkaroundRe
     std::vector<unsigned short> steppings;
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
-    steppings.push_back(0x0); //A0
-    steppings.push_back(0x4); //B0
-    steppings.push_back(0x5); //undefined
+    steppings.push_back(0x0); // A0
+    steppings.push_back(0x4); // B0
+    steppings.push_back(0x5); // undefined
 
     for (auto stepping : steppings) {
         hardwareInfo.platform.usRevId = stepping;
@@ -380,9 +380,9 @@ HWTEST2_F(HwHelperTestGen12Lp, givenRevisionEnumThenProperValueForIsWorkaroundRe
     std::vector<unsigned short> steppings;
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
-    steppings.push_back(0x0); //A0
-    steppings.push_back(0x4); //B0
-    steppings.push_back(0x5); //undefined
+    steppings.push_back(0x0); // A0
+    steppings.push_back(0x4); // B0
+    steppings.push_back(0x5); // undefined
 
     for (auto stepping : steppings) {
         hardwareInfo.platform.usRevId = stepping;

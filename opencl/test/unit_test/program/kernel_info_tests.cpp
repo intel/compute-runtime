@@ -45,7 +45,8 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), heap, heapSize));
-    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    auto &helper = device->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(allocation->getUnderlyingBufferSize(), heapSize + isaPadding);
     device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
 }

@@ -8,6 +8,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/blit_commands_helper.h"
@@ -390,23 +391,28 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
     if (dssCount == 0) {
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
-    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto &descriptor = kernelImmData->getDescriptor();
-    auto availableThreadCount = hwHelper.calculateAvailableThreadCount(hardwareInfo, descriptor.kernelAttributes.numGrfRequired);
 
+    auto &helper = module->getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    auto &descriptor = kernelImmData->getDescriptor();
+    auto availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, descriptor.kernelAttributes.numGrfRequired);
+
+    auto availableSlmSize = static_cast<uint32_t>(dssCount * KB * hardwareInfo.capabilityTable.slmSize);
+    auto usedSlmSize = helper.alignSlmSize(slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize);
+    auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
     auto barrierCount = descriptor.kernelAttributes.barrierCount;
     const uint32_t workDim = 3;
     const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
+
     *totalGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(descriptor.kernelAttributes.simdSize,
                                                                availableThreadCount,
                                                                dssCount,
-                                                               dssCount * KB * hardwareInfo.capabilityTable.slmSize,
-                                                               hwHelper.alignSlmSize(slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize),
-                                                               static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
+                                                               availableSlmSize,
+                                                               usedSlmSize,
+                                                               maxBarrierCount,
                                                                barrierCount,
                                                                workDim,
                                                                localWorkSize);
-    *totalGroupCount = hwHelper.adjustMaxWorkGroupCount(*totalGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
+    *totalGroupCount = helper.adjustMaxWorkGroupCount(*totalGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
     return ZE_RESULT_SUCCESS;
 }
 

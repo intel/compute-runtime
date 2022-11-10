@@ -27,7 +27,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;
@@ -58,7 +59,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;
@@ -88,7 +90,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;

@@ -67,18 +67,18 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTimestampPacketAlignmentThenRet
 }
 
 HWTEST2_F(HwHelperTest, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned, IsAtMostXeHpgCore) {
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 512u);
+    auto &helper = getHelper<CoreHelper>();
+    EXPECT_EQ(helper.getPaddingForISAAllocation(), 512u);
 }
 
 HWTEST_F(HwHelperTest, givenForceExtendedKernelIsaSizeSetWhenGettingISAPaddingThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &helper = getHelper<CoreHelper>();
 
-    auto defaultPadding = hwHelper.getPaddingForISAAllocation();
+    auto defaultPadding = helper.getPaddingForISAAllocation();
     for (int32_t valueToTest : {0, 1, 2, 10}) {
         DebugManager.flags.ForceExtendedKernelIsaSize.set(valueToTest);
-        EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), defaultPadding + MemoryConstants::pageSize * valueToTest);
+        EXPECT_EQ(helper.getPaddingForISAAllocation(), defaultPadding + MemoryConstants::pageSize * valueToTest);
     }
 }
 

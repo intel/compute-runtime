@@ -734,14 +734,14 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
 
     auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
     bool status = false;
+    auto &helper = clDevice.getRootDeviceEnvironment().getHelper<CoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
 
-    const auto &hwInfo = clDevice.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    size_t isaPadding = hwHelper.getPaddingForISAAllocation();
     if (currentAllocationSize >= newKernelHeapSize + isaPadding) {
         auto &hwInfo = clDevice.getDevice().getHardwareInfo();
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        status = MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *pKernelInfo->getGraphicsAllocation()),
+        auto &productHelper = clDevice.getRootDeviceEnvironment().getHelper<ProductHelper>();
+        auto useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *pKernelInfo->getGraphicsAllocation());
+        status = MemoryTransferHelper::transferMemoryToAllocation(useBlitter,
                                                                   clDevice.getDevice(), pKernelInfo->getGraphicsAllocation(), 0, newKernelHeap,
                                                                   static_cast<size_t>(newKernelHeapSize));
     } else {
@@ -1083,30 +1083,33 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
 
 uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const {
     auto &hardwareInfo = getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &helper = this->getDevice().getRootDeviceEnvironment().getHelper<CoreHelper>();
 
-    auto engineGroupType = hwHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
-                                                       commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+    auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
+                                                     commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
 
     const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     auto dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
     if (dssCount == 0) {
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
-    auto availableThreadCount = hwHelper.calculateAvailableThreadCount(hardwareInfo, kernelDescriptor.kernelAttributes.numGrfRequired);
-
+    auto availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, kernelDescriptor.kernelAttributes.numGrfRequired);
+    auto availableSlmSize = static_cast<uint32_t>(dssCount * KB * hardwareInfo.capabilityTable.slmSize);
+    auto usedSlmSize = helper.alignSlmSize(slmTotalSize);
+    auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
     auto barrierCount = kernelDescriptor.kernelAttributes.barrierCount;
+
     auto maxWorkGroupCount = KernelHelper::getMaxWorkGroupCount(kernelInfo.getMaxSimdSize(),
                                                                 availableThreadCount,
                                                                 dssCount,
-                                                                dssCount * KB * hardwareInfo.capabilityTable.slmSize,
-                                                                hwHelper.alignSlmSize(slmTotalSize),
-                                                                static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
+                                                                availableSlmSize,
+                                                                usedSlmSize,
+                                                                maxBarrierCount,
                                                                 barrierCount,
                                                                 workDim,
                                                                 localWorkSize);
     auto isEngineInstanced = commandQueue->getGpgpuCommandStreamReceiver().getOsContext().isEngineInstanced();
-    maxWorkGroupCount = hwHelper.adjustMaxWorkGroupCount(maxWorkGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
+    maxWorkGroupCount = helper.adjustMaxWorkGroupCount(maxWorkGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
     return maxWorkGroupCount;
 }
 

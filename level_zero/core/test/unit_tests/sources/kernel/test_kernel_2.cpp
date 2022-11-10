@@ -365,15 +365,15 @@ class KernelImpSuggestMaxCooperativeGroupCountTests : public KernelImp {
         KernelImp::SetUp();
         kernelInfo.kernelDescriptor = &kernelDescriptor;
         auto &hardwareInfo = device->getHwInfo();
-        auto &hwHelper = device->getHwHelper();
-        availableThreadCount = hwHelper.calculateAvailableThreadCount(hardwareInfo, numGrf);
+        auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<CoreHelper>();
+        availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, numGrf);
 
         dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
         if (dssCount == 0) {
             dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
         }
         availableSlm = dssCount * KB * hardwareInfo.capabilityTable.slmSize;
-        maxBarrierCount = static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice());
+        maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
 
         kernelInfo.kernelDescriptor->kernelAttributes.simdSize = simd;
         kernelInfo.kernelDescriptor->kernelAttributes.numGrfRequired = numGrf;

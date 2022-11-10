@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,8 +117,8 @@ void KernelDataTest::buildAndDecode() {
         auto kernelAllocation = pKernelInfo->getGraphicsAllocation();
         UNRECOVERABLE_IF(kernelAllocation == nullptr);
         auto &device = pContext->getDevice(0)->getDevice();
-        auto &hwHelper = NEO::HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
-        size_t isaPadding = hwHelper.getPaddingForISAAllocation();
+        auto &helper = device.getRootDeviceEnvironment().getHelper<CoreHelper>();
+        size_t isaPadding = helper.getPaddingForISAAllocation();
         EXPECT_EQ(kernelAllocation->getUnderlyingBufferSize(), kernelHeapSize + isaPadding);
         auto kernelIsa = kernelAllocation->getUnderlyingBuffer();
         EXPECT_EQ(0, memcmp(kernelIsa, pKernelInfo->heapInfo.pKernelHeap, kernelHeapSize));
