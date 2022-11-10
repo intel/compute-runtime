@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_property.h"
+#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
 

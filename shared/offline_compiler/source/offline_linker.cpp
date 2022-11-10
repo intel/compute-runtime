@@ -14,8 +14,6 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/os_inc_base.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/import/library_api.h"

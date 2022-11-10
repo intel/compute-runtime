@@ -14,14 +14,11 @@
 #include "shared/offline_compiler/source/ocloc_concat.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
-#include "shared/offline_compiler/source/ocloc_interface.h"
 #include "shared/offline_compiler/source/ocloc_validator.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/offline_compiler/source/offline_linker.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
 
 #include <memory>
 

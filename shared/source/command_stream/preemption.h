@@ -9,7 +9,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/helpers/hw_info.h"
 
 #include "sku_info.h"
 
@@ -18,6 +17,7 @@ class Device;
 class GraphicsAllocation;
 struct KernelDescriptor;
 class LogicalStateHelper;
+struct RuntimeCapabilityTable;
 
 struct PreemptionFlags {
     PreemptionFlags() {

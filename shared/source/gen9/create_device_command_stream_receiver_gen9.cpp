@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/device_command_stream.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gen9/hw_cmds.h"
 
 #include "create_command_stream_receiver.inl"

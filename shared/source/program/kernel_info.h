@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/heap_info.h"
 #include "shared/source/utilities/arrayref.h"

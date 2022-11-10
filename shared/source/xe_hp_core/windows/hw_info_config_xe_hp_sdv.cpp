@@ -7,7 +7,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"

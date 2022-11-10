@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 

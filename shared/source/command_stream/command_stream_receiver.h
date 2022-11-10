@@ -49,6 +49,7 @@ class HwTimeStamps;
 class GmmHelper;
 class TagAllocatorBase;
 class LogicalStateHelper;
+class KmdNotifyHelper;
 
 template <typename TSize>
 class TimestampPackets;

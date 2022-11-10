@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/hw_info.h"
-
 #include "stream_properties.inl"
 
 namespace NEO {

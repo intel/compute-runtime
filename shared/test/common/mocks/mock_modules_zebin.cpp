@@ -10,6 +10,7 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/test/common/mocks/mock_elf.h"
 
 namespace ZebinTestData {
 using ELF_IDENTIFIER_CLASS = NEO::Elf::ELF_IDENTIFIER_CLASS;

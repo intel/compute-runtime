@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
@@ -16,8 +17,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 
 #include "igfxfmid.h"
-
-#include <memory>
 
 namespace NEO {
 enum class ImageType;

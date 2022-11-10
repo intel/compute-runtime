@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 #include "mock/mock_encoder.h"
 
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <sstream>
