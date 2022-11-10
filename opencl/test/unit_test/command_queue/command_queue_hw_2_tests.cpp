@@ -310,7 +310,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenCheckIsSplitEnqueueBlit
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useBlitSplit = true;
     {
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
         EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
         EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
         EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));

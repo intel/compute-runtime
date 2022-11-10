@@ -1125,8 +1125,7 @@ bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitNeeded(TransferDirection trans
     auto bcsSplit = getDevice().isBcsSplitSupported() &&
                     csr.getOsContext().getEngineType() == aub_stream::EngineType::ENGINE_BCS &&
                     transferSize >= minimalSizeForBcsSplit &&
-                    (transferDirection == TransferDirection::HostToLocal ||
-                     transferDirection == TransferDirection::LocalToHost);
+                    transferDirection != TransferDirection::LocalToLocal;
 
     if (bcsSplit) {
         this->constructBcsEnginesForSplit();

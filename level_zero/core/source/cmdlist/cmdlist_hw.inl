@@ -2493,8 +2493,7 @@ inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::Memor
 
     return this->isBcsSplitNeeded &&
            size >= minimalSizeForBcsSplit &&
-           ((!NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool) && NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool)) ||
-            (!NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool) && NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool)));
+           (NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool) || NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
