@@ -149,7 +149,7 @@ struct EncodeStates {
                                      uint32_t borderColorOffset,
                                      const void *fnDynamicStateHeap,
                                      BindlessHeapsHelper *bindlessHeapHelper,
-                                     const HardwareInfo &hwInfo);
+                                     const RootDeviceEnvironment &rootDeviceEnvironment);
 };
 
 template <typename GfxFamily>

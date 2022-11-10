@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
 #include "opencl/source/sampler/sampler.h"
 
 namespace NEO {
@@ -38,7 +39,7 @@ struct MockSampler : public Sampler {
         return filterMode;
     }
 
-    void setArg(void *memory, const HardwareInfo &hwInfo) override {
+    void setArg(void *memory, const RootDeviceEnvironment &rootDeviceEnvironment) override {
     }
 };
 } // namespace NEO

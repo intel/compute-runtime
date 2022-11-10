@@ -42,7 +42,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
                                                 uint32_t borderColorOffset,
                                                 const void *fnDynamicStateHeap,
                                                 BindlessHeapsHelper *bindlessHeapHelper,
-                                                const HardwareInfo &hwInfo) {
+                                                const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto sizeSamplerState = sizeof(SAMPLER_STATE) * samplerCount;
     auto borderColorSize = samplerStateOffset - borderColorOffset;
 
@@ -80,14 +80,14 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
         samplerStateOffsetInDsh = static_cast<uint32_t>(samplerStateInDsh.surfaceStateOffset);
     }
 
+    auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto srcSamplerState = reinterpret_cast<const SAMPLER_STATE *>(ptrOffset(fnDynamicStateHeap, samplerStateOffset));
     SAMPLER_STATE state = {};
     for (uint32_t i = 0; i < samplerCount; i++) {
         state = srcSamplerState[i];
         state.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
-
-        HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(&state, hwInfo);
-
+        helper.adjustSamplerState(&state, hwInfo);
         dstSamplerState[i] = state;
     }
 

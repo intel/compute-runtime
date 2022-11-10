@@ -41,4 +41,13 @@ MockDevice *ClDeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
     hardwareInfo.platform.usDeviceID = usDeviceId;
     return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, rootDeviceIndex);
 }
+
+template <typename HelperType>
+HelperType &ClDeviceFixture::getHelper() const {
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<HelperType>();
+    return helper;
+}
+
+template ProductHelper &ClDeviceFixture::getHelper() const;
+
 } // namespace NEO

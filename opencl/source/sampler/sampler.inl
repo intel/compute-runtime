@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/numeric.h"
@@ -14,7 +15,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void SamplerHw<GfxFamily>::setArg(void *memory, const HardwareInfo &hwInfo) {
+void SamplerHw<GfxFamily>::setArg(void *memory, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(memory);
     samplerState->setNonNormalizedCoordinateEnable(!this->normalizedCoordinates);
@@ -90,6 +91,8 @@ void SamplerHw<GfxFamily>::setArg(void *memory, const HardwareInfo &hwInfo) {
     samplerState->setMinLod(minLodValue.getRawAccess());
     samplerState->setMaxLod(maxLodValue.getRawAccess());
 
-    HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(samplerState, hwInfo);
+    auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    helper.adjustSamplerState(samplerState, hwInfo);
 }
 } // namespace NEO

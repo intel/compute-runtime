@@ -116,7 +116,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                                     kernelDescriptor.payloadMappings.samplerTable.numSamplers,
                                                                     kernelDescriptor.payloadMappings.samplerTable.borderColor,
                                                                     args.dispatchInterface->getDynamicStateHeapData(),
-                                                                    args.device->getBindlessHeapsHelper(), hwInfo);
+                                                                    args.device->getBindlessHeapsHelper(), args.device->getRootDeviceEnvironment());
     }
 
     idd.setSamplerStatePointer(samplerStateOffset);

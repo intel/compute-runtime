@@ -29,6 +29,9 @@ struct HwInfoConfigTestWindows : public HwInfoConfigTest {
     MockHwInfoConfigHw<IGFX_UNKNOWN> hwConfig;
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
+
+    template <typename HelperType>
+    HelperType &getHelper() const;
 };
 
 } // namespace NEO

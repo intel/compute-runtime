@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/numeric.h"
@@ -110,8 +111,8 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
     samplerState.setMaxLod(maxLodValue.getRawAccess());
 
     auto &hwInfo = device->getHwInfo();
-
-    NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(&samplerState, hwInfo);
+    auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    helper.adjustSamplerState(&samplerState, hwInfo);
 
     return ZE_RESULT_SUCCESS;
 }

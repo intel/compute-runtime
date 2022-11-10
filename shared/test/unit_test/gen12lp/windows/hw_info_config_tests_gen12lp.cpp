@@ -13,60 +13,60 @@
 
 using namespace NEO;
 
-using HwInfoConfigTestWindowsGen12lp = HwInfoConfigTestWindows;
+using ProductHelperTestWindowsGen12lp = HwInfoConfigTestWindows;
 
-GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenE2ECSetByKmdWhenConfiguringHwThenAdjustInternalImageFlag) {
+GEN12LPTEST_F(ProductHelperTestWindowsGen12lp, givenE2ECSetByKmdWhenConfiguringHwThenAdjustInternalImageFlag) {
     FeatureTable &localFeatureTable = outHwInfo.featureTable;
 
-    auto &hwInfoConfig = rootDeviceEnvironment->getHwInfoConfig();
+    auto &helper = getHelper<ProductHelper>();
 
     localFeatureTable.flags.ftrE2ECompression = true;
-    hwInfoConfig.configureHardwareCustom(&outHwInfo, nullptr);
+    helper.configureHardwareCustom(&outHwInfo, nullptr);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 
     localFeatureTable.flags.ftrE2ECompression = false;
-    hwInfoConfig.configureHardwareCustom(&outHwInfo, nullptr);
+    helper.configureHardwareCustom(&outHwInfo, nullptr);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 }
 
-GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+GEN12LPTEST_F(ProductHelperTestWindowsGen12lp, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
+    auto &helper = getHelper<ProductHelper>();
 
     PLATFORM *testPlatform = &outHwInfo.platform;
     testPlatform->eDisplayCoreFamily = IGFX_GEN11_CORE;
     testPlatform->eRenderCoreFamily = IGFX_GEN11_CORE;
-    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
+    helper.adjustPlatformForProductFamily(&outHwInfo);
 
     EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eRenderCoreFamily);
     EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eDisplayCoreFamily);
 }
 
-GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+GEN12LPTEST_F(ProductHelperTestWindowsGen12lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
+    auto &helper = getHelper<ProductHelper>();
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_FALSE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+    EXPECT_FALSE(helper.isPageTableManagerSupported(outHwInfo));
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+    EXPECT_TRUE(helper.isPageTableManagerSupported(outHwInfo));
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+    EXPECT_TRUE(helper.isPageTableManagerSupported(outHwInfo));
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+    EXPECT_TRUE(helper.isPageTableManagerSupported(outHwInfo));
 }
 
-GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenGen12LpSkuWhenGettingCapabilityCoherencyFlagThenExpectValidValue) {
-    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+GEN12LPTEST_F(ProductHelperTestWindowsGen12lp, givenGen12LpSkuWhenGettingCapabilityCoherencyFlagThenExpectValidValue) {
+    auto &helper = getHelper<ProductHelper>();
     bool coherency = false;
-    hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+    helper.setCapabilityCoherencyFlag(outHwInfo, coherency);
     const bool checkDone = SpecialUltHelperGen12lp::additionalCoherencyCheck(outHwInfo.platform.eProductFamily, coherency);
     if (checkDone) {
         EXPECT_FALSE(coherency);
@@ -74,11 +74,11 @@ GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenGen12LpSkuWhenGettingCapabili
     }
 
     if (SpecialUltHelperGen12lp::isAdditionalCapabilityCoherencyFlagSettingRequired(outHwInfo.platform.eProductFamily)) {
-        outHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, outHwInfo);
-        hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+        outHwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A1, outHwInfo);
+        helper.setCapabilityCoherencyFlag(outHwInfo, coherency);
         EXPECT_TRUE(coherency);
-        outHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, outHwInfo);
-        hwInfoConfig.setCapabilityCoherencyFlag(outHwInfo, coherency);
+        outHwInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, outHwInfo);
+        helper.setCapabilityCoherencyFlag(outHwInfo, coherency);
         EXPECT_FALSE(coherency);
     } else {
         EXPECT_TRUE(coherency);

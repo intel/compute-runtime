@@ -141,7 +141,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
                     kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
                     args.dispatchInterface->getDynamicStateHeapData(),
-                    args.device->getBindlessHeapsHelper(), hwInfo);
+                    args.device->getBindlessHeapsHelper(), args.device->getRootDeviceEnvironment());
                 if (ApiSpecificConfig::getBindlessConfiguration()) {
                     container.getResidencyContainer().push_back(args.device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
                 }

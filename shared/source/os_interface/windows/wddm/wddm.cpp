@@ -88,7 +88,8 @@ bool Wddm::init() {
     if (!hardwareInfoTable[productFamily]) {
         return false;
     }
-    auto hardwareInfo = std::make_unique<HardwareInfo>();
+
+    auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     hardwareInfo->platform = *gfxPlatform;
     hardwareInfo->featureTable = *featureTable;
     hardwareInfo->workaroundTable = *workaroundTable;
@@ -99,17 +100,16 @@ bool Wddm::init() {
     hardwareInfo->capabilityTable.instrumentationEnabled =
         (hardwareInfo->capabilityTable.instrumentationEnabled && instrumentationEnabled);
 
-    HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
-
-    hwConfig->adjustPlatformForProductFamily(hardwareInfo.get());
-    if (hwConfig->configureHwInfoWddm(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    productHelper.adjustPlatformForProductFamily(hardwareInfo);
+    if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, nullptr)) {
         return false;
     }
-    setPlatformSupportEvictIfNecessaryFlag(*hwConfig);
+    setPlatformSupportEvictIfNecessaryFlag(productHelper);
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
     populateIpVersion(*hardwareInfo);
-    rootDeviceEnvironment.setHwInfo(hardwareInfo.get());
+
     rootDeviceEnvironment.initGmm();
     this->rootDeviceEnvironment.getGmmClientContext()->setHandleAllocator(this->hwDeviceId->getUmKmDataTranslator()->createGmmHandleAllocator());
 

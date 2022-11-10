@@ -39,6 +39,15 @@ void HwInfoConfigTestWindows::TearDown() {
     HwInfoConfigTest::TearDown();
 }
 
+template <typename HelperType>
+HelperType &HwInfoConfigTestWindows::getHelper() const {
+    auto &helper = rootDeviceEnvironment->getHelper<HelperType>();
+    return helper;
+}
+
+template ProductHelper &HwInfoConfigTestWindows::getHelper() const;
+template CoreHelper &HwInfoConfigTestWindows::getHelper() const;
+
 TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenReturnSuccess) {
     int ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
     EXPECT_EQ(0, ret);

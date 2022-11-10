@@ -581,7 +581,7 @@ HWTEST_P(FilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
         ptrOffset(pKernel->getDynamicStateHeap(),
                   pKernelInfo->argAsSmp(0).bindful));
 
-    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState), *defaultHwInfo);
+    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState), pClDevice->getRootDeviceEnvironment());
 
     if (CL_FILTER_NEAREST == filterMode) {
         EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());

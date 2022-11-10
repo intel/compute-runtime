@@ -20,6 +20,9 @@ struct ClDeviceFixture {
 
     MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
 
+    template <typename HelperType>
+    HelperType &getHelper() const;
+
     MockDevice *pDevice = nullptr;
     MockClDevice *pClDevice = nullptr;
     volatile uint32_t *pTagMemory = nullptr;
@@ -29,4 +32,5 @@ struct ClDeviceFixture {
     const uint32_t rootDeviceIndex = 0u;
     MockClExecutionEnvironment *pClExecutionEnvironment = nullptr;
 };
+
 } // namespace NEO

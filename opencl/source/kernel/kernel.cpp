@@ -1248,7 +1248,7 @@ void Kernel::setInlineSamplers() {
         UNRECOVERABLE_IF(errCode != CL_SUCCESS);
 
         auto samplerState = ptrOffset(getDynamicStateHeap(), static_cast<size_t>(inlineSampler.getSamplerBindfulOffset()));
-        sampler->setArg(const_cast<void *>(samplerState), clDevice.getHardwareInfo());
+        sampler->setArg(const_cast<void *>(samplerState), clDevice.getRootDeviceEnvironment());
     }
 }
 
@@ -1717,7 +1717,7 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
         auto dsh = getDynamicStateHeap();
         auto samplerState = ptrOffset(dsh, argAsSmp.bindful);
 
-        pSampler->setArg(const_cast<void *>(samplerState), clDevice.getHardwareInfo());
+        pSampler->setArg(const_cast<void *>(samplerState), clDevice.getRootDeviceEnvironment());
 
         patch<uint32_t, uint32_t>(pSampler->getSnapWaValue(), crossThreadData, argAsSmp.metadataPayload.samplerSnapWa);
         patch<uint32_t, uint32_t>(getAddrModeEnum(pSampler->addressingMode), crossThreadData, argAsSmp.metadataPayload.samplerAddressingMode);
