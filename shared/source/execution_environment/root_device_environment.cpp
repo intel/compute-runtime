@@ -169,9 +169,8 @@ HelperType &RootDeviceEnvironment::getHelper() const {
     if constexpr (std::is_same_v<HelperType, ProductHelper>) {
         auto &hwInfoConfig = *HwInfoConfig::get(this->getHardwareInfo()->platform.eProductFamily);
         return hwInfoConfig;
-    }
-
-    if constexpr (std::is_same_v<HelperType, CoreHelper>) {
+    } else {
+        static_assert(std::is_same_v<HelperType, CoreHelper>, "Only ProductHelper and CoreHelper are supported");
         auto &hwHelper = HwHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
         return hwHelper;
     }
