@@ -28,7 +28,7 @@ bool L0HwHelperHw<Family>::platformSupportsStateComputeModeTracking(const NEO::H
 
 template <typename Family>
 bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const {
-    return false;
+    return true;
 }
 
 template <typename Family>

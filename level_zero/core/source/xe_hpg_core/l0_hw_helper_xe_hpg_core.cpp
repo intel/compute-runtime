@@ -31,11 +31,6 @@ template <>
 void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
 }
 
-template <>
-bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const {
-    return true;
-}
-
 // clang-format off
 #include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_plus.inl"
 // clang-format on
