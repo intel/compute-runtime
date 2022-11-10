@@ -55,6 +55,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum.h
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/file_io_load.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io.h
     ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.cpp

@@ -84,17 +84,19 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stdout_capturer.h
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/file_io_load.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_modules_zebin.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_modules_zebin.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/file_io.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_directory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
     ${IGDRCL_SRCS_cloc}
     ${IGDRCL_SRCS_offline_compiler_mock}
     ${NEO_CORE_tests_compiler_mocks}

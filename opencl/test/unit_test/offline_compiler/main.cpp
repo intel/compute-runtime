@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/helpers/virtual_file_system_listener.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/test_stats.h"
 
@@ -138,15 +139,15 @@ int main(int argc, char **argv) {
     }
 #endif
 
+    auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (useDefaultListener == false) {
-        ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-        ::testing::TestEventListener *defaultListener = listeners.default_result_printer();
-
+        auto defaultListener = listeners.default_result_printer();
         auto customEventListener = new CCustomEventListener(defaultListener);
 
-        listeners.Release(listeners.default_result_printer());
+        listeners.Release(defaultListener);
         listeners.Append(customEventListener);
     }
+    listeners.Append(new NEO::VirtualFileSystemListener);
 
     gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, familyNameWithType)));
 

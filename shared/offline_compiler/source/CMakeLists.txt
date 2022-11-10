@@ -51,7 +51,6 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_bdw_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_dg2_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.h
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.cpp
@@ -193,6 +192,8 @@ apply_macro_for_each_core_type("SUPPORTED")
 set(CLOC_LIB_SRCS
     ${CLOC_LIB_SRCS_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/file_io_load.cpp
 )
 add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS})
 

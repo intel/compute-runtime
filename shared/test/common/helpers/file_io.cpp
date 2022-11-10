@@ -1,35 +1,34 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "file_io.h"
+#include "shared/source/helpers/file_io.h"
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/stdio.h"
 
 #include <cstring>
 #include <new>
+#include <set>
+
+namespace NEO {
+extern std::set<std::string> virtualFileList;
+}
 
 size_t writeDataToFile(
     const char *filename,
     const void *pData,
     size_t dataSize) {
-    FILE *fp = nullptr;
-    size_t nsize = 0;
 
     DEBUG_BREAK_IF(nullptr == pData);
     DEBUG_BREAK_IF(nullptr == filename);
 
-    fopen_s(&fp, filename, "wb");
-    if (fp) {
-        nsize = fwrite(pData, sizeof(unsigned char), dataSize, fp);
-        fclose(fp);
-    }
+    NEO::virtualFileList.insert(filename);
 
-    return nsize;
+    return dataSize;
 }
 
 bool fileExists(const std::string &fileName) {
@@ -37,6 +36,10 @@ bool fileExists(const std::string &fileName) {
 
     DEBUG_BREAK_IF(fileName.empty());
     DEBUG_BREAK_IF(fileName == "");
+
+    if (NEO::virtualFileList.count(fileName) > 0) {
+        return true;
+    }
 
     fopen_s(&pFile, fileName.c_str(), "rb");
     if (pFile) {

@@ -34,26 +34,19 @@ class MockOclocArgHelper : public OclocArgHelper {
     bool interceptOutput{false};
     bool shouldLoadDataFromFileReturnZeroSize{false};
     FilesMap interceptedFiles;
-    std::vector<std::string> createdFiles{};
     bool callBaseFileExists = false;
     bool callBaseReadBinaryFile = false;
     bool callBaseLoadDataFromFile = false;
-    bool callBaseSaveOutput = false;
     bool callBaseReadFileToVectorOfStrings = false;
     bool shouldReturnEmptyVectorOfStrings = false;
 
     MockOclocArgHelper(FilesMap &filesMap) : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr),
                                              filesMap(filesMap){};
 
-    ~MockOclocArgHelper() override {
-        cleanUpOutput();
-    }
-
     void setAllCallBase(bool value) {
         callBaseFileExists = value;
         callBaseReadBinaryFile = value;
         callBaseLoadDataFromFile = value;
-        callBaseSaveOutput = value;
         callBaseReadFileToVectorOfStrings = value;
     }
 
@@ -120,21 +113,7 @@ class MockOclocArgHelper : public OclocArgHelper {
 
             memcpy_s(fileContent.data(), fileContent.size(), pData, dataSize);
         } else {
-            if (callBaseSaveOutput) {
-                createdFiles.push_back(filename.c_str());
-            }
             OclocArgHelper::saveOutput(filename, pData, dataSize);
-        }
-    }
-
-    void cleanUpOutput() {
-        for (const auto &fileName : createdFiles) {
-            int retVal = remove(fileName.c_str());
-            EXPECT_EQ(0, retVal);
-            if (retVal != 0) {
-                auto errMsg = "Error deleting file: " + fileName;
-                perror(errMsg.c_str());
-            }
         }
     }
 };
