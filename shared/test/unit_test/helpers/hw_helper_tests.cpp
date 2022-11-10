@@ -965,6 +965,33 @@ HWTEST2_F(HwInfoConfigCommonTest, givenBlitterPreferenceWhenEnablingBlitterOpera
     EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
+HWTEST2_F(HwInfoConfigCommonTest, givenHardwareInfoWhendisableRcsExposureIsCalledThenFtrRcsNodeIsFalse, IsAtLeastGen12lp) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &productHelper = getHelper<ProductHelper>();
+    productHelper.disableRcsExposure(&hwInfo);
+    EXPECT_FALSE(hwInfo.featureTable.flags.ftrRcsNode);
+}
+
+HWTEST2_F(HwInfoConfigCommonTest, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenDisableRcsExposureIsCalledThenFtrRcsNodeIsTrue, IsAtLeastGen12lp) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &productHelper = getHelper<ProductHelper>();
+    DebugManagerStateRestore restore;
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
+
+    productHelper.disableRcsExposure(&hwInfo);
+    EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
+}
+
+HWTEST2_F(HwInfoConfigCommonTest, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsCccsWhenDisableRcsExposureIsCalledThenFtrRcsNodeIsTrue, IsAtLeastGen12lp) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &productHelper = getHelper<ProductHelper>();
+    DebugManagerStateRestore restore;
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
+
+    productHelper.disableRcsExposure(&hwInfo);
+    EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
+}
+
 HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForIsaSystemMemoryPlacementThenReturnFalseIfLocalMemorySupported) {
     DebugManagerStateRestore restorer;
     HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);

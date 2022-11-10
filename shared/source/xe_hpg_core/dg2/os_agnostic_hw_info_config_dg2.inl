@@ -204,10 +204,3 @@ bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
         return false;
     }
 }
-
-void adjustRcsExposure(HardwareInfo *hwInfo) {
-    hwInfo->featureTable.flags.ftrRcsNode = false;
-    if (DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) {
-        hwInfo->featureTable.flags.ftrRcsNode = true;
-    }
-}

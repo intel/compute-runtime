@@ -24,11 +24,7 @@ template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     enableCompression(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
-
-    hwInfo->featureTable.flags.ftrRcsNode = false;
-    if (DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) {
-        hwInfo->featureTable.flags.ftrRcsNode = true;
-    }
+    disableRcsExposure(hwInfo);
 
     return 0;
 }

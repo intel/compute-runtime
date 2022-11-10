@@ -53,6 +53,7 @@ class HwInfoConfig {
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const = 0;
     virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
     virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) = 0;
+    virtual void disableRcsExposure(HardwareInfo *hwInfo) const = 0;
     virtual uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) = 0;
     virtual uint64_t getDeviceMemCapabilities() = 0;
     virtual uint64_t getSingleDeviceSharedMemCapabilities() = 0;
@@ -189,6 +190,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
     void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
     void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) override;
+    void disableRcsExposure(HardwareInfo *hwInfo) const override;
     uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) override;
     uint64_t getDeviceMemCapabilities() override;
     uint64_t getSingleDeviceSharedMemCapabilities() override;

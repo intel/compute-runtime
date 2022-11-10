@@ -33,7 +33,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     DG2::adjustHardwareInfo(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
-    adjustRcsExposure(hwInfo);
+    disableRcsExposure(hwInfo);
 
     return 0;
 }
