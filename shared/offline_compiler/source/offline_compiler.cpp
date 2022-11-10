@@ -416,11 +416,14 @@ int OfflineCompiler::build() {
 void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t errorStringSize) {
     std::string errorString = (errorStringSize && pErrorString) ? std::string(pErrorString, pErrorString + errorStringSize) : "";
     if (errorString[0] != '\0') {
-        if (buildLog.empty()) {
-            buildLog.assign(errorString.c_str());
-        } else {
-            buildLog.append("\n");
-            buildLog.append(errorString.c_str());
+        bool errorFound = (errorString.find("Error") != std::string::npos) || (errorString.find("error") != std::string::npos);
+        if (!isQuiet() || errorFound) {
+            if (buildLog.empty()) {
+                buildLog.assign(errorString.c_str());
+            } else {
+                buildLog.append("\n");
+                buildLog.append(errorString.c_str());
+            }
         }
     }
 }
