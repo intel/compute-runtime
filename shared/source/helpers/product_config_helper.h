@@ -106,15 +106,12 @@ struct ProductConfigHelper {
     bool isProductConfig(const std::string &device);
 
     bool getDeviceAotInfoForProductConfig(AOT::PRODUCT_CONFIG config, DeviceAotInfo &out) const;
-
     std::vector<DeviceAotInfo> &getDeviceAotInfo();
     std::vector<NEO::ConstStringRef> getRepresentativeProductAcronyms();
     std::vector<NEO::ConstStringRef> getReleasesAcronyms();
     std::vector<NEO::ConstStringRef> getFamiliesAcronyms();
     std::vector<NEO::ConstStringRef> getDeprecatedAcronyms();
     std::vector<NEO::ConstStringRef> getAllProductAcronyms();
-    AOT::PRODUCT_CONFIG getProductConfigForDeviceId(unsigned short deviceId) const;
-    const std::string getAcronymForProductConfig(AOT::PRODUCT_CONFIG config) const;
 
   protected:
     std::vector<DeviceAotInfo> deviceAotInfo;

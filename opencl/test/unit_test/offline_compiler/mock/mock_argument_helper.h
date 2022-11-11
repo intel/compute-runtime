@@ -19,6 +19,7 @@
 
 class MockOclocArgHelper : public OclocArgHelper {
   public:
+    using OclocArgHelper::deviceProductTable;
     using OclocArgHelper::hasOutput;
     using OclocArgHelper::headers;
     using OclocArgHelper::inputs;

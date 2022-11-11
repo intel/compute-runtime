@@ -101,8 +101,7 @@ All supported acronyms: %s.
     void setFamilyType();
     int initHardwareInfo(std::string deviceName);
     int initHardwareInfoForProductConfig(std::string deviceName);
-    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName);
-    bool isArgumentDeviceId(const std::string &argument) const;
+    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId);
 
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);

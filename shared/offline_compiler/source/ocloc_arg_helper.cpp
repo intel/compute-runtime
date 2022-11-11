@@ -58,7 +58,13 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
                                uint64_t **lenOutputs, char ***nameOutputs)
     : numOutputs(numOutputs), nameOutputs(nameOutputs),
       dataOutputs(dataOutputs), lenOutputs(lenOutputs), hasOutput(numOutputs != nullptr),
-      messagePrinter(hasOutput) {
+      messagePrinter(hasOutput), deviceProductTable({
+#define NAMEDDEVICE(devId, product, ignored_devName) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
+#define DEVICE(devId, product) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
+#include "devices.inl"
+#undef DEVICE
+#undef NAMEDDEVICE
+                                     {0u, std::string("")}}) {
     for (uint32_t i = 0; i < numSources; ++i) {
         inputs.push_back(Source(dataSources[i], static_cast<size_t>(lenSources[i]), nameSources[i]));
     }
@@ -193,4 +199,25 @@ void OclocArgHelper::saveOutput(const std::string &filename, const std::ostream 
         std::ofstream file(filename);
         file << ss.str();
     }
+}
+
+bool OclocArgHelper::setAcronymForDeviceId(std::string &device) {
+    auto product = returnProductNameForDevice(std::stoi(device, 0, 16));
+    if (!product.empty()) {
+        printf("Auto-detected target based on %s device id: %s\n", device.c_str(), product.c_str());
+
+    } else {
+        printf("Could not determine target based on device id: %s\n", device.c_str());
+        return false;
+    }
+    device = std::move(product);
+    return true;
+}
+std::string OclocArgHelper::returnProductNameForDevice(unsigned short deviceId) {
+    for (int i = 0; deviceProductTable[i].deviceId != 0; i++) {
+        if (deviceProductTable[i].deviceId == deviceId) {
+            return deviceProductTable[i].product;
+        }
+    }
+    return "";
 }
