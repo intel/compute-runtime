@@ -237,6 +237,12 @@ HWTEST2_F(ZesPerformanceFixture, GivenValidPerfHandleWhenSettingMediaConfigAndGe
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorGetConfig(handle, &getFactor));
             EXPECT_DOUBLE_EQ(std::round(getFactor), halfOfMaxPerformanceFactor);
 
+            setFactor = 50;
+            getFactor = 0;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorSetConfig(handle, setFactor));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorGetConfig(handle, &getFactor));
+            EXPECT_DOUBLE_EQ(std::round(getFactor), halfOfMaxPerformanceFactor);
+
             setFactor = 60;
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorSetConfig(handle, setFactor));
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorGetConfig(handle, &getFactor));

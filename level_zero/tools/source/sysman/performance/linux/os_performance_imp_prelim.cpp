@@ -114,13 +114,13 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
         break;
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
         if (productFamily == IGFX_PVC) {
-            if (pFactor >= halfOfMaxPerformanceFactor) {
+            if (pFactor > halfOfMaxPerformanceFactor) {
                 multiplier = 1;
             } else {
                 multiplier = 0.5;
             }
         } else {
-            if (pFactor >= halfOfMaxPerformanceFactor) {
+            if (pFactor > halfOfMaxPerformanceFactor) {
                 multiplier = 1;
             } else if (pFactor > minPerformanceFactor) {
                 multiplier = 0.5;
