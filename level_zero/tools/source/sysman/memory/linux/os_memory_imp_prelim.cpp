@@ -185,6 +185,10 @@ ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) 
         return result;
     }
     pBandwidth->timestamp = timeStampVal * 1e-8; // Convert timeStamp into seconds
+    const std::string maxBwFile = "prelim_lmem_max_bw_Mbps";
+    uint64_t maxBw = 0;
+    pSysfsAccess->read(maxBwFile, maxBw);
+    pBandwidth->maxBandwidth = maxBw * MbpsToBytesPerSecond;
     return result;
 }
 
