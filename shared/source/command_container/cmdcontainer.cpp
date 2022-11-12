@@ -188,14 +188,10 @@ size_t CommandContainer::getTotalCmdBufferSize() {
 
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,
                                               size_t size) {
-    return getHeapWithRequiredSize(heapType, size, 0, true)->getSpace(size);
+    return getHeapWithRequiredSizeAndAlignment(heapType, size, 0)->getSpace(size);
 }
 
 IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment) {
-    return getHeapWithRequiredSize(heapType, sizeRequired, alignment, false);
-}
-
-IndirectHeap *CommandContainer::getHeapWithRequiredSize(HeapType heapType, size_t sizeRequired, size_t alignment, bool allowGrow) {
     auto indirectHeap = getIndirectHeap(heapType);
     UNRECOVERABLE_IF(indirectHeap == nullptr);
     auto sizeRequested = sizeRequired;
@@ -210,9 +206,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSize(HeapType heapType, size_
     } else {
         if (indirectHeap->getAvailableSpace() < sizeRequested) {
             size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
-            if (allowGrow) {
-                newSize = std::max(newSize, indirectHeap->getAvailableSpace() + sizeRequested);
-            }
+            newSize = std::max(newSize, indirectHeap->getAvailableSpace() + sizeRequested);
             newSize = alignUp(newSize, MemoryConstants::pageSize);
             auto oldAlloc = getIndirectHeapAllocation(heapType);
             this->createAndAssignNewHeap(heapType, newSize);

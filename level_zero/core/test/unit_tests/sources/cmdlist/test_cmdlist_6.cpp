@@ -895,7 +895,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     }
     EXPECT_LT(0u, sshUsed);
 
-    size_t dshEstimated = NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernel->getImmutableData()->getKernelInfo()->kernelDescriptor, 1);
+    size_t dshEstimated = NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(*kernel->getImmutableData()->getKernelInfo());
     size_t sshEstimated = NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(*kernel->getImmutableData()->getKernelInfo());
 
     EXPECT_GE(dshEstimated, dshUsed);

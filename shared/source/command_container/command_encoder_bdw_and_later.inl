@@ -104,15 +104,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, args.preemptionMode);
 
-    if (!ApiSpecificConfig::getBindlessConfiguration()) {
-        auto heap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
-        auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor, container.getNumIddPerBlock());
-        if (heap->getAvailableSpace() <= dshSizeRequired) {
-            heap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, heap->getUsed() + heap->getAvailableSpace(), 0);
-            UNRECOVERABLE_IF(!heap);
-        }
-    }
-
     uint32_t samplerStateOffset = 0;
     uint32_t samplerCount = 0;
 
@@ -175,9 +166,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  args.dispatchInterface->getPerThreadData(), sizePerThreadDataForWholeGroup);
     }
 
-    uint32_t numIDD = 0u;
-    void *iddPtr = getInterfaceDescriptor(container, numIDD);
-
     auto slmSizeNew = args.dispatchInterface->getSlmTotalSize();
     bool dirtyHeaps = container.isAnyHeapDirty();
     bool flush = container.slmSize != slmSizeNew || dirtyHeaps || args.requiresUncachedMocs;
@@ -211,12 +199,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         if (container.slmSize != slmSizeNew) {
             EncodeL3State<Family>::encode(container, slmSizeNew != 0u);
             container.slmSize = slmSizeNew;
+
+            if (container.nextIddInBlock != container.getNumIddPerBlock()) {
+                EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
+            }
         }
     }
 
-    if (numIDD == 0 || flush) {
-        EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
-    }
+    uint32_t numIDD = 0u;
+    void *iddPtr = getInterfaceDescriptor(container, numIDD, hwInfo);
 
     cmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
     cmd.setIndirectDataLength(sizeThreadData);
@@ -554,8 +545,8 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t numIddsPerBlock) {
-    return sizeof(typename Family::INTERFACE_DESCRIPTOR_DATA) * numIddsPerBlock;
+uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh() {
+    return sizeof(typename Family::INTERFACE_DESCRIPTOR_DATA);
 }
 
 } // namespace NEO
