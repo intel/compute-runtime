@@ -42,6 +42,9 @@ struct DeviceFixture {
     L0::ContextImp *context = nullptr;
     MockBuiltins *mockBuiltIns = nullptr;
     NEO::ExecutionEnvironment *execEnv = nullptr;
+
+    template <typename HelperType>
+    HelperType &getHelper() const;
 };
 
 struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {

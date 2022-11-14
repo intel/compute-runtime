@@ -670,11 +670,11 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     ASSERT_NE(nullptr, eventPool);
 
     auto &hwInfo = device->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto event = std::unique_ptr<L0::Event>(l0HwHelper.createEvent(eventPool.get(), &eventDesc, device));
+    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto event = std::unique_ptr<L0::Event>(l0CoreHelper.createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
 
-    if (l0HwHelper.multiTileCapablePlatform()) {
+    if (l0CoreHelper.multiTileCapablePlatform()) {
         EXPECT_TRUE(event->isUsingContextEndOffset());
     } else {
         EXPECT_FALSE(event->isUsingContextEndOffset());
@@ -685,8 +685,8 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
         eventCompletionMemory = ptrOffset(eventCompletionMemory, event->getContextEndOffset());
     }
     uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
-    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPacketsCount = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    if (l0CoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPacketsCount = l0CoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
 
     for (uint32_t i = 0; i < maxPacketsCount; i++) {

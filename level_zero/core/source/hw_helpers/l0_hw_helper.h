@@ -26,6 +26,9 @@ namespace L0 {
 struct Event;
 struct Device;
 struct EventPool;
+class L0HwHelper;
+
+using L0CoreHelper = L0HwHelper;
 
 class L0HwHelper {
   public:

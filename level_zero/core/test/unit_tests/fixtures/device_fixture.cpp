@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
@@ -47,6 +48,14 @@ void DeviceFixture::tearDown() {
     driverHandle.reset(nullptr);
     execEnv->decRefInternal();
 }
+
+template <typename HelperType>
+HelperType &DeviceFixture::getHelper() const {
+    auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<HelperType>();
+    return helper;
+}
+
+template L0CoreHelper &DeviceFixture::getHelper() const;
 
 void PageFaultDeviceFixture::setUp() {
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());

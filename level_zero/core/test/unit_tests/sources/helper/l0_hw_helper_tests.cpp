@@ -14,25 +14,26 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 namespace L0 {
 namespace ult {
 
-using L0HwHelperTest = ::testing::Test;
+using L0HwHelperTest = Test<DeviceFixture>;
 
 using PlatformsWithWa = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HP_CORE>;
 using NonMultiTilePlatforms = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 
 HWTEST2_F(L0HwHelperTest, givenResumeWANotNeededThenFalseIsReturned, IsAtMostGen11) {
-    auto &l0HwHelper = L0::L0HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
 
-    EXPECT_FALSE(l0HwHelper.isResumeWARequired());
+    EXPECT_FALSE(l0CoreHelper.isResumeWARequired());
 }
 
 HWTEST2_F(L0HwHelperTest, givenResumeWANeededThenTrueIsReturned, PlatformsWithWa) {
-    auto &l0HwHelper = L0::L0HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
 
-    EXPECT_TRUE(l0HwHelper.isResumeWARequired());
+    EXPECT_TRUE(l0CoreHelper.isResumeWARequired());
 }
 
 static void printAttentionBitmask(uint8_t *expected, uint8_t *actual, uint32_t maxSlices, uint32_t maxSubSlicesPerSlice, uint32_t maxEuPerSubslice, uint32_t threadsPerEu, bool printBitmask = false) {
@@ -108,7 +109,7 @@ HWTEST_F(L0HwHelperTest, givenL0HwHelperWhenAskingForUsmCompressionSupportThenRe
 
 HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned) {
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0HwHelper = L0::L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
 
     std::unique_ptr<uint8_t[]> bitmask;
     size_t size = 0;
@@ -126,7 +127,7 @@ HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenC
     std::vector<EuThread::ThreadId> threads;
     threads.push_back({0, 0, 0, 0, 6});
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
 
     auto expectedBitmask = std::make_unique<uint8_t[]>(size);
     uint8_t *data = nullptr;
@@ -138,7 +139,7 @@ HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenC
     threads.clear();
     threads.push_back({0, 0, 0, 1, 3});
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
     returnedBitmask = bitmask.get();
     returnedBitmask += bytesPerEu;
     EXPECT_EQ(uint8_t(1u << 3), returnedBitmask[0]);
@@ -146,7 +147,7 @@ HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenC
     threads.clear();
     threads.push_back({0, 0, subslice, 3, 6});
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
 
     data = expectedBitmask.get();
     memset(expectedBitmask.get(), 0, size);
@@ -161,7 +162,7 @@ HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenC
     threads.clear();
     threads.push_back({0, hwInfo.gtSystemInfo.MaxSlicesSupported - 1, subslice, 3, 6});
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
     data = expectedBitmask.get();
     memset(expectedBitmask.get(), 0, size);
 
@@ -176,14 +177,14 @@ HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenC
     threads.clear();
     threads.push_back({0, hwInfo.gtSystemInfo.MaxSlicesSupported - 1, subslice, maxEUsInAtt - 1, 0});
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
     data = expectedBitmask.get();
     memset(expectedBitmask.get(), 0, size);
 
     data = ptrOffset(data, (hwInfo.gtSystemInfo.MaxSlicesSupported - 1) * threadsSizePerSlice);
     data = ptrOffset(data, subslice * threadsSizePerSubSlice);
 
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0CoreHelper.isResumeWARequired()) {
         data = ptrOffset(data, (maxEUsInAtt - 1) % 4 * bytesPerEu);
     } else {
         data = ptrOffset(data, maxEUsInAtt - 1 * bytesPerEu);

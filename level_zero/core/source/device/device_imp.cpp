@@ -302,16 +302,15 @@ uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCo
         return numSubDeviceCopyEngineGroups;
     }
 
-    const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto &l0HwHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0HwHelper>();
+    auto &coreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    auto &l0CoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     uint32_t subDeviceQueueGroupsIter = 0;
     for (; subDeviceQueueGroupsIter < std::min(numSubDeviceCopyEngineGroups, numberOfSubDeviceCopyEngineGroupsRequested); subDeviceQueueGroupsIter++) {
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
-        pCommandQueueGroupProperties[subDeviceQueueGroupsIter].maxMemoryFillPatternSize = hwHelper.getMaxFillPaternSizeForCopyEngine();
+        pCommandQueueGroupProperties[subDeviceQueueGroupsIter].maxMemoryFillPatternSize = coreHelper.getMaxFillPaternSizeForCopyEngine();
 
-        l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[subDeviceQueueGroupsIter], this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter]);
+        l0CoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[subDeviceQueueGroupsIter], this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter]);
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].numQueues = static_cast<uint32_t>(this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter].engines.size());
     }
 
@@ -333,9 +332,8 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
         return ZE_RESULT_SUCCESS;
     }
 
-    const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto &l0HwHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0HwHelper>();
+    auto &coreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    auto &l0CoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0HwHelper>();
 
     *pCount = std::min(totalEngineGroups, *pCount);
     for (uint32_t i = 0; i < std::min(numEngineGroups, *pCount); i++) {
@@ -354,9 +352,9 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
         }
         if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Copy) {
             pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
-            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = hwHelper.getMaxFillPaternSizeForCopyEngine();
+            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = coreHelper.getMaxFillPaternSizeForCopyEngine();
         }
-        l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i]);
+        l0CoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i]);
         pCommandQueueGroupProperties[i].numQueues = static_cast<uint32_t>(engineGroups[i].engines.size());
     }
 

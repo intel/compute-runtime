@@ -149,9 +149,9 @@ ze_result_t EventPoolImp::createEvent(const ze_event_desc_t *desc, ze_event_hand
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto &l0HwHelper = L0HwHelper::get(getDevice()->getHwInfo().platform.eRenderCoreFamily);
+    auto &l0CoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
-    *phEvent = l0HwHelper.createEvent(this, desc, getDevice());
+    *phEvent = l0CoreHelper.createEvent(this, desc, getDevice());
 
     return ZE_RESULT_SUCCESS;
 }

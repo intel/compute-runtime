@@ -60,13 +60,13 @@ TEST(DebugSessionTest, givenApplyResumeWaCalledThenWAIsApplied) {
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     size_t bitmaskSize = 32;
     auto bitmask = std::make_unique<uint8_t[]>(bitmaskSize);
     bitmask.get()[0] = 1;
     sessionMock->applyResumeWa(bitmask.get(), bitmaskSize);
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0CoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1, bitmask.get()[4]);
     } else {
         EXPECT_EQ(0, bitmask.get()[4]);
@@ -918,10 +918,11 @@ TEST(DebugSessionTest, GivenBindlessSipVersion1AndResumeWARequiredWhenCallingRes
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -940,7 +941,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion1AndResumeWARequiredWhenCallingRes
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0CoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, sessionMock->readRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeResumeCommandCalled);
@@ -961,10 +962,11 @@ TEST(DebugSessionTest, GivenErrorFromReadRegisterWhenResumingThreadThenRegisterI
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -982,7 +984,7 @@ TEST(DebugSessionTest, GivenErrorFromReadRegisterWhenResumingThreadThenRegisterI
 
     auto result = sessionMock->resume(thread);
 
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0CoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, sessionMock->readRegistersCallCount);
         EXPECT_EQ(0u, sessionMock->writeRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeResumeCommandCalled);
@@ -1006,10 +1008,11 @@ TEST(DebugSessionTest, GivenErrorFromWriteRegisterWhenResumingThreadThenRegister
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1027,7 +1030,7 @@ TEST(DebugSessionTest, GivenErrorFromWriteRegisterWhenResumingThreadThenRegister
 
     auto result = sessionMock->resume(thread);
 
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0CoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, sessionMock->readRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeResumeCommandCalled);
@@ -1050,10 +1053,11 @@ TEST(DebugSessionTest, GivenNonBindlessSipVersion1AndResumeWARequiredWhenCalling
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1072,7 +1076,7 @@ TEST(DebugSessionTest, GivenNonBindlessSipVersion1AndResumeWARequiredWhenCalling
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0CoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, sessionMock->readRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeResumeCommandCalled);
@@ -2307,7 +2311,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
     retVal = sessionMock->writeSLMMemory(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 
-    desc.address = 0x1000000f; //force a read
+    desc.address = 0x1000000f; // force a read
     retVal = sessionMock->writeSLMMemory(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
     sessionMock->slmCmdRegisterAccessReadyCount = 2;
