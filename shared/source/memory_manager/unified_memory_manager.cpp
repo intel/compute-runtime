@@ -493,9 +493,12 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                        subDevices};
     cpuProperties.alignment = MemoryConstants::pageSize2Mb;
     cpuProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
+    cpuProperties.forceKMDAllocation = true;
+    cpuProperties.makeGPUVaDifferentThanCPUPtr = true;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false, cacheRegion);
     GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties, externalPtr);
+
     if (!allocationCpu) {
         return nullptr;
     }

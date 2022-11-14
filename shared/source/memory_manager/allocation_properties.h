@@ -11,6 +11,7 @@
 
 namespace NEO {
 struct ImageInfo;
+
 struct AllocationProperties {
     union {
         struct {
@@ -40,6 +41,8 @@ struct AllocationProperties {
     AllocationType allocationType = AllocationType::UNKNOWN;
     GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
     ImageInfo *imgInfo = nullptr;
+    bool forceKMDAllocation = false;
+    bool makeGPUVaDifferentThanCPUPtr = false;
     bool multiStorageResource = false;
     ColouringPolicy colouringPolicy = ColouringPolicy::DeviceCountBased;
     size_t colouringGranularity = MemoryConstants::pageSize64k;
@@ -122,6 +125,8 @@ struct AllocationData {
     size_t alignment = 0;
     StorageInfo storageInfo = {};
     ImageInfo *imgInfo = nullptr;
+    bool forceKMDAllocation = false;
+    bool makeGPUVaDifferentThanCPUPtr = false;
     uint32_t rootDeviceIndex = 0;
     OsContext *osContext = nullptr;
     bool useMmapObject = true;
