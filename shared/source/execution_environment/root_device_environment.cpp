@@ -45,7 +45,7 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
 }
 
 void RootDeviceEnvironment::initDebugger() {
-    debugger = Debugger::create(hwInfo.get());
+    debugger = Debugger::create(*this);
 }
 
 void RootDeviceEnvironment::initDebuggerL0(Device *neoDevice) {

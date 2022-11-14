@@ -419,13 +419,13 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingSupportedDeviceFeatureCapabilities
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenLocalMemoryFeatureDisabledWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
-    EXPECT_TRUE(helper.isLocalMemoryEnabled(hardwareInfo));
+    auto &coreHelper = getHelper<CoreHelper>();
+    EXPECT_TRUE(coreHelper.isLocalMemoryEnabled(hardwareInfo));
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenLocalMemoryFeatureEnabledWhenIsLocalMemoryEnabledIsCalledThenFalseIsReturned) {
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
 
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
-    EXPECT_FALSE(helper.isLocalMemoryEnabled(hardwareInfo));
+    auto &coreHelper = getHelper<CoreHelper>();
+    EXPECT_FALSE(coreHelper.isLocalMemoryEnabled(hardwareInfo));
 }

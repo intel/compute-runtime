@@ -123,10 +123,10 @@ HWTEST_F(HwHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIs
 }
 
 TEST_F(HwHelperTest, givenDebuggingInactiveWhenSipKernelTypeIsQueriedThenCsrTypeIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_NE(nullptr, &helper);
+    auto &coreHelper = getHelper<CoreHelper>();
+    EXPECT_NE(nullptr, &coreHelper);
 
-    auto sipType = helper.getSipKernelType(false);
+    auto sipType = coreHelper.getSipKernelType(false);
     EXPECT_EQ(SipKernelType::Csr, sipType);
 }
 
@@ -767,21 +767,21 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingGlobalTimeStam
 TEST_F(HwHelperTest, givenEnableLocalMemoryDebugVarAndOsEnableLocalMemoryWhenSetThenGetEnableLocalMemoryReturnsCorrectValue) {
     DebugManagerStateRestore dbgRestore;
     VariableBackup<bool> orgOsEnableLocalMemory(&OSInterface::osEnableLocalMemory);
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &coreHelper = getHelper<CoreHelper>();
 
     DebugManager.flags.EnableLocalMemory.set(0);
-    EXPECT_FALSE(helper.getEnableLocalMemory(hardwareInfo));
+    EXPECT_FALSE(coreHelper.getEnableLocalMemory(hardwareInfo));
 
     DebugManager.flags.EnableLocalMemory.set(1);
-    EXPECT_TRUE(helper.getEnableLocalMemory(hardwareInfo));
+    EXPECT_TRUE(coreHelper.getEnableLocalMemory(hardwareInfo));
 
     DebugManager.flags.EnableLocalMemory.set(-1);
 
     OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(helper.getEnableLocalMemory(hardwareInfo));
+    EXPECT_FALSE(coreHelper.getEnableLocalMemory(hardwareInfo));
 
     OSInterface::osEnableLocalMemory = true;
-    EXPECT_EQ(helper.isLocalMemoryEnabled(hardwareInfo), helper.getEnableLocalMemory(hardwareInfo));
+    EXPECT_EQ(coreHelper.isLocalMemoryEnabled(hardwareInfo), coreHelper.getEnableLocalMemory(hardwareInfo));
 }
 
 TEST_F(HwHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnableLocalMemoryReturnsCorrectValue) {

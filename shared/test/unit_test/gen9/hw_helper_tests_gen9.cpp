@@ -36,9 +36,9 @@ GEN9TEST_F(HwHelperTestGen9, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) 
 }
 
 GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenDbgCsrLocalTypeIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &coreHelper = getHelper<CoreHelper>();
 
-    auto sipType = helper.getSipKernelType(true);
+    auto sipType = coreHelper.getSipKernelType(true);
     EXPECT_EQ(SipKernelType::DbgCsrLocal, sipType);
 }
 

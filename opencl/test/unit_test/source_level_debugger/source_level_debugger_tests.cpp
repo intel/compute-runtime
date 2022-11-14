@@ -879,8 +879,11 @@ TEST(SourceLevelDebugger, givenDebuggerLibraryAvailableAndExperimentalEnableSour
 
     DebugManager.flags.ExperimentalEnableSourceLevelDebugger.set(1);
 
-    auto hwInfo = *defaultHwInfo;
-    auto debugger = std::unique_ptr<Debugger>(Debugger::create(&hwInfo));
+    auto executionEnvironment = new ExecutionEnvironment();
+    MockPlatform platform(*executionEnvironment);
+    platform.initializeWithNewDevices();
+
+    auto debugger = std::unique_ptr<Debugger>(Debugger::create(*executionEnvironment->rootDeviceEnvironments[0].get()));
     ASSERT_NE(nullptr, debugger.get());
     EXPECT_TRUE(debugger->isLegacy());
 }

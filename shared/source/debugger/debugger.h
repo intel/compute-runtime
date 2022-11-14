@@ -13,6 +13,7 @@ class LinearStream;
 class IndirectHeap;
 struct DebugData;
 class GraphicsAllocation;
+struct RootDeviceEnvironment;
 
 class Debugger {
   public:
@@ -27,7 +28,7 @@ class Debugger {
         uint64_t BindlessSamplerStateBaseAddress = 0;
     };
 
-    static std::unique_ptr<Debugger> create(HardwareInfo *hwInfo);
+    static std::unique_ptr<Debugger> create(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     virtual ~Debugger() = default;
     bool isLegacy() const { return isLegacyMode; }
     virtual void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) = 0;

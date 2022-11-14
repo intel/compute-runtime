@@ -68,7 +68,8 @@ void ClDevice::setupFp64Flags() {
 
 void ClDevice::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto &coreHelper = getRootDeviceEnvironment().getHelper<CoreHelper>();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
@@ -88,8 +89,6 @@ void ClDevice::initializeCaps() {
         driverVersion.assign(driverInfo->getVersion(driverVersion).c_str());
         sharingFactory.verifyExtensionSupport(driverInfo.get());
     }
-
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     deviceInfo.name = name.c_str();
     deviceInfo.driverVersion = driverVersion.c_str();
@@ -141,7 +140,7 @@ void ClDevice::initializeCaps() {
 
         auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
                                 ? CommonConstants::maximalSimdSize
-                                : hwHelper.getMinimalSIMDSize();
+                                : coreHelper.getMinimalSIMDSize();
 
         // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
         deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
@@ -204,7 +203,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_intel_media_block_io ";
     }
 
-    if (hwInfoConfig->isBFloat16ConversionSupported(hwInfo)) {
+    if (productHelper.isBFloat16ConversionSupported(hwInfo)) {
         deviceExtensions += "cl_intel_bfloat16_conversions ";
     }
 
@@ -228,7 +227,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_pci_bus_info ";
     }
 
-    deviceExtensions += hwHelper.getExtensions(hwInfo);
+    deviceExtensions += coreHelper.getExtensions(hwInfo);
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     std::vector<std::string> exposedBuiltinKernelsVector;
@@ -252,7 +251,7 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.deviceType = CL_DEVICE_TYPE_GPU;
     deviceInfo.endianLittle = 1;
-    deviceInfo.hostUnifiedMemory = (false == hwHelper.isLocalMemoryEnabled(hwInfo));
+    deviceInfo.hostUnifiedMemory = (false == coreHelper.isLocalMemoryEnabled(hwInfo));
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
     deviceInfo.parentDevice = nullptr;
@@ -284,7 +283,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.maxReadWriteImageArgs = hwInfo.capabilityTable.supportsImages ? 128 : 0;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 
-    //copy system info to prevent misaligned reads
+    // copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;
 
     const auto subDevicesCount = std::max(getNumGenericSubDevices(), 1u);
@@ -326,11 +325,11 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.localMemType = CL_LOCAL;
 
-    deviceInfo.image3DMaxWidth = hwHelper.getMax3dImageWidthOrHeight();
-    deviceInfo.image3DMaxHeight = hwHelper.getMax3dImageWidthOrHeight();
+    deviceInfo.image3DMaxWidth = coreHelper.getMax3dImageWidthOrHeight();
+    deviceInfo.image3DMaxHeight = coreHelper.getMax3dImageWidthOrHeight();
 
     // cl_khr_image2d_from_buffer
-    deviceInfo.imagePitchAlignment = hwHelper.getPitchAlignmentForImage(&hwInfo);
+    deviceInfo.imagePitchAlignment = coreHelper.getPitchAlignmentForImage(&hwInfo);
     deviceInfo.imageBaseAddressAlignment = 4;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
@@ -393,7 +392,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.globalVariablePreferredTotalSize = ocl21FeaturesEnabled ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;
 
     deviceInfo.planarYuvMaxWidth = 16384;
-    deviceInfo.planarYuvMaxHeight = hwHelper.getPlanarYuvMaxHeight();
+    deviceInfo.planarYuvMaxHeight = coreHelper.getPlanarYuvMaxHeight();
 
     deviceInfo.vmeAvcSupportsTextureSampler = hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler;
     if (hwInfo.capabilityTable.supportsVme) {
@@ -408,15 +407,15 @@ void ClDevice::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    deviceInfo.preferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(hwInfo, false)
+    deviceInfo.preferredWorkGroupSizeMultiple = coreHelper.isFusedEuDispatchEnabled(hwInfo, false)
                                                     ? CommonConstants::maximalSimdSize * 2
                                                     : CommonConstants::maximalSimdSize;
 
-    deviceInfo.hostMemCapabilities = hwInfoConfig->getHostMemCapabilities(&hwInfo);
-    deviceInfo.deviceMemCapabilities = hwInfoConfig->getDeviceMemCapabilities();
-    deviceInfo.singleDeviceSharedMemCapabilities = hwInfoConfig->getSingleDeviceSharedMemCapabilities();
-    deviceInfo.crossDeviceSharedMemCapabilities = hwInfoConfig->getCrossDeviceSharedMemCapabilities();
-    deviceInfo.sharedSystemMemCapabilities = hwInfoConfig->getSharedSystemMemCapabilities(&hwInfo);
+    deviceInfo.hostMemCapabilities = productHelper.getHostMemCapabilities(&hwInfo);
+    deviceInfo.deviceMemCapabilities = productHelper.getDeviceMemCapabilities();
+    deviceInfo.singleDeviceSharedMemCapabilities = productHelper.getSingleDeviceSharedMemCapabilities();
+    deviceInfo.crossDeviceSharedMemCapabilities = productHelper.getCrossDeviceSharedMemCapabilities();
+    deviceInfo.sharedSystemMemCapabilities = productHelper.getSharedSystemMemCapabilities(&hwInfo);
 
     initializeOsSpecificCaps();
     getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures);

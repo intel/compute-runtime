@@ -1306,12 +1306,12 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreating
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableLocalMemory.set(true);
 
-    // Ensure family supports local memory
-    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isLocalMemoryEnabled(hwInfo)) {
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    auto &coreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CoreHelper>();
+    if (!coreHelper.isLocalMemoryEnabled(hwInfo)) {
         GTEST_SKIP();
     }
 
-    MockExecutionEnvironment executionEnvironment(&hwInfo);
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
     const auto size = MemoryConstants::pageSize64k;
 

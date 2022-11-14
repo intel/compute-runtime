@@ -944,9 +944,8 @@ TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDevi
 TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDependsOnLocalMemory) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
-
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    auto localMemoryEnabled = hwHelper.isLocalMemoryEnabled(*defaultHwInfo);
+    auto &coreHelper = device->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto localMemoryEnabled = coreHelper.isLocalMemoryEnabled(*defaultHwInfo);
 
     EXPECT_EQ((localMemoryEnabled == false), caps.hostUnifiedMemory);
 }

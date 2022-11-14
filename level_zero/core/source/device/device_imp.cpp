@@ -1041,11 +1041,11 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     neoDevice->incRefInternal();
 
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &coreHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
 
     device->execEnvironment = (void *)neoDevice->getExecutionEnvironment();
     device->allocationsForReuse = std::make_unique<NEO::AllocationsList>();
-    bool platformImplicitScaling = hwHelper.platformSupportsImplicitScaling(hwInfo);
+    bool platformImplicitScaling = coreHelper.platformSupportsImplicitScaling(hwInfo);
     device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), platformImplicitScaling);
     device->metricContext = MetricDeviceContext::create(*device);
     device->builtins = BuiltinFunctionsLib::create(
@@ -1056,7 +1056,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
     device->driverInfo.reset(NEO::DriverInfo::create(&hwInfo, osInterface));
 
-    auto debugSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+    auto debugSurfaceSize = coreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     std::vector<char> stateSaveAreaHeader;
 
     if (neoDevice->getDebugger() || neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
@@ -1085,8 +1085,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     }
 
     if (debugSurface && stateSaveAreaHeader.size() > 0) {
-        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
+        const auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
                                                               *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
                                                               stateSaveAreaHeader.size());
     }

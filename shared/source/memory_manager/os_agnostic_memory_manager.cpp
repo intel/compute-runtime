@@ -155,9 +155,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithGpuVa(con
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     AllocationData allocationDataAlign = allocationData;
     allocationDataAlign.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    allocationDataAlign.alignment = hwHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferCompressed)
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get();
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
+    allocationDataAlign.alignment = coreHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferCompressed)
                                         ? MemoryConstants::megaByte
                                         : MemoryConstants::pageSize64k;
     auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationDataAlign);
