@@ -223,9 +223,10 @@ TEST(YamlConsumeNameIdentifier, GivenInvalidNameIdentifierBeginningCharacterThen
 
 TEST(YamlConsumeNameIdentifier, GivenNameIdentifierBeginningCharacterThenConsumeWholeNameIdentifier) {
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {
-        bool isNameIndentifierChar = NEO::Yaml::isNameIdentifierCharacter(static_cast<char>(c));
+        bool isNameOrSeparationWhitespaceIndentifierChar = NEO::Yaml::isNameIdentifierCharacter(static_cast<char>(c));
+        isNameOrSeparationWhitespaceIndentifierChar |= NEO::Yaml::isSeparationWhitespace(static_cast<char>(c));
         char nameIdentifierStr[] = {'A', static_cast<char>(c)};
-        auto expected = nameIdentifierStr + (isNameIndentifierChar ? 2 : 1);
+        auto expected = nameIdentifierStr + (isNameOrSeparationWhitespaceIndentifierChar ? 2 : 1);
         EXPECT_EQ(expected, NEO::Yaml::consumeNameIdentifier(ConstStringRef::fromArray(nameIdentifierStr), nameIdentifierStr)) << c;
     }
 }
@@ -1026,6 +1027,34 @@ TEST(YamlTokenize, GivenInvalidNumericLiteralThenReturnError) {
     EXPECT_FALSE(success);
     EXPECT_STREQ("NEO::Yaml : Could not parse line : [0] : [@] <-- parser position on error. Reason : Invalid numeric literal\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(YamlTokenize, GivenSpaceSeparatedStringAsValueThenReadItCorrectly) {
+    ConstStringRef yaml = "\nbanana: space separated string\napple: space separated with spaces at the end   \n";
+
+    NEO::Yaml::Token expectedTokens[] = {
+        Token{"\n", NEO::Yaml::Token::SingleCharacter},
+        Token{"banana", NEO::Yaml::Token::Identifier},
+        Token{":", NEO::Yaml::Token::SingleCharacter},
+        Token{"space separated string", NEO::Yaml::Token::LiteralString},
+        Token{"\n", NEO::Yaml::Token::SingleCharacter},
+        Token{"apple", NEO::Yaml::Token::Identifier},
+        Token{":", NEO::Yaml::Token::SingleCharacter},
+        Token{"space separated with spaces at the end", NEO::Yaml::Token::LiteralString},
+        Token{"\n", NEO::Yaml::Token::SingleCharacter}};
+    NEO::Yaml::LinesCache lines;
+    NEO::Yaml::TokensCache tokens;
+    std::string warnings;
+    std::string errors;
+    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    ASSERT_EQ(sizeof(expectedTokens) / sizeof(expectedTokens[0]), tokens.size());
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        EXPECT_EQ(expectedTokens[i], tokens[i]) << i;
+    }
 }
 
 TEST(YamlNode, WhenConstructedThenSetsUpProperDefaults) {

@@ -542,7 +542,7 @@ kernels_misc_info:
         address_qualifier: __global
         access_qualifier: NONE
         type_name:       'int*;8'
-        type_qualifiers: NONE
+        type_qualifiers: restrict const volatile
   - name:            kernel2
     args_info:
       - index:           0
@@ -596,13 +596,15 @@ kernels_misc_info:
     EXPECT_STREQ(kernel1ArgInfo1.addressQualifier.c_str(), "__global");
     EXPECT_STREQ(kernel1ArgInfo1.accessQualifier.c_str(), "NONE");
     EXPECT_STREQ(kernel1ArgInfo1.type.c_str(), "int*");
-    EXPECT_STREQ(kernel1ArgInfo1.typeQualifiers.c_str(), "NONE");
+    EXPECT_STREQ(kernel1ArgInfo1.typeQualifiers.c_str(), "restrict const volatile");
 
     const auto &kernel1ArgTraits1 = kernel1Info->kernelDescriptor.payloadMappings.explicitArgs.at(0).getTraits();
     EXPECT_EQ(KernelArgMetadata::AccessNone, kernel1ArgTraits1.accessQualifier);
     EXPECT_EQ(KernelArgMetadata::AddrGlobal, kernel1ArgTraits1.addressQualifier);
     KernelArgMetadata::TypeQualifiers qual = {};
-    qual.unknownQual = true;
+    qual.restrictQual = true;
+    qual.constQual = true;
+    qual.volatileQual = true;
     EXPECT_EQ(qual.packed, kernel1ArgTraits1.typeQualifiers.packed);
 
     EXPECT_EQ(4u, kernel2Info->kernelDescriptor.explicitArgsExtendedMetadata.size());

@@ -31,6 +31,16 @@ constexpr bool isWhitespace(char c) {
     }
 }
 
+constexpr bool isSeparationWhitespace(char c) {
+    switch (c) {
+    default:
+        return false;
+    case ' ':
+    case '\t':
+        return true;
+    }
+}
+
 constexpr bool isLetter(char c) {
     return ((c >= 'a') & (c <= 'z')) || ((c >= 'A') & (c <= 'Z'));
 }
@@ -103,7 +113,9 @@ constexpr const char *consumeNameIdentifier(ConstStringRef wholeText, const char
         auto it = parsePos + 1;
         while (it < parseEnd) {
             if (false == isNameIdentifierCharacter(*it)) {
-                break;
+                if (false == isSeparationWhitespace(*it)) {
+                    break;
+                }
             }
             ++it;
         }

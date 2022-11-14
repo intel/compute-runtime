@@ -81,6 +81,21 @@ class ConstStringRef {
         }
     }
 
+    template <typename Predicate>
+    constexpr ConstStringRef trimEnd(Predicate &&pred) const noexcept {
+        const char *end = ptr + len;
+        end--;
+        auto newLen = len;
+        while (true == pred(*end)) {
+            if (0u == newLen) {
+                break;
+            }
+            newLen--;
+            end--;
+        }
+        return ConstStringRef(this->ptr, newLen);
+    }
+
     constexpr const char *data() const noexcept {
         return ptr;
     }

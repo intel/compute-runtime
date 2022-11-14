@@ -275,10 +275,12 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
             context.isParsingIdent = false;
             auto tokEnd = consumeNameIdentifier(text, context.pos);
             if (tokEnd != context.pos) {
+                auto tokenData = ConstStringRef(context.pos, tokEnd - context.pos);
+                tokenData = tokenData.trimEnd(isWhitespace);
                 if (context.lineTraits.hasDictionaryEntry) {
-                    outTokens.push_back(Token(ConstStringRef(context.pos, tokEnd - context.pos), Token::LiteralString));
+                    outTokens.push_back(Token(tokenData, Token::LiteralString));
                 } else {
-                    outTokens.push_back(Token(ConstStringRef(context.pos, tokEnd - context.pos), Token::Identifier));
+                    outTokens.push_back(Token(tokenData, Token::Identifier));
                 }
             } else {
                 tokEnd = consumeNumberOrSign(text, context.pos);

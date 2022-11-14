@@ -251,3 +251,19 @@ TEST(ConstStringStartsWithConstString, GivenInvalidPrefixThenReturnsFalse) {
     EXPECT_FALSE(str.startsWith(ConstStringRef("some diff")));
     EXPECT_FALSE(str.startsWith(ConstStringRef("ome text")));
 }
+
+TEST(ConstStringRefTrimEnd, givenTrimEndFunctionWithPredicateThenReturnTrimmedConstStringRefAccordingToPredicate) {
+    auto predicateIsNumber = [](char c) {
+        return c >= '0' && c <= '9';
+    };
+    ConstStringRef str = "some 10 text1024";
+    auto trimmed = str.trimEnd(predicateIsNumber);
+    EXPECT_EQ(trimmed, ConstStringRef("some 10 text"));
+}
+
+TEST(ConstStringRefTrimEnd, givenTrimEndFunctionWithPredicateThatReturnsTrueForAllElementsThenReturnEmptyConstStringRef) {
+    auto predicate = [](char c) { return true; };
+    ConstStringRef str = "some text";
+    auto trimmed = str.trimEnd(predicate);
+    EXPECT_EQ(0u, trimmed.length());
+}
