@@ -76,7 +76,6 @@ DECLARE_DEBUG_VARIABLE(bool, UpdateCrossThreadDataSize, false, "Turn on cross th
 DECLARE_DEBUG_VARIABLE(bool, UseNewQueryTopoIoctl, true, "Use DRM_I915_QUERY_COMPUTE_SLICES")
 DECLARE_DEBUG_VARIABLE(bool, DisableGpuHangDetection, false, "Disable GPU hang detection")
 DECLARE_DEBUG_VARIABLE(bool, DisableForceToStateless, false, "Do not force stateless for buffers")
-DECLARE_DEBUG_VARIABLE(bool, DebuggerDisableSingleAddressSbaTracking, false, "Disable SBA Tracking command programming in single address space mode")
 DECLARE_DEBUG_VARIABLE(bool, ForceTheoreticalMaxWorkGroupCount, false, "Do not apply any limitation to max cooperative/concurrent work-group count queries")
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
