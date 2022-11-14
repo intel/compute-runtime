@@ -422,6 +422,36 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertes
     EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
 }
 
+HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenErrorIsReturned, IsAtLeastSkl) {
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = false;
+
+    ze_result_t returnValue;
+
+    using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<static_cast<GFXCORE_FAMILY>(NEO::HwMapper<productFamily>::gfxFamily)>;
+
+    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(productFamily,
+                                                                                                                            device,
+                                                                                                                            &desc,
+                                                                                                                            internalEngine,
+                                                                                                                            NEO::EngineGroupType::RenderCompute,
+                                                                                                                            returnValue)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList0);
+
+    auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+
+    returnValue = commandList0->performCpuMemcpy(nullptr, nullptr, 8, false, nullptr, 1, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+
+    returnValue = commandList0->performCpuMemcpy(nullptr, nullptr, 8, false, nullptr, 1, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);
+}
+
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;

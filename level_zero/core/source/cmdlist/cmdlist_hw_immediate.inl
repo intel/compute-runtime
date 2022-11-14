@@ -20,6 +20,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/device/bcs_split.h"
+#include "level_zero/core/source/helpers/error_code_helper_l0.h"
 
 namespace L0 {
 
@@ -602,7 +603,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
     }
 
     if (this->dependenciesPresent) {
-        this->csr->flushTagUpdate();
+        auto submissionStatus = this->csr->flushTagUpdate();
+        if (submissionStatus != NEO::SubmissionStatus::SUCCESS) {
+            return getErrorCodeForSubmissionStatus(submissionStatus);
+        }
     }
 
     Event *signalEvent = nullptr;

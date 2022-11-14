@@ -15,7 +15,6 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
-#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debugger/debugger_l0.h"
@@ -42,6 +41,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fence/fence.h"
+#include "level_zero/core/source/helpers/error_code_helper_l0.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <algorithm>
@@ -1112,13 +1112,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::handleSubmissionAndCompletionResults(
             }
         }
         if (completionRet != ZE_RESULT_ERROR_DEVICE_LOST) {
-            completionRet = ZE_RESULT_ERROR_UNKNOWN;
-        }
-        if (submitRet == NEO::SubmissionStatus::OUT_OF_MEMORY) {
-            completionRet = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-        }
-        if (submitRet == NEO::SubmissionStatus::OUT_OF_HOST_MEMORY) {
-            completionRet = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            completionRet = getErrorCodeForSubmissionStatus(submitRet);
         }
     }
 
