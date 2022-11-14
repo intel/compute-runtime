@@ -304,7 +304,7 @@ uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCo
 
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &l0HwHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0HwHelper>();
 
     uint32_t subDeviceQueueGroupsIter = 0;
     for (; subDeviceQueueGroupsIter < std::min(numSubDeviceCopyEngineGroups, numberOfSubDeviceCopyEngineGroupsRequested); subDeviceQueueGroupsIter++) {
@@ -335,7 +335,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
 
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &l0HwHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0HwHelper>();
 
     *pCount = std::min(totalEngineGroups, *pCount);
     for (uint32_t i = 0; i < std::min(numEngineGroups, *pCount); i++) {

@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 
 namespace L0 {
@@ -75,3 +76,9 @@ bool L0HwHelper::useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo) {
 }
 
 } // namespace L0
+
+template <>
+L0::L0HwHelper &NEO::RootDeviceEnvironment::getHelper<L0::L0HwHelper>() const {
+    auto &apiHelper = L0::L0HwHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
+    return apiHelper;
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
@@ -23,6 +24,12 @@ uint8_t ClHwHelper::makeDeviceRevision(const HardwareInfo &hwInfo) {
 
 cl_version ClHwHelper::makeDeviceIpVersion(uint16_t major, uint8_t minor, uint8_t revision) {
     return (major << 16) | (minor << 8) | revision;
+}
+
+template <>
+ClHwHelper &RootDeviceEnvironment::getHelper<ClHwHelper>() const {
+    auto &apiHelper = ClHwHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
+    return apiHelper;
 }
 
 } // namespace NEO
