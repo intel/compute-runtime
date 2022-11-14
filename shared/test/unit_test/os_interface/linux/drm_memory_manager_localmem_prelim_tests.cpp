@@ -1641,6 +1641,27 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWh
     drmMemoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWhenCopyDebugSurfaceToMultiTileAllocationThenCallCopyMemoryToAllocation) {
+    size_t sourceAllocationSize = MemoryConstants::pageSize;
+    size_t destinationAllocationSize = sourceAllocationSize;
+
+    DrmMemoryManagerToTestCopyMemoryToAllocation drmMemoryManager(*executionEnvironment, true, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    AllocationType debugSurfaces[] = {AllocationType::DEBUG_CONTEXT_SAVE_AREA, AllocationType::DEBUG_SBA_TRACKING_BUFFER};
+
+    for (auto type : debugSurfaces) {
+        AllocationProperties debugSurfaceProperties{0, true, sourceAllocationSize, type, false, false, 0b11};
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties);
+        ASSERT_NE(nullptr, allocation);
+
+        auto ret = drmMemoryManager.copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
+        EXPECT_TRUE(ret);
+        EXPECT_EQ(0u, drmMemoryManager.copyMemoryToAllocationBanksCalled);
+        drmMemoryManager.freeGraphicsMemory(allocation);
+    }
+}
+
 TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationFailsToLockResourceThenItReturnsFalse) {
     DrmMemoryManagerToTestCopyMemoryToAllocation drmMemoryManager(*executionEnvironment, true, 0);
     std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);

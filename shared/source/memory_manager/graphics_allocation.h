@@ -212,6 +212,11 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                type == AllocationType::DEBUG_MODULE_AREA;
     }
 
+    static bool isDebugSurfaceAllocationType(AllocationType type) {
+        return type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+               type == AllocationType::DEBUG_SBA_TRACKING_BUFFER;
+    }
+
     void *getReservedAddressPtr() const {
         return this->reservedAddressRangeInfo.addressPtr;
     }

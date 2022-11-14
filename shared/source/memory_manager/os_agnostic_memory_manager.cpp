@@ -77,8 +77,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize2Mb);
     }
 
-    if (allocationData.type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-        allocationData.type == AllocationType::DEBUG_SBA_TRACKING_BUFFER) {
+    if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type)) {
         sizeAligned *= allocationData.storageInfo.getNumBanks();
     }
 
@@ -104,8 +103,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
             memoryAllocation->setCpuPtrAndGpuAddress(ptr, canonizedGpuAddress);
         }
 
-        if (allocationData.type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-            allocationData.type == AllocationType::DEBUG_SBA_TRACKING_BUFFER) {
+        if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type)) {
             memoryAllocation->storageInfo = allocationData.storageInfo;
         }
 

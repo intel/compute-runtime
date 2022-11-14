@@ -296,8 +296,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-    if ((allocationData.type == NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-         allocationData.type == NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER) &&
+    if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type) &&
         allocationData.storageInfo.subDeviceBitfield.count() > 1) {
         return createMultiHostAllocation(allocationData);
     }
@@ -1249,11 +1248,12 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
 }
 
 bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
-    if (graphicsAllocation->getUnderlyingBuffer() && graphicsAllocation->storageInfo.getNumBanks() == 1) {
+    if (graphicsAllocation->getUnderlyingBuffer() && (graphicsAllocation->storageInfo.getNumBanks() == 1 || GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType()))) {
         return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
     }
     return copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));
 }
+
 bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
     if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         return false;
