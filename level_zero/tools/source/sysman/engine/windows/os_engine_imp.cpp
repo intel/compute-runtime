@@ -67,7 +67,7 @@ WddmEngineImp::WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType,
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
-OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId) {
+OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {
     WddmEngineImp *pWddmEngineImp = new WddmEngineImp(pOsSysman, engineType, engineInstance, subDeviceId);
     return static_cast<OsEngine *>(pWddmEngineImp);
 }

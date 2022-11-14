@@ -19,6 +19,7 @@ namespace ult {
 constexpr uint32_t handleComponentCount = 6u;
 class ZesEngineFixture : public SysmanDeviceFixture {
   protected:
+    std::vector<ze_device_handle_t> deviceHandles;
     std::unique_ptr<Mock<EngineNeoDrm>> pDrm;
     std::unique_ptr<Mock<MockPmuInterfaceImp>> pPmuInterface;
     Drm *pOriginalDrm = nullptr;
@@ -68,6 +69,20 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         ON_CALL(*pFsAccess.get(), read(_, _))
             .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EngineFsAccess>::readValSuccess));
 
+        for (auto handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+            delete handle;
+        }
+
+        pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+        uint32_t subDeviceCount = 0;
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
         getEngineHandles(0);
     }
 
@@ -169,7 +184,7 @@ TEST_F(ZesEngineFixture, GivenTestDiscreteDevicesAndValidEngineHandleWhenCalling
     ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<EngineSysfsAccess>::getValStringSymLinkFailure));
 
-    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u);
+    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
 
     zes_engine_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
@@ -179,7 +194,7 @@ TEST_F(ZesEngineFixture, GivenTestDiscreteDevicesAndValidEngineHandleWhenCalling
     ON_CALL(*pFsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EngineFsAccess>::readValFailure));
 
-    auto pOsEngineTest2 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u);
+    auto pOsEngineTest2 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest2->getActivity(&stats));
     delete pOsEngineTest1;
     delete pOsEngineTest2;
@@ -191,7 +206,7 @@ TEST_F(ZesEngineFixture, GivenTestIntegratedDevicesAndValidEngineHandleWhenCalli
     ON_CALL(*pFsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EngineFsAccess>::readValFailure));
 
-    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u);
+    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
     delete pOsEngineTest1;
 }

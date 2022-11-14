@@ -25,8 +25,8 @@ void EngineImp::init() {
     }
 }
 
-EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId) {
-    pOsEngine = OsEngine::create(pOsSysman, engineType, engineInstance, subDeviceId);
+EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice) {
+    pOsEngine = OsEngine::create(pOsSysman, engineType, engineInstance, subDeviceId, onSubdevice);
     init();
 }
 

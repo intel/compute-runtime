@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <map>
@@ -36,7 +37,7 @@ struct EngineHandleContext {
     EngineHandleContext(OsSysman *pOsSysman);
     MOCKABLE_VIRTUAL ~EngineHandleContext();
 
-    MOCKABLE_VIRTUAL void init();
+    MOCKABLE_VIRTUAL void init(std::vector<ze_device_handle_t> &deviceHandles);
     void releaseEngines();
 
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine);
@@ -48,7 +49,7 @@ struct EngineHandleContext {
     }
 
   private:
-    void createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId);
+    void createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
     std::once_flag initEngineOnce;
     bool engineInitDone = false;
 };

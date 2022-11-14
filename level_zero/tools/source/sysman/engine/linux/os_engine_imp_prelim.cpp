@@ -91,9 +91,6 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 }
 
 void LinuxEngineImp::init() {
-    uint32_t subDeviceCount = 0;
-    pDevice->getSubDevices(&subDeviceCount, nullptr);
-    onSubDevice = (subDeviceCount == 0) ? 0 : 1;
     uint64_t config = UINT64_MAX;
     switch (engineGroup) {
     case ZES_ENGINE_GROUP_ALL:
@@ -124,7 +121,7 @@ bool LinuxEngineImp::isEngineModuleSupported() {
     return true;
 }
 
-LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId) : engineGroup(type), engineInstance(engineInstance), subDeviceId(subDeviceId) {
+LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) : engineGroup(type), engineInstance(engineInstance), subDeviceId(subDeviceId), onSubDevice(onSubDevice) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
@@ -132,8 +129,8 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     init();
 }
 
-OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId) {
-    LinuxEngineImp *pLinuxEngineImp = new LinuxEngineImp(pOsSysman, type, engineInstance, subDeviceId);
+OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {
+    LinuxEngineImp *pLinuxEngineImp = new LinuxEngineImp(pOsSysman, type, engineInstance, subDeviceId, onSubDevice);
     return static_cast<OsEngine *>(pLinuxEngineImp);
 }
 

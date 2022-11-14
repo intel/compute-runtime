@@ -69,7 +69,7 @@ struct Mock<DiagnosticsFwInterface> : public DiagnosticsFwInterface {
 };
 struct MockGlobalOperationsEngineHandleContext : public EngineHandleContext {
     MockGlobalOperationsEngineHandleContext(OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}
-    void init() override {}
+    void init(std::vector<ze_device_handle_t> &deviceHandles) override {}
 };
 
 class DiagFsAccess : public FsAccess {};

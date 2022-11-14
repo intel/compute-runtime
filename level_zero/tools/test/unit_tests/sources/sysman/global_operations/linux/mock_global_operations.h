@@ -56,9 +56,9 @@ struct GlobalOperationsEngineHandleContext : public EngineHandleContext {
 };
 template <>
 struct Mock<GlobalOperationsEngineHandleContext> : public GlobalOperationsEngineHandleContext {
-    void initMock() {}
+    void initMock(std::vector<ze_device_handle_t> &deviceHandles) {}
     Mock<GlobalOperationsEngineHandleContext>(OsSysman *pOsSysman) : GlobalOperationsEngineHandleContext(pOsSysman) {}
-    MOCK_METHOD(void, init, (), (override));
+    MOCK_METHOD(void, init, (std::vector<ze_device_handle_t> & deviceHandles), (override));
 };
 
 struct GlobalOperationsRasHandleContext : public RasHandleContext {

@@ -22,7 +22,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
     bool isEngineModuleSupported() override;
     static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
     LinuxEngineImp() = default;
-    LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId);
+    LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice);
     ~LinuxEngineImp() override {
         if (fd != -1) {
             close(static_cast<int>(fd));
@@ -37,7 +37,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
     NEO::Drm *pDrm = nullptr;
     Device *pDevice = nullptr;
     uint32_t subDeviceId = 0;
-    uint32_t onSubDevice = 0;
+    ze_bool_t onSubDevice = false;
 
   private:
     void init();

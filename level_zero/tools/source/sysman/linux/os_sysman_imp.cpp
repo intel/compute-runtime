@@ -335,7 +335,7 @@ void LinuxSysmanImp::reInitSysmanDeviceResources() {
         getSysmanDeviceImp()->pRasHandleContext->init(getSysmanDeviceImp()->deviceHandles);
     }
     if (getSysmanDeviceImp()->pEngineHandleContext->isEngineInitDone()) {
-        getSysmanDeviceImp()->pEngineHandleContext->init();
+        getSysmanDeviceImp()->pEngineHandleContext->init(getSysmanDeviceImp()->deviceHandles);
     }
     if (!diagnosticsReset) {
         if (getSysmanDeviceImp()->pDiagnosticsHandleContext->isDiagnosticsInitDone()) {
