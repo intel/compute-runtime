@@ -2260,14 +2260,27 @@ struct MockEventCompletion : public EventImp<uint32_t> {
 
     MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device) {
         auto neoDevice = device->getNEODevice();
-        kernelEventCompletionData = std::make_unique<KernelEventCompletionData<uint32_t>[]>(EventPacketsCount::maxKernelSplit);
+        auto &hwInfo = neoDevice->getHardwareInfo();
+        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        signalAllEventPackets = L0HwHelper::useSignalAllEventPackets(hwInfo);
+
+        uint32_t maxKernels = EventPacketsCount::maxKernelSplit;
+        if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
+            maxKernels = l0HwHelper.getEventMaxKernelCount(hwInfo);
+        }
+        kernelEventCompletionData = std::make_unique<KernelEventCompletionData<uint32_t>[]>(maxKernels);
 
         auto alloc = eventPool->getAllocation().getGraphicsAllocation(neoDevice->getRootDeviceIndex());
 
         uint64_t baseHostAddr = reinterpret_cast<uint64_t>(alloc->getUnderlyingBuffer());
-        eventPoolOffset = index * eventPool->getEventSize();
+        totalEventSize = eventPool->getEventSize();
+        eventPoolOffset = index * totalEventSize;
         hostAddress = reinterpret_cast<void *>(baseHostAddr + eventPoolOffset);
         csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+
+        maxKernelCount = maxKernels;
+        maxPacketCount = eventPool->getEventMaxPackets();
     }
 
     void assignKernelEventCompletionData(void *address) override {

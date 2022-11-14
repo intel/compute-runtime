@@ -65,7 +65,7 @@ bool L0HwHelper::useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo) {
     if (NEO::DebugManager.flags.UseDynamicEventPacketsCount.get() != -1) {
         return !!NEO::DebugManager.flags.UseDynamicEventPacketsCount.get();
     }
-    return false;
+    return true;
 }
 
 bool L0HwHelper::useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo) {

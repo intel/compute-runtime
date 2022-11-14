@@ -678,10 +678,10 @@ TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForCompactL3FlushEven
     EXPECT_FALSE(defaultValue);
 }
 
-TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForDynamicEventPacketCountThenReturnFalse) {
+TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForDynamicEventPacketCountThenReturnTrue) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     bool defaultValue = L0::L0HwHelper::useDynamicEventPacketsCount(hwInfo);
-    EXPECT_FALSE(defaultValue);
+    EXPECT_TRUE(defaultValue);
 }
 
 HWTEST2_F(L0HwHelperTest, givenL0HelperWhenGettingMaxKernelAndMaxPacketThenExpectBothReturnOne, NonMultiTilePlatforms) {

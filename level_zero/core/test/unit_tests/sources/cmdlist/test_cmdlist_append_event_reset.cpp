@@ -113,7 +113,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
             gpuAddress += event->getSinglePacketSize();
             sdiFound++;
         }
-        EXPECT_EQ(EventPacketsCount::eventPackets - 1, sdiFound);
+        EXPECT_EQ(maxPackets - 1, sdiFound);
     }
 
     uint32_t postSyncFound = 0;
@@ -244,9 +244,9 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
-    event->setPacketsInUse(16u);
+    event->setPacketsInUse(3u);
     commandList->appendEventReset(event->toHandle());
-    ASSERT_EQ(16u, event->getPacketsInUse());
+    ASSERT_EQ(3u, event->getPacketsInUse());
 
     auto contextOffset = event->getContextEndOffset();
     auto baseAddr = event->getGpuAddress(device);
