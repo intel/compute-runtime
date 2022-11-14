@@ -139,7 +139,7 @@ std::vector<std::string> BinaryDecoder::loadPatchList() {
     } else {
         std::vector<std::string> patchList;
         if (pathToPatch.empty()) {
-            argHelper->printf("Path to patch list not provided - using defaults, skipping patchokens as undefined.\n");
+            argHelper->printf("Path to patch list not provided - using defaults, skipping patchtokens as undefined.\n");
             patchList = {
                 "struct SProgramBinaryHeader",
                 "{",
@@ -534,7 +534,7 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         }
     }
     if (false == iga->isKnownPlatform()) {
-        argHelper->printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
+        argHelper->printf("Warning : missing or invalid -device parameter - results may be inaccurate\n");
     }
     if (!argHelper->outputEnabled()) {
         if (pathToDump.empty()) {

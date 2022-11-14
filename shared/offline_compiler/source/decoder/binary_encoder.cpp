@@ -341,7 +341,7 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
     }
 
     if (false == iga->isKnownPlatform()) {
-        argHelper->printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
+        argHelper->printf("Warning : missing or invalid -device parameter - results may be inaccurate\n");
     }
     return 0;
 }
