@@ -126,16 +126,6 @@ uint32_t HwHelperHw<Family>::getMinimalSIMDSize() {
 }
 
 template <>
-bool HwHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
-    if ((DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
-        (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
-        (DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
-        return false;
-    }
-    return true;
-}
-
-template <>
 uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;

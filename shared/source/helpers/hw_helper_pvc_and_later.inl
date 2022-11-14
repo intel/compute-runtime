@@ -11,6 +11,16 @@
 namespace NEO {
 
 template <>
+bool HwHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
+    if ((DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
+        (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
+        (DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
+        return false;
+    }
+    return true;
+}
+
+template <>
 bool HwHelperHw<Family>::isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const {
     return !hwInfo.capabilityTable.supportsImages;
 }

@@ -722,8 +722,10 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
 }
 
 bool CommandStreamReceiver::createGlobalFenceAllocation() {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    if (!HwHelper::get(hwInfo->platform.eRenderCoreFamily).isFenceAllocationRequired(*hwInfo)) {
+    auto &rootDevicEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
+    auto &coreHelper = rootDevicEnvironment.getHelper<CoreHelper>();
+    auto &hwInfo = *rootDevicEnvironment.getHardwareInfo();
+    if (!coreHelper.isFenceAllocationRequired(hwInfo)) {
         return true;
     }
 

@@ -590,32 +590,32 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenAskedIfFenceAllocatio
     DebugManagerStateRestore dbgRestore;
 
     auto hwInfo = *defaultHwInfo;
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &coreHelper = getHelper<CoreHelper>();
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
-    EXPECT_TRUE(helper.isFenceAllocationRequired(hwInfo));
+    EXPECT_TRUE(coreHelper.isFenceAllocationRequired(hwInfo));
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_FALSE(helper.isFenceAllocationRequired(hwInfo));
+    EXPECT_FALSE(coreHelper.isFenceAllocationRequired(hwInfo));
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_TRUE(helper.isFenceAllocationRequired(hwInfo));
+    EXPECT_TRUE(coreHelper.isFenceAllocationRequired(hwInfo));
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_TRUE(helper.isFenceAllocationRequired(hwInfo));
+    EXPECT_TRUE(coreHelper.isFenceAllocationRequired(hwInfo));
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
-    EXPECT_TRUE(helper.isFenceAllocationRequired(hwInfo));
+    EXPECT_TRUE(coreHelper.isFenceAllocationRequired(hwInfo));
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {

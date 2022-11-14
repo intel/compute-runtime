@@ -49,5 +49,6 @@ HelperType &ClDeviceFixture::getHelper() const {
 }
 
 template ProductHelper &ClDeviceFixture::getHelper() const;
+template CoreHelper &ClDeviceFixture::getHelper() const;
 
 } // namespace NEO
