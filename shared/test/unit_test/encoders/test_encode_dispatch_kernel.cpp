@@ -58,6 +58,28 @@ HWTEST_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenDispatchKernelThenWa
     ASSERT_NE(itorPC, commands.end());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDebugFlagSetWhenProgrammingWalkerThenSetFlushingBits) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceComputeWalkerPostSyncFlush.set(1);
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    EXPECT_TRUE(walkerCmd->getPostSync().getDataportPipelineFlush());
+}
+
 using CommandEncodeStatesUncachedMocsTests = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUncachedMocsAndDirtyHeapsThenCorrectMocsIsSet) {

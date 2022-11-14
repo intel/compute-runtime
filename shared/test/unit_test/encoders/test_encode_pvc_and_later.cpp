@@ -6,7 +6,11 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
+#include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 using namespace NEO;
 
@@ -196,4 +200,29 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalRegRe
             validateBaseProgramming<FamilyType>(buffer, compareOperation, startAddress, indirect, compareReg1, compareReg2);
         }
     }
+}
+
+using CommandEncodeStatesXeHpcAndLaterTests = Test<CommandEncodeStatesFixture>;
+
+HWTEST2_F(CommandEncodeStatesXeHpcAndLaterTests, givenDebugFlagSetWhenProgrammingWalkerThenSetFlushingBits, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceComputeWalkerPostSyncFlush.set(1);
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    EXPECT_TRUE(walkerCmd->getPostSync().getDataportPipelineFlush());
+    EXPECT_TRUE(walkerCmd->getPostSync().getDataportSubsliceCacheFlush());
 }

@@ -279,6 +279,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
     }
 
+    if (DebugManager.flags.ForceComputeWalkerPostSyncFlush.get() == 1) {
+        postSync.setDataportPipelineFlush(true);
+        EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
+    }
+
     walkerCmd.setPredicateEnable(args.isPredicate);
 
     auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
