@@ -385,8 +385,8 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
 HWTEST_F(DeviceTest, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1u);
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    hwHelper.adjustDefaultEngineType(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo());
+    auto &coreHelper = getHelper<CoreHelper>();
+    coreHelper.adjustDefaultEngineType(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo());
 
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0));
     auto osContext = device->getDefaultEngine().osContext;

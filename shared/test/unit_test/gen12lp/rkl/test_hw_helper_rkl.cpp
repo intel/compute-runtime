@@ -14,22 +14,24 @@
 using HwHelperTestRkl = HwHelperTest;
 
 RKLTEST_F(HwHelperTestRkl, givenRklSteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.featureTable.flags.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    auto &coreHelper = getHelper<CoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
 
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hardwareInfo);
+    hardwareInfo.featureTable.flags.ftrCCSNode = true;
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+
+    coreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
 RKLTEST_F(HwHelperTestRkl, givenRklSteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.featureTable.flags.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+    auto &coreHelper = getHelper<CoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
 
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hardwareInfo);
+    hardwareInfo.featureTable.flags.ftrCCSNode = true;
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+
+    coreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -63,9 +64,10 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
     return 0;
 }
 
-int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
+int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
     int ret = 0;
-    Drm *drm = osIface->getDriverModel()->as<Drm>();
+    auto osInterface = rootDeviceEnvironemnt.osInterface.get();
+    Drm *drm = osInterface->getDriverModel()->as<Drm>();
 
     *outHwInfo = *inHwInfo;
     auto platform = &outHwInfo->platform;
@@ -128,7 +130,7 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     int maxGpuFreq = 0;
     drm->getMaxGpuFrequency(*outHwInfo, maxGpuFreq);
 
-    ret = configureHardwareCustom(outHwInfo, osIface);
+    ret = configureHardwareCustom(outHwInfo, osInterface);
     if (ret != 0) {
         *outHwInfo = {};
         return ret;

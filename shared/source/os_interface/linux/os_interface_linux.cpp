@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,8 +42,8 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
     dstOsInterface.reset(new OSInterface());
     dstOsInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     auto hardwareInfo = rootDeviceEnv->getMutableHardwareInfo();
-    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-    if (hwConfig->configureHwInfoDrm(hardwareInfo, hardwareInfo, dstOsInterface.get())) {
+    auto &productHelper = rootDeviceEnv->getHelper<ProductHelper>();
+    if (productHelper.configureHwInfoDrm(hardwareInfo, hardwareInfo, *rootDeviceEnv)) {
         return false;
     }
     rootDeviceEnv->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);

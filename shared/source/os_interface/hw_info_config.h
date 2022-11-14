@@ -28,6 +28,7 @@ struct StateComputeModePropertiesSupport;
 class HwInfoConfig;
 class GraphicsAllocation;
 class MemoryManager;
+struct RootDeviceEnvironment;
 class OSInterface;
 enum class DriverModelType;
 
@@ -48,8 +49,8 @@ class HwInfoConfig {
     }
     static constexpr uint32_t uuidSize = 16u;
     static constexpr uint32_t luidSize = 8u;
-    int configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
-    int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
+    int configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt);
+    int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt);
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const = 0;
     virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
     virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) = 0;

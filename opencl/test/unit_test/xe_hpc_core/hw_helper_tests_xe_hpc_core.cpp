@@ -97,8 +97,8 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSimdThen
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenReturnZero) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getMaxNumSamplers());
+    auto &coreHelper = getHelper<CoreHelper>();
+    EXPECT_EQ(0u, coreHelper.getMaxNumSamplers());
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {

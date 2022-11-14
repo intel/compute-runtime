@@ -36,8 +36,9 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
 
-        osInterface = new OSInterface();
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+        osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
         drm->storedEUVal = pInHwInfo.gtSystemInfo.EUCount;
@@ -50,8 +51,6 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
     void TearDown() override {
         CpuInfo::cpuidexFunc = rt_cpuidex_func;
 
-        delete osInterface;
-
         HwInfoConfigTest::TearDown();
     }
 
@@ -59,6 +58,10 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
     HelperType &getHelper() const {
         auto &helper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<HelperType>();
         return helper;
+    }
+
+    RootDeviceEnvironment &getRootDeviceEnvironment() {
+        return *executionEnvironment->rootDeviceEnvironments[0].get();
     }
 
     OSInterface *osInterface;

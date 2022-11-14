@@ -94,7 +94,6 @@ bool Wddm::init() {
     hardwareInfo->featureTable = *featureTable;
     hardwareInfo->workaroundTable = *workaroundTable;
     hardwareInfo->gtSystemInfo = *gtSystemInfo;
-
     hardwareInfo->capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
     hardwareInfo->capabilityTable.maxRenderFrequency = maxRenderFrequency;
     hardwareInfo->capabilityTable.instrumentationEnabled =
@@ -102,7 +101,7 @@ bool Wddm::init() {
 
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     productHelper.adjustPlatformForProductFamily(hardwareInfo);
-    if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, nullptr)) {
+    if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {
         return false;
     }
     setPlatformSupportEvictIfNecessaryFlag(productHelper);

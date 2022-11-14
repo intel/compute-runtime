@@ -22,8 +22,9 @@ struct HwInfoConfigTestLinuxAdls : HwInfoConfigTestLinux {
 };
 
 ADLSTEST_F(HwInfoConfigTestLinuxAdls, WhenConfiguringHwInfoThenConfigIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+
     EXPECT_EQ(0, ret);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
@@ -33,16 +34,16 @@ ADLSTEST_F(HwInfoConfigTestLinuxAdls, WhenConfiguringHwInfoThenConfigIsCorrect) 
 }
 
 ADLSTEST_F(HwInfoConfigTestLinuxAdls, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &productHelper = getHelper<ProductHelper>();
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 

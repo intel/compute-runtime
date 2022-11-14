@@ -23,8 +23,8 @@ struct HwInfoConfigTestLinuxDg2 : HwInfoConfigTestLinux {
 };
 
 DG2TEST_F(HwInfoConfigTestLinuxDg2, WhenConfiguringHwInfoThenZeroIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 }
 

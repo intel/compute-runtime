@@ -37,8 +37,8 @@ HWTEST2_F(HwHelperTestPvcAndLater, givenVariousCachesRequestsThenProperMocsIndex
 HWTEST2_F(HwHelperTestPvcAndLater, givenRenderEngineWhenRemapCalledThenUseCccs, IsAtLeastXeHpcCore) {
     hardwareInfo.featureTable.flags.ftrCCSNode = false;
 
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hardwareInfo);
+    auto &coreHelper = getHelper<CoreHelper>();
+    coreHelper.adjustDefaultEngineType(&hardwareInfo);
 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_CCCS, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, hardwareInfo));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_CCCS, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCCS, hardwareInfo));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
+int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
     UNRECOVERABLE_IF(true);
     return {};
 }

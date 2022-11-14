@@ -21,22 +21,22 @@ struct HwInfoConfigTestLinuxGlk : HwInfoConfigTestLinux {
 };
 
 GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    //constant sysInfo/ftr flags
+    // constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
 
     pInHwInfo.platform.usDeviceID = 0x3184;
 
     drm->storedMinEUinPool = 6;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -48,7 +48,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrec
     pInHwInfo.platform.usDeviceID = 0x3185;
 
     drm->storedMinEUinPool = 9;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -69,23 +69,23 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrec
 }
 
 GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenInvalidInputWhenConfiguringHwInfoThenErrorIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
 GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingEnabledPoolWhenConfiguringHwInfoThenZeroIsSet) {
     drm->storedRetValForPooledEU = -1;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
@@ -95,8 +95,8 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingEnabledPoolWhenConfiguringHwInfo
 
 GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenDisabledEnabledPoolWhenConfiguringHwInfoThenZeroIsSet) {
     drm->storedHasPooledEU = 0;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
@@ -108,8 +108,8 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingMinEuInPoolWhenConfiguringHwInfo
     drm->storedRetValForMinEUinPool = -1;
 
     drm->storedSSVal = 3;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
@@ -117,7 +117,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingMinEuInPoolWhenConfiguringHwInfo
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 
     drm->storedSSVal = 2;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
@@ -129,8 +129,8 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenInvalidMinEuInPoolWhenConfiguringHwInfo
     drm->storedMinEUinPool = 4;
 
     drm->storedSSVal = 3;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
@@ -138,7 +138,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenInvalidMinEuInPoolWhenConfiguringHwInfo
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 
     drm->storedSSVal = 2;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
@@ -147,10 +147,10 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenInvalidMinEuInPoolWhenConfiguringHwInfo
 }
 
 GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenWaFlagsWhenConfiguringHwInfoThenInformationIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     pInHwInfo.platform.usRevId = 0;
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 }
 

@@ -19,8 +19,8 @@ struct HwInfoConfigTestLinuxLkf : HwInfoConfigTestLinux {
 };
 
 LKFTEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
-    auto hwInfoConfig = HwInfoConfigHw<IGFX_LAKEFIELD>::get();
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -30,22 +30,23 @@ LKFTEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
 }
 
 LKFTEST_F(HwInfoConfigTestLinuxLkf, negative) {
-    auto hwInfoConfig = HwInfoConfigHw<IGFX_LAKEFIELD>::get();
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
 template <typename T>
 class LkfHwInfoTests : public ::testing::Test {};
-typedef ::testing::Types<LkfHw1x8x8> lkfTestTypes;
+using lkfTestTypes = ::testing::Types<LkfHw1x8x8>;
 TYPED_TEST_CASE(LkfHwInfoTests, lkfTestTypes);
 TYPED_TEST(LkfHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;

@@ -26,7 +26,8 @@ HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOn
 
     auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    auto osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
     osInterface->setDriverModel(std::unique_ptr<Drm>(drm));
 
     drm->failRetTopology = true;
@@ -38,8 +39,8 @@ HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOn
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = 0;
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = 6;
 
-    auto hwConfig = HwInfoConfigHw<productFamily>::get();
-    int ret = hwConfig->configureHwInfoDrm(&hwInfo, &outHwInfo, osInterface.get());
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    int ret = productHelper.configureHwInfoDrm(&hwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_NE(-1, ret);
 
     EXPECT_EQ(6u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);

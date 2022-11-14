@@ -86,8 +86,8 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingPitchAlignmentForImageThenCorrectV
 GEN12LPTEST_F(HwHelperTestGen12Lp, WhenAdjustingDefaultEngineTypeThenRcsIsSet) {
     hardwareInfo.featureTable.flags.ftrCCSNode = false;
 
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hardwareInfo);
+    auto &coreHelper = getHelper<CoreHelper>();
+    coreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 

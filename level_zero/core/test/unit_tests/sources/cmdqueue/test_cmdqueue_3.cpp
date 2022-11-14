@@ -629,10 +629,14 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
         DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
 
         auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
-        auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0].get();
+        auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
         hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
         hwInfo->featureTable.flags.ftrCCSNode = (numCcs > 0);
-        HwHelper::get(hwInfo->platform.eRenderCoreFamily).adjustDefaultEngineType(hwInfo);
+
+        auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
+        coreHelper.adjustDefaultEngineType(hwInfo);
 
         if (!multiCcsDevice(*hwInfo, numCcs)) {
             return false;

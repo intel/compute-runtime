@@ -109,17 +109,18 @@ DG2TEST_F(HwInfoConfigTestDg2, givenG12DevIdWhenIsDisableOverdispatchAvailableCa
 DG2TEST_F(HwInfoConfigTestDg2, whenAdjustingDefaultEngineTypeThenSelectEngineTypeBasedOnRevisionId) {
     auto hardwareInfo = *defaultHwInfo;
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+
+    auto &coreHelper = getHelper<CoreHelper>();
+    auto &productHelper = getHelper<ProductHelper>();
 
     hardwareInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-    hwHelper.adjustDefaultEngineType(&hardwareInfo);
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    coreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 
     hardwareInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
-    hwHelper.adjustDefaultEngineType(&hardwareInfo);
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+    coreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 

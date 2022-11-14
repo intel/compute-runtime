@@ -17,9 +17,9 @@ struct HwInfoConfigTestLinuxBdw : HwInfoConfigTestLinux {
 };
 
 BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
     drm->storedSSVal = 3;
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -28,7 +28,7 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
 
     pInHwInfo.platform.usDeviceID = 0x1602;
 
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -37,7 +37,7 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
     pInHwInfo.platform.usDeviceID = 0x1626;
 
     drm->storedSSVal = 6;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -48,36 +48,35 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
 BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenFailedIoctlEuCountWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -4;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-4, ret);
 }
 
 BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenFailedIoctlSsCountWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->failRetTopology = true;
     drm->storedRetValForSSVal = -5;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-5, ret);
 }
 
 BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenEdramInformationIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrEDram);
 
     pInHwInfo.platform.usDeviceID = 0x1622;
 
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 
     pInHwInfo.platform.usDeviceID = 0x162A;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);

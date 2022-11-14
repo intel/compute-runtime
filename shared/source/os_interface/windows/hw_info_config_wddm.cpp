@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -17,16 +18,16 @@
 
 namespace NEO {
 
-int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
-    auto &hwHelper = HwHelper::get(outHwInfo->platform.eRenderCoreFamily);
-    auto &hwInfoConfig = *HwInfoConfig::get(outHwInfo->platform.eProductFamily);
+int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
+    auto &coreHelper = rootDeviceEnvironemnt.getHelper<CoreHelper>();
+    auto &productHelper = rootDeviceEnvironemnt.getHelper<ProductHelper>();
     auto compilerHwInfoConfig = CompilerHwInfoConfig::get(outHwInfo->platform.eProductFamily);
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.flags.ftrSVM;
 
-    hwHelper.adjustDefaultEngineType(outHwInfo);
+    coreHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
-    hwInfoConfig.setCapabilityCoherencyFlag(*outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
+    productHelper.setCapabilityCoherencyFlag(*outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
     outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.flags.ftrL3IACoherency;
 
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
@@ -38,7 +39,7 @@ int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo
         outHwInfo->gtSystemInfo.CsrSizeInMb = static_cast<uint32_t>(DebugManager.flags.OverridePreemptionSurfaceSizeInMb.get());
     }
     outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
-    hwHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
+    coreHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);
@@ -50,8 +51,9 @@ int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleepForDirectSubmission.get(), kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideDelayQuickKmdSleepForDirectSubmissionMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 
+    auto osInterface = rootDeviceEnvironemnt.osInterface.get();
     // Product specific config
-    int ret = configureHardwareCustom(outHwInfo, osIface);
+    int ret = configureHardwareCustom(outHwInfo, osInterface);
     if (ret != 0) {
         *outHwInfo = {};
     }

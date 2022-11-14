@@ -815,8 +815,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenVariousCachesRequestThenCorrectMo
 }
 
 HWTEST_F(HwHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(16u, helper.getMaxNumSamplers());
+    auto &coreHelper = getHelper<CoreHelper>();
+    EXPECT_EQ(16u, coreHelper.getMaxNumSamplers());
 }
 
 HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenReturnCorrectValue) {

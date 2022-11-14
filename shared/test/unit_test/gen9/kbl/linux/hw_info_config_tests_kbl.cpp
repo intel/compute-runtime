@@ -18,27 +18,27 @@ struct HwInfoConfigTestLinuxKbl : HwInfoConfigTestLinux {
 };
 
 KBLTEST_F(HwInfoConfigTestLinuxKbl, WhenConfiguringHwInfoThenInformationIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    //constant sysInfo/ftr flags
+    // constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
 
     drm->storedSSVal = 3;
 
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -46,7 +46,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, WhenConfiguringHwInfoThenInformationIsCorrec
 
     drm->storedSSVal = 6;
 
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -55,7 +55,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, WhenConfiguringHwInfoThenInformationIsCorrec
 
     drm->storedSSVal = 6;
 
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -76,56 +76,56 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, WhenConfiguringHwInfoThenInformationIsCorrec
 KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenFailedIoctlEuCountWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -4;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-4, ret);
 }
 
 KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenFailedIoctlSsCountWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->failRetTopology = true;
     drm->storedRetValForSSVal = -5;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto &productHelper = getHelper<ProductHelper>();
+    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-5, ret);
 }
 
 KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenWaFlagsWhenConfiguringHwInfoThenInformationIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &productHelper = getHelper<ProductHelper>();
 
     outHwInfo.platform.usRevId = 0;
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 
     pInHwInfo.platform.usRevId = 7;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waDisableLSQCROPERFforOCL);
     EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waEncryptedEdramOnlyPartials);
 
     pInHwInfo.platform.usRevId = 9;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waDisableLSQCROPERFforOCL);
     EXPECT_EQ(0u, outHwInfo.workaroundTable.flags.waEncryptedEdramOnlyPartials);
 }
 
 KBLTEST_F(HwInfoConfigTestLinuxKbl, WhenConfiguringHwInfoThenEdramInformationIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &productHelper = getHelper<ProductHelper>();
 
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrEDram);
 
     pInHwInfo.platform.usDeviceID = 0x5927;
 
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 
     pInHwInfo.platform.usDeviceID = 0x5926;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);

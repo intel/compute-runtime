@@ -24,7 +24,7 @@ struct HwInfoConfigTestLinuxXeHp : HwInfoConfigTestLinux {
 
 XEHPTEST_F(HwInfoConfigTestLinuxXeHp, WhenConfiguringHwInfoThenZeroIsReturned) {
     auto &productHelper = getHelper<ProductHelper>();
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 }
 

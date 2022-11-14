@@ -30,8 +30,8 @@ GEN9TEST_F(HwHelperTestGen9, WhenGettingPitchAlignmentForImageThenCorrectValueIs
 
 GEN9TEST_F(HwHelperTestGen9, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hardwareInfo);
+    auto &coreHelper = getHelper<CoreHelper>();
+    coreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 

@@ -115,7 +115,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     const auto &caps = device->getDeviceInfo();
     const auto &sharedCaps = device->getSharedDeviceInfo();
     const auto &sysInfo = defaultHwInfo->gtSystemInfo;
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &hwHelper = device->getRootDeviceEnvironment().getHelper<CoreHelper>();
 
     EXPECT_NE(nullptr, caps.builtInKernels);
 
