@@ -84,6 +84,12 @@ TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenCallingFunctionsThenCal
     auto rootSbaGpuVa = rootSession->getSbaBufferGpuVa(5);
     EXPECT_EQ(0x567000u, sbaGpuVa);
     EXPECT_EQ(rootSbaGpuVa, sbaGpuVa);
+
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    session->ioctl(0, nullptr);
+    EXPECT_EQ(1, handler->ioctlCalled);
 }
 
 TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenReadingContextStateSaveAreaHeaderThenHeaderIsCopiedFromRootSession) {
@@ -111,6 +117,7 @@ TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenReadingContextStateSave
     EXPECT_STREQ(header, data);
 }
 
+template <bool BlockOnFence = false>
 struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxHelper {
     void setUp() {
         NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
@@ -124,6 +131,7 @@ struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDe
         session->clientHandle = MockDebugSessionLinux::mockClientHandle;
         session->createTileSessionsIfEnabled();
         rootSession = session.get();
+        rootSession->blockOnFenceMode = BlockOnFence;
 
         tileSessions[0] = static_cast<MockTileDebugSessionLinux *>(rootSession->tileSessions[0].first);
         tileSessions[1] = static_cast<MockTileDebugSessionLinux *>(rootSession->tileSessions[1].first);
@@ -142,7 +150,7 @@ struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDe
     MockTileDebugSessionLinux *tileSessions[2];
 };
 
-using TileAttachTest = Test<TileAttachFixture>;
+using TileAttachTest = Test<TileAttachFixture<>>;
 
 TEST_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingDebugSessionThenTileSessionsAreCreated) {
     zet_debug_config_t config = {};
@@ -773,43 +781,50 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     EXPECT_TRUE(tileSessions[1]->triggerEvents);
 }
 
-TEST_F(TileAttachTest, GivenEventsWithOsEventToAckWhenDetachingTileThenAllEventsAreAcked) {
-    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
-    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
-    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
-    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
-    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
-    vmBindIsa->base.seqno = 10;
-    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
-    vmBindIsa->va_start = isaGpuVa;
-    vmBindIsa->va_length = isaSize;
-    vmBindIsa->vm_handle = vm0;
-    vmBindIsa->num_uuids = 0;
-
+TEST_F(TileAttachTest, GivenBlockingOnCpuDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled) {
     auto handler = new MockIoctlHandler;
     rootSession->ioctlHandler.reset(handler);
 
-    zet_debug_event_t debugEvent = {};
-    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
-    debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-    debugEvent.info.module.load = isaGpuVa;
-    debugEvent.info.module.moduleBegin = 0;
-    debugEvent.info.module.moduleEnd = 0;
+    EXPECT_FALSE(rootSession->blockOnFenceMode);
 
-    tileSessions[0]->pushApiEvent(debugEvent, &vmBindIsa->base);
+    addZebinVmBindEvent(rootSession, vm0, true, true, 0);
+    addZebinVmBindEvent(rootSession, vm0, true, true, 1);
+    addZebinVmBindEvent(rootSession, vm1, true, true, 0);
 
-    debugEvent.info.module.load = 0x999000;
-    vmBindIsa->va_start = 0x999000;
-    tileSessions[0]->pushApiEvent(debugEvent, &vmBindIsa->base);
-
-    debugEvent.info.module.load = 0x12000;
-    vmBindIsa->va_start = 0x12000;
-    tileSessions[0]->pushApiEvent(debugEvent, &vmBindIsa->base);
-
-    tileSessions[0]->detachTile();
+    EXPECT_EQ(0u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
     EXPECT_EQ(3u, handler->ackCount);
-    EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
-    EXPECT_EQ(vmBindIsa->base.type, handler->debugEventAcked.type);
+
+    handler->ackCount = 0;
+    tileSessions[0]->detachTile();
+    // No ACK called on detach
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(10u, handler->debugEventAcked.seqno);
+    EXPECT_EQ(uint32_t(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
+}
+
+TEST_F(TileAttachTest, GivenBlockingOnCpuAttachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenLastEventIsAcked) {
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    EXPECT_FALSE(rootSession->blockOnFenceMode);
+
+    rootSession->tileSessions[0].second = true;
+    tileSessions[0]->attachTile();
+
+    addZebinVmBindEvent(rootSession, vm0, true, true, 0);
+    addZebinVmBindEvent(rootSession, vm0, true, true, 1);
+    EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
+
+    addZebinVmBindEvent(rootSession, vm1, true, true, 0);
+    EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
+    EXPECT_EQ(2u, handler->ackCount);
+    auto ackBeforeDetach = handler->ackCount;
+
+    EXPECT_EQ(1u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    tileSessions[0]->detachTile();
+    EXPECT_EQ(ackBeforeDetach + 1u, handler->ackCount);
+    EXPECT_EQ(10u, handler->debugEventAcked.seqno);
+    EXPECT_EQ(uint32_t(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
 }
 
 TEST_F(TileAttachTest, GivenTileAttachedAndIsaWithOsEventToAckWhenDetachingTileThenAllEventsAreAcked) {
@@ -833,7 +848,137 @@ TEST_F(TileAttachTest, GivenTileAttachedAndIsaWithOsEventToAckWhenDetachingTileT
     EXPECT_TRUE(isa->moduleLoadEventAck);
 }
 
-using TileAttachAsyncThreadTest = Test<TileAttachFixture>;
+TEST_F(TileAttachTest, GivenBlockingOnCpuAndZebinModuleEventWithoutAckWhenHandlingEventThenNoEventsToAckAdded) {
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    EXPECT_FALSE(rootSession->blockOnFenceMode);
+
+    rootSession->tileSessions[0].second = true;
+    tileSessions[0]->attachTile();
+
+    addZebinVmBindEvent(rootSession, vm0, false, true, 0);
+    addZebinVmBindEvent(rootSession, vm0, false, true, 1);
+
+    EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
+    EXPECT_FALSE(ZET_DEBUG_EVENT_FLAG_NEED_ACK & tileSessions[0]->apiEvents.front().flags);
+    EXPECT_EQ(0u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    EXPECT_EQ(0u, handler->ackCount);
+}
+using TileAttachBlockOnFenceTest = Test<TileAttachFixture<true>>;
+
+TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled) {
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    EXPECT_TRUE(rootSession->blockOnFenceMode);
+
+    addZebinVmBindEvent(rootSession, vm0, true, true, 0);
+    addZebinVmBindEvent(rootSession, vm0, true, true, 1);
+    addZebinVmBindEvent(rootSession, vm1, true, true, 0);
+
+    EXPECT_EQ(0u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(3u, handler->ackCount);
+
+    handler->ackCount = 0;
+    tileSessions[0]->detachTile();
+    // No ACK called on detach
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(uint32_t(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
+}
+
+TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenAllEventsAreAcked) {
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    EXPECT_TRUE(rootSession->blockOnFenceMode);
+
+    rootSession->tileSessions[0].second = true;
+    tileSessions[0]->attachTile();
+
+    addZebinVmBindEvent(rootSession, vm0, true, true, 0);
+    addZebinVmBindEvent(rootSession, vm0, true, true, 1);
+    EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
+    EXPECT_EQ(0u, handler->ackCount);
+
+    addZebinVmBindEvent(rootSession, vm1, true, true, 0);
+    EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, tileSessions[0]->apiEvents.front().flags);
+    EXPECT_EQ(1u, handler->ackCount);
+    auto ackBeforeDetach = handler->ackCount;
+
+    EXPECT_EQ(2u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(0u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
+    tileSessions[0]->detachTile();
+
+    EXPECT_EQ(ackBeforeDetach + 2u, handler->ackCount);
+    EXPECT_EQ(uint32_t(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
+}
+
+TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModulesWithEventsToAckWhenModuleLoadEventIsAckedThenAllNewEventsAreAutoAcked) {
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    EXPECT_TRUE(rootSession->blockOnFenceMode);
+
+    rootSession->tileSessions[0].second = true;
+    tileSessions[0]->attachTile();
+
+    addZebinVmBindEvent(rootSession, vm0, true, true, 0);
+    addZebinVmBindEvent(rootSession, vm0, true, true, 1);
+    EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
+    EXPECT_EQ(0u, handler->ackCount);
+
+    EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
+    EXPECT_EQ(2u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_FALSE(rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].moduleLoadEventAcked[0]);
+    EXPECT_EQ(2, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentVmBindCounter[0]);
+
+    zet_debug_event_t event = {};
+    auto result = zetDebugReadEvent(tileSessions[0]->toHandle(), 0, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+
+    result = zetDebugAcknowledgeEvent(tileSessions[0]->toHandle(), &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(2u, handler->ackCount);
+    EXPECT_EQ(0u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vm0 + 20] = 0;
+
+    addZebinVmBindEvent(rootSession, vm0 + 20, true, true, 0);
+    EXPECT_EQ(3u, handler->ackCount);
+    EXPECT_EQ(3, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentVmBindCounter[0]);
+    EXPECT_TRUE(rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].moduleLoadEventAcked[0]);
+
+    EXPECT_EQ(0u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+}
+
+TEST_F(TileAttachBlockOnFenceTest, GivenMultipleVmBindEventsForFirstZebinSegmentWhenHandlingEventThenLoadEventIsNotTriggered) {
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    EXPECT_TRUE(rootSession->blockOnFenceMode);
+
+    rootSession->tileSessions[0].second = true;
+    tileSessions[0]->attachTile();
+
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vm0 + 20] = 0;
+
+    addZebinVmBindEvent(rootSession, vm0, true, true, 0);
+    addZebinVmBindEvent(rootSession, vm0 + 20, true, true, 0);
+    EXPECT_EQ(0u, tileSessions[0]->apiEvents.size());
+    EXPECT_EQ(2, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentVmBindCounter[0]);
+    EXPECT_EQ(1u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
+
+    addZebinVmBindEvent(rootSession, vm0 + 20, true, true, 1);
+    EXPECT_EQ(1u, tileSessions[0]->apiEvents.size());
+    EXPECT_EQ(2u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
+}
+
+using TileAttachAsyncThreadTest = Test<TileAttachFixture<>>;
 
 TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated) {
     rootSession->tileSessions[0].second = true;

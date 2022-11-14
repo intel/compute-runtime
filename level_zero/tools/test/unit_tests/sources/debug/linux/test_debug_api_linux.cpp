@@ -386,7 +386,7 @@ TEST(DebugSessionLinuxTest, GivenRootDebugSessionWhenCreateTileSessionCalledThen
         using DebugSessionLinux::DebugSessionLinux;
     };
 
-    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr);
     ASSERT_NE(nullptr, session);
 
     std::unique_ptr<TileDebugSessionLinux> tileSession = std::unique_ptr<TileDebugSessionLinux>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};
@@ -410,7 +410,55 @@ TEST(DebugSessionLinuxTest, GivenRootLinuxSessionWhenCallingTileSepcificFunction
     EXPECT_THROW(sessionMock->detachTile(), std::exception);
 }
 
+using DebugSessionLinuxFenceMode = Test<DebugApiLinuxFixture>;
+
+TEST_F(DebugSessionLinuxFenceMode, GivenDebuggerOpenVersionGreaterEqual3WhenDebugSessionCreatedThanBlockingOnFenceModeIsSet) {
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinux(config, device, debugFd, params);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    mockDrm->context.debuggerOpenVersion = 3;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, false));
+
+    MockDebugSessionLinux *linuxSession = static_cast<MockDebugSessionLinux *>(session.get());
+
+    EXPECT_TRUE(linuxSession->blockOnFenceMode);
+}
+
 using DebugApiLinuxTest = Test<DebugApiLinuxFixture>;
+
+TEST_F(DebugApiLinuxTest, GivenDebuggerOpenVersion1AndSuccessfulInitializationWhenCreatingDebugSessionThenBlockOnFenceModeIsFalse) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinux(config, device, debugFd, params);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    mockDrm->context.debuggerOpenRetval = 10;
+    mockDrm->context.debuggerOpenVersion = 1;
+    mockDrm->baseErrno = false;
+    mockDrm->errnoRetVal = 0;
+
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
+
+    EXPECT_NE(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    MockDebugSessionLinux *linuxSession = static_cast<MockDebugSessionLinux *>(session.get());
+    EXPECT_FALSE(linuxSession->blockOnFenceMode);
+}
 
 TEST_F(DebugApiLinuxTest, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
     zet_debug_config_t config = {};
@@ -478,20 +526,13 @@ TEST_F(DebugApiLinuxTest, GivenUnknownEventWhenAcknowledgeEventCalledThenErrorUn
     auto result = L0::DebugApiHandlers::debugAcknowledgeEvent(session, &debugEvent);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
 
-    // One event to acknowledge
-    prelim_drm_i915_debug_event eventToAck = {};
-    eventToAck.type = 500;
-    eventToAck.seqno = 5;
-    eventToAck.flags = PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
-    eventToAck.size = sizeof(prelim_drm_i915_debug_event);
-
     debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
     debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
     debugEvent.info.module.load = 0x1000;
     debugEvent.info.module.moduleBegin = 0x2000;
     debugEvent.info.module.moduleEnd = 0x3000;
 
-    sessionMock->pushApiEvent(debugEvent, &eventToAck);
+    sessionMock->pushApiEvent(debugEvent);
 
     // Different event acknowledged
     debugEvent.info.module.load = 0x2221000;
@@ -514,15 +555,33 @@ TEST_F(DebugApiLinuxTest, GivenEventRequiringAckWhenAcknowledgeEventCalledThenSu
     zet_debug_session_handle_t session = sessionMock->toHandle();
     sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+
     zet_debug_event_t debugEvent = {};
     debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+    debugEvent.info.module.load = isaGpuVa;
+    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
 
     prelim_drm_i915_debug_event eventToAck = {};
     eventToAck.type = 500;
     eventToAck.seqno = 10;
     eventToAck.flags = PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
     eventToAck.size = sizeof(prelim_drm_i915_debug_event);
-    sessionMock->pushApiEvent(debugEvent, &eventToAck);
+
+    auto isa = std::make_unique<DebugSessionLinux::IsaAllocation>();
+    isa->bindInfo = {isaGpuVa, isaSize};
+    isa->vmHandle = 3;
+    isa->elfUuidHandle = DebugSessionLinux::invalidHandle;
+    isa->moduleBegin = 0;
+    isa->moduleEnd = 0;
+
+    auto &isaMap = sessionMock->clientHandleToConnection[sessionMock->clientHandle]->isaMap[0];
+    isaMap[isaGpuVa] = std::move(isa);
+    isaMap[isaGpuVa]->vmBindCounter = 5;
+    isaMap[isaGpuVa]->ackEvents.push_back(eventToAck);
+
+    sessionMock->pushApiEvent(debugEvent);
 
     auto result = zetDebugAcknowledgeEvent(session, &debugEvent);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -3727,7 +3786,6 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForISAWhenModuleLoadEventAlreadyAckedT
     vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
     vmBindIsa->va_start = isaGpuVa;
     vmBindIsa->va_length = isaSize;
-    vmBindIsa->vm_handle = vmHandleForVmBind;
     vmBindIsa->num_uuids = 3;
 
     auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
@@ -3739,22 +3797,33 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForISAWhenModuleLoadEventAlreadyAckedT
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
-    session->handleEvent(&vmBindIsa->base);
+    bool modes[] = {false,
+                    true};
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
-    EXPECT_EQ(1u, isaIter->second->ackEvents.size());
+    for (const auto &mode : modes) {
 
-    auto event = session->apiEvents.front();
-    session->apiEvents.pop();
+        session->blockOnFenceMode = mode;
 
-    session->acknowledgeEvent(&event);
-    EXPECT_EQ(0u, isaIter->second->ackEvents.size());
+        vmBindIsa->vm_handle = vmHandleForVmBind;
+        session->handleEvent(&vmBindIsa->base);
 
-    vmBindIsa->vm_handle = vmHandleForVmBind + 100;
-    session->handleEvent(&vmBindIsa->base);
+        auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+        ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
+        EXPECT_EQ(1u, isaIter->second->ackEvents.size());
 
-    EXPECT_EQ(0u, isaIter->second->ackEvents.size());
+        auto event = session->apiEvents.front();
+        session->apiEvents.pop();
+
+        session->acknowledgeEvent(&event);
+        EXPECT_EQ(0u, isaIter->second->ackEvents.size());
+
+        vmBindIsa->vm_handle = vmHandleForVmBind + 100;
+        session->handleEvent(&vmBindIsa->base);
+
+        EXPECT_EQ(0u, isaIter->second->ackEvents.size());
+
+        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap->clear();
+    }
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenEventForIsaWithoutAckTriggeredBeforeAttachWhenHandlingSubsequentEventsWithAckThenEventsAreAckedImmediatelyAndNotPushed) {
@@ -3804,6 +3873,80 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForIsaWithoutAckTriggeredBeforeAttachW
 
     EXPECT_EQ(0u, isaIter->second->ackEvents.size());
     EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenTwoPendingEventsWhenAcknowledgeEventCalledThenCorrectEventIsAcked) {
+    setupVmToTile(session.get());
+    // first module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    // second module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0, 1);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1, 1);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].ackEvents[0].size());
+    EXPECT_EQ(2u, session->apiEvents.size());
+
+    zet_debug_event_t event0 = {};
+    auto result = session->readEvent(0, &event0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zet_debug_event_t event1 = {};
+    result = session->readEvent(0, &event1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // 2 modules need ack
+    EXPECT_EQ(2u, session->eventsToAck.size());
+
+    handler->ackCount = 0;
+    session->acknowledgeEvent(&event1);
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].ackEvents[0].size());
+    EXPECT_NE(0u, handler->ackCount);
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    // 1 module needs ack
+    EXPECT_EQ(1u, session->eventsToAck.size());
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenBlockOnFenceAndTwoPendingEventsWhenAcknowledgeEventCalledThenCorrectEventIsAcked) {
+    session->blockOnFenceMode = true;
+    setupVmToTile(session.get());
+    // first module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    // second module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0, 1);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1, 1);
+
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].ackEvents[0].size());
+
+    EXPECT_EQ(2u, session->apiEvents.size());
+
+    zet_debug_event_t event0 = {};
+    auto result = session->readEvent(0, &event0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zet_debug_event_t event1 = {};
+    result = session->readEvent(0, &event1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // 2 modules need ack
+    EXPECT_EQ(2u, session->eventsToAck.size());
+
+    handler->ackCount = 0;
+    session->acknowledgeEvent(&event1);
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].ackEvents[0].size());
+    EXPECT_EQ(2u, handler->ackCount);
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    // 1 module needs ack
+    EXPECT_EQ(1u, session->eventsToAck.size());
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenIsaRemovedWhenModuleLoadEventIsAckedThenErrorReturned) {
@@ -6707,7 +6850,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootS
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
 
-    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd) -> DebugSession * {
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
         auto session = new MockDebugSessionLinux(config, device, debugFd);
         session->initializeRetVal = ZE_RESULT_SUCCESS;
         return session;
@@ -6734,7 +6877,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenSubDeviceWhenDebugAttachCalledThenTileSe
     zet_debug_session_handle_t debugSession = nullptr;
     zet_debug_session_handle_t debugSessionRoot = nullptr;
 
-    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd) -> DebugSession * {
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
         auto session = new MockDebugSessionLinux(config, device, debugFd);
         session->initializeRetVal = ZE_RESULT_SUCCESS;
         return session;
@@ -6832,6 +6975,7 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     EXPECT_EQ(1u, deviceIndex);
 }
 
+template <bool BlockOnFence = false>
 struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxHelper {
     void setUp() {
         DebugApiLinuxMultiDeviceFixture::setUp();
@@ -6846,6 +6990,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
         handler = new MockIoctlHandler;
         session->ioctlHandler.reset(handler);
 
+        session->blockOnFenceMode = BlockOnFence;
         setupSessionClassHandlesAndUuidMap(session.get());
         setupVmToTile(session.get());
     }
@@ -6854,11 +6999,67 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
         DebugApiLinuxMultiDeviceFixture::tearDown();
     }
 
+    void givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived() {
+        auto handler = new MockIoctlHandler;
+        session->ioctlHandler.reset(handler);
+
+        uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+        DebugSessionLinux::UuidData isaUuidData = {
+            .handle = isaUUID,
+            .classHandle = isaClassHandle,
+            .classIndex = NEO::DrmResourceClass::Isa,
+            .data = std::make_unique<char[]>(sizeof(devices)),
+            .dataSize = sizeof(devices)};
+
+        memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+        // VM BIND events for 2 kernels from zebin in vm0 - tile0
+        addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+        addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+        EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+        EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+        // VM BIND events for 2 kernels from zebin in vm1 - tile0
+        addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+        addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+        EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+        auto numberOfEvents = session->apiEvents.size();
+
+        // remove all VM BINDs
+        addZebinVmBindEvent(session.get(), vm1, false, false, 0);
+        EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+        addZebinVmBindEvent(session.get(), vm1, false, false, 1);
+        EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+        addZebinVmBindEvent(session.get(), vm0, false, false, 0);
+        EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+        addZebinVmBindEvent(session.get(), vm0, false, false, 1);
+
+        // MODULE UNLOAD after all unbinds
+        auto numberOfAllEvents = session->apiEvents.size();
+        EXPECT_EQ(numberOfEvents + 1, numberOfAllEvents);
+
+        zet_debug_event_t event;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        while (numberOfAllEvents--) {
+            result = session->readEvent(0, &event);
+            if (result != ZE_RESULT_SUCCESS) {
+                break;
+            }
+        }
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+        EXPECT_EQ(isaGpuVa, event.info.module.load);
+    }
+
     MockIoctlHandler *handler = nullptr;
     std::unique_ptr<MockDebugSessionLinux> session;
 };
 
-using DebugApiLinuxMultiDeviceVmBindTest = Test<DebugApiLinuxMultiDeviceVmBindFixture>;
+using DebugApiLinuxMultiDeviceVmBindTest = Test<DebugApiLinuxMultiDeviceVmBindFixture<false>>;
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
 
@@ -6960,28 +7161,45 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWh
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
 
     addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    EXPECT_EQ(1u, handler->ackCount);
     addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+    EXPECT_EQ(2u, handler->ackCount);
+
     EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
     EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
     EXPECT_EQ(10u, handler->debugEventAcked.seqno);
     EXPECT_EQ(0u, session->apiEvents.size());
 
     addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    EXPECT_EQ(3u, handler->ackCount);
     addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+    // ACK not called for last segment
+    EXPECT_EQ(3u, handler->ackCount);
 
     EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
 
     zet_debug_event_t event;
     auto result = session->readEvent(0, &event);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+    givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived();
+}
+
+using DebugLinuxMultiDeviceVmBindBlockOnFenceTest = Test<DebugApiLinuxMultiDeviceVmBindFixture<true>>;
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
+
     auto handler = new MockIoctlHandler;
     session->ioctlHandler.reset(handler);
+    handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
 
@@ -6995,43 +7213,154 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWh
     memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
 
-    // VM BIND events for 2 kernels from zebin in vm0 - tile0
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+    // No ACK ioctl called
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(0u, session->apiEvents.size());
+
+    addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+
+    // No ACK ioctl called
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(kernelCount, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(kernelCount, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+    givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived();
+}
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenAcknowledgingEventThenModuleFromBothTilesAreAcked) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
     addZebinVmBindEvent(session.get(), vm0, true, true, 0);
     addZebinVmBindEvent(session.get(), vm0, true, true, 1);
 
-    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
-    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
-
-    // VM BIND events for 2 kernels from zebin in vm1 - tile0
     addZebinVmBindEvent(session.get(), vm1, true, true, 0);
     addZebinVmBindEvent(session.get(), vm1, true, true, 1);
-    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
 
-    auto numberOfEvents = session->apiEvents.size();
-
-    // remove all VM BINDs
-    addZebinVmBindEvent(session.get(), vm1, false, false, 0);
-    EXPECT_EQ(numberOfEvents, session->apiEvents.size());
-    addZebinVmBindEvent(session.get(), vm1, false, false, 1);
-    EXPECT_EQ(numberOfEvents, session->apiEvents.size());
-    addZebinVmBindEvent(session.get(), vm0, false, false, 0);
-    EXPECT_EQ(numberOfEvents, session->apiEvents.size());
-    addZebinVmBindEvent(session.get(), vm0, false, false, 1);
-
-    // MODULE UNLOAD after all unbinds
-    auto numberOfAllEvents = session->apiEvents.size();
-    EXPECT_EQ(numberOfEvents + 1, numberOfAllEvents);
+    // No ACK ioctl called
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(1u, session->apiEvents.size());
 
     zet_debug_event_t event;
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    while (numberOfAllEvents--) {
-        result = session->readEvent(0, &event);
-        if (result != ZE_RESULT_SUCCESS) {
-            break;
-        }
-    }
+    auto result = session->readEvent(0, &event);
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+
+    result = zetDebugAcknowledgeEvent(session->toHandle(), &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(4u, handler->ackCount);
+    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].moduleLoadEventAcked[0]);
+    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].moduleLoadEventAcked[1]);
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
+}
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenModuleUUIDIsNotFoundThenAcknowledgeCallsDebugBreakAndReturnsSuccess) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+
+    ASSERT_EQ(1u, session->apiEvents.size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.erase(zebinModuleUUID);
+
+    result = zetDebugAcknowledgeEvent(session->toHandle(), &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, handler->ackCount);
+}
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWithoutAckFlagWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterOneTileInstancesEventsReceived) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getSubDevice(0)->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addZebinVmBindEvent(session.get(), vm0, false, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, false, true, 1);
+    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+    // No ACK ioctl called
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(0u, event.flags);
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 

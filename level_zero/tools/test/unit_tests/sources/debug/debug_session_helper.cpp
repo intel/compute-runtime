@@ -13,9 +13,9 @@ namespace L0 {
 namespace ult {
 CreateDebugSessionHelperFunc createDebugSessionFunc = nullptr;
 }
-DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd) {
+DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params) {
     if (L0::ult::createDebugSessionFunc) {
-        return L0::ult::createDebugSessionFunc(config, device, debugFd);
+        return L0::ult::createDebugSessionFunc(config, device, debugFd, params);
     }
     return new L0::ult::DebugSessionMock(config, device);
 }

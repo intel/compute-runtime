@@ -270,6 +270,12 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
     case DrmIoctl::DebuggerOpen: {
         auto debuggerOpen = reinterpret_cast<prelim_drm_i915_debugger_open_param *>(arg);
         if (debuggerOpen->pid != 0 && debuggerOpen->events == 0) {
+            if (debuggerOpen->version != 0) {
+                return -1;
+            }
+            if (debuggerOpenVersion != 0) {
+                debuggerOpen->version = debuggerOpenVersion;
+            }
             return debuggerOpenRetval;
         }
     } break;

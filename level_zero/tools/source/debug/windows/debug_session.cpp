@@ -17,7 +17,7 @@
 
 namespace L0 {
 
-DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd);
+DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
 DebugSessionWindows::~DebugSessionWindows() {
     closeAsyncThread();
@@ -29,7 +29,7 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
         return nullptr;
     }
 
-    auto debugSession = createDebugSessionHelper(config, device, 0);
+    auto debugSession = createDebugSessionHelper(config, device, 0, nullptr);
     debugSession->setAttachMode(isRootAttach);
     result = debugSession->initialize();
     if (result != ZE_RESULT_SUCCESS) {

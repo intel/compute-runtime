@@ -34,7 +34,7 @@ struct DebugSessionLinux : DebugSessionImp {
     friend struct TileDebugSessionLinux;
 
     ~DebugSessionLinux() override;
-    DebugSessionLinux(const zet_debug_config_t &config, Device *device, int debugFd);
+    DebugSessionLinux(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
     ze_result_t initialize() override;
 
@@ -129,10 +129,14 @@ struct DebugSessionLinux : DebugSessionImp {
 
     struct Module {
         std::unordered_set<uint64_t> loadAddresses[NEO::EngineLimits::maxHandleCount];
+        uint64_t moduleUuidHandle;
         uint64_t elfUuidHandle;
         uint32_t segmentCount;
         NEO::DeviceBitfield deviceBitfield;
         int segmentVmBindCounter[NEO::EngineLimits::maxHandleCount];
+
+        std::vector<prelim_drm_i915_debug_event> ackEvents[NEO::EngineLimits::maxHandleCount];
+        bool moduleLoadEventAcked[NEO::EngineLimits::maxHandleCount];
     };
 
     static bool apiEventCompare(const zet_debug_event_t &event1, const zet_debug_event_t &event2) {
@@ -183,21 +187,19 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t interruptImp(uint32_t deviceIndex) override;
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
-        pushApiEvent(debugEvent, nullptr);
+        pushApiEvent(debugEvent);
     }
 
-    void pushApiEvent(zet_debug_event_t &debugEvent, prelim_drm_i915_debug_event *baseEvent) {
+    void pushApiEvent(zet_debug_event_t &debugEvent) {
+        return pushApiEvent(debugEvent, invalidHandle);
+    }
+
+    void pushApiEvent(zet_debug_event_t &debugEvent, uint64_t moduleUuidHandle) {
         std::unique_lock<std::mutex> lock(asyncThreadMutex);
 
-        if (baseEvent && (baseEvent->flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
-            prelim_drm_i915_debug_event_ack eventToAck = {};
-            eventToAck.type = baseEvent->type;
-            eventToAck.seqno = baseEvent->seqno;
-            eventToAck.flags = 0;
-            debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
-
+        if (moduleUuidHandle != invalidHandle && (debugEvent.flags & ZET_DEBUG_EVENT_FLAG_NEED_ACK)) {
             eventsToAck.push_back(
-                std::pair<zet_debug_event_t, prelim_drm_i915_debug_event_ack>(debugEvent, eventToAck));
+                std::pair<zet_debug_event_t, uint64_t>(debugEvent, moduleUuidHandle));
         }
 
         apiEvents.push(debugEvent);
@@ -241,6 +243,8 @@ struct DebugSessionLinux : DebugSessionImp {
     void handleAttentionEvent(prelim_drm_i915_debug_event_eu_attention *attention);
     void handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines);
     virtual bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
+    virtual bool ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle);
+
     MOCKABLE_VIRTUAL void processPendingVmBindEvents();
 
     void attachTile() override {
@@ -343,10 +347,11 @@ struct DebugSessionLinux : DebugSessionImp {
     std::mutex internalEventThreadMutex;
     std::condition_variable internalEventCondition;
     std::queue<std::unique_ptr<uint64_t[]>> internalEventQueue;
-    std::vector<std::pair<zet_debug_event_t, prelim_drm_i915_debug_event_ack>> eventsToAck;
+    std::vector<std::pair<zet_debug_event_t, uint64_t>> eventsToAck; // debug event, uuid handle to module
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
 
     int fd = 0;
+    uint32_t i915DebuggerVersion = 0;
     virtual int ioctl(unsigned long request, void *arg);
     std::unique_ptr<IoctlHandler> ioctlHandler;
     std::atomic<bool> detached{false};
@@ -358,10 +363,12 @@ struct DebugSessionLinux : DebugSessionImp {
 
     std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
     std::atomic<bool> internalThreadHasStarted{false};
+    bool blockOnFenceMode = false; // false - blocking VM_BIND on CPU - autoack events until last blocking event
+                                   // true - blocking on fence - do not auto-ack events
 };
 
 struct TileDebugSessionLinux : DebugSessionLinux {
-    TileDebugSessionLinux(zet_debug_config_t config, Device *device, DebugSessionImp *rootDebugSession) : DebugSessionLinux(config, device, 0),
+    TileDebugSessionLinux(zet_debug_config_t config, Device *device, DebugSessionImp *rootDebugSession) : DebugSessionLinux(config, device, 0, nullptr),
                                                                                                           rootDebugSession(reinterpret_cast<DebugSessionLinux *>(rootDebugSession)) {
         tileIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
     }
@@ -380,6 +387,8 @@ struct TileDebugSessionLinux : DebugSessionLinux {
     bool processExit();
     void attachTile() override;
     void detachTile() override;
+
+    bool isAttached = false;
 
   protected:
     void startAsyncThread() override { UNRECOVERABLE_IF(true); };
@@ -418,6 +427,10 @@ struct TileDebugSessionLinux : DebugSessionLinux {
         return rootDebugSession->ackIsaEvents(this->tileIndex, isaVa);
     }
 
+    bool ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle) override {
+        return rootDebugSession->ackModuleEvents(this->tileIndex, moduleUuidHandle);
+    }
+
     ze_result_t readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) override {
         return rootDebugSession->readGpuMemory(vmHandle, output, size, gpuVa);
     }
@@ -436,7 +449,6 @@ struct TileDebugSessionLinux : DebugSessionLinux {
 
     DebugSessionLinux *rootDebugSession = nullptr;
     uint32_t tileIndex = std::numeric_limits<uint32_t>::max();
-    bool isAttached = false;
     bool processEntryState = false;
 
     std::unordered_map<uint64_t, zet_debug_event_info_module_t> modules;

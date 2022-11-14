@@ -250,6 +250,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::triggerEvents;
 
     using L0::DebugSessionLinux::asyncThread;
+    using L0::DebugSessionLinux::blockOnFenceMode;
     using L0::DebugSessionLinux::checkAllEventsCollected;
     using L0::DebugSessionLinux::clientHandle;
     using L0::DebugSessionLinux::clientHandleClosed;
@@ -292,11 +293,13 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::uuidL0CommandQueueHandleToDevice;
     using L0::DebugSessionLinux::writeGpuMemory;
 
-    MockDebugSessionLinux(const zet_debug_config_t &config, L0::Device *device, int debugFd) : DebugSessionLinux(config, device, debugFd) {
+    MockDebugSessionLinux(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinux(config, device, debugFd, params) {
         clientHandleToConnection[mockClientHandle].reset(new ClientConnection);
         clientHandle = mockClientHandle;
         createEuThreads();
     }
+
+    MockDebugSessionLinux(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinux(config, device, debugFd, nullptr) {}
 
     ze_result_t initialize() override {
         if (initializeRetVal != ZE_RESULT_FORCE_UINT32) {
@@ -459,6 +462,7 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     using DebugSessionImp::stateSaveAreaHeader;
     using DebugSessionImp::triggerEvents;
     using DebugSessionLinux::detached;
+    using DebugSessionLinux::ioctl;
     using DebugSessionLinux::pushApiEvent;
     using TileDebugSessionLinux::cleanRootSessionAfterDetach;
     using TileDebugSessionLinux::getAllMemoryHandles;
@@ -605,7 +609,6 @@ struct MockDebugSessionLinuxHelper {
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 2;
-
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].ptr = elfVa;
     }
 
@@ -648,7 +651,7 @@ struct MockDebugSessionLinuxHelper {
         session->handleEvent(&vmBindIsa->base);
     }
 
-    void addZebinVmBindEvent(MockDebugSessionLinux *session, uint64_t vm, bool ack, bool create, uint64_t kernelIndex) {
+    void addZebinVmBindEvent(MockDebugSessionLinux *session, uint64_t vm, bool ack, bool create, uint64_t kernelIndex, uint32_t zebinModuleId) {
         uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + 4 * sizeof(typeOfUUID) + sizeof(uint64_t)) / sizeof(uint64_t)];
         prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
@@ -666,7 +669,21 @@ struct MockDebugSessionLinuxHelper {
         vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 4 * sizeof(typeOfUUID);
         vmBindIsa->base.seqno = 10;
         vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
-        vmBindIsa->va_start = kernelIndex == 0 ? isaGpuVa : isaGpuVa + isaSize;
+        if (zebinModuleId == 0) {
+            vmBindIsa->va_start = kernelIndex == 0 ? isaGpuVa : isaGpuVa + isaSize;
+        } else {
+            vmBindIsa->va_start = kernelIndex == 0 ? isaGpuVa * 4 : isaGpuVa * 4 + isaSize;
+
+            DebugSessionLinux::UuidData zebinModuleUuidData = {
+                .handle = zebinModuleUUID1,
+                .classHandle = zebinModuleClassHandle,
+                .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+                .data = std::make_unique<char[]>(sizeof(kernelCount)),
+                .dataSize = sizeof(kernelCount)};
+
+            session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(zebinModuleUUID1, std::move(zebinModuleUuidData));
+            session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].segmentCount = kernelCount;
+        }
         vmBindIsa->va_length = isaSize;
         vmBindIsa->vm_handle = vm;
         vmBindIsa->num_uuids = 4;
@@ -675,10 +692,14 @@ struct MockDebugSessionLinuxHelper {
         uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
         uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
         uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
-        uuidsTemp[3] = static_cast<typeOfUUID>(zebinModuleUUID);
+        uuidsTemp[3] = static_cast<typeOfUUID>(zebinModuleId == 0 ? zebinModuleUUID : zebinModuleUUID1);
 
         memcpy_s(uuids, 4 * sizeof(typeOfUUID), uuidsTemp, sizeof(uuidsTemp));
         session->handleEvent(&vmBindIsa->base);
+    }
+
+    void addZebinVmBindEvent(MockDebugSessionLinux *session, uint64_t vm, bool ack, bool create, uint64_t kernelIndex) {
+        return addZebinVmBindEvent(session, vm, ack, create, kernelIndex, 0);
     }
 
     const uint64_t sbaClassHandle = 1;
@@ -696,6 +717,7 @@ struct MockDebugSessionLinuxHelper {
 
     const uint64_t zebinModuleClassHandle = 101;
     const uint64_t zebinModuleUUID = 9;
+    const uint64_t zebinModuleUUID1 = 10;
     const uint32_t kernelCount = 2;
 
     const uint64_t vm0 = 1;

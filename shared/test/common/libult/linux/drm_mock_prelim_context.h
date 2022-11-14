@@ -146,6 +146,7 @@ struct DrmMockPrelimContext {
 
     // Debugger ioctls
     int debuggerOpenRetval = 10; // debugFd
+    uint32_t debuggerOpenVersion = 0;
 
     int handlePrelimRequest(DrmIoctl request, void *arg);
     bool handlePrelimQueryItem(void *arg);

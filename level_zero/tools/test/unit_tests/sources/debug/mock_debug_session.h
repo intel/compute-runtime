@@ -13,7 +13,7 @@
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
 namespace L0 {
-DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd);
+DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
 namespace ult {
 
