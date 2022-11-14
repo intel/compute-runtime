@@ -205,7 +205,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
     ClientOptionsData_1_0 &subDeviceCount,
     ClientOptionsData_1_0 &workloadPartition) {
 
-    const auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
+    auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
 
     if (!deviceImp.isSubdevice) {
 
@@ -214,7 +214,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDevice.SubDevice.Enabled = false;
 
         subDeviceIndex.Type = ClientOptionsType::SubDeviceIndex;
-        subDeviceIndex.SubDeviceIndex.Index = 0;
+        subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(deviceImp.getPhysicalSubDeviceId());
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
         subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
@@ -229,7 +229,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDevice.SubDevice.Enabled = true;
 
         subDeviceIndex.Type = ClientOptionsType::SubDeviceIndex;
-        subDeviceIndex.SubDeviceIndex.Index = static_cast<NEO::SubDevice *>(deviceImp.getNEODevice())->getSubDeviceIndex();
+        subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(deviceImp.getPhysicalSubDeviceId());
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
         subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);

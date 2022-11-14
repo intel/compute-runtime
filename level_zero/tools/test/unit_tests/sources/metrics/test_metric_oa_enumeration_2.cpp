@@ -192,6 +192,40 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MetricEnumerationMultiDeviceTest, givenSubDeviceWhenOpenMetricsDiscoveryIsCalledThenOpenMetricsSubDeviceWillBeCalled) {
+
+    // Use sub device
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    ASSERT_GE(subDeviceCount, 2u);
+    Mock<IAdapterGroup_1_9> mockAdapterGroup;
+    Mock<IAdapter_1_9> mockAdapter;
+    Mock<IMetricsDevice_1_5> mockDevice;
+
+    EXPECT_CALL(*Mock<MetricEnumeration>::g_mockApi, MockOpenAdapterGroup(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&mockAdapterGroup), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(mockAdapter, CloseMetricsDevice(_))
+        .Times(1)
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(mockAdapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(*mockMetricEnumerationSubDevices[1], getMetricsAdapter())
+        .Times(1)
+        .WillOnce(Return(&mockAdapter));
+
+    EXPECT_CALL(mockAdapter, OpenMetricsSubDevice(_, _))
+        .Times(1)
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&mockDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_EQ(mockMetricEnumerationSubDevices[1]->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockMetricEnumerationSubDevices[1]->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
+}
+
 TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCalledThenOpenMetricsSubDeviceWillBeCalledWithoutSuccess) {
 
     // Use first root device.

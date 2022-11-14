@@ -123,8 +123,6 @@ ze_result_t MetricEnumeration::loadMetricsDiscovery() {
 ze_result_t MetricEnumeration::openMetricsDiscovery() {
     UNRECOVERABLE_IF(openAdapterGroup == nullptr);
 
-    const uint32_t subDeviceIndex = metricSource.getSubDeviceIndex();
-
     // Clean up members.
     pAdapterGroup = nullptr;
     pAdapter = nullptr;
@@ -153,10 +151,11 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
         // Open metrics device for each sub device.
         for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
 
-            auto &metricsDevice = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().pMetricsDevice;
-            pAdapter->OpenMetricsSubDevice(static_cast<uint32_t>(i), &metricsDevice);
-            deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().pAdapter = pAdapter;
-
+            auto &subDeviceMetricEnumeraion = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration();
+            auto &metricsDevice = subDeviceMetricEnumeraion.pMetricsDevice;
+            auto subDeviceImp = static_cast<DeviceImp *>(deviceImp.subDevices[i]);
+            pAdapter->OpenMetricsSubDevice(subDeviceImp->getPhysicalSubDeviceId(), &metricsDevice);
+            subDeviceMetricEnumeraion.pAdapter = pAdapter;
             if (metricsDevice == nullptr) {
                 NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", i);
                 cleanupMetricsDiscovery();
@@ -164,6 +163,8 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
             }
         }
     } else {
+        auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
+        const uint32_t subDeviceIndex = deviceImp.getPhysicalSubDeviceId();
         if (subDeviceIndex == 0) {
             // Open metrics device for root device or sub device with index 0.
             pAdapter->OpenMetricsDevice(&pMetricsDevice);
