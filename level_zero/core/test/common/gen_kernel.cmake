@@ -27,9 +27,9 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
       )
 
       add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
+                         COMMAND echo generate ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -78,9 +78,9 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
       set(output_name "-output" "${prefix}_${basename}")
 
       add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >" , workdir is ${workdir}
+                         COMMAND echo generate ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >" , workdir is ${workdir}
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >"
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )

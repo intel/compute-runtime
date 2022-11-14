@@ -68,7 +68,7 @@ function(compile_builtin core_type platform_type builtin bits builtin_options)
 
     add_custom_command(
                        OUTPUT ${OUTPUT_FILES}
-                       COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -out_dir ${OUTPUTDIR} -options "$<JOIN:${__ocloc__options__}, >"
+                       COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -out_dir ${OUTPUTDIR} -options "$<JOIN:${__ocloc__options__}, >"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        DEPENDS ${builtin} ocloc copy_compiler_files
     )
