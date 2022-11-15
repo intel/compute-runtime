@@ -2674,9 +2674,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
                                                                data,
                                                                comparator);
 
+    const auto &hwInfo = this->device->getHwInfo();
+    NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, hwInfo);
     if (hSignalEvent) {
         auto event = Event::fromHandle(hSignalEvent);
-        const auto &hwInfo = this->device->getHwInfo();
 
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         uint64_t baseAddr = event->getGpuAddress(this->device);

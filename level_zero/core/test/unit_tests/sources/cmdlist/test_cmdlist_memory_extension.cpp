@@ -418,6 +418,30 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMe
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
 }
 
+HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeThenMiMemFenceEncodedCorrectly, IsXeHpcCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = commandList->commandContainer;
+
+    auto hwInfo = commandList->commandContainer.getDevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->platform.usRevId = 0x03;
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_MEM_FENCE *>(*itor);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE, cmd->getFenceType());
+}
+
 using CommandListAppendWriteToMem = Test<CommandListWaitOnMemFixture>;
 
 HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithNoScopeThenPipeControlEncodedCorrectly) {
@@ -450,7 +474,6 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithNoScopeThenPipeCo
     }
     ASSERT_TRUE(postSyncFound);
 }
-
 HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemOnBcsWithNoScopeThenFlushDwEncodedCorrectly) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     ze_result_t result = ZE_RESULT_SUCCESS;
