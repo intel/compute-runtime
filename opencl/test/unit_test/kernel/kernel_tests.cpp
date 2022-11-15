@@ -2517,11 +2517,14 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
 
     capabilityTable.ftrRenderCompressedBuffers = true;
     kernel.mockKernel->initialize();
-    EXPECT_EQ(ClHwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo, *hwInfo), kernel.mockKernel->isAuxTranslationRequired());
+
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
+    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+    EXPECT_EQ(clCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(-1);
     kernel.mockKernel->initialize();
-    EXPECT_EQ(ClHwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo, *hwInfo), kernel.mockKernel->isAuxTranslationRequired());
+    EXPECT_EQ(clCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(0);
     kernel.mockKernel->initialize();
@@ -2544,7 +2547,10 @@ TEST(KernelTest, WhenAuxTranslationIsRequiredThenKernelSetsRequiredResolvesInCon
 
     kernel.mockKernel->initialize();
 
-    if (ClHwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo, *hwInfo)) {
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
+    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+
+    if (clCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment)) {
         EXPECT_TRUE(context->getResolvesRequiredInKernels());
     } else {
         EXPECT_FALSE(context->getResolvesRequiredInKernels());
@@ -2587,7 +2593,10 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
 
     kernel.mockKernel->initialize();
 
-    if (ClHwHelper::get(localHwInfo.platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo, localHwInfo)) {
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
+    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+
+    if (clCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment)) {
         EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
     } else {
         EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());

@@ -9,6 +9,8 @@
 
 #include "shared/source/built_ins/sip.h"
 
+#include "opencl/source/helpers/cl_hw_helper.h"
+
 #include "gtest/gtest.h"
 
 namespace NEO {
@@ -42,6 +44,10 @@ MockDevice *ClDeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
     return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, rootDeviceIndex);
 }
 
+const RootDeviceEnvironment &ClDeviceFixture::getRootDeviceEnvironment() const {
+    return pClDevice->getRootDeviceEnvironment();
+}
+
 template <typename HelperType>
 HelperType &ClDeviceFixture::getHelper() const {
     auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<HelperType>();
@@ -50,5 +56,5 @@ HelperType &ClDeviceFixture::getHelper() const {
 
 template ProductHelper &ClDeviceFixture::getHelper() const;
 template CoreHelper &ClDeviceFixture::getHelper() const;
-
+template ClCoreHelper &ClDeviceFixture::getHelper() const;
 } // namespace NEO

@@ -138,14 +138,15 @@ cl_int Kernel::initialize() {
     auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
     reconfigureKernel();
     auto &hwInfo = pClDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
+    auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
     auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     const auto &implicitArgs = kernelDescriptor.payloadMappings.implicitArgs;
     const auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
     auto maxSimdSize = kernelInfo.getMaxSimdSize();
     const auto &heapInfo = kernelInfo.heapInfo;
 
-    if (maxSimdSize != 1 && maxSimdSize < hwHelper.getMinimalSIMDSize()) {
+    if (maxSimdSize != 1 && maxSimdSize < coreHelper.getMinimalSIMDSize()) {
         return CL_INVALID_KERNEL;
     }
 
@@ -238,15 +239,15 @@ cl_int Kernel::initialize() {
 
     auto &threadArbitrationPolicy = const_cast<ThreadArbitrationPolicy &>(kernelInfo.kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
     if (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
-        threadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(hwHelper.getDefaultThreadArbitrationPolicy());
+        threadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(coreHelper.getDefaultThreadArbitrationPolicy());
     }
     if (false == kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress) {
         threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
     }
 
-    auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
 
-    auxTranslationRequired = !program->getIsBuiltIn() && HwHelper::compressedBuffersSupported(hwInfo) && clHwHelper.requiresAuxResolves(kernelInfo, hwInfo);
+    auxTranslationRequired = !program->getIsBuiltIn() && HwHelper::compressedBuffersSupported(hwInfo) && clCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
 
     if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
         auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
@@ -919,8 +920,8 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     bool disableL3 = false;
     bool forceNonAuxMode = false;
     bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
-    auto &hwInfo = getDevice().getHardwareInfo();
-    auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
+    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
 
     if (isAuxTranslationKernel) {
         if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
@@ -928,7 +929,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             forceNonAuxMode = true;
         }
         disableL3 = (argIndex == 0);
-    } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clHwHelper.requiresNonAuxMode(argAsPtr, hwInfo)) {
+    } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clCoreHelper.requiresNonAuxMode(argAsPtr, rootDeviceEnvironment)) {
         forceNonAuxMode = true;
     }
 
@@ -1476,8 +1477,8 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         bool forceNonAuxMode = false;
         bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
         auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
-        auto &hwInfo = pClDevice->getHardwareInfo();
-        auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
+        auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
 
         if (isAuxTranslationKernel) {
             if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
@@ -1485,7 +1486,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                 forceNonAuxMode = true;
             }
             disableL3 = (argIndex == 0);
-        } else if (graphicsAllocation->isCompressionEnabled() && clHwHelper.requiresNonAuxMode(argAsPtr, hwInfo)) {
+        } else if (graphicsAllocation->isCompressionEnabled() && clCoreHelper.requiresNonAuxMode(argAsPtr, rootDeviceEnvironment)) {
             forceNonAuxMode = true;
         }
 

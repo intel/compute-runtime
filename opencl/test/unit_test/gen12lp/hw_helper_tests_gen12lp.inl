@@ -12,16 +12,17 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "engine_node.h"
 
-using HwHelperTestGen12Lp = HwHelperTest;
+using ClHwHelperTestsGen12Lp = Test<ClDeviceFixture>;
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+GEN12LPTEST_F(ClHwHelperTestsGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
 
     for (auto accessedUsingStatelessAddressingMode : {true, false}) {
         KernelInfo kernelInfo{};
@@ -30,9 +31,11 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
         arg.as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = accessedUsingStatelessAddressingMode;
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(std::move(arg));
 
-        EXPECT_EQ(accessedUsingStatelessAddressingMode, clHwHelper.requiresAuxResolves(kernelInfo, hardwareInfo));
+        EXPECT_EQ(accessedUsingStatelessAddressingMode, clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
     }
 }
+
+using HwHelperTestGen12Lp = HwHelperTest;
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
     auto &helper = getHelper<CoreHelper>();

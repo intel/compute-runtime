@@ -13,13 +13,14 @@ namespace NEO {
 class ClDevice;
 class Context;
 struct HardwareInfo;
+struct RootDeviceEnvironment;
 
 namespace TestChecks {
 bool supportsSvm(const ClDevice *pClDevice);
 bool supportsImages(const Context *pContext);
 bool supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 bool supportsPipes(const ClDevice *pClDevice);
-bool supportsAuxResolves();
+bool supportsAuxResolves(const RootDeviceEnvironment &rootDeviceEnvironment);
 } // namespace TestChecks
 
 } // namespace NEO
@@ -37,7 +38,7 @@ bool supportsAuxResolves();
         GTEST_SKIP();                                     \
     }
 
-#define REQUIRE_AUX_RESOLVES()                             \
-    if (NEO::TestChecks::supportsAuxResolves() == false) { \
-        GTEST_SKIP();                                      \
+#define REQUIRE_AUX_RESOLVES(rootDeviceEnvironment)                             \
+    if (NEO::TestChecks::supportsAuxResolves(rootDeviceEnvironment) == false) { \
+        GTEST_SKIP();                                                           \
     }

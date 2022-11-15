@@ -362,7 +362,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     // Generically validate this command
     PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 
-    //skip if size to big 4MB, no point in stressing memory allocator.
+    // skip if size to big 4MB, no point in stressing memory allocator.
     if (allocationSize > 4194304) {
         return;
     }
@@ -382,7 +382,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     if constexpr (is64bit) {
         ASSERT_NE(itorCmdForStateBase, itorCmd);
     } else {
-        //no SBA not dirty
+        // no SBA not dirty
         ASSERT_EQ(itorCmdForStateBase, cmdList.end());
     }
 
@@ -511,7 +511,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
 
         EXPECT_EQ(memoryManager->getExternalHeapBaseAddress(graphicsAllocation->getRootDeviceIndex(), graphicsAllocation->isAllocatedInLocalMemoryPool()), gsHaddress);
 
-        //now re-try to see if SBA is not programmed
+        // now re-try to see if SBA is not programmed
 
         scratchSize *= 2;
         mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
@@ -841,7 +841,8 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationAndWithoutA
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThenPickOnlyApplicableBuffers) {
-    REQUIRE_AUX_RESOLVES();
+
+    REQUIRE_AUX_RESOLVES(this->getRootDeviceEnvironment());
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);

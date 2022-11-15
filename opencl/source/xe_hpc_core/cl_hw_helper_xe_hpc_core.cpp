@@ -25,7 +25,7 @@ void populateFactoryTable<ClHwHelperHw<Family>>() {
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const HardwareInfo &hwInfo) const {
+bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return false;
 }
 

@@ -17,6 +17,7 @@
 #include "opencl/source/helpers/cl_helper.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include <array>
@@ -106,30 +107,29 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenIsLinearStoragePreferredThenReturnValidV
     }
 }
 
-using ClHwHelperTest = ::testing::Test;
+using ClHwHelperTest = Test<ClDeviceFixture>;
 HWTEST_F(ClHwHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
-    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
     KernelInfo kernelInfo{};
 
     ArgDescriptor argDescriptorValue(ArgDescriptor::ArgType::ArgTValue);
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorValue);
-    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, hwInfo));
+    EXPECT_FALSE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 
     ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
     argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
-    EXPECT_TRUE(clHwHelper.requiresAuxResolves(kernelInfo, hwInfo));
+    EXPECT_TRUE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
 
 TEST_F(ClHwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
     }
 }
 

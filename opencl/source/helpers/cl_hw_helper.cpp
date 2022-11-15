@@ -27,7 +27,7 @@ cl_version ClHwHelper::makeDeviceIpVersion(uint16_t major, uint8_t minor, uint8_
 }
 
 template <>
-ClHwHelper &RootDeviceEnvironment::getHelper<ClHwHelper>() const {
+ClCoreHelper &RootDeviceEnvironment::getHelper<ClCoreHelper>() const {
     auto &apiHelper = ClHwHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
     return apiHelper;
 }

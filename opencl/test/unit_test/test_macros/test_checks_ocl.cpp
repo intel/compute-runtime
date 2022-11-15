@@ -31,11 +31,11 @@ bool TestChecks::supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInf
             pHardwareInfo->capabilityTable.supportsIndependentForwardProgress);
 }
 
-bool TestChecks::supportsAuxResolves() {
+bool TestChecks::supportsAuxResolves(const RootDeviceEnvironment &rootDeviceEnvironment) {
     KernelInfo kernelInfo{};
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
 
-    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    return clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo);
+    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+    return clCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
 }

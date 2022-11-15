@@ -27,10 +27,10 @@
 using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
     KernelInfo kernelInfo{};
 
-    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
+    EXPECT_FALSE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperwhenAskingForDcFlushThenReturnFalse) {

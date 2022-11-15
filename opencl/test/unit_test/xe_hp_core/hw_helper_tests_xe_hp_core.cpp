@@ -19,54 +19,57 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
-using HwHelperTestXE_HP_CORE = HwHelperTest;
+using ClHwHelperTestsXeHpCore = Test<ClDeviceFixture>;
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
+XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_FALSE(clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
+        EXPECT_FALSE(clCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXE_HP_COREThenAuxTranslationIsRequired) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenXE_HP_COREThenAuxTranslationIsRequired) {
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         KernelInfo kernelInfo{};
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_EQ(!isPureStateful, clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
+        EXPECT_EQ(!isPureStateful, clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXE_HP_COREWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
+XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenXE_HP_COREWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
     KernelInfo kernelInfo{};
 
-    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
+    EXPECT_FALSE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
+
+using HwHelperTestXE_HP_CORE = HwHelperTest;
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
     DebugManagerStateRestore restore;
