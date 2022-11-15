@@ -225,13 +225,13 @@ void ImageCoreFamily<gfxCoreFamily>::copyRedescribedSurfaceStateToSSH(void *surf
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool ImageCoreFamily<gfxCoreFamily>::isSuitableForCompression(const StructuresLookupTable &structuresLookupTable, const NEO::ImageInfo &imgInfo) {
     auto &hwInfo = device->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &loCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     if (structuresLookupTable.uncompressedHint) {
         return false;
     }
 
-    return (l0HwHelper.imageCompressionSupported(hwInfo) && !imgInfo.linearStorage);
+    return (loCoreHelper.imageCompressionSupported(hwInfo) && !imgInfo.linearStorage);
 }
 
 } // namespace L0

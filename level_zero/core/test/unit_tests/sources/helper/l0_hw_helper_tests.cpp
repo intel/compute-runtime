@@ -73,38 +73,38 @@ static void printAttentionBitmask(uint8_t *expected, uint8_t *actual, uint32_t m
 HWTEST_F(L0HwHelperTest, givenL0HwHelperWhenAskingForImageCompressionSupportThenReturnFalse) {
     DebugManagerStateRestore restore;
 
-    auto &l0HwHelper = L0::L0HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
 
-    EXPECT_FALSE(l0HwHelper.imageCompressionSupported(*NEO::defaultHwInfo));
+    EXPECT_FALSE(l0CoreHelper.imageCompressionSupported(*NEO::defaultHwInfo));
 
     NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(1);
-    EXPECT_TRUE(l0HwHelper.imageCompressionSupported(*NEO::defaultHwInfo));
+    EXPECT_TRUE(l0CoreHelper.imageCompressionSupported(*NEO::defaultHwInfo));
 
     NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(0);
-    EXPECT_FALSE(l0HwHelper.imageCompressionSupported(*NEO::defaultHwInfo));
+    EXPECT_FALSE(l0CoreHelper.imageCompressionSupported(*NEO::defaultHwInfo));
 }
 
 HWTEST_F(L0HwHelperTest, givenL0HwHelperWhenAskingForUsmCompressionSupportThenReturnFalse) {
     DebugManagerStateRestore restore;
 
-    auto &l0HwHelper = L0::L0HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily);
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
 
-    EXPECT_FALSE(l0HwHelper.forceDefaultUsmCompressionSupport());
+    EXPECT_FALSE(l0CoreHelper.forceDefaultUsmCompressionSupport());
 
     HardwareInfo hwInfo = *NEO::defaultHwInfo;
 
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    EXPECT_FALSE(l0HwHelper.usmCompressionSupported(hwInfo));
+    EXPECT_FALSE(l0CoreHelper.usmCompressionSupported(hwInfo));
 
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
-    EXPECT_FALSE(l0HwHelper.usmCompressionSupported(hwInfo));
+    EXPECT_FALSE(l0CoreHelper.usmCompressionSupported(hwInfo));
 
     NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    EXPECT_TRUE(l0HwHelper.usmCompressionSupported(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.usmCompressionSupported(hwInfo));
 
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
-    EXPECT_FALSE(l0HwHelper.usmCompressionSupported(hwInfo));
+    EXPECT_FALSE(l0CoreHelper.usmCompressionSupported(hwInfo));
 }
 
 HWTEST_F(L0HwHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned) {
