@@ -337,8 +337,8 @@ HWTEST2_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyInt
 }
 
 HWTEST_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyIntelWhenThreadArbitrationPolicyChangeNotSupportedAndCallClGetDeviceInfoThenParamRetSizeIsZero) {
-    auto &hwHelper = NEO::ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    if (hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clCoreHelper = this->pDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    if (clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     cl_device_info paramName = 0;

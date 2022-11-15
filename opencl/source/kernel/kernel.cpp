@@ -2278,10 +2278,9 @@ void Kernel::updateAuxTranslationRequired() {
 }
 
 int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
-    auto &hwInfo = clDevice.getHardwareInfo();
-    auto &hwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &clCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClCoreHelper>();
     auto &threadArbitrationPolicy = const_cast<ThreadArbitrationPolicy &>(getDescriptor().kernelAttributes.threadArbitrationPolicy);
-    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    if (!clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
         return CL_INVALID_DEVICE;
     } else if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {

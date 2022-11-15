@@ -381,8 +381,8 @@ void ClDevice::initializeCaps() {
         getQueueFamilyName(properties.name, engineGroup.engineGroupType);
         deviceInfo.queueFamilyProperties.push_back(properties);
     }
-    auto &clHwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    const std::vector<uint32_t> &supportedThreadArbitrationPolicies = clHwHelper.getSupportedThreadArbitrationPolicies();
+    auto &clCoreHelper = this->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    const std::vector<uint32_t> &supportedThreadArbitrationPolicies = clCoreHelper.getSupportedThreadArbitrationPolicies();
     deviceInfo.supportedThreadArbitrationPolicies.resize(supportedThreadArbitrationPolicies.size());
     for (size_t policy = 0u; policy < supportedThreadArbitrationPolicies.size(); policy++) {
         deviceInfo.supportedThreadArbitrationPolicies[policy] = supportedThreadArbitrationPolicies[policy];

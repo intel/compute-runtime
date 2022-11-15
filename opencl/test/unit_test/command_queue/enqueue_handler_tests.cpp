@@ -586,8 +586,8 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySetKernelThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
     REQUIRE_SVM_OR_SKIP(pClDevice);
-    auto &hwHelper = NEO::ClHwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    if (!clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore stateRestore;
@@ -623,8 +623,8 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySe
 }
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenNotSupportedPolicyChangeThenRequiredThreadArbitrationPolicyNotChangedAndIsSetAsDefault) {
-    auto &hwHelper = NEO::ClHwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    if (clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore stateRestore;
