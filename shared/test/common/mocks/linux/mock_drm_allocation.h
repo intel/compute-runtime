@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
 
@@ -59,6 +60,8 @@ class MockDrmAllocation : public DrmAllocation {
         DrmAllocation::bindBOs(osContext, vmHandleId, bufferObjects, bind);
         return bindBOsRetValue;
     }
+
+    ADDMETHOD_NOBASE(makeBOsResident, int, 0, (OsContext * osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind));
 
     bool registerBOBindExtHandleCalled = false;
     bool markedForCapture = false;

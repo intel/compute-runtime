@@ -114,7 +114,10 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         lock = memoryOperationsInterface->lockHandlerIfUsed();
     }
 
-    this->printBOsForSubmit(allocationsForResidency, *batchBuffer.commandBufferAllocation);
+    auto submissionStatus = this->printBOsForSubmit(allocationsForResidency, *batchBuffer.commandBufferAllocation);
+    if (submissionStatus != SubmissionStatus::SUCCESS) {
+        return submissionStatus;
+    }
 
     if (this->drm->isVmBindAvailable()) {
         allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
@@ -174,17 +177,23 @@ void DrmCommandStreamReceiver<GfxFamily>::readBackAllocation(void *source) {
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation) {
+SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation) {
     if (DebugManager.flags.PrintBOsForSubmit.get()) {
         std::vector<BufferObject *> bosForSubmit;
         for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
             if (osContext->getDeviceBitfield().test(drmIterator)) {
                 for (auto gfxAllocation = allocationsForResidency.begin(); gfxAllocation != allocationsForResidency.end(); gfxAllocation++) {
                     auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
-                    drmAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true);
+                    auto retCode = drmAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true);
+                    if (retCode) {
+                        return Drm::getSubmissionStatusFromReturnCode(retCode);
+                    }
                 }
                 auto drmCmdBufferAllocation = static_cast<DrmAllocation *>(&cmdBufferAllocation);
-                drmCmdBufferAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true);
+                auto retCode = drmCmdBufferAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true);
+                if (retCode) {
+                    return Drm::getSubmissionStatusFromReturnCode(retCode);
+                }
             }
         }
         printf("Buffer object for submit\n");
@@ -193,6 +202,7 @@ void DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(ResidencyContainer &
         }
         printf("\n");
     }
+    return SubmissionStatus::SUCCESS;
 }
 
 template <typename GfxFamily>

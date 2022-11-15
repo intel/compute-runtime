@@ -61,7 +61,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
         gemCloseWorkerOperationMode = gemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
-    void printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
+    SubmissionStatus printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
 
     using CommandStreamReceiver::pageTableManager;
 

@@ -544,49 +544,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenFlushNotCalledThenClearResi
     mm->freeGraphicsMemory(allocation2);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrintThenProperValuesArePrinted) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintBOsForSubmit.set(true);
-
-    auto allocation1 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
-    auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
-    auto buffer = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
-    ASSERT_NE(nullptr, allocation1);
-    ASSERT_NE(nullptr, allocation2);
-    ASSERT_NE(nullptr, buffer);
-
-    csr->makeResident(*allocation1);
-    csr->makeResident(*allocation2);
-
-    ResidencyContainer residency;
-    residency.push_back(allocation1);
-    residency.push_back(allocation2);
-
-    testing::internal::CaptureStdout();
-
-    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, *buffer);
-
-    std::string output = testing::internal::GetCapturedStdout();
-
-    std::vector<BufferObject *> bos;
-    allocation1->makeBOsResident(&csr->getOsContext(), 0, &bos, true);
-    allocation2->makeBOsResident(&csr->getOsContext(), 0, &bos, true);
-    buffer->makeBOsResident(&csr->getOsContext(), 0, &bos, true);
-
-    std::stringstream expected;
-    expected << "Buffer object for submit\n";
-    for (const auto &bo : bos) {
-        expected << "BO-" << bo->peekHandle() << ", range: " << std::hex << bo->peekAddress() << " - " << ptrOffset(bo->peekAddress(), bo->peekSize()) << ", size: " << std::dec << bo->peekSize() << "\n";
-    }
-    expected << "\n";
-
-    EXPECT_FALSE(output.compare(expected.str()));
-
-    mm->freeGraphicsMemory(allocation1);
-    mm->freeGraphicsMemory(allocation2);
-    mm->freeGraphicsMemory(buffer);
-}
-
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenFlushMultipleTimesThenSucceeds) {
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());

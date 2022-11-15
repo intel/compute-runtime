@@ -30,6 +30,7 @@
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -949,4 +950,90 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpd
 
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrintThenProperValuesArePrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintBOsForSubmit.set(true);
+
+    MockDrmAllocation allocation1(AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation2(AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+
+    csr->makeResident(allocation1);
+    csr->makeResident(allocation2);
+
+    ResidencyContainer residency;
+    residency.push_back(&allocation1);
+    residency.push_back(&allocation2);
+
+    testing::internal::CaptureStdout();
+
+    EXPECT_EQ(SubmissionStatus::SUCCESS, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    std::vector<BufferObject *> bos;
+    allocation1.makeBOsResident(&csr->getOsContext(), 0, &bos, true);
+    allocation2.makeBOsResident(&csr->getOsContext(), 0, &bos, true);
+    cmdBuffer.makeBOsResident(&csr->getOsContext(), 0, &bos, true);
+
+    std::stringstream expected;
+    expected << "Buffer object for submit\n";
+    for (const auto &bo : bos) {
+        expected << "BO-" << bo->peekHandle() << ", range: " << std::hex << bo->peekAddress() << " - " << ptrOffset(bo->peekAddress(), bo->peekSize()) << ", size: " << std::dec << bo->peekSize() << "\n";
+    }
+    expected << "\n";
+
+    EXPECT_FALSE(output.compare(expected.str()));
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailureOnMakeResidentForCmdBufferWhenPrintThenErrorIsReturnedAndNothingIsPrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintBOsForSubmit.set(true);
+
+    MockDrmAllocation allocation1(AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation2(AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+
+    cmdBuffer.makeBOsResidentResult = ENOSPC;
+
+    csr->makeResident(allocation1);
+    csr->makeResident(allocation2);
+
+    ResidencyContainer residency;
+    residency.push_back(&allocation1);
+    residency.push_back(&allocation2);
+
+    testing::internal::CaptureStdout();
+
+    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.empty());
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailureOnMakeResidentForAllocationToResidencyWhenPrintThenErrorIsReturnedAndNothingIsPrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintBOsForSubmit.set(true);
+
+    MockDrmAllocation allocation1(AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation2(AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+
+    allocation1.makeBOsResidentResult = ENOSPC;
+
+    csr->makeResident(allocation1);
+    csr->makeResident(allocation2);
+
+    ResidencyContainer residency;
+    residency.push_back(&allocation1);
+    residency.push_back(&allocation2);
+
+    testing::internal::CaptureStdout();
+
+    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.empty());
 }
