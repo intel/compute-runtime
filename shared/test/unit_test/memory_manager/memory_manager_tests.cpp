@@ -68,3 +68,17 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGettingDefaultContextThenCorrectCo
     EXPECT_EQ(mockMemoryManager->getRegisteredEngines()[mockMemoryManager->defaultEngineIndex[0]].osContext,
               executionEnvironment.memoryManager->getDefaultEngineContext(0, 2));
 }
+
+TEST(MemoryManagerTest, givenFailureOnRegisterSystemMemoryAllocationWhenAllocatingMemoryThenNullptrIsReturned) {
+    AllocationProperties properties(mockRootDeviceIndex, true, MemoryConstants::cacheLineSize, AllocationType::BUFFER, false, mockDeviceBitfield);
+    MockMemoryManager memoryManager;
+    memoryManager.registerSysMemAllocResult = MemoryManager::AllocationStatus::Error;
+    EXPECT_EQ(nullptr, memoryManager.allocateGraphicsMemoryWithProperties(properties));
+}
+
+TEST(MemoryManagerTest, givenFailureOnRegisterLocalMemoryAllocationWhenAllocatingMemoryThenNullptrIsReturned) {
+    AllocationProperties properties(mockRootDeviceIndex, true, MemoryConstants::cacheLineSize, AllocationType::BUFFER, false, mockDeviceBitfield);
+    MockMemoryManager memoryManager(true, true);
+    memoryManager.registerLocalMemAllocResult = MemoryManager::AllocationStatus::Error;
+    EXPECT_EQ(nullptr, memoryManager.allocateGraphicsMemoryWithProperties(properties));
+}

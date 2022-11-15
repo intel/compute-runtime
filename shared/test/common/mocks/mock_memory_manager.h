@@ -70,6 +70,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new MockExecutionEnvironment(defaultHwInfo.get()))) {
         mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));
     }
+
+    ADDMETHOD_NOBASE(registerSysMemAlloc, AllocationStatus, AllocationStatus::Success, (GraphicsAllocation * allocation));
+    ADDMETHOD_NOBASE(registerLocalMemAlloc, AllocationStatus, AllocationStatus::Success, (GraphicsAllocation * allocation, uint32_t rootDeviceIndex));
+
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);

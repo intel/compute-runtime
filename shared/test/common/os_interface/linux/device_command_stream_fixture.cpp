@@ -196,6 +196,11 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::GemVmUnbind: {
     } break;
+    case DrmIoctl::GemVmCreate: {
+        auto vmCreate = reinterpret_cast<NEO::GemVmControl *>(arg);
+        vmCreate->vmId = vmIdToCreate;
+        break;
+    }
     default:
         int res = ioctlExtra(request, arg);
         if (returnIoctlExtraErrorValue) {

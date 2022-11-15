@@ -75,8 +75,8 @@ class DrmMemoryManager : public MemoryManager {
     [[nodiscard]] std::unique_lock<std::mutex> acquireAllocLock();
     std::vector<GraphicsAllocation *> &getSysMemAllocs();
     std::vector<GraphicsAllocation *> &getLocalMemAllocs(uint32_t rootDeviceIndex);
-    void registerSysMemAlloc(GraphicsAllocation *allocation) override;
-    void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) override;
+    AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation) override;
+    AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) override;
     void unregisterAllocation(GraphicsAllocation *allocation);
 
     static std::unique_ptr<MemoryManager> create(ExecutionEnvironment &executionEnvironment);
@@ -112,7 +112,6 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override;
-    GraphicsAllocation *createSharedUnifiedMemoryAllocationLegacy(const AllocationData &allocationData);
     GraphicsAllocation *createSharedUnifiedMemoryAllocation(const AllocationData &allocationData);
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
@@ -126,7 +125,7 @@ class DrmMemoryManager : public MemoryManager {
     void registerAllocationInOs(GraphicsAllocation *allocation) override;
     void waitOnCompletionFence(GraphicsAllocation *allocation);
     bool allocationTypeForCompletionFence(AllocationType allocationType);
-    void makeAllocationResident(GraphicsAllocation *allocation);
+    bool makeAllocationResident(GraphicsAllocation *allocation);
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;
     uint32_t getRootDeviceIndex(const Drm *drm);

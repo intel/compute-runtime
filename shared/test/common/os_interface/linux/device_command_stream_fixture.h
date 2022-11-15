@@ -220,6 +220,8 @@ class DrmMockCustom : public Drm {
     uint32_t createExtHandle = 0;
     uint64_t createExtExtensions = 0;
 
+    uint32_t vmIdToCreate = 0;
+
     int errnoValue = 0;
 
     bool returnIoctlExtraErrorValue = false;

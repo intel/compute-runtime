@@ -220,8 +220,8 @@ class MemoryManager {
     virtual bool isCpuCopyRequired(const void *ptr) { return false; }
     virtual bool isWCMemory(const void *ptr) { return false; }
 
-    virtual void registerSysMemAlloc(GraphicsAllocation *allocation){};
-    virtual void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex){};
+    virtual AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation) { return AllocationStatus::Success; };
+    virtual AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) { return AllocationStatus::Success; };
 
     virtual bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) { return true; }
     virtual bool setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t subDeviceId, uint32_t rootDeviceIndex) { return true; }

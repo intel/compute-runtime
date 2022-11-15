@@ -5485,3 +5485,31 @@ TEST_F(DrmMemoryManagerTest, givenSingleSubDevicesBitfieldWhenAllocatingSbaTrack
         memoryManager->freeGraphicsMemory(sbaBuffer);
     }
 }
+
+TEST_F(DrmMemoryManagerTest, givenMakeBosResidentErrorWhenRegisteringMemoryAllocationThenErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MakeEachAllocationResident.set(1);
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(0));
+    drm.vmIdToCreate = 1;
+    drm.createVirtualMemoryAddressSpace(1);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System4KBPages);
+    allocation.makeBOsResidentResult = ENOSPC;
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, memoryManager->registerSysMemAlloc(&allocation));
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, memoryManager->registerLocalMemAlloc(&allocation, 0));
+}
+
+TEST_F(DrmMemoryManagerTest, givenMakeBosResidentSuccessWhenRegisteringMemoryAllocationThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MakeEachAllocationResident.set(1);
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(0));
+    drm.vmIdToCreate = 1;
+    drm.createVirtualMemoryAddressSpace(1);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System4KBPages);
+    allocation.makeBOsResidentResult = 0;
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->registerSysMemAlloc(&allocation));
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->registerLocalMemAlloc(&allocation, 0));
+}

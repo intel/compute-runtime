@@ -481,15 +481,18 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
     if (allocation) {
         getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
-        this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
+        status = this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
     }
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
         allocation = allocateGraphicsMemory(allocationData);
         if (allocation) {
-            this->registerSysMemAlloc(allocation);
+            status = this->registerSysMemAlloc(allocation);
         }
     }
-
+    if (allocation && status != AllocationStatus::Success) {
+        freeGraphicsMemory(allocation);
+        allocation = nullptr;
+    }
     if (!allocation) {
         return nullptr;
     }
