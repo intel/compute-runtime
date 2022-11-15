@@ -110,9 +110,8 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
     }
     for (auto &pClDevice : context.getDevices()) {
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
-        auto &hwInfo = pClDevice->getHardwareInfo();
-        auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        if (!clHwHelper.allowCompressionForContext(*pClDevice, context)) {
+        auto &clCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+        if (!clCoreHelper.allowCompressionForContext(*pClDevice, context)) {
             return false;
         }
 
@@ -121,7 +120,7 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
                 return false;
             }
 
-            //for unrestrictive and default context, turn on compression only for read only surfaces with no host access.
+            // for unrestrictive and default context, turn on compression only for read only surfaces with no host access.
             bool isContextSpecialized = (context.peekContextType() == ContextType::CONTEXT_TYPE_SPECIALIZED);
             bool isReadOnlyAndHostNoAccess = (properties.flags.readOnly && properties.flags.hostNoAccess);
             if (!isContextSpecialized && !isReadOnlyAndHostNoAccess) {

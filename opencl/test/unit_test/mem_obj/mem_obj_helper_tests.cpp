@@ -376,7 +376,6 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
     DebugManagerStateRestore debugRestore;
     VariableBackup<bool> renderCompressedBuffersCapability{&defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers};
     int32_t enableMultiTileCompressionValues[] = {-1, 0, 1};
-    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
     for (auto ftrRenderCompressedBuffers : ::testing::Bool()) {
         renderCompressedBuffersCapability = ftrRenderCompressedBuffers;
@@ -385,6 +384,8 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
 
             MockSpecializedContext context;
             auto &device = context.getDevice(0)->getDevice();
+            auto &clCoreHelper = device.getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+
             MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &device);
 
             bool compressionEnabled = MemObjHelper::isSuitableForCompression(HwHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
@@ -393,7 +394,7 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
                 memoryProperties, context, compressionEnabled, false);
 
             bool expectBufferCompressed = ftrRenderCompressedBuffers && (enableMultiTileCompressionValue == 1);
-            if (expectBufferCompressed && clHwHelper.allowCompressionForContext(*context.getDevice(0), context)) {
+            if (expectBufferCompressed && clCoreHelper.allowCompressionForContext(*context.getDevice(0), context)) {
                 EXPECT_TRUE(compressionEnabled);
             } else {
                 EXPECT_FALSE(compressionEnabled);
@@ -416,7 +417,6 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                                ContextType::CONTEXT_TYPE_UNRESTRICTIVE};
     __REVID steppingValues[] = {REVISION_A0, REVISION_B};
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
     for (auto stepping : steppingValues) {
         hardwareStepping = hwInfoConfig.getHwRevIdFromStepping(stepping, *defaultHwInfo);
@@ -446,6 +446,8 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                     for (auto flagsIntel : flagsIntelValues) {
 
                         auto &device = context.getDevice(0)->getDevice();
+                        auto &clCoreHelper = device.getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+
                         MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel,
                                                                                                              0, &device);
 
@@ -460,7 +462,7 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                         bool isMultiTile = (numSubDevices > 1);
                         if (expectBufferCompressed && isMultiTile) {
                             bool isBufferReadOnly = isValueSet(flags, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
-                            expectBufferCompressed = clHwHelper.allowCompressionForContext(*context.getDevice(0), context) &&
+                            expectBufferCompressed = clCoreHelper.allowCompressionForContext(*context.getDevice(0), context) &&
                                                      ((contextType == ContextType::CONTEXT_TYPE_SPECIALIZED) || isBufferReadOnly);
                         }
 

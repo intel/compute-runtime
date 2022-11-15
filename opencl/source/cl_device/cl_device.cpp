@@ -216,7 +216,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
 }
 
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineGroupType type) {
-    auto &clHwHelper = NEO::ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
+    auto &clCoreHelper = this->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
 
     cl_command_queue_capabilities_intel disabledProperties = 0u;
     if (EngineHelper::isCopyOnlyEngineType(type)) {
@@ -227,7 +227,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
         disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL); // clEnqueueCopyBufferToImage
         disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL); // clEnqueueCopyImageToBuffer
     }
-    disabledProperties |= clHwHelper.getAdditionalDisabledQueueFamilyCapabilities(type);
+    disabledProperties |= clCoreHelper.getAdditionalDisabledQueueFamilyCapabilities(type);
 
     if (disabledProperties != 0) {
         return getQueueFamilyCapabilitiesAll() & ~disabledProperties;
