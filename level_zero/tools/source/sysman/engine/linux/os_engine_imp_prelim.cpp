@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
@@ -53,6 +54,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     NEO::Drm *pDrm = &pLinuxSysmanImp->getDrm();
 
     if (pDrm->sysmanQueryEngineInfo() == false) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error message:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     auto engineInfo = pDrm->getEngineInfo();
@@ -71,10 +73,13 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
 
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
     if (fd < 0) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d it's returning error:0x%x \n", __FUNCTION__, fd, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     uint64_t data[2] = {};
-    if (pPmuInterface->pmuRead(static_cast<int>(fd), data, sizeof(data)) < 0) {
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fd), data, sizeof(data));
+    if (ret < 0) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     // In data[], First u64 is "active time", And second u64 is "timestamp". Both in nanoseconds
@@ -116,6 +121,7 @@ void LinuxEngineImp::init() {
 
 bool LinuxEngineImp::isEngineModuleSupported() {
     if (fd < 0) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d Engine Module is not supported \n", __FUNCTION__, fd);
         return false;
     }
     return true;
