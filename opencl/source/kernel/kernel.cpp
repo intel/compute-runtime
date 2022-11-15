@@ -551,7 +551,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     size_t maxWorkgroupSize;
     const auto &hwInfo = clDevice.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &clCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClCoreHelper>();
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     switch (paramName) {
@@ -594,7 +594,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         pSrc = &scratchSize;
         break;
     case CL_KERNEL_PRIVATE_MEM_SIZE:
-        privateMemSize = clHwHelper.getKernelPrivateMemSize(kernelInfo);
+        privateMemSize = clCoreHelper.getKernelPrivateMemSize(kernelInfo);
         srcSize = sizeof(privateMemSize);
         pSrc = &privateMemSize;
         break;

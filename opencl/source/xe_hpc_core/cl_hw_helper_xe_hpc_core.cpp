@@ -30,20 +30,6 @@ bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, con
 }
 
 template <>
-inline bool ClHwHelperHw<Family>::getQueueFamilyName(std::string &name, EngineGroupType type) const {
-    switch (type) {
-    case EngineGroupType::RenderCompute:
-        name = "cccs";
-        return true;
-    case EngineGroupType::LinkedCopy:
-        name = "linked bcs";
-        return true;
-    default:
-        return false;
-    }
-}
-
-template <>
 cl_version ClHwHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
     return makeDeviceIpVersion(12, 8, makeDeviceRevision(hwInfo));
 }

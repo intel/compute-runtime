@@ -8,13 +8,22 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 
 template <>
-inline bool ClHwHelperHw<Family>::preferBlitterForLocalToLocalTransfers() const {
-    return false;
+std::vector<uint32_t> ClHwHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
+    return std::vector<uint32_t>{CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_AFTER_DEPENDENCY_ROUND_ROBIN_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_STALL_BASED_ROUND_ROBIN_INTEL};
 }
 
 template <>
-std::vector<uint32_t> ClHwHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
-    return std::vector<uint32_t>{CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_AFTER_DEPENDENCY_ROUND_ROBIN_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_STALL_BASED_ROUND_ROBIN_INTEL};
+inline bool ClHwHelperHw<Family>::getQueueFamilyName(std::string &name, EngineGroupType type) const {
+    switch (type) {
+    case EngineGroupType::RenderCompute:
+        name = "cccs";
+        return true;
+    case EngineGroupType::LinkedCopy:
+        name = "linked bcs";
+        return true;
+    default:
+        return false;
+    }
 }
 
 template <>

@@ -1817,7 +1817,8 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndLocalToLo
     DebugManagerStateRestore restore{};
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    const bool hwPreference = ClHwHelper::get(::defaultHwInfo->platform.eRenderCoreFamily).preferBlitterForLocalToLocalTransfers();
+    auto &clCoreHelper = clDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    const bool hwPreference = clCoreHelper.preferBlitterForLocalToLocalTransfers();
     const auto &hwPreferenceCsr = hwPreference ? *queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS) : queue->getGpgpuCommandStreamReceiver();
 
     BuiltinOpParams builtinOpParams{};

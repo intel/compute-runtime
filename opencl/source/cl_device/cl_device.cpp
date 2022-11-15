@@ -238,8 +238,8 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
 void ClDevice::getQueueFamilyName(char *outputName, EngineGroupType type) {
     std::string name{};
 
-    const auto &clHwHelper = ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
-    const bool hasHwSpecificName = clHwHelper.getQueueFamilyName(name, type);
+    const auto &clCoreHelper = this->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    const bool hasHwSpecificName = clCoreHelper.getQueueFamilyName(name, type);
 
     if (!hasHwSpecificName) {
         switch (type) {

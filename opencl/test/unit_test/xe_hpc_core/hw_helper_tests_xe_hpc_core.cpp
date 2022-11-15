@@ -24,14 +24,22 @@
 
 #include "hw_cmds_xe_hpc_core_base.h"
 
-using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
+using ClHwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
+;
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
+XE_HPC_CORETEST_F(ClHwHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
     auto &clCoreHelper = getHelper<ClCoreHelper>();
     KernelInfo kernelInfo{};
 
     EXPECT_FALSE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
+
+XE_HPC_CORETEST_F(ClHwHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnFalse) {
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
+    EXPECT_FALSE(clCoreHelper.preferBlitterForLocalToLocalTransfers());
+}
+
+using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperwhenAskingForDcFlushThenReturnFalse) {
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo));
@@ -715,10 +723,6 @@ XE_HPC_CORETEST_F(LriHelperTestsXeHpcCore, whenProgrammingLriCommandThenExpectMm
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenCheckingSipWAThenFalseIsReturned) {
     EXPECT_FALSE(HwHelper::get(renderCoreFamily).isSipWANeeded(*defaultHwInfo));
-}
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnFalse) {
-    EXPECT_FALSE(ClHwHelper::get(renderCoreFamily).preferBlitterForLocalToLocalTransfers());
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsCheckedThenReturnFalse) {
