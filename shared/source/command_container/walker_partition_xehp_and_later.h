@@ -480,7 +480,8 @@ uint64_t computeWalkerSectionStart(WalkerPartitionArgs &args) {
 template <typename GfxFamily>
 void programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgrammed,
                               COMPUTE_WALKER<GfxFamily> *inputWalker,
-                              uint32_t partitionCount) {
+                              uint32_t partitionCount,
+                              bool forceExecutionOnSingleTile) {
     auto computeWalker = putCommand<COMPUTE_WALKER<GfxFamily>>(inputAddress, totalBytesProgrammed);
     COMPUTE_WALKER<GfxFamily> cmd = *inputWalker;
 
@@ -503,7 +504,11 @@ void programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramme
             workgroupCount = inputWalker->getThreadGroupIdZDimension();
         }
 
-        cmd.setPartitionSize((workgroupCount + partitionCount - 1u) / partitionCount);
+        if (forceExecutionOnSingleTile) {
+            cmd.setPartitionSize(workgroupCount);
+        } else {
+            cmd.setPartitionSize(Math::divideAndRoundUp(workgroupCount, partitionCount));
+        }
     }
     *computeWalker = cmd;
 }
@@ -614,7 +619,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
         args.secondaryBatchBuffer);
 
     // Walker section
-    programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount);
+    programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.forceExecutionOnSingleTile);
 
     programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation, false, args.secondaryBatchBuffer);
 
@@ -704,7 +709,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
     if (args.initializeWparidRegister) {
         programMiLoadRegisterMem<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args.workPartitionAllocationGpuVa, wparidCCSOffset);
     }
-    programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount);
+    programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.forceExecutionOnSingleTile);
 
     // Prepare for cleanup section
     if (args.emitSelfCleanup) {

@@ -122,7 +122,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
-    auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, !kernel.isSingleSubdevicePreferred());
+    auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
 
     if (partitionWalker) {
         const uint64_t workPartitionAllocationGpuVa = commandQueue.getDevice().getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
@@ -135,6 +135,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                              false,
                                                              kernel.usesImages(),
                                                              queueCsr.getDcFlushSupport(),
+                                                             kernel.isSingleSubdevicePreferred(),
                                                              workPartitionAllocationGpuVa,
                                                              hwInfo);
         if (queueCsr.isStaticWorkPartitioningEnabled()) {

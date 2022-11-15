@@ -400,7 +400,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
 
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
     void *walkerCommandAddress = cmdBufferAddress;
-    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u);
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
     auto walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
@@ -411,7 +411,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
 
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Y);
     walkerCommandAddress = cmdBufferAddress;
-    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u);
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
     walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
@@ -420,7 +420,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
 
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z);
     walkerCommandAddress = cmdBufferAddress;
-    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u);
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
     walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
@@ -430,7 +430,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
     //if we program with partition Count == 1 then do not trigger partition stuff
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
     walkerCommandAddress = cmdBufferAddress;
-    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 1u);
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 1u, false);
     walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
@@ -506,7 +506,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithDifferentWorkg
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDisalbedMinimalPartitionSizeWhenCoomputePartitionSizeThenProperValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDisabledMinimalPartitionSizeWhenComputePartitionSizeThenProperValueIsReturned) {
     WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(64u);
@@ -1671,4 +1671,33 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     EXPECT_EQ(parsedOffset, expectedCommandUsedSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenForceExecutionOnSingleTileWhenProgramComputeWalkerThenWalkerIsProperlyProgrammed) {
+    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdXDimension(32u);
+    walker.setThreadGroupIdYDimension(1u);
+    walker.setThreadGroupIdZDimension(1u);
+
+    bool forceExecutionOnSingleTile = false;
+    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
+    void *walkerCommandAddress = cmdBufferAddress;
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, forceExecutionOnSingleTile);
+    auto walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+
+    ASSERT_NE(nullptr, walkerCommand);
+    EXPECT_TRUE(walkerCommand->getWorkloadPartitionEnable());
+    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
+    EXPECT_EQ(16u, walkerCommand->getPartitionSize());
+
+    forceExecutionOnSingleTile = true;
+    walkerCommandAddress = cmdBufferAddress;
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, forceExecutionOnSingleTile);
+    walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+
+    ASSERT_NE(nullptr, walkerCommand);
+    EXPECT_TRUE(walkerCommand->getWorkloadPartitionEnable());
+    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
+    EXPECT_EQ(32u, walkerCommand->getPartitionSize());
 }

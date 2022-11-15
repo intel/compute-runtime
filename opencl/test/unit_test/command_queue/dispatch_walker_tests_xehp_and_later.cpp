@@ -1319,29 +1319,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelThatPrefersSingleSubdeviceWhenProgramWalkerThenPartitioningIsNotUsed) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
-
-    struct SingleSubdeviceKernel : public MockKernel {
-        using MockKernel::MockKernel;
-        bool isSingleSubdevicePreferred() const override { return true; }
-    };
-
-    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    size_t gws[] = {2, 1, 1};
-    size_t lws[] = {1, 1, 1};
-    SingleSubdeviceKernel subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
-    cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
-
-    ClHardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithPartitionLogicDisabledThenWalkerPartitionLogicIsNotExecuted) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
@@ -1913,4 +1890,70 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenSimdSize1TWhenCheckToGener
     simd = 1;
     EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+}
+
+struct XeHPAndLaterDispatchWalkerTestMultiTileDevice : public XeHPAndLaterDispatchWalkerBasicTest {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(2u);
+
+        XeHPAndLaterDispatchWalkerBasicTest::SetUp();
+    }
+    void TearDown() override {
+        XeHPAndLaterDispatchWalkerBasicTest::TearDown();
+    }
+};
+
+struct KernelWithSingleSubdevicePreferences : public MockKernel {
+    using MockKernel::MockKernel;
+    bool isSingleSubdevicePreferred() const override { return singleSubdevicePreferred; }
+
+    bool singleSubdevicePreferred = true;
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, givenKernelThatPrefersSingleSubdeviceWhenProgramWalkerThenKernelIsExecutedOnSingleTile) {
+    if (!OSInterface::osEnableLocalMemory) {
+        GTEST_SKIP();
+    }
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    size_t gws[] = {2, 1, 1};
+    size_t lws[] = {1, 1, 1};
+    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    KernelWithSingleSubdevicePreferences subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
+    subdeviceKernel.singleSubdevicePreferred = true;
+    cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ);
+    auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
+    ASSERT_NE(nullptr, computeWalker);
+    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+    EXPECT_EQ(2u, computeWalker->getPartitionSize());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, givenKernelThatDoesntPreferSingleSubdeviceWhenProgramWalkerThenKernelIsExecutedOnAllTiles) {
+    if (!OSInterface::osEnableLocalMemory) {
+        GTEST_SKIP();
+    }
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    size_t gws[] = {2, 1, 1};
+    size_t lws[] = {1, 1, 1};
+    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    KernelWithSingleSubdevicePreferences subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
+    subdeviceKernel.singleSubdevicePreferred = false;
+    cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ);
+    auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
+    ASSERT_NE(nullptr, computeWalker);
+    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+    EXPECT_EQ(1u, computeWalker->getPartitionSize());
 }

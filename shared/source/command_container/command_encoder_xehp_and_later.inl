@@ -301,8 +301,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
 
-    if ((args.partitionCount > 1 && !args.isCooperative) &&
-        !args.isInternal) {
+    if (args.partitionCount > 1 && !args.isInternal) {
         const uint64_t workPartitionAllocationGpuVa = args.device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
         if (args.eventAddress != 0) {
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
@@ -315,6 +314,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                           !args.isKernelDispatchedFromImmediateCmdList,
                                                           false,
                                                           args.dcFlushEnable,
+                                                          args.isCooperative,
                                                           workPartitionAllocationGpuVa,
                                                           hwInfo);
     } else {

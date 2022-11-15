@@ -1026,6 +1026,36 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
     EXPECT_EQ(eventAddress, postSync.getDestinationAddress());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling, givenCooperativeKernelWhenEncodingDispatchKernelThenExpectPartitionSizeEqualWorkgroupSize) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    uint32_t dims[] = {16, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    bool requiresUncachedMocs = false;
+    bool isInternal = false;
+    bool isCooperative = true;
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.isInternal = isInternal;
+    dispatchArgs.isCooperative = isCooperative;
+    dispatchArgs.partitionCount = 2;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+
+    size_t containerUsedAfterBase = cmdContainer->getCommandStream()->getUsed();
+
+    GenCmdList partitionedWalkerList;
+    CmdParse<FamilyType>::parseCommandBuffer(partitionedWalkerList, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), containerUsedAfterBase);
+    auto itor = find<WALKER_TYPE *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    ASSERT_NE(itor, partitionedWalkerList.end());
+
+    auto partitionWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    EXPECT_EQ(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
+    uint32_t expectedPartitionSize = dims[0];
+    EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
+}
+
 struct CommandEncodeStatesDynamicImplicitScalingFixture : CommandEncodeStatesImplicitScalingFixture {
     void setUp() {
         DebugManager.flags.EnableStaticPartitioning.set(0);

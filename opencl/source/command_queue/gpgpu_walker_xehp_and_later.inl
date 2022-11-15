@@ -138,8 +138,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
                   HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
                   EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.KernelHeapSize, commandQueue.getDevice().getHardwareInfo());
     auto devices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getDeviceBitfield();
-    auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices,
-                                                                           !pKernel->isSingleSubdevicePreferred());
+    auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
     if (partitionWalker) {
         Vec3<size_t> groupStart = dispatchInfo.getStartOfWorkgroups();
         Vec3<size_t> groupCount = dispatchInfo.getNumberOfWorkgroups();

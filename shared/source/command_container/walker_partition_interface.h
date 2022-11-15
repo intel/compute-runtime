@@ -31,6 +31,7 @@ struct WalkerPartitionArgs {
     bool usePostSync = false;
     bool pipeControlBeforeCleanupCrossTileSync = false;
     bool dcFlushEnable = false;
+    bool forceExecutionOnSingleTile = false;
 };
 
 constexpr uint32_t wparidCCSOffset = 0x221C;

@@ -205,7 +205,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
         false,                                                                            // epilogueRequired
         false,                                                                            // usePerDssBackedBuffer
-        kernel->isSingleSubdevicePreferred(),                                             // useSingleSubdevice
+        false,                                                                            // useSingleSubdevice
         kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                         // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                // memoryMigrationRequired

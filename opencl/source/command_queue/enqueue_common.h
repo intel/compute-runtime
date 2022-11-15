@@ -799,7 +799,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),             // outOfOrderExecutionAllowed
         false,                                                                                                  // epilogueRequired
         false,                                                                                                  // usePerDssBackedBuffer
-        kernel->isSingleSubdevicePreferred(),                                                                   // useSingleSubdevice
+        false,                                                                                                  // useSingleSubdevice
         useGlobalAtomics,                                                                                       // useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                                               // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                                      // memoryMigrationRequired

@@ -1417,8 +1417,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     EXPECT_EQ(4u, commandList->partitionCount);
 }
 
-HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenDoNotUseImplicitScaling, IsAtLeastXeHpCore) {
-    ze_group_count_t groupCount{1, 1, 1};
+HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenSetProperPartitionSize, IsAtLeastXeHpCore) {
+    ze_group_count_t groupCount{16, 1, 1};
 
     auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = commandListWithNonCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -1434,6 +1434,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     auto itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
     auto cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
+    EXPECT_EQ(4u, cmd->getPartitionSize());
 
     auto commandListWithCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     result = commandListWithCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -1445,11 +1446,12 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     sizeAfter = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
     cmdList.clear();
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+        cmdList, ptrOffset(commandListWithCooperativeKernel->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
 
     itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
     cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
+    EXPECT_EQ(16u, cmd->getPartitionSize());
 }
 
 HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
