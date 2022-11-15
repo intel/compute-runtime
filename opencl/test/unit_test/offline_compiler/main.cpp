@@ -52,6 +52,7 @@ int main(int argc, char **argv) {
     std::string devicePrefix("skl");
     std::string familyNameWithType("Gen9core");
     std::string revId("0");
+    std::string productConfig("");
 
 #if defined(__linux__)
     if (getenv("CLOC_SELFTEST") == nullptr) {
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
         }
 
         execv(argv[0], argv);
-        //execv failed, we return with error
+        // execv failed, we return with error
         printf("FATAL ERROR: cannot self-exec test!\n");
         return -1;
     }
@@ -110,6 +111,16 @@ int main(int argc, char **argv) {
         }
     }
 
+    auto productConfigHelper = new ProductConfigHelper();
+    auto allEnabledDeviceConfigs = productConfigHelper->getDeviceAotInfo();
+
+    for (const auto &device : allEnabledDeviceConfigs) {
+        if (device.hwInfo->platform.eProductFamily == productFamily) {
+            productConfig = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
+            break;
+        }
+    }
+
     // we look for test files always relative to binary location
     // this simplifies multi-process execution and using different
     // working directories
@@ -149,7 +160,7 @@ int main(int argc, char **argv) {
     }
     listeners.Append(new NEO::VirtualFileSystemListener);
 
-    gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, familyNameWithType)));
+    gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, productConfig, familyNameWithType)));
 
     int sigOut = setAlarm(enableAlarm);
     if (sigOut != 0) {

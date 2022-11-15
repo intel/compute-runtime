@@ -9,6 +9,9 @@
 
 #include "shared/source/utilities/const_stringref.h"
 
+#include "igfxfmid.h"
+
+#include <algorithm>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -88,6 +91,11 @@ struct ProductConfigHelper {
     }
 
     template <typename EqComparableT>
+    static auto findAcronym(const EqComparableT &lhs) {
+        return [&lhs](const auto &rhs) { return std::any_of(rhs.acronyms.begin(), rhs.acronyms.end(), findAcronymWithoutDash(lhs)); };
+    }
+
+    template <typename EqComparableT>
     static auto findFamily(const EqComparableT &lhs) {
         return [&lhs](const auto &rhs) { return lhs == rhs.family; };
     }
@@ -114,6 +122,7 @@ struct ProductConfigHelper {
     std::vector<NEO::ConstStringRef> getFamiliesAcronyms();
     std::vector<NEO::ConstStringRef> getDeprecatedAcronyms();
     std::vector<NEO::ConstStringRef> getAllProductAcronyms();
+    PRODUCT_FAMILY getProductFamilyForAcronym(const std::string &device) const;
 
   protected:
     std::vector<DeviceAotInfo> deviceAotInfo;

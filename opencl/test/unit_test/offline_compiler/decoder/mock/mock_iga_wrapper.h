@@ -31,11 +31,8 @@ struct MockIgaWrapper : public IgaWrapper {
     }
 
     void setProductFamily(PRODUCT_FAMILY product) override {
+        IgaWrapper::setProductFamily(product);
         setProductFamilyWasCalled = true;
-    }
-
-    bool isKnownPlatform() const override {
-        return isKnownPlatformReturnValue;
     }
 
     bool tryLoadIga() override {
@@ -49,7 +46,6 @@ struct MockIgaWrapper : public IgaWrapper {
 
     bool disasmWasCalled = false;
     bool asmWasCalled = false;
-    bool isKnownPlatformReturnValue = false;
     bool setProductFamilyWasCalled = false;
     bool setGfxCoreWasCalled = false;
 };

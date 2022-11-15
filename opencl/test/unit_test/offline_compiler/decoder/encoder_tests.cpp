@@ -10,6 +10,8 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/helpers/test_files.h"
 
+#include "opencl/test/unit_test/offline_compiler/environment.h"
+
 #include "gtest/gtest.h"
 #include "mock/mock_encoder.h"
 
@@ -17,6 +19,8 @@
 #include <cstdint>
 #include <fstream>
 #include <sstream>
+
+extern Environment *gEnvironment;
 
 namespace NEO {
 
@@ -90,18 +94,21 @@ TEST(EncoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnV
 }
 
 TEST(EncoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryIsNotUsedAsDumpPath) {
+    if (gEnvironment->productConfig.empty()) {
+        GTEST_SKIP();
+    }
     const std::vector<std::string> args = {
         "ocloc",
         "asm",
         "-out",
         "test_files/binary_gen.bin",
         "-device",
-        "pvc"};
+        gEnvironment->productConfig.c_str(),
+    };
 
     constexpr auto suppressMessages{false};
     MockEncoder encoder{suppressMessages};
     encoder.mockArgHelper->hasOutput = true;
-    encoder.getMockIga()->isKnownPlatformReturnValue = true;
 
     ::testing::internal::CaptureStdout();
     const auto result = encoder.validateInput(args);

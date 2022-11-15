@@ -312,7 +312,7 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
             pathToDump = args[++argIndex];
             addSlash(pathToDump);
         } else if ("-device" == currArg && hasMoreArgs) {
-            iga->setProductFamily(getProductFamilyFromDeviceName(args[++argIndex]));
+            setProductFamilyForIga(args[++argIndex], iga.get(), argHelper);
         } else if ("-out" == currArg && hasMoreArgs) {
             elfName = args[++argIndex];
         } else if ("--help" == currArg) {

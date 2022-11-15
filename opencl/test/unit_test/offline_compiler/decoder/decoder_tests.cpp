@@ -7,9 +7,11 @@
 
 #include "shared/offline_compiler/source/decoder/translate_platform_base.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "opencl/test/unit_test/offline_compiler/environment.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 #include "opencl/test/unit_test/offline_compiler/stdout_capturer.h"
 #include "opencl/test/unit_test/test_files/patch_list.h"
@@ -24,6 +26,8 @@
 #include <sstream>
 #include <string>
 #include <utility>
+
+extern Environment *gEnvironment;
 
 static void abortOclocExecutionMock(int code) {
     throw std::runtime_error{"Exit called with code = " + std::to_string(code)};
@@ -43,7 +47,6 @@ SKernelBinaryHeaderCommon createKernelBinaryHeaderCommon(const uint32_t kernelNa
 }
 
 namespace NEO {
-
 TEST(DecoderTests, GivenArgHelperWithHeadersWhenLoadingPatchListThenHeadersAreReturned) {
     const char input[] = "First\nSecond\nThird";
     const auto inputLength{sizeof(input)};
@@ -277,6 +280,80 @@ TEST(DecoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenError
     }
 }
 
+TEST(DecoderTests, givenUnknownDeviceNameWhenValidateInputThenCorrectWarningIsReported) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "disasm",
+        "-device",
+        "unk"};
+
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = decoder.validateInput(args);
+    const auto output{::testing::internal::GetCapturedStdout()};
+    EXPECT_EQ(result, 0);
+
+    const std::string expectedWarningMessage{"Warning : missing or invalid -device parameter - results may be inaccurate\n"};
+    EXPECT_TRUE(hasSubstr(output, expectedWarningMessage));
+}
+
+TEST(DecoderTests, givenDeprecatedDeviceNamesWhenValidateInputThenCorrectWarningIsReported) {
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+
+    auto deprecatedAcronyms = decoder.mockArgHelper->productConfigHelper->getDeprecatedAcronyms();
+    if (deprecatedAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &acronym : deprecatedAcronyms) {
+        const std::vector<std::string> args = {
+            "ocloc",
+            "disasm",
+            "-device",
+            acronym.str()};
+
+        ::testing::internal::CaptureStdout();
+        const auto result = decoder.validateInput(args);
+        const auto output{::testing::internal::GetCapturedStdout()};
+
+        EXPECT_EQ(result, 0);
+
+        const std::string expectedWarningMessage{"Warning : Deprecated device name is being used.\n"};
+        EXPECT_TRUE(hasSubstr(output, expectedWarningMessage));
+    }
+}
+
+TEST(DecoderTests, givenDeviceNamesWhenValidateInputThenSuccessIsReturned) {
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+    decoder.mockArgHelper->hasOutput = true;
+
+    auto supportedAcronyms = decoder.mockArgHelper->productConfigHelper->getAllProductAcronyms();
+    if (supportedAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &acronym : supportedAcronyms) {
+        const std::vector<std::string> args = {
+            "ocloc",
+            "disasm",
+            "-device",
+            acronym.str()};
+
+        ::testing::internal::CaptureStdout();
+        const auto result = decoder.validateInput(args);
+        const auto output{::testing::internal::GetCapturedStdout()};
+
+        EXPECT_EQ(result, 0);
+        EXPECT_TRUE(output.empty());
+    }
+
+    decoder.mockArgHelper->hasOutput = false;
+}
+
 TEST(DecoderTests, GivenIgnoreIsaPaddingFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndInternalFlagIsSet) {
     const std::vector<std::string> args = {
         "ocloc",
@@ -314,19 +391,21 @@ TEST(DecoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnV
 }
 
 TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndWarningAboutCreationOfDefaultDirectoryIsPrinted) {
+    if (gEnvironment->productConfig.empty()) {
+        GTEST_SKIP();
+    }
     const std::vector<std::string> args = {
         "ocloc",
         "disasm",
         "-file",
         "test_files/binary.bin",
         "-device",
-        "pvc",
+        gEnvironment->productConfig.c_str(),
         "-patch",
         "test_files/patch"};
 
     constexpr auto suppressMessages{false};
     MockDecoder decoder{suppressMessages};
-    decoder.getMockIga()->isKnownPlatformReturnValue = true;
 
     ::testing::internal::CaptureStdout();
     const auto result = decoder.validateInput(args);
@@ -335,32 +414,31 @@ TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenRetur
     EXPECT_EQ(0, result);
 
     const std::string expectedErrorMessage{"Warning : Path to dump folder not specificed - using ./dump as default.\n"};
-    EXPECT_EQ(expectedErrorMessage, output);
+    EXPECT_TRUE(hasSubstr(output, expectedErrorMessage));
 }
 
 TEST(DecoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryWarningIsNotEmitted) {
+    if (gEnvironment->productConfig.empty()) {
+        GTEST_SKIP();
+    }
     const std::vector<std::string> args = {
         "ocloc",
         "disasm",
         "-file",
         "test_files/binary.bin",
         "-device",
-        "pvc",
+        gEnvironment->productConfig.c_str(),
         "-patch",
         "test_files/patch"};
-
     constexpr auto suppressMessages{false};
     MockDecoder decoder{suppressMessages};
     decoder.mockArgHelper->hasOutput = true;
-    decoder.getMockIga()->isKnownPlatformReturnValue = true;
 
     ::testing::internal::CaptureStdout();
     const auto result = decoder.validateInput(args);
     const auto output{::testing::internal::GetCapturedStdout()};
-
     EXPECT_EQ(0, result);
     EXPECT_TRUE(output.empty()) << output;
-
     decoder.mockArgHelper->hasOutput = false;
 }
 
@@ -549,30 +627,30 @@ TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBin
 TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPatchTokensAreReadCorrectly) {
     std::stringstream binarySS;
 
-    //ProgramBinaryHeader
+    // ProgramBinaryHeader
     auto programHeader = createProgramBinaryHeader(1, 30);
     binarySS.write(reinterpret_cast<const char *>(&programHeader), sizeof(SProgramBinaryHeader));
 
-    //PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO
+    // PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO
     SPatchAllocateConstantMemorySurfaceProgramBinaryInfo patchAllocateConstantMemory;
     patchAllocateConstantMemory.Token = 42;
     patchAllocateConstantMemory.Size = 16;
     patchAllocateConstantMemory.ConstantBufferIndex = 0;
     patchAllocateConstantMemory.InlineDataSize = 14;
     binarySS.write(reinterpret_cast<const char *>(&patchAllocateConstantMemory), sizeof(patchAllocateConstantMemory));
-    //InlineData
+    // InlineData
     for (uint8_t i = 0; i < 14; ++i) {
         binarySS.write(reinterpret_cast<char *>(&i), sizeof(uint8_t));
     }
 
-    //KernelBinaryHeader
+    // KernelBinaryHeader
     std::string kernelName("ExampleKernel");
     auto kernelHeader = createKernelBinaryHeaderCommon(static_cast<uint32_t>(kernelName.size() + 1), 12);
 
     binarySS.write(reinterpret_cast<const char *>(&kernelHeader), sizeof(SKernelBinaryHeaderCommon));
     binarySS.write(kernelName.c_str(), kernelHeader.KernelNameSize);
 
-    //PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD
+    // PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD
     SPatchMediaInterfaceDescriptorLoad patchMediaInterfaceDescriptorLoad;
     patchMediaInterfaceDescriptorLoad.Token = 19;
     patchMediaInterfaceDescriptorLoad.Size = 12;

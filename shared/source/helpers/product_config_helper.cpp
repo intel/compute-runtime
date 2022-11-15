@@ -11,8 +11,6 @@
 #include "hw_cmds.h"
 #include "platforms.h"
 
-#include <algorithm>
-
 ProductConfigHelper::ProductConfigHelper() : deviceAotInfo({
 #define DEVICE_CONFIG(productConfig, hwConfig, deviceIds, family, release) {{AOT::productConfig}, &NEO::hwConfig::hwInfo, &NEO::deviceIds, AOT::family, AOT::release},
 #include "product_config.inl"
@@ -152,23 +150,31 @@ std::vector<NEO::ConstStringRef> ProductConfigHelper::getAllProductAcronyms() {
     return allSupportedAcronyms;
 }
 
+PRODUCT_FAMILY ProductConfigHelper::getProductFamilyForAcronym(const std::string &device) const {
+    std::vector<DeviceAotInfo>::const_iterator it;
+    if (device.find(".") != std::string::npos) {
+        it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(getProductConfigForVersionValue(device)));
+    } else {
+        it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findAcronym(device));
+    }
+    if (it != deviceAotInfo.end())
+        return it->hwInfo->platform.eProductFamily;
+    return IGFX_UNKNOWN;
+}
+
 std::vector<NEO::ConstStringRef> ProductConfigHelper::getDeprecatedAcronyms() {
-    std::vector<NEO::ConstStringRef> prefixes{}, deprecatedAcronyms{}, enabledAcronyms{};
+    std::vector<NEO::ConstStringRef> prefixes{}, deprecatedAcronyms{};
     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
         if (NEO::hardwarePrefix[j] == nullptr)
             continue;
         prefixes.push_back(NEO::hardwarePrefix[j]);
     }
 
-    for (const auto &device : deviceAotInfo) {
-        enabledAcronyms.insert(enabledAcronyms.end(), device.acronyms.begin(), device.acronyms.end());
-    }
-
     for (const auto &prefix : prefixes) {
         std::string prefixCopy = prefix.str();
         ProductConfigHelper::adjustDeviceName(prefixCopy);
 
-        if (std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), ProductConfigHelper::findAcronymWithoutDash(prefixCopy)))
+        if (std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), findAcronym(prefixCopy)))
             continue;
         deprecatedAcronyms.push_back(prefix);
     }

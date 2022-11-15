@@ -513,7 +513,7 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         if ("-file" == currArg && hasMoreArgs) {
             binaryFile = args[++argIndex];
         } else if ("-device" == currArg && hasMoreArgs) {
-            iga->setProductFamily(getProductFamilyFromDeviceName(args[++argIndex]));
+            setProductFamilyForIga(args[++argIndex], iga.get(), argHelper);
         } else if ("-patch" == currArg && hasMoreArgs) {
             pathToPatch = args[++argIndex];
             addSlash(pathToPatch);

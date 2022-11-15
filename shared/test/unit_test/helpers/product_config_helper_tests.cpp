@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/helpers/product_config_helper_tests.h"
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
@@ -491,6 +492,29 @@ TEST_F(AotDeviceInfoTests, givenUnknownIsaWhenGetDeviceAotInfoThenFalseIsReturne
 
     EXPECT_FALSE(productConfigHelper->getDeviceAotInfoForProductConfig(AOT::UNKNOWN_ISA, aotInfo));
     EXPECT_TRUE(aotInfo == emptyInfo);
+}
+
+TEST_F(AotDeviceInfoTests, givenDeviceAcronymsOrProductConfigWhenGetProductFamilyThenCorrectResultIsReturned) {
+    auto &enabledProducts = productConfigHelper->getDeviceAotInfo();
+
+    for (const auto &product : enabledProducts) {
+        auto config = ProductConfigHelper::parseMajorMinorRevisionValue(product.aotConfig);
+        auto productFamily = productConfigHelper->getProductFamilyForAcronym(config);
+        EXPECT_EQ(productFamily, product.hwInfo->platform.eProductFamily);
+
+        for (const auto &acronym : product.acronyms) {
+            productFamily = productConfigHelper->getProductFamilyForAcronym(acronym.str());
+            EXPECT_EQ(productFamily, product.hwInfo->platform.eProductFamily);
+        }
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenDeprecatedDeviceAcronymsWhenGetProductFamilyThenUnknownIsReturned) {
+    auto deprecatedAcronyms = productConfigHelper->getDeprecatedAcronyms();
+
+    for (const auto &acronym : deprecatedAcronyms) {
+        EXPECT_EQ(productConfigHelper->getProductFamilyForAcronym(acronym.str()), IGFX_UNKNOWN);
+    }
 }
 
 TEST_F(AotDeviceInfoTests, givenProductConfigHelperWhenGetDeviceAcronymsThenCorrectResultsAreReturned) {

@@ -7,6 +7,8 @@
 
 #include "helper.h"
 
+#include "shared/offline_compiler/source/decoder/iga_wrapper.h"
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_library.h"
@@ -90,4 +92,15 @@ PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName) {
         }
     }
     return IGFX_UNKNOWN;
+}
+
+void setProductFamilyForIga(const std::string &device, IgaWrapper *iga, OclocArgHelper *argHelper) {
+    auto productFamily = argHelper->productConfigHelper->getProductFamilyForAcronym(device);
+    if (productFamily == IGFX_UNKNOWN) {
+        productFamily = getProductFamilyFromDeviceName(device);
+        if (productFamily != IGFX_UNKNOWN) {
+            argHelper->printf("Warning : Deprecated device name is being used.\n");
+        }
+    }
+    iga->setProductFamily(productFamily);
 }
