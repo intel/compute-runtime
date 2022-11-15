@@ -123,7 +123,6 @@ void MemoryManagementFixture::checkForLeaks() {
         auto testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
         auto testResult = testInfo->result();
         if (testResult->Passed()) {
-            //EXPECT_EQ(previousAllocations, currentAllocations);
             size_t leakEventIndex;
             do {
                 leakEventIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDellocationTop, false, false);

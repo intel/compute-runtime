@@ -54,9 +54,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenCopyingImageThenGpgpuWalke
         lanesPerThreadX += laneMaskRight & 1;
         laneMaskRight >>= 1;
     }
-
-    //auto numWorkItems = ( ( cmd->getThreadWidthCounterMaximum() - 1 ) * simd + lanesPerThreadX ) * cmd->getThreadGroupIdXDimension();
-    //EXPECT_EQ( expectedWorkItems, numWorkItems );
 }
 
 HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenTaskCountIsAlignedWithCsr) {

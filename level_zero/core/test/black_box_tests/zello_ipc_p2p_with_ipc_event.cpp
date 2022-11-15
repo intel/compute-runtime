@@ -332,7 +332,6 @@ void runServer(int commSocket, bool &validRet) {
     // Copy from device-allocated memory
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, validateBuffer, zeBuffer, allocSize,
                                                        nullptr, 1, &events[0]));
-    //nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));

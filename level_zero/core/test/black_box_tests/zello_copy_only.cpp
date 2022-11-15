@@ -158,8 +158,6 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     // Validate stack and xe deviceBuffers have the original data from hostBuffer
     validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
 
-    //delete[] heapBuffer;
-
     delete[] stackBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, hostBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, deviceBuffer));

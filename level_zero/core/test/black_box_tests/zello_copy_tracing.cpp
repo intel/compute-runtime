@@ -498,7 +498,6 @@ void testAppendMemoryCopy1(ze_context_handle_t &context, ze_device_handle_t &dev
     // Validate stack and xe buffers have the original data from hostBuffer
     validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
 
-    //delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(memDdiTable.pfnFree(context, hostBuffer));
     SUCCESS_OR_TERMINATE(memDdiTable.pfnFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(cmdListDdiTable.pfnDestroy(cmdList));
