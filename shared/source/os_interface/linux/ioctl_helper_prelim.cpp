@@ -229,12 +229,13 @@ bool IoctlHelperPrelim20::setVmBoAdvise(int32_t handle, uint32_t attribute, void
     return true;
 }
 
-bool IoctlHelperPrelim20::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region) {
+bool IoctlHelperPrelim20::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) {
     prelim_drm_i915_gem_vm_prefetch vmPrefetch{};
 
     vmPrefetch.length = length;
     vmPrefetch.region = region;
     vmPrefetch.start = start;
+    vmPrefetch.rsvd = vmId;
 
     int ret = IoctlHelper::ioctl(DrmIoctl::GemVmPrefetch, &vmPrefetch);
     if (ret != 0) {

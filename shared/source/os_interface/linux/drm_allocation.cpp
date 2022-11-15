@@ -320,11 +320,12 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, uint32_t subDeviceId) {
     bool success = true;
     auto ioctlHelper = drm->getIoctlHelper();
     auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+    auto vmId = drm->getVirtualMemoryAddressSpace(subDeviceId);
 
     for (auto bo : bufferObjects) {
         if (bo != nullptr) {
             auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
-            success &= ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region);
+            success &= ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region, vmId);
         }
     }
 

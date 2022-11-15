@@ -81,7 +81,7 @@ class IoctlHelper {
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
     virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
-    virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region) = 0;
+    virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
@@ -159,7 +159,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
-    bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region) override;
+    bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
@@ -225,7 +225,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
-    bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region) override;
+    bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;

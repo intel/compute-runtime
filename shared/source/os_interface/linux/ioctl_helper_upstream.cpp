@@ -90,7 +90,7 @@ bool IoctlHelperUpstream::setVmBoAdvise(int32_t handle, uint32_t attribute, void
     return true;
 }
 
-bool IoctlHelperUpstream::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region) {
+bool IoctlHelperUpstream::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) {
     return true;
 }
 

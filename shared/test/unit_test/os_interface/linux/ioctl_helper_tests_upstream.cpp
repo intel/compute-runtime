@@ -284,7 +284,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmPrefetchThenReturnTrue) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    EXPECT_TRUE(ioctlHelper->setVmPrefetch(0, 0, 0));
+    EXPECT_TRUE(ioctlHelper->setVmPrefetch(0, 0, 0, 0));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenDirectSubmissionEnabledThenNoFlagsAdded) {
