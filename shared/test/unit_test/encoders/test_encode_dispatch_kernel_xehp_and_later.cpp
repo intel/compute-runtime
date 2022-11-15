@@ -59,6 +59,29 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
     EXPECT_EQ(expectedValue, idd.getSharedLocalMemorySize());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpAndLaterWhenDispatchingKernelThenSetDenormMode) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto &idd = cmd->getInterfaceDescriptor();
+
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL, idd.getDenormMode());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSimdSizeWhenDispatchingKernelThenSimdMessageIsSet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
