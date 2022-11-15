@@ -58,10 +58,10 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         gfxAllocation.updateResidencyTaskCount(1, osContext->getContextId());
     }
 
-    bool processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
+    SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
         processResidencyParameterization.wasCalled = true;
         processResidencyParameterization.receivedAllocationsForResidency = &allocationsForResidency;
-        return true;
+        return SubmissionStatus::SUCCESS;
     }
 
     void makeNonResident(GraphicsAllocation &gfxAllocation) override {

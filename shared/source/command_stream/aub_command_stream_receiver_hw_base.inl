@@ -742,10 +742,10 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
 }
 
 template <typename GfxFamily>
-bool AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
+SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
-            return true;
+            return SubmissionStatus::SUCCESS;
         }
     }
 
@@ -767,7 +767,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyCont
     }
 
     dumpAubNonWritable = false;
-    return true;
+    return SubmissionStatus::SUCCESS;
 }
 
 template <typename GfxFamily>

@@ -12,9 +12,9 @@ namespace NEO {
 
 template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
-    bool processResidencySuccess = this->processResidency(allocationsForResidency, 0u);
-    if (processResidencySuccess == false) {
-        return SubmissionStatus::OUT_OF_MEMORY;
+    auto processResidencySuccess = this->processResidency(allocationsForResidency, 0u);
+    if (processResidencySuccess != SubmissionStatus::SUCCESS) {
+        return processResidencySuccess;
     }
 
     int ret = this->exec(batchBuffer, 0u, static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0], 0);

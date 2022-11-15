@@ -247,9 +247,9 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 }
 
 template <typename GfxFamily>
-bool DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
+SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
     if (drm->isVmBindAvailable()) {
-        return true;
+        return SubmissionStatus::SUCCESS;
     }
     int ret = 0;
     for (auto &alloc : inputAllocationsForResidency) {
@@ -260,7 +260,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContai
         }
     }
 
-    return ret == 0;
+    return Drm::getSubmissionStatusFromReturnCode(ret);
 }
 
 template <typename GfxFamily>

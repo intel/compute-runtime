@@ -601,7 +601,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     mm->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFailingProcessResidencyWhenFlushingThenFlushReturnsOutOfMemory) {
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenProcessResidencyFailingOnOutOfMemoryWhenFlushingThenFlushReturnsOutOfMemory) {
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     LinearStream cs(commandBuffer);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -613,10 +613,32 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFailingProcessResidencyWhe
 
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->processResidencyCallBase = false;
-    testedCsr->processResidencyResult = false;
+    testedCsr->processResidencyResult = SubmissionStatus::OUT_OF_MEMORY;
 
     SubmissionStatus ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, ret);
+    EXPECT_EQ(testedCsr->flushInternalCalled, 1u);
+    EXPECT_EQ(testedCsr->processResidencyCalled, 1u);
+    mm->freeGraphicsMemory(allocation);
+    mm->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenProcessResidencyFailingOnOutOfHostMemoryWhenFlushingThenFlushReturnsOutOfHostMemory) {
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    LinearStream cs(commandBuffer);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1));
+
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->processResidencyCallBase = false;
+    testedCsr->processResidencyResult = SubmissionStatus::OUT_OF_HOST_MEMORY;
+
+    SubmissionStatus ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, ret);
     EXPECT_EQ(testedCsr->flushInternalCalled, 1u);
     EXPECT_EQ(testedCsr->processResidencyCalled, 1u);
     mm->freeGraphicsMemory(allocation);
@@ -635,7 +657,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFailingExecWhenFlushingThe
 
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->processResidencyCallBase = true;
-    testedCsr->processResidencyResult = true;
+    testedCsr->processResidencyResult = SubmissionStatus::SUCCESS;
     testedCsr->execCallBase = false;
     testedCsr->execResult = -1;
 

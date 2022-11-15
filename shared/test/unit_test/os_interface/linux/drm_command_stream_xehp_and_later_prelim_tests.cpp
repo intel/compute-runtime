@@ -275,7 +275,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
             : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield, mode), expectedHandleId(inputHandleId) {
         }
 
-        bool processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(handleId, expectedHandleId);
             return DrmCommandStreamReceiver<GfxFamily>::processResidency(allocationsForResidency, handleId);
         }
@@ -587,11 +587,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenUseSingle
             execCalled++;
             return 0;
         }
-        bool processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(0u, processResidencyCalled);
             EXPECT_EQ(0u, handleId);
             processResidencyCalled++;
-            return true;
+            return SubmissionStatus::SUCCESS;
         }
 
         uint32_t execCalled = 0;
@@ -628,11 +628,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
             execCalled++;
             return 0;
         }
-        bool processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(0u, processResidencyCalled);
             EXPECT_EQ(0u, handleId);
             processResidencyCalled++;
-            return true;
+            return SubmissionStatus::SUCCESS;
         }
 
         uint32_t execCalled = 0;
@@ -665,9 +665,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
             execCalled++;
             return 0;
         }
-        bool processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(execCalled, handleId);
-            return true;
+            return SubmissionStatus::SUCCESS;
         }
 
         uint32_t execCalled = 0;

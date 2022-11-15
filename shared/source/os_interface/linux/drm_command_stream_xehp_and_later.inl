@@ -28,9 +28,9 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
                 tileIterator = contextIndex = DebugManager.flags.ForceExecutionTile.get();
             }
 
-            bool processResidencySuccess = this->processResidency(allocationsForResidency, tileIterator);
-            if (processResidencySuccess == false) {
-                return SubmissionStatus::OUT_OF_MEMORY;
+            auto processResidencySuccess = this->processResidency(allocationsForResidency, tileIterator);
+            if (processResidencySuccess != SubmissionStatus::SUCCESS) {
+                return processResidencySuccess;
             }
 
             if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {

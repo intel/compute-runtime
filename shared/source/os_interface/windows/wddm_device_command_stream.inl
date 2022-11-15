@@ -77,19 +77,19 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
     batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Wddm CSR processing residency set: %zu\n", allocationsForResidency.size());
 
-    bool ret = this->processResidency(allocationsForResidency, 0u);
-    if (ret == false) {
-        return SubmissionStatus::OUT_OF_MEMORY;
+    auto submissionStatus = this->processResidency(allocationsForResidency, 0u);
+    if (submissionStatus != SubmissionStatus::SUCCESS) {
+        return submissionStatus;
     }
     if (this->directSubmission.get()) {
-        ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        auto ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
             return SubmissionStatus::FAILED;
         }
         return SubmissionStatus::SUCCESS;
     }
     if (this->blitterDirectSubmission.get()) {
-        ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        auto ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
             return SubmissionStatus::FAILED;
         }
@@ -133,8 +133,8 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 }
 
 template <typename GfxFamily>
-bool WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
+SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
+    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency) ? SubmissionStatus::SUCCESS : SubmissionStatus::OUT_OF_MEMORY;
 }
 
 template <typename GfxFamily>
