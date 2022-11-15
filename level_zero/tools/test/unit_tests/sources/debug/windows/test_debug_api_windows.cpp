@@ -156,7 +156,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventForThreadsWhenHandling
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0},
@@ -173,7 +173,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventForThreadsWhenHandling
     }
     sessionMock->allContexts.insert(0x12345);
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     mockWddm->numEvents = 1;
     mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
     copyBitmaskToEventParams(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer, bitmask, bitmaskSize);
@@ -193,7 +193,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenNoContextWhenHandlingAttentionEventThe
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0},
@@ -209,7 +209,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenNoContextWhenHandlingAttentionEventThe
         sessionMock->stoppedThreads[thread.packed] = 1;
     }
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     mockWddm->numEvents = 1;
     mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
     copyBitmaskToEventParams(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer, bitmask, bitmaskSize);
@@ -251,7 +251,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsR
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0}};
@@ -260,7 +260,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsR
     sessionMock->stoppedThreads[threads[0].packed] = 1;
     sessionMock->allContexts.insert(0x12345);
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
     ze_device_thread_t thread2 = {0, 0, 1, UINT32_MAX};
     sessionMock->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
