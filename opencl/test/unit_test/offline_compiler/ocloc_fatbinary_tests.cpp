@@ -1454,42 +1454,6 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsNotPrinted) {
-    ::testing::internal::CaptureStdout();
-
-    using namespace std::string_literals;
-
-    const std::vector<std::string> argv = {
-        "ocloc",
-        "-q",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
-
-    MockOfflineCompiler mockOfflineCompiler{};
-    mockOfflineCompiler.initialize(argv.size(), argv);
-
-    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
-    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
-
-    const char buildWarning[] = "Warning: this is a build log!";
-    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
-    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
-
-    // Dummy value
-    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-    Ar::ArEncoder ar;
-    const std::string pointerSize{"32"};
-
-    const int previousReturnValue{OclocErrorCode::SUCCESS};
-    buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
-    const auto output{::testing::internal::GetCapturedStdout()};
-
-    EXPECT_TRUE(output.empty()) << output;
-}
-
 TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {
     using namespace std::string_literals;
 
