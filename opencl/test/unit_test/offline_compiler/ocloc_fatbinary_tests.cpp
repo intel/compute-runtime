@@ -154,7 +154,7 @@ TEST(OclocFatBinaryRequestedFatBinary, givenHwInfoForProductConfigWhenUnknownIsa
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
     NEO::HardwareInfo hwInfo;
-    EXPECT_FALSE(argHelper->getHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, 0u, std::move(compilerProductHelper)));
+    EXPECT_FALSE(argHelper->getHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, 0u, 0u, 0u, std::move(compilerProductHelper)));
 }
 
 TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronymsForTargetThenCorrectValuesAreReturned) {

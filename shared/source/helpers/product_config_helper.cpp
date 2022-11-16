@@ -74,6 +74,28 @@ AOT::FAMILY ProductConfigHelper::getFamilyForAcronym(const std::string &device) 
     return it->second;
 }
 
+const std::string ProductConfigHelper::getAcronymForProductConfig(AOT::PRODUCT_CONFIG config) const {
+    auto it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(config));
+    if (it == deviceAotInfo.end()) {
+        return {};
+    }
+    if (!it->deviceAcronyms.empty()) {
+        return it->deviceAcronyms.front().str();
+    } else if (!it->rtlIdAcronyms.empty()) {
+        return it->rtlIdAcronyms.front().str();
+    } else
+        return parseMajorMinorRevisionValue(it->aotConfig);
+}
+
+AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForDeviceId(unsigned short deviceId) const {
+    for (const auto &device : deviceAotInfo) {
+        if (std::find(device.deviceIds->begin(), device.deviceIds->end(), deviceId) != device.deviceIds->end()) {
+            return static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.value);
+        }
+    }
+    return AOT::UNKNOWN_ISA;
+}
+
 bool ProductConfigHelper::isRelease(const std::string &device) {
     auto release = getReleaseForAcronym(device);
     if (release == AOT::UNKNOWN_RELEASE) {

@@ -44,11 +44,6 @@ struct Output {
     Output(const std::string &name, const void *data, const size_t &size);
 };
 
-struct DeviceProduct {
-    unsigned short deviceId;
-    std::string product;
-};
-
 class OclocArgHelper {
   protected:
     std::vector<Source> inputs, headers;
@@ -59,7 +54,6 @@ class OclocArgHelper {
     uint64_t **lenOutputs = nullptr;
     bool hasOutput = false;
     MessagePrinter messagePrinter;
-    const std::vector<DeviceProduct> deviceProductTable;
     void moveOutputs();
     Source *findSourceFile(const std::string &filename);
     bool sourceFileExists(const std::string &filename) const;
@@ -79,7 +73,7 @@ class OclocArgHelper {
                    uint64_t **lenOutputs, char ***nameOutputs);
     virtual ~OclocArgHelper();
     MOCKABLE_VIRTUAL bool fileExists(const std::string &filename) const;
-    bool getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper);
+    bool getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, uint32_t deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper);
     bool setAcronymForDeviceId(std::string &device);
     std::vector<std::string> headersToVectorOfStrings();
     MOCKABLE_VIRTUAL void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);
@@ -138,6 +132,5 @@ class OclocArgHelper {
         return os.str();
     }
 
-    std::string returnProductNameForDevice(unsigned short deviceId);
     std::unique_ptr<ProductConfigHelper> productConfigHelper;
 };

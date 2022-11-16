@@ -58,13 +58,7 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
                                uint64_t **lenOutputs, char ***nameOutputs)
     : numOutputs(numOutputs), nameOutputs(nameOutputs),
       dataOutputs(dataOutputs), lenOutputs(lenOutputs), hasOutput(numOutputs != nullptr),
-      messagePrinter(hasOutput), deviceProductTable({
-#define NAMEDDEVICE(devId, product, ignored_devName) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
-#define DEVICE(devId, product) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
-#include "devices.inl"
-#undef DEVICE
-#undef NAMEDDEVICE
-                                     {0u, std::string("")}}) {
+      messagePrinter(hasOutput) {
     for (uint32_t i = 0; i < numSources; ++i) {
         inputs.push_back(Source(dataSources[i], static_cast<size_t>(lenSources[i]), nameSources[i]));
     }
@@ -156,24 +150,32 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
     }
 }
 
-bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
+bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, uint32_t deviceID, int revisionID, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
     bool retVal = false;
     if (productConfig == AOT::UNKNOWN_ISA) {
         return retVal;
     }
 
     const auto &deviceAotMap = productConfigHelper->getDeviceAotInfo();
+
     for (auto &deviceConfig : deviceAotMap) {
         if (deviceConfig.aotConfig.value == productConfig) {
             hwInfo = *deviceConfig.hwInfo;
-            if (hwInfoConfig) {
-                setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
-            }
-            NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
             compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
             UNRECOVERABLE_IF(compilerProductHelper == nullptr);
-            compilerProductHelper->setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
-            hwInfo.platform.usDeviceID = deviceConfig.deviceIds->front();
+
+            if (deviceID) {
+                hwInfo.platform.usDeviceID = deviceID;
+            } else {
+                compilerProductHelper->setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
+                hwInfo.platform.usDeviceID = deviceConfig.deviceIds->front();
+            }
+            if (revisionID != -1) {
+                hwInfo.platform.usRevId = revisionID;
+            }
+            uint64_t config = hwInfoConfig ? hwInfoConfig : NEO::defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
+            setHwInfoValuesFromConfig(config, hwInfo);
+            NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
             retVal = true;
             return retVal;
@@ -199,25 +201,4 @@ void OclocArgHelper::saveOutput(const std::string &filename, const std::ostream 
         std::ofstream file(filename);
         file << ss.str();
     }
-}
-
-bool OclocArgHelper::setAcronymForDeviceId(std::string &device) {
-    auto product = returnProductNameForDevice(std::stoi(device, 0, 16));
-    if (!product.empty()) {
-        printf("Auto-detected target based on %s device id: %s\n", device.c_str(), product.c_str());
-
-    } else {
-        printf("Could not determine target based on device id: %s\n", device.c_str());
-        return false;
-    }
-    device = std::move(product);
-    return true;
-}
-std::string OclocArgHelper::returnProductNameForDevice(unsigned short deviceId) {
-    for (int i = 0; deviceProductTable[i].deviceId != 0; i++) {
-        if (deviceProductTable[i].deviceId == deviceId) {
-            return deviceProductTable[i].product;
-        }
-    }
-    return "";
 }

@@ -1034,13 +1034,14 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenOfflineCompilerIsCreatedThenSuccessIsR
 }
 
 TEST_F(OfflineCompilerTests, givenDeviceIdHexValueWhenInitHwInfoThenItHasCorrectlySetValues) {
-    auto deviceId = oclocArgHelperWithoutInput->deviceProductTable[0].deviceId;
-    if (oclocArgHelperWithoutInput->deviceProductTable.size() == 1 && deviceId == 0) {
+    auto deviceAotInfo = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    if (deviceAotInfo.empty()) {
         GTEST_SKIP();
     }
 
     MockOfflineCompiler mockOfflineCompiler;
     std::stringstream deviceString, productString;
+    auto deviceId = deviceAotInfo[0].deviceIds->front();
     deviceString << "0x" << std::hex << deviceId;
 
     mockOfflineCompiler.argHelper->getPrinterRef() = MessagePrinter{true};
@@ -1049,15 +1050,17 @@ TEST_F(OfflineCompilerTests, givenDeviceIdHexValueWhenInitHwInfoThenItHasCorrect
 }
 
 TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIsReturned) {
-    auto deviceId = oclocArgHelperWithoutInput->deviceProductTable[0].deviceId;
-    if (oclocArgHelperWithoutInput->deviceProductTable.size() == 1 && deviceId == 0) {
+    auto deviceAotInfo = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    if (deviceAotInfo.empty()) {
         GTEST_SKIP();
     }
 
     std::stringstream deviceString, productString;
+    AOT::PRODUCT_CONFIG config = static_cast<AOT::PRODUCT_CONFIG>(deviceAotInfo[0].aotConfig.value);
+    auto deviceId = deviceAotInfo[0].deviceIds->front();
 
+    productString << oclocArgHelperWithoutInput->productConfigHelper->getAcronymForProductConfig(config);
     deviceString << "0x" << std::hex << deviceId;
-    productString << oclocArgHelperWithoutInput->deviceProductTable[0].product;
 
     std::vector<std::string> argv = {
         "ocloc",
@@ -1095,7 +1098,7 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdHexThenInvalidDeviceIsReturne
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Could not determine target based on device id: 0x0\nError: Cannot get HW Info for device 0x0.\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 0x0\nError: Cannot get HW Info for device 0x0.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -2309,7 +2312,7 @@ TEST(OfflineCompilerTest, GivenUnsupportedDeviceConfigWhenInitHardwareInfoThenIn
     EXPECT_EQ(retVal, OclocErrorCode::INVALID_DEVICE);
 
     auto output = testing::internal::GetCapturedStdout();
-    resString << "Could not determine target based on product config: " << deviceName << "\n";
+    resString << "Could not determine device target: " << deviceName << "\n";
     EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 

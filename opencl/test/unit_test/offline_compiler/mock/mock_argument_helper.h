@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,6 @@
 
 class MockOclocArgHelper : public OclocArgHelper {
   public:
-    using OclocArgHelper::deviceProductTable;
     using OclocArgHelper::hasOutput;
     using OclocArgHelper::headers;
     using OclocArgHelper::inputs;
