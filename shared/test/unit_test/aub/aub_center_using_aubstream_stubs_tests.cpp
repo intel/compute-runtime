@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,17 +24,6 @@ extern uint16_t tbxServerPort;
 extern std::string tbxServerIp;
 extern bool tbxFrontdoorMode;
 } // namespace aub_stream_stubs
-
-TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenAubManagerIsNotCreated) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseAubStream.set(true);
-
-    GmmHelper gmmHelper(nullptr, defaultHwInfo.get());
-
-    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, false, "test", CommandStreamReceiverType::CSR_AUB);
-
-    EXPECT_EQ(nullptr, aubCenter.aubManager.get());
-}
 
 TEST(AubCenter, GivenUseAubStreamAndTbxServerIpDebugVariableSetWhenAubCenterIsCreatedThenServerIpIsModified) {
     DebugManagerStateRestore restorer;

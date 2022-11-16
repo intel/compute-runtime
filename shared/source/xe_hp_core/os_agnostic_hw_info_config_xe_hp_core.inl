@@ -5,6 +5,8 @@
  *
  */
 
+#include "product_family.h"
+
 namespace NEO {
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
@@ -138,4 +140,10 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
     return true;
 }
+
+template <>
+std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::XeHpSdv;
+};
+
 } // namespace NEO

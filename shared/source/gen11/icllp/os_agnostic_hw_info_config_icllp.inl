@@ -5,6 +5,8 @@
  *
  */
 
+#include "product_family.h"
+
 namespace NEO {
 template <>
 bool HwInfoConfigHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
@@ -25,4 +27,10 @@ template <>
 AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     return AOT::ICL;
 }
+
+template <>
+std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Icllp;
+};
+
 } // namespace NEO

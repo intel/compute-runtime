@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -22,15 +22,9 @@ elseif(UNIX AND NOT DISABLE_WDDM_LINUX)
        ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
   )
 endif()
-if(DEFINED AUB_STREAM_PROJECT_NAME)
-  list(APPEND NEO_SHARED_unit_tests_configurations
-       ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
-  )
-else()
-  list(APPEND NEO_SHARED_unit_tests_configurations
-       ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
-  )
-endif()
+list(APPEND NEO_SHARED_unit_tests_configurations
+     ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
+)
 add_library(neo_unit_tests_config OBJECT EXCLUDE_FROM_ALL ${NEO_SHARED_unit_tests_configurations})
 
 set_target_properties(neo_unit_tests_config PROPERTIES POSITION_INDEPENDENT_CODE ON)

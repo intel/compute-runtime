@@ -10,8 +10,10 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 using namespace NEO;
 
@@ -31,7 +33,11 @@ TEST(BxtHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThr
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-using BxtHwInfo = ::testing::Test;
+using BxtHwInfo = HwInfoConfigTest;
+
+BXTTEST_F(BxtHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Bxt, productHelper->getAubStreamProductFamily());
+}
 
 BXTTEST_F(BxtHwInfo, givenBoolWhenCallBxtHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {

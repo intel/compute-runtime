@@ -11,10 +11,13 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 using namespace NEO;
+using BdwHwInfo = HwInfoConfigTest;
 
 TEST(BdwHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_BROADWELL != productFamily) {
@@ -31,8 +34,6 @@ TEST(BdwHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThr
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
-
-using BdwHwInfo = ::testing::Test;
 
 BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {
@@ -95,6 +96,10 @@ BDWTEST_F(BdwHwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedTh
 using CompilerHwInfoConfigHelperTestsBdw = ::testing::Test;
 BDWTEST_F(CompilerHwInfoConfigHelperTestsBdw, givenBdwWhenIsStatelessToStatefulBufferOffsetSupportedIsCalledThenReturnsTrue) {
     EXPECT_FALSE(CompilerHwInfoConfig::get(productFamily)->isStatelessToStatefulBufferOffsetSupported());
+}
+
+BDWTEST_F(BdwHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Bdw, productHelper->getAubStreamProductFamily());
 }
 
 BDWTEST_F(BdwHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {

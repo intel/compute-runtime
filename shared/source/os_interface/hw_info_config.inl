@@ -212,6 +212,11 @@ uint32_t HwInfoConfigHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const Hardw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+    return std::nullopt;
+};
+
+template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }

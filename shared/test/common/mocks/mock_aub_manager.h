@@ -70,14 +70,7 @@ class MockAubManager : public aub_stream::AubManager {
 
   public:
     MockAubManager(){};
-    MockAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace) {
-        mockAubManagerParams.productFamily = productFamily;
-        mockAubManagerParams.devicesCount = devicesCount;
-        mockAubManagerParams.memoryBankSize = memoryBankSize;
-        mockAubManagerParams.stepping = stepping;
-        mockAubManagerParams.localMemorySupported = localMemorySupported;
-        mockAubManagerParams.streamMode = streamMode;
-        mockAubManagerParams.gpuAddressSpace = gpuAddressSpace;
+    MockAubManager(const aub_stream::AubManagerOptions &inputOptions) : options(inputOptions) {
     }
     ~MockAubManager() override {}
 
@@ -160,15 +153,7 @@ class MockAubManager : public aub_stream::AubManager {
     int hintToWriteMemory = 0;
     size_t writeMemoryPageSizePassed = 0;
 
-    struct MockAubManagerParams {
-        uint32_t productFamily = 0;
-        int32_t devicesCount = 0;
-        uint64_t memoryBankSize = 0;
-        uint32_t stepping = 0;
-        bool localMemorySupported = false;
-        uint32_t streamMode = 0xFFFFFFFF;
-        uint64_t gpuAddressSpace = 0xFFFFFFFFFFFF;
-    } mockAubManagerParams;
+    aub_stream::AubManagerOptions options{};
 
   protected:
     HardwareContext *hardwareContext = nullptr;

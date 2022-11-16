@@ -11,12 +11,18 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 using namespace NEO;
 
-using AdlnHwInfo = ::testing::Test;
+using AdlnHwInfo = HwInfoConfigTest;
+
+ADLNTEST_F(AdlnHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Adln, productHelper->getAubStreamProductFamily());
+}
 
 ADLNTEST_F(AdlnHwInfo, givenBoolWhenCallAdlnHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     static bool boolValue[]{

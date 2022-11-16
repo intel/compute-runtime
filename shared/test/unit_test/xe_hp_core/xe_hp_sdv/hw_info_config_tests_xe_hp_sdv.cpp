@@ -10,8 +10,17 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+
+#include "product_family.h"
 
 using namespace NEO;
+
+using XeHpSdvHwInfo = HwInfoConfigTest;
+
+XEHPTEST_F(XeHpSdvHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::XeHpSdv, productHelper->getAubStreamProductFamily());
+}
 
 using HwInfoConfigTestXeHpSdv = ::testing::Test;
 

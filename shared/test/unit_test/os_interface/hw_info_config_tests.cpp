@@ -24,6 +24,16 @@
 using namespace NEO;
 using ProductHelperTest = Test<DeviceFixture>;
 
+HwInfoConfigTest::HwInfoConfigTest() {
+    executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    productHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+}
+HwInfoConfigTest::~HwInfoConfigTest() = default;
+void HwInfoConfigTest::SetUp() {
+    pInHwInfo = *defaultHwInfo;
+    testPlatform = &pInHwInfo.platform;
+}
+
 HWTEST_F(HwInfoConfigTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 

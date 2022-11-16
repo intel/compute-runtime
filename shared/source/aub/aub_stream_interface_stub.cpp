@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,6 @@
 
 namespace NEO {
 aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOptions &options) {
-    return aub_stream::AubManager::create(options);
+    return nullptr;
 }
 } // namespace NEO

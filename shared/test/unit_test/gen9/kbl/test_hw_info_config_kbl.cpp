@@ -9,8 +9,10 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 using namespace NEO;
 
@@ -30,7 +32,11 @@ TEST(KblHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-using KblHwInfo = ::testing::Test;
+using KblHwInfo = HwInfoConfigTest;
+
+KBLTEST_F(KblHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Kbl, productHelper->getAubStreamProductFamily());
+}
 
 KBLTEST_F(KblHwInfo, givenBoolWhenCallKblHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {

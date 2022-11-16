@@ -13,8 +13,14 @@
 
 #include "igfxfmid.h"
 
+#include <optional>
+
 namespace AOT {
 enum PRODUCT_CONFIG : uint32_t;
+}
+
+namespace aub_stream {
+enum class ProductFamily : uint32_t;
 }
 
 namespace NEO {
@@ -79,6 +85,7 @@ class HwInfoConfig {
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
+    virtual std::optional<aub_stream::ProductFamily> getAubStreamProductFamily() const = 0;
     virtual bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool overrideGfxPartitionLayoutForWsl() const = 0;
     virtual std::string getDeviceMemoryName() const = 0;
@@ -217,6 +224,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     AOT::PRODUCT_CONFIG getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
+    std::optional<aub_stream::ProductFamily> getAubStreamProductFamily() const override;
     bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     std::string getDeviceMemoryName() const override;
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;

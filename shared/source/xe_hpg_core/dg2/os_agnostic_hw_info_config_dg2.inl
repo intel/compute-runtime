@@ -7,6 +7,8 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "product_family.h"
+
 namespace NEO {
 template <>
 void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
@@ -205,4 +207,10 @@ bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
         return false;
     }
 }
+
+template <>
+std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Dg2;
+};
+
 } // namespace NEO

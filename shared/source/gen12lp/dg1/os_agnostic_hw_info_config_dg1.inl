@@ -5,6 +5,8 @@
  *
  */
 
+#include "product_family.h"
+
 namespace NEO {
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
@@ -67,4 +69,10 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
     return true;
 }
+
+template <>
+std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Dg1;
+};
+
 } // namespace NEO

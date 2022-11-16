@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,8 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 #include "third_party/aub_stream/headers/aubstream.h"
@@ -32,22 +34,6 @@ TEST_F(AubCenterTests, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreate
 
     MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(nullptr, aubCenter.aubManager.get());
-}
-
-TEST_F(AubCenterTests, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreateAubManagerWithCorrectParameters) {
-    DebugManager.flags.UseAubStream.set(false);
-
-    MockAubManager *mockAubManager = new MockAubManager(defaultHwInfo->platform.eProductFamily, 4, 8 * MB, defaultHwInfo->platform.usRevId, true, aub_stream::mode::aubFile, defaultHwInfo->capabilityTable.gpuAddressSpace);
-    MockAubCenter mockAubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
-    mockAubCenter.aubManager = std::unique_ptr<MockAubManager>(mockAubManager);
-
-    EXPECT_EQ(defaultHwInfo->platform.eProductFamily, mockAubManager->mockAubManagerParams.productFamily);
-    EXPECT_EQ(4, mockAubManager->mockAubManagerParams.devicesCount);
-    EXPECT_EQ(8 * MB, mockAubManager->mockAubManagerParams.memoryBankSize);
-    EXPECT_EQ(defaultHwInfo->platform.usRevId, mockAubManager->mockAubManagerParams.stepping);
-    EXPECT_EQ(true, mockAubManager->mockAubManagerParams.localMemorySupported);
-    EXPECT_EQ(aub_stream::mode::aubFile, mockAubManager->mockAubManagerParams.streamMode);
-    EXPECT_EQ(defaultHwInfo->capabilityTable.gpuAddressSpace, mockAubManager->mockAubManagerParams.gpuAddressSpace);
 }
 
 TEST_F(AubCenterTests, GivenDefaultSetCommandStreamReceiverFlagAndAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
@@ -104,6 +90,29 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
         MockAubCenter aubCenter(&hwInfo, gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
         EXPECT_EQ(steppingPair.expectedAubStreamStepping, aubCenter.stepping);
     }
+}
+
+HWTEST_F(AubCenterTests, whenCreatingAubManagerThenCorrectProductFamilyIsPassed) {
+    DebugManager.flags.UseAubStream.set(true);
+
+    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX);
+
+    MockExecutionEnvironment executionEnviroonment{};
+
+    const auto &rootDeviceEnvironment = *executionEnviroonment.rootDeviceEnvironments[0];
+
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
+    auto aubStreamProductFamily = productHelper.getAubStreamProductFamily();
+
+    ASSERT_TRUE(aubStreamProductFamily.has_value());
+
+    MockAubCenter aubCenter(rootDeviceEnvironment.getHardwareInfo(), *rootDeviceEnvironment.getGmmHelper(), true, "", CommandStreamReceiverType::CSR_AUB);
+
+    auto aubManager = static_cast<MockAubManager *>(aubCenter.aubManager.get());
+    ASSERT_NE(nullptr, aubManager);
+
+    EXPECT_EQ(static_cast<uint32_t>(*aubStreamProductFamily), aubManager->options.productFamily);
 }
 
 TEST_F(AubCenterTests, GivenCsrTypeWhenGettingAubStreamModeThenCorrectModeIsReturned) {

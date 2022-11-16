@@ -16,10 +16,18 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 using namespace NEO;
+
+using TgllpHwInfo = HwInfoConfigTest;
+
+TGLLPTEST_F(TgllpHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Tgllp, productHelper->getAubStreamProductFamily());
+}
 
 using HwInfoConfigTestTgllp = Test<DeviceFixture>;
 
@@ -115,8 +123,6 @@ TGLLPTEST_F(HwInfoConfigTestTgllp, givenHwInfoConfigWhenAskedIf3DPipelineSelectW
     EXPECT_TRUE(hwInfoConfig.is3DPipelineSelectWARequired());
 }
 
-using TgllpHwInfo = ::testing::Test;
-
 TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     static bool boolValue[]{
         true, false};
@@ -186,6 +192,7 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWithOverrideGpuAddressSpaceWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAubManagerIsInitializedWithCorrectGpuAddressSpace) {
     DebugManagerStateRestore stateRestore;
+    DebugManager.flags.UseAubStream.set(1);
     DebugManager.flags.SetCommandStreamReceiver.set(1);
     DebugManager.flags.ProductFamilyOverride.set("tgllp");
     DebugManager.flags.OverrideGpuAddressSpace.set(48);
@@ -198,7 +205,7 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWithOverrideGpuAd
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
 
     auto mockAubManager = static_cast<MockAubManager *>(rootDeviceEnvironment->aubCenter->getAubManager());
-    EXPECT_EQ(MemoryConstants::max48BitAddress, mockAubManager->mockAubManagerParams.gpuAddressSpace);
+    EXPECT_EQ(MemoryConstants::max48BitAddress, mockAubManager->options.gpuAddressSpace);
 }
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {

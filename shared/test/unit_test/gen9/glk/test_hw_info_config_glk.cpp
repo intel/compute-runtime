@@ -10,8 +10,10 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 using namespace NEO;
 
@@ -32,7 +34,11 @@ TEST(GlkHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-using GlkHwInfo = ::testing::Test;
+using GlkHwInfo = HwInfoConfigTest;
+
+GLKTEST_F(GlkHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Glk, productHelper->getAubStreamProductFamily());
+}
 
 GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {

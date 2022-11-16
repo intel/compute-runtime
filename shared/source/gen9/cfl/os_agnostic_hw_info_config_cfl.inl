@@ -8,6 +8,7 @@
 #include "shared/source/gen9/cfl/device_ids_configs_cfl.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 #include <algorithm>
 
@@ -28,4 +29,10 @@ AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const
     }
     return AOT::UNKNOWN_ISA;
 }
+
+template <>
+std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Cfl;
+};
+
 } // namespace NEO

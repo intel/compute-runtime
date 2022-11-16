@@ -10,8 +10,10 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 using namespace NEO;
 
@@ -31,7 +33,7 @@ TEST(SklHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-using SklHwInfo = ::testing::Test;
+using SklHwInfo = HwInfoConfigTest;
 
 SKLTEST_F(SklHwInfo, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {
@@ -109,6 +111,10 @@ SKLTEST_F(SklHwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedTh
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
+}
+
+SKLTEST_F(SklHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Skl, productHelper->getAubStreamProductFamily());
 }
 
 SKLTEST_F(SklHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {

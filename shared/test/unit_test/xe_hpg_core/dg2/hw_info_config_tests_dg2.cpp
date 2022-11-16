@@ -15,11 +15,20 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/xe_hpg_core/dg2/product_configs_dg2.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+
+#include "product_family.h"
 
 using namespace NEO;
 
 using HwInfoConfigTestDg2 = Test<DeviceFixture>;
 using ProductHelperTestDg2 = Test<DeviceFixture>;
+
+using Dg2HwInfo = HwInfoConfigTest;
+
+DG2TEST_F(Dg2HwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Dg2, productHelper->getAubStreamProductFamily());
+}
 
 DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;

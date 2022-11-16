@@ -5,6 +5,8 @@
  *
  */
 
+#include "product_family.h"
+
 namespace NEO {
 template <>
 bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
@@ -210,4 +212,10 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isStatefulAddressingModeSupported() const {
     return false;
 }
+
+template <>
+std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Pvc;
+};
+
 } // namespace NEO

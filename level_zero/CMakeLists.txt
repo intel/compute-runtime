@@ -223,7 +223,6 @@ if(BUILD_WITH_L0)
 
   target_sources(${TARGET_NAME_L0}
                  PRIVATE
-                 ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface.cpp
                  ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
@@ -231,6 +230,18 @@ if(BUILD_WITH_L0)
                  ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/source_level_debugger_dll.cpp
   )
+  if(DEFINED AUB_STREAM_PROJECT_NAME)
+    target_sources(${TARGET_NAME_L0}
+                   PRIVATE
+                   ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface.cpp
+    )
+  else()
+    target_sources(${TARGET_NAME_L0}
+                   PRIVATE
+                   ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface_stub.cpp
+    )
+
+  endif()
 
   if(WIN32)
     target_sources(${TARGET_NAME_L0}

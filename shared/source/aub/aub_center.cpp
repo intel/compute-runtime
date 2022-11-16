@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,10 @@
 
 #include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/aubstream.h"
+#include "third_party/aub_stream/headers/product_family.h"
 
 namespace NEO {
-extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace);
+extern aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOptions &options);
 
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
@@ -32,6 +33,9 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bo
 
         auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
         const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
+
+        auto aubStreamProductFamily = hwInfoConfig.getAubStreamProductFamily();
+
         stepping = hwInfoConfig.getAubStreamSteppingFromHwRevId(*pHwInfo);
 
         aub_stream::MMIOList extraMmioList = hwHelper.getExtraMmioList(*pHwInfo, gmmHelper);
@@ -43,8 +47,17 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bo
 
         AubHelper::setTbxConfiguration();
 
-        aubManager.reset(createAubManager(pHwInfo->platform.eProductFamily, devicesCount, memoryBankSize, stepping, localMemoryEnabled,
-                                          aubStreamMode, pHwInfo->capabilityTable.gpuAddressSpace));
+        aub_stream::AubManagerOptions options{};
+        options.version = 1u;
+        options.productFamily = static_cast<uint32_t>(aubStreamProductFamily.value_or(aub_stream::ProductFamily::MaxProduct));
+        options.devicesCount = devicesCount;
+        options.memoryBankSize = memoryBankSize;
+        options.stepping = stepping;
+        options.localMemorySupported = localMemoryEnabled;
+        options.mode = aubStreamMode;
+        options.gpuAddressSpace = pHwInfo->capabilityTable.gpuAddressSpace;
+
+        aubManager.reset(createAubManager(options));
     }
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();

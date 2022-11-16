@@ -12,10 +12,18 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
+#include "product_family.h"
 
 using namespace NEO;
+
+using Dg1HwInfo = HwInfoConfigTest;
+
+DG1TEST_F(Dg1HwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Dg1, productHelper->getAubStreamProductFamily());
+}
 
 using Dg1HwInfoConfig = Test<DeviceFixture>;
 
@@ -59,8 +67,6 @@ DG1TEST_F(Dg1HwInfoConfig, givenHwInfoConfigWhenAskedIf3DPipelineSelectWAIsRequi
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.is3DPipelineSelectWARequired());
 }
-
-using Dg1HwInfo = ::testing::Test;
 
 DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
