@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 

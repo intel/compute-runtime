@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/kernel_filename_helper.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"

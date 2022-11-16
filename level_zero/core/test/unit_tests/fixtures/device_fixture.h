@@ -19,6 +19,7 @@ class MockPageFaultManager;
 namespace NEO {
 struct UltDeviceFactory;
 class MockMemoryManager;
+class OsAgnosticMemoryManager;
 class MemoryManagerMemHandleMock;
 } // namespace NEO
 

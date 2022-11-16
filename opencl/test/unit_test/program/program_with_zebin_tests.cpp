@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_with_zebin.h"
 
 #include <memory>

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/test_macros/hw_test.h"

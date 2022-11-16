@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_ostime.h"
@@ -103,6 +104,19 @@ bool MockDevice::verifyAdapterLuid() {
     if (callBaseVerifyAdapterLuid)
         return Device::verifyAdapterLuid();
     return verifyAdapterLuidReturnValue;
+}
+
+ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo) {
+    auto executionEnvironment = new ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
+
+    MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->initializeMemoryManager();
+    return executionEnvironment;
 }
 
 bool MockSubDevice::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {

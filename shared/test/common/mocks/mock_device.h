@@ -10,11 +10,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/device/sub_device.h"
-#include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 namespace NEO {
 class CommandStreamReceiver;
@@ -186,7 +183,7 @@ class MockDevice : public RootDevice {
     void setRTDispatchGlobalsForceAllocation() {
         rtDispatchGlobalsForceAllocation = true;
     }
-
+    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool isDebuggerActiveParentCall = true;
@@ -200,15 +197,7 @@ class MockDevice : public RootDevice {
 
 template <>
 inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
-    auto executionEnvironment = new ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
-
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
-
-    MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
-    executionEnvironment->initializeMemoryManager();
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(pHwInfo);
     return Device::create<RootDevice>(executionEnvironment, 0u);
 }
 

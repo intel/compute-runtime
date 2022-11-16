@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 using namespace NEO;
 
@@ -50,3 +51,5 @@ void ProgramWithZebinFixture::populateProgramWithSegments(NEO::MockProgram *prog
     program->buildInfos[rootDeviceIndex].constStringSectionData.initData = &strings;
     program->buildInfos[rootDeviceIndex].constStringSectionData.size = sizeof(strings);
 }
+ProgramWithZebinFixture::ProgramWithZebinFixture() = default;
+ProgramWithZebinFixture::~ProgramWithZebinFixture() = default;
