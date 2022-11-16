@@ -13,10 +13,9 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_ICELAKE_LP;
-
 #include "shared/source/gen11/icllp/os_agnostic_hw_info_config_icllp.inl"
+namespace NEO {
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {

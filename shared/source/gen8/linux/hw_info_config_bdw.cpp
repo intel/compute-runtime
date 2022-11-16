@@ -13,10 +13,11 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_BROADWELL;
 
 #include "shared/source/gen8/bdw/os_agnostic_hw_info_config_bdw.inl"
+
+namespace NEO {
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {

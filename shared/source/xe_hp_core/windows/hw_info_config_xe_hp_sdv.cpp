@@ -15,11 +15,11 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_XE_HP_SDV;
 
 #include "shared/source/xe_hp_core/os_agnostic_hw_info_config_xe_hp_core.inl"
 
+namespace NEO {
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (allowCompression(*hwInfo)) {

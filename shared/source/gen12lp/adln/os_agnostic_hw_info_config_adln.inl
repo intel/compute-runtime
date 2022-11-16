@@ -5,6 +5,7 @@
  *
  */
 
+namespace NEO {
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     switch (stepping) {
@@ -27,3 +28,4 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
     }
     return CommonConstants::invalidStepping;
 }
+} // namespace NEO

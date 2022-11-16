@@ -15,10 +15,11 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_GEMINILAKE;
 
 #include "shared/source/gen9/glk/os_agnostic_hw_info_config_glk.inl"
+
+namespace NEO {
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {

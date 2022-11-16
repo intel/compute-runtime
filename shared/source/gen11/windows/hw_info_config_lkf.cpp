@@ -12,10 +12,8 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_LAKEFIELD;
 
 #include "shared/source/gen11/lkf/os_agnostic_hw_info_config_lkf.inl"
 
-template class HwInfoConfigHw<gfxProduct>;
-} // namespace NEO
+template class NEO::HwInfoConfigHw<gfxProduct>;

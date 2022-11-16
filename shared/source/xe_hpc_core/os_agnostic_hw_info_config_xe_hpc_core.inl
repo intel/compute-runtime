@@ -5,6 +5,7 @@
  *
  */
 
+namespace NEO {
 template <>
 std::string HwInfoConfigHw<gfxProduct>::getDeviceMemoryName() const {
     return "HBM";
@@ -63,3 +64,4 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {
     return false;
 }
+} // namespace NEO

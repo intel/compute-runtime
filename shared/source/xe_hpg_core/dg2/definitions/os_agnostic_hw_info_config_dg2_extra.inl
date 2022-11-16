@@ -5,6 +5,7 @@
  *
  */
 
+namespace NEO {
 template <>
 AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     if (DG2::isG10(hwInfo)) {
@@ -32,3 +33,4 @@ AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const
     }
     return AOT::UNKNOWN_ISA;
 }
+} // namespace NEO

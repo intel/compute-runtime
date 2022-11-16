@@ -13,10 +13,9 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_LAKEFIELD;
-
 #include "shared/source/gen11/lkf/os_agnostic_hw_info_config_lkf.inl"
+namespace NEO {
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {

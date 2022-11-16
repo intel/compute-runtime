@@ -5,6 +5,7 @@
  *
  */
 
+namespace NEO {
 template <>
 bool HwInfoConfigHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
     return true;
@@ -24,3 +25,4 @@ template <>
 AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     return AOT::ICL;
 }
+} // namespace NEO

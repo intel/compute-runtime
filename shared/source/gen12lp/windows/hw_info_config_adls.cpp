@@ -13,11 +13,9 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_S;
 
 #include "shared/source/gen12lp/adls/os_agnostic_hw_info_config_adls.inl"
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 
-template class HwInfoConfigHw<gfxProduct>;
-} // namespace NEO
+template class NEO::HwInfoConfigHw<gfxProduct>;

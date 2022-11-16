@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
+namespace NEO {
 template <>
 void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
     using SAMPLER_STATE = typename XeHpgCoreFamily::SAMPLER_STATE;
@@ -204,3 +205,4 @@ bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
         return false;
     }
 }
+} // namespace NEO

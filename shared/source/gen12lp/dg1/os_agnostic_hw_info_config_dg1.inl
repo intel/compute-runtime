@@ -5,6 +5,7 @@
  *
  */
 
+namespace NEO {
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     switch (stepping) {
@@ -66,3 +67,4 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
     return true;
 }
+} // namespace NEO

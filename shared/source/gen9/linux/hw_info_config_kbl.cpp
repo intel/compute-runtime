@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
 
 constexpr static auto gfxProduct = IGFX_KABYLAKE;
+
 #include "shared/source/gen9/kbl/os_agnostic_hw_info_config_kbl.inl"
 
 namespace NEO {

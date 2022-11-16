@@ -13,10 +13,10 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_ELKHARTLAKE;
 
 #include "shared/source/gen11/ehl/os_agnostic_hw_info_config_ehl.inl"
+namespace NEO {
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {

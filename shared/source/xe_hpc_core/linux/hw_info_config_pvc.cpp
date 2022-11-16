@@ -22,16 +22,18 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_PVC;
+
+namespace NEO {
 const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
     // add new values for guid in the form of {"guid", {offset, size}} for each platform
     {"0x41fe79a5", {64u, 8u}}};
-
 #include "shared/source/os_interface/linux/hw_info_config_uuid_xehp_and_later.inl"
 #include "shared/source/os_interface/linux/hw_info_config_xe_hpc_and_later.inl"
+} // namespace NEO
 #include "shared/source/xe_hpc_core/os_agnostic_hw_info_config_xe_hpc_core.inl"
 #include "shared/source/xe_hpc_core/pvc/os_agnostic_hw_info_config_pvc.inl"
+namespace NEO {
 
 template <>
 uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
@@ -76,6 +78,4 @@ uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond
 
 #include "shared/source/xe_hpc_core/linux/hw_info_config_xe_hpc_core.inl"
 
-namespace NEO {
-template class HwInfoConfigHw<gfxProduct>;
-} // namespace NEO
+template class NEO::HwInfoConfigHw<gfxProduct>;

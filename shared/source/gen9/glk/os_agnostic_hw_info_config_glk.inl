@@ -5,7 +5,9 @@
  *
  */
 
+namespace NEO {
 template <>
 AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     return AOT::GLK;
 }
+} // namespace NEO

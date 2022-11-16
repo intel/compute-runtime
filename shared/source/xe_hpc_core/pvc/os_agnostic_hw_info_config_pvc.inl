@@ -5,6 +5,7 @@
  *
  */
 
+namespace NEO {
 template <>
 bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
     return PVC::isXl(hwInfo);
@@ -209,3 +210,4 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isStatefulAddressingModeSupported() const {
     return false;
 }
+} // namespace NEO

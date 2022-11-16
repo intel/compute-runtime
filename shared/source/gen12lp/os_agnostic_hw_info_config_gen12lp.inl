@@ -5,6 +5,7 @@
  *
  */
 
+namespace NEO {
 template <>
 void HwInfoConfigHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
     hwInfo->platform.eRenderCoreFamily = GFXCORE_FAMILY::IGFX_GEN12LP_CORE;
@@ -29,3 +30,4 @@ template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
 }
+} // namespace NEO

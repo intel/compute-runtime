@@ -12,11 +12,8 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_BROXTON;
 
 #include "shared/source/gen9/bxt/os_agnostic_hw_info_config_bxt.inl"
 
-template class HwInfoConfigHw<gfxProduct>;
-
-} // namespace NEO
+template class NEO::HwInfoConfigHw<gfxProduct>;

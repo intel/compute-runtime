@@ -12,11 +12,8 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_ELKHARTLAKE;
 
 #include "shared/source/gen11/ehl/os_agnostic_hw_info_config_ehl.inl"
 
-template class HwInfoConfigHw<gfxProduct>;
-
-} // namespace NEO
+template class NEO::HwInfoConfigHw<gfxProduct>;
