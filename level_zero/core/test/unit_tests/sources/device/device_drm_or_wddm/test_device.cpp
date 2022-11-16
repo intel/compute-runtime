@@ -68,8 +68,8 @@ class MockDriverModelWDDMLUID : public NEO::Wddm {
 
 class MockOsContextWin : public OsContextWin {
   public:
-    MockOsContextWin(MockDriverModelWDDMLUID &wddm, uint32_t contextId, const EngineDescriptor &engineDescriptor)
-        : OsContextWin(wddm, contextId, engineDescriptor) {}
+    MockOsContextWin(MockDriverModelWDDMLUID &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+        : OsContextWin(wddm, rootDeviceIndex, contextId, engineDescriptor) {}
 };
 
 using LuidDeviceTest = Test<DeviceFixture>;
@@ -78,7 +78,7 @@ TEST_F(LuidDeviceTest, givenOsContextWinAndGetLUIDArrayThenLUIDisValid) {
     DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
-    OsContextWin osContext(*luidMock, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
+    OsContextWin osContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
     std::vector<uint8_t> luidData;
     size_t arraySize = 8;
     osContext.getDeviceLuidArray(luidData, arraySize);
@@ -95,7 +95,7 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndWDDMDriverTypeThenSu
     auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(luidMock));
-    MockOsContextWin mockContext(*luidMock, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
+    MockOsContextWin mockContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
     auto &deviceRegularEngines = neoDevice->getRegularEngineGroups();
     auto &deviceEngine = deviceRegularEngines[0].engines[0];
     auto csr = deviceEngine.commandStreamReceiver;

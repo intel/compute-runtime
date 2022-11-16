@@ -45,7 +45,7 @@ class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnviron
 
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
+        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
     }
 

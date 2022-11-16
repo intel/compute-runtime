@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ struct DeferredOsContextCreationL0Tests : ::testing::Test {
 
     std::unique_ptr<OsContext> createOsContext(EngineTypeUsage engineTypeUsage, bool defaultEngine) {
         OSInterface *osInterface = device->getRootDeviceEnvironment().osInterface.get();
-        std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, 0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage))};
+        std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, 0, 0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage))};
         EXPECT_FALSE(osContext->isInitialized());
         return osContext;
     }

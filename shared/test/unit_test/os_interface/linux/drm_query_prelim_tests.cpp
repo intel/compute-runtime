@@ -331,7 +331,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectSetToColourWithBindWhenBindingT
     bo.setColourWithBind();
     bo.setColourChunk(MemoryConstants::pageSize64k);
     bo.addColouringAddress(0xffeeffee);
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     bo.bind(&osContext, 0);
@@ -385,7 +385,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureWhenBindingThen
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     BufferObjectMock bo(&drm, 3, 1, 0, 1);
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     bo.markForCapture();
 
@@ -403,7 +403,7 @@ TEST(DrmBufferObjectTestPrelim, givenNoActiveDirectSubmissionAndForceUseImmediat
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     BufferObjectMock bo(&drm, 3, 1, 0, 1);
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     bo.bind(&osContext, 0);
@@ -419,7 +419,7 @@ TEST(DrmBufferObjectTestPrelim, whenBindingThenImmediateFlagIsSetAndExtensionLis
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setDirectSubmissionActive(true);
     BufferObjectMock bo(&drm, 3, 1, 0, 1);
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     osContext.setDirectSubmissionActive();
 
@@ -432,7 +432,7 @@ TEST(DrmBufferObjectTestPrelim, whenBindingThenImmediateFlagIsSetAndExtensionLis
 TEST(DrmBufferObjectTestPrelim, givenProvidedCtxIdWhenCallingWaitUserFenceThenExpectCtxFlagSetAndNoSoftFlagSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     uint64_t gpuAddress = 0x1020304000ull;
@@ -453,7 +453,7 @@ TEST(DrmBufferObjectTestPrelim, givenProvidedCtxIdWhenCallingWaitUserFenceThenEx
 TEST(DrmBufferObjectTestPrelim, givenProvidedNoCtxIdWhenCallingWaitUserFenceThenExpectCtxFlagNotSetAndSoftFlagSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     uint64_t gpuAddress = 0x1020304000ull;

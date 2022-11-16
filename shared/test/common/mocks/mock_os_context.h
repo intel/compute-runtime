@@ -18,7 +18,7 @@ class MockOsContext : public OsContext {
     using OsContext::getDeviceBitfield;
 
     MockOsContext(uint32_t contextId, const EngineDescriptor &engineDescriptorHelper)
-        : OsContext(contextId, engineDescriptorHelper) {}
+        : OsContext(0, contextId, engineDescriptorHelper) {}
 };
 static_assert(sizeof(OsContext) == sizeof(MockOsContext));
 

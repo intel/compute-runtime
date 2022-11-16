@@ -15,15 +15,15 @@
 
 namespace NEO {
 
-OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
+OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
     if (osInterface) {
-        return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), contextId, engineDescriptor);
+        return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), rootDeviceIndex, contextId, engineDescriptor);
     }
-    return new OsContext(contextId, engineDescriptor);
+    return new OsContext(rootDeviceIndex, contextId, engineDescriptor);
 }
 
-OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, const EngineDescriptor &engineDescriptor)
-    : OsContext(contextId, engineDescriptor),
+OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+    : OsContext(rootDeviceIndex, contextId, engineDescriptor),
       residencyController(wddm, contextId),
       wddm(wddm) {
 }

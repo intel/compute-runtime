@@ -63,8 +63,8 @@ class MockWddmResidencyController : public WddmResidencyController {
 
 class MockOsContextWin : public OsContextWin {
   public:
-    MockOsContextWin(Wddm &wddm, uint32_t contextId, const EngineDescriptor &engineDescriptor)
-        : OsContextWin(wddm, contextId, engineDescriptor),
+    MockOsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+        : OsContextWin(wddm, rootDeviceIndex, contextId, engineDescriptor),
           mockResidencyController(wddm, contextId) {}
 
     WddmResidencyController &getResidencyController() override { return mockResidencyController; };
@@ -80,7 +80,7 @@ struct WddmResidencyControllerTest : ::testing::Test {
         rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddm->init();
-        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, EngineDescriptorHelper::getDefaultDescriptor());
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, 0, osContextId, EngineDescriptorHelper::getDefaultDescriptor());
         wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
         residencyController = &mockOsContextWin->mockResidencyController;
     }
@@ -103,7 +103,7 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
         wddm->resetGdi(gdi);
         wddm->init();
 
-        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, EngineDescriptorHelper::getDefaultDescriptor());
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, 0, osContextId, EngineDescriptorHelper::getDefaultDescriptor());
         wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
         residencyController = &mockOsContextWin->mockResidencyController;
         residencyController->registerCallback();

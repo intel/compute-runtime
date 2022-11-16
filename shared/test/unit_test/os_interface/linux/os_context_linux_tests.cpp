@@ -29,7 +29,7 @@ TEST(OSContextLinux, givenReinitializeContextWhenContextIsInitThenContextIsStill
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
-    OsContextLinux osContext(*mock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_NO_THROW(osContext.reInitializeContext());
     EXPECT_NO_THROW(osContext.ensureContextInitialized());
 }

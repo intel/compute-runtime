@@ -45,7 +45,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         wddmMockInterface = static_cast<WddmMockInterface23 *>(wddm->wddmInterface.release());
         wddm->init();
         wddm->wddmInterface.reset(wddmMockInterface);
-        osContext = std::make_unique<OsContextWin>(*wddm, 0u,
+        osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
                                                    EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0], preemptionMode));
         osContext->ensureContextInitialized();
     }
@@ -79,9 +79,9 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
     auto defaultEngine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0];
-    OsContextWin osContextWithoutPreemption(*wddm, 0u,
+    OsContextWin osContextWithoutPreemption(*wddm, 0, 0u,
                                             EngineDescriptorHelper::getDefaultDescriptor(defaultEngine, PreemptionMode::Disabled));
-    OsContextWin osContextWithPreemption(*wddm, 0, EngineDescriptorHelper::getDefaultDescriptor(defaultEngine, PreemptionMode::MidBatch));
+    OsContextWin osContextWithPreemption(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor(defaultEngine, PreemptionMode::MidBatch));
 
     wddm->wddmInterface->createHwQueue(osContextWithoutPreemption);
     EXPECT_EQ(0u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);

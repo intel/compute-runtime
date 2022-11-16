@@ -23,8 +23,8 @@ struct HardwareInfo;
 
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
-    OsContext(uint32_t contextId, const EngineDescriptor &engineDescriptor);
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
     bool isImmediateContextInitializationEnabled(bool isDefaultEngine) const;
     bool isInitialized() const { return contextInitialized; }
@@ -58,9 +58,12 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     uint8_t getUmdPowerHintValue() { return powerHintValue; }
     void setUmdPowerHintValue(uint8_t powerHintValue) { this->powerHintValue = powerHintValue; }
 
+    uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
+
   protected:
     virtual void initializeContext() {}
 
+    const uint32_t rootDeviceIndex;
     const uint32_t contextId;
     const DeviceBitfield deviceBitfield;
     const PreemptionMode preemptionMode;

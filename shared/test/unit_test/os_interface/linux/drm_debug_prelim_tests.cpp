@@ -245,7 +245,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultE
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     bo.bind(&osContext, 0);
 
@@ -265,7 +265,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternal
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
-    OsContextLinux osContext(drm, 0u, {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
+    OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
     osContext.ensureContextInitialized();
     bo.bind(&osContext, 0);
 
@@ -281,7 +281,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngi
 
     drm.context.receivedVmBindUuidExt[0].reset();
 
-    OsContextLinux osContext(drm, 0u, {{aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
+    OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
     osContext.ensureContextInitialized();
     bo.bind(&osContext, 0);
 
@@ -296,7 +296,7 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     bo.bind(&osContext, 0);
     EXPECT_NE(0u, drm.context.receivedVmBind.value().extensions);
@@ -323,7 +323,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
     drm->contextDebugSupported = true;
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-    OsContextLinux osContext(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     EXPECT_EQ(DrmPrelimHelper::getSIPContextParamDebugFlag() << 32 | DrmPrelimHelper::getSIPContextParamDebugFlag(), drm->context.receivedSetContextParamValue);
@@ -345,7 +345,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
     drm->contextDebugSupported = true;
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-    OsContextLinux osContext(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     EXPECT_EQ(DrmPrelimHelper::getSIPContextParamDebugFlag() << 32 | DrmPrelimHelper::getSIPContextParamDebugFlag(), drm->context.receivedSetContextParamValue);

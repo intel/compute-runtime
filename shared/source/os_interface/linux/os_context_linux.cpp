@@ -19,15 +19,15 @@
 
 namespace NEO {
 
-OsContext *OsContextLinux::create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
+OsContext *OsContextLinux::create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
     if (osInterface) {
-        return new OsContextLinux(*osInterface->getDriverModel()->as<Drm>(), contextId, engineDescriptor);
+        return new OsContextLinux(*osInterface->getDriverModel()->as<Drm>(), rootDeviceIndex, contextId, engineDescriptor);
     }
-    return new OsContext(contextId, engineDescriptor);
+    return new OsContext(rootDeviceIndex, contextId, engineDescriptor);
 }
 
-OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, const EngineDescriptor &engineDescriptor)
-    : OsContext(contextId, engineDescriptor),
+OsContextLinux::OsContextLinux(Drm &drm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+    : OsContext(rootDeviceIndex, contextId, engineDescriptor),
       drm(drm) {}
 
 void OsContextLinux::initializeContext() {
