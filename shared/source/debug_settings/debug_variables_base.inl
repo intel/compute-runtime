@@ -254,6 +254,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintTimestampPacketContents, false, "prints all ti
 DECLARE_DEBUG_VARIABLE(bool, WddmResidencyLogger, false, "gather Wddm residency statistics to file")
 DECLARE_DEBUG_VARIABLE(bool, PrintBOCreateDestroyResult, false, "tracks the result of creation and destruction of BOs")
 DECLARE_DEBUG_VARIABLE(bool, PrintBOBindingResult, false, "tracks the result of binding and unbinding of BOs")
+DECLARE_DEBUG_VARIABLE(bool, PrintBOPrefetchingResult, false, "tracks the result of prefetching BOs")
 DECLARE_DEBUG_VARIABLE(bool, PrintTagAllocationAddress, false, "Print tag allocation address for each engine")
 DECLARE_DEBUG_VARIABLE(bool, ProvideVerboseImplicitFlush, false, "provides verbose messages about implicit flush mechanism")
 DECLARE_DEBUG_VARIABLE(bool, PrintBlitDispatchDetails, false, "Print blit dispatch details")

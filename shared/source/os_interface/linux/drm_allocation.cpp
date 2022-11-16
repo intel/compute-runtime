@@ -179,6 +179,21 @@ int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vecto
     return 0;
 }
 
+bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t subDeviceId) {
+    auto drm = bo->peekDrm();
+    auto ioctlHelper = drm->getIoctlHelper();
+    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+    auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
+    auto vmId = drm->getVirtualMemoryAddressSpace(subDeviceId);
+
+    auto result = ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region, vmId);
+
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                       "prefetch BO=%d to VM %u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
+                       bo->peekHandle(), vmId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
+    return result;
+}
+
 void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     if (!drm->resourceRegistrationEnabled()) {
         return;
@@ -318,15 +333,18 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
 
 bool DrmAllocation::setMemPrefetch(Drm *drm, uint32_t subDeviceId) {
     bool success = true;
-    auto ioctlHelper = drm->getIoctlHelper();
-    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
-    auto vmId = drm->getVirtualMemoryAddressSpace(subDeviceId);
+    auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(storageInfo.getNumBanks());
 
-    for (auto bo : bufferObjects) {
-        if (bo != nullptr) {
-            auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
-            success &= ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region, vmId);
+    if (numHandles > 1) {
+        for (uint8_t subDeviceId = 0u; subDeviceId < EngineLimits::maxHandleCount; subDeviceId++) {
+            if (storageInfo.memoryBanks.test(subDeviceId)) {
+                auto bo = this->getBOs()[subDeviceId];
+                success &= prefetchBO(bo, subDeviceId);
+            }
         }
+    } else {
+        auto bo = this->getBO();
+        success = prefetchBO(bo, subDeviceId);
     }
 
     return success;

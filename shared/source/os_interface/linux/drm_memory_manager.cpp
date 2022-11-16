@@ -1859,15 +1859,12 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     BufferObjects bos{};
     auto currentAddress = cpuPointer;
     auto remainingSize = size;
-    auto getNumHandles = [](uint32_t numBanks) -> uint32_t {
-        return (numBanks > 1) && (DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() != 0) ? numBanks : 1u;
-    };
+    auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(allocationData.storageInfo.getNumBanks());
 
-    auto handles = getNumHandles(allocationData.storageInfo.getNumBanks());
-    for (auto handleId = 0u; handleId < handles; handleId++) {
+    for (auto handleId = 0u; handleId < numHandles; handleId++) {
         uint32_t handle = 0;
 
-        auto currentSize = alignUp(remainingSize / (handles - handleId), MemoryConstants::pageSize64k);
+        auto currentSize = alignUp(remainingSize / (numHandles - handleId), MemoryConstants::pageSize64k);
         if (currentSize == 0) {
             break;
         }
@@ -1917,7 +1914,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         }
         return nullptr;
     }
-    if (handles > 1) {
+    if (numHandles > 1) {
         allocation->storageInfo = allocationData.storageInfo;
     }
 

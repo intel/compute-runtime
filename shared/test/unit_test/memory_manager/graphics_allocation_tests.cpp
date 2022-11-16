@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -195,6 +196,19 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsSharedResourceCopyThenAllocatio
 
 TEST(GraphicsAllocationTest, whenAllocationTypeIsImageThenAllocationIsNotLockable) {
     EXPECT_FALSE(GraphicsAllocation::isLockable(AllocationType::IMAGE));
+}
+
+TEST(GraphicsAllocationTest, givenNumMemoryBanksWhenGettingNumHandlesForKmdSharedAllocationThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    EXPECT_EQ(1u, GraphicsAllocation::getNumHandlesForKmdSharedAllocation(1));
+    EXPECT_EQ(2u, GraphicsAllocation::getNumHandlesForKmdSharedAllocation(2));
+
+    DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
+    EXPECT_EQ(1u, GraphicsAllocation::getNumHandlesForKmdSharedAllocation(2));
+
+    DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(1);
+    EXPECT_EQ(2u, GraphicsAllocation::getNumHandlesForKmdSharedAllocation(2));
 }
 
 TEST(GraphicsAllocationTest, givenDefaultAllocationWhenGettingNumHandlesThenOneIsReturned) {

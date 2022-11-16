@@ -217,6 +217,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                type == AllocationType::DEBUG_SBA_TRACKING_BUFFER;
     }
 
+    static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
+
     void *getReservedAddressPtr() const {
         return this->reservedAddressRangeInfo.addressPtr;
     }
