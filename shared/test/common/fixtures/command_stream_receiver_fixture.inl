@@ -9,6 +9,8 @@
 #include "shared/test/common/fixtures/command_stream_receiver_fixture.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 
+#include "gtest/gtest.h"
+
 template <typename FamilyType>
 void CommandStreamReceiverSystolicFixture::testBody() {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();

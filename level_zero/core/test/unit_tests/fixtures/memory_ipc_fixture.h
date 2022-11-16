@@ -31,6 +31,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
+#include "gtest/gtest.h"
+
 namespace L0 {
 namespace ult {
 

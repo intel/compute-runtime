@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/compression_selector.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"

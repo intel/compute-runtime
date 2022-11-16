@@ -16,6 +16,8 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
+#include "gtest/gtest.h"
+
 struct MultiTileFixture : public ::testing::Test {
     void SetUp() override {
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;

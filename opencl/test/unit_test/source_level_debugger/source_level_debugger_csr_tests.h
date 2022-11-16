@@ -17,6 +17,8 @@
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
+#include "gtest/gtest.h"
+
 #include <memory>
 
 class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {

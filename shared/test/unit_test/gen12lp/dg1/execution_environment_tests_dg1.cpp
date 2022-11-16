@@ -16,8 +16,7 @@ namespace NEO {
 using RootDeviceEnvironmentTests = ::testing::Test;
 
 HWTEST2_F(RootDeviceEnvironmentTests, givenRootDeviceEnvironmentWhenAILInitProcessExecutableNameReturnsFailedThenInitAilConfigurationReturnsFail, IsDG1) {
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    MockExecutionEnvironment executionEnvironment{};
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
 
     class AILDG1 : public AILConfigurationHw<productFamily> {

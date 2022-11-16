@@ -12,6 +12,8 @@
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
+#include "gtest/gtest.h"
+
 using namespace MetricsLibraryApi;
 
 namespace NEO {

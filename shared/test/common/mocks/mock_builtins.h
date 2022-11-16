@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
+#include <map>
 #include <memory>
 
 namespace NEO {

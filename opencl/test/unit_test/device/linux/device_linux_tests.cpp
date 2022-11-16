@@ -7,6 +7,8 @@
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
+#include "gtest/gtest.h"
+
 using namespace NEO;
 
 namespace ULT {

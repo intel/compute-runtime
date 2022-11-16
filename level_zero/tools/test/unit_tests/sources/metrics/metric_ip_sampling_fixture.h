@@ -9,6 +9,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include <level_zero/zet_api.h>
 
+#include "gtest/gtest.h"
+
 namespace L0 {
 namespace ult {
 class MockMetricIpSamplingOsInterface;

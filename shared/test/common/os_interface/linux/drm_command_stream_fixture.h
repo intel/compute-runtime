@@ -18,6 +18,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
+#include "gtest/gtest.h"
+
 #include <algorithm>
 
 template <typename GfxFamily>

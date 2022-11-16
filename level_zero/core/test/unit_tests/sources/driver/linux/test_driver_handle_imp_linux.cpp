@@ -20,6 +20,8 @@
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
+#include "gtest/gtest.h"
+
 using namespace NEO;
 
 namespace NEO {

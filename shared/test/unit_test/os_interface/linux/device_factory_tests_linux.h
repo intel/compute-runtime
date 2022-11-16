@@ -11,6 +11,8 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
+#include "gtest/gtest.h"
+
 namespace NEO {
 extern Drm **pDrmToReturnFromCreateFunc;
 }; // namespace NEO

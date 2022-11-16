@@ -7,6 +7,7 @@
 
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
 namespace NEO {

@@ -9,6 +9,8 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 
+#include "gtest/gtest.h"
+
 #include <vector>
 
 class ProgramTests : public NEO::ClDeviceFixture,

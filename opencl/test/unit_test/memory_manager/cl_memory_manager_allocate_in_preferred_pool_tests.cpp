@@ -14,6 +14,8 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
+#include "gtest/gtest.h"
+
 using namespace NEO;
 
 TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyThenLocalMemoryAllocationIsReturnedAndGpuAddresIsInStandard64kHeap) {

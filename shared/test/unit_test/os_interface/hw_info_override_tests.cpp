@@ -18,7 +18,7 @@ HWTEST2_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironment
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.HardwareInfoOverride.set("1x2x3");
 
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockExecutionEnvironment executionEnvironment{};
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_TRUE(success);

@@ -46,6 +46,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_direct_submission_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver_model.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_elf.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_execution_environment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_execution_environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_experimental_command_buffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_partition.cpp

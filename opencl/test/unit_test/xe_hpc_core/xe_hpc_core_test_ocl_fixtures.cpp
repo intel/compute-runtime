@@ -11,6 +11,8 @@
 
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
+#include "gtest/gtest.h"
+
 namespace NEO {
 
 void HwHelperTestsXeHpcCore::setupDeviceIdAndRevision(HardwareInfo *hwInfo, ClDevice &clDevice) {

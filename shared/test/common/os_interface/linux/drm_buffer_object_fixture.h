@@ -13,6 +13,8 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
+#include "gtest/gtest.h"
+
 #include <memory>
 
 using namespace NEO;
