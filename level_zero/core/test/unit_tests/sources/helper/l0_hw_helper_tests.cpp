@@ -666,16 +666,16 @@ HWTEST2_F(L0HwHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse
     EXPECT_FALSE(l0HwHelper.alwaysAllocateEventInLocalMem());
 }
 
-TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForUsePipeControlMultiKernelEventSyncThenReturnFalse) {
+TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForUsePipeControlMultiKernelEventSyncThenReturnTrue) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     bool defaultValue = L0::L0HwHelper::usePipeControlMultiKernelEventSync(hwInfo);
-    EXPECT_FALSE(defaultValue);
+    EXPECT_TRUE(defaultValue);
 }
 
-TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForCompactL3FlushEventPacketThenReturnFalse) {
+TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForCompactL3FlushEventPacketThenReturnTrue) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     bool defaultValue = L0::L0HwHelper::useCompactL3FlushEventPacket(hwInfo);
-    EXPECT_FALSE(defaultValue);
+    EXPECT_TRUE(defaultValue);
 }
 
 TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForDynamicEventPacketCountThenReturnTrue) {

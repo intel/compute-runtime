@@ -51,14 +51,14 @@ bool L0HwHelper::usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwI
     if (NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.get() != -1) {
         return !!NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.get();
     }
-    return false;
+    return true;
 }
 
 bool L0HwHelper::useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo) {
     if (NEO::DebugManager.flags.CompactL3FlushEventPacket.get() != -1) {
         return !!NEO::DebugManager.flags.CompactL3FlushEventPacket.get();
     }
-    return false;
+    return true;
 }
 
 bool L0HwHelper::useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo) {

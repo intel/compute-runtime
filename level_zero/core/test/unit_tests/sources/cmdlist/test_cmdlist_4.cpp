@@ -310,6 +310,11 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 using CommandListAppendLaunchKernelResetKernelCount = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOperationFalseWhenAppendLaunchKernelThenResetKernelCount, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+
+    NEO::DebugManager.flags.CompactL3FlushEventPacket.set(0);
+    NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+
     Mock<::L0::Kernel> kernel;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
