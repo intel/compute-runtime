@@ -146,7 +146,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
     [[maybe_unused]] auto status = true;
 
-    if ((!(preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr) && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) || is32bit) {
+    if (executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress || is32bit) {
         status = mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
     } else {
         status = mapGpuVirtualAddress(wddmAllocation.get(), nullptr);
@@ -224,7 +224,7 @@ GraphicsAllocation *WddmMemoryManager::allocateUSMHostGraphicsMemory(const Alloc
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
     auto pageSize = NEO::OSInterface::osEnabled64kbPages ? MemoryConstants::pageSize64k : MemoryConstants::pageSize;
     bool requiresNonStandardAlignment = allocationData.alignment > pageSize;
-    if ((preferredAllocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) || (requiresNonStandardAlignment && allocationData.forceKMDAllocation == false)) {
+    if ((preferredAllocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) || requiresNonStandardAlignment) {
         return allocateSystemMemoryAndCreateGraphicsAllocationFromIt(allocationData);
     } else {
         return allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, NEO::OSInterface::osEnabled64kbPages);

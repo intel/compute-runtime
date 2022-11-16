@@ -447,8 +447,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.storageInfo = storageInfo;
     allocationData.alignment = properties.alignment ? properties.alignment : MemoryConstants::preferredAlignment;
     allocationData.imgInfo = properties.imgInfo;
-    allocationData.forceKMDAllocation = properties.forceKMDAllocation;
-    allocationData.makeGPUVaDifferentThanCPUPtr = properties.makeGPUVaDifferentThanCPUPtr;
 
     if (allocationData.flags.allocateMemory) {
         allocationData.hostPtr = nullptr;
