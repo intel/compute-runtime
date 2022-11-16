@@ -19,6 +19,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/event_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -815,36 +816,8 @@ HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseCon
     event->destroy();
 }
 
-class EventSynchronizeTest : public Test<DeviceFixture> {
-  public:
-    void SetUp() override {
-        DeviceFixture::setUp();
-        ze_event_pool_desc_t eventPoolDesc = {};
-        eventPoolDesc.count = 1;
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-
-        ze_event_desc_t eventDesc = {};
-        eventDesc.index = 0;
-        eventDesc.signal = 0;
-        eventDesc.wait = 0;
-
-        ze_result_t result = ZE_RESULT_SUCCESS;
-        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        ASSERT_NE(nullptr, eventPool);
-        event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-        ASSERT_NE(nullptr, event);
-    }
-
-    void TearDown() override {
-        event.reset(nullptr);
-        eventPool.reset(nullptr);
-        DeviceFixture::tearDown();
-    }
-
-    std::unique_ptr<L0::EventPool> eventPool = nullptr;
-    std::unique_ptr<L0::Event> event;
-};
+using EventSynchronizeTest = Test<EventFixture<1, 0>>;
+using EventUsedPacketSignalSynchronizeTest = Test<EventUsedPacketSignalFixture<1, 0>>;
 
 TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
@@ -921,7 +894,7 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroWhenO
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
+TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
     constexpr uint32_t packetsInUse = 2;
     event->setPacketsInUse(packetsInUse);
     event->setUsingContextEndOffset(false);
@@ -957,7 +930,7 @@ TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForNonTimestampEvent
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForOffsetedNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
+TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForOffsetedNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
     constexpr uint32_t packetsInUse = 2;
     event->setPacketsInUse(packetsInUse);
     event->setUsingContextEndOffset(true);
@@ -993,7 +966,7 @@ TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForOffsetedNonTimest
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
+TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
     constexpr uint32_t packetsInUse = 2;
     event->setPacketsInUse(packetsInUse);
     event->setEventTimestampFlag(true);
@@ -1159,48 +1132,19 @@ struct EventCreateAllocationResidencyTest : public ::testing::Test {
     L0::Device *device = nullptr;
 };
 
-class TimestampEventCreateFixture : public DeviceFixture {
-  public:
-    void setUp() {
-        DeviceFixture::setUp();
-        ze_event_pool_desc_t eventPoolDesc = {};
-        eventPoolDesc.count = 1;
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-        ze_event_desc_t eventDesc = {};
-        eventDesc.index = 0;
-        eventDesc.signal = 0;
-        eventDesc.wait = 0;
-
-        ze_result_t result = ZE_RESULT_SUCCESS;
-        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        ASSERT_NE(nullptr, eventPool);
-        event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device)));
-        ASSERT_NE(nullptr, event);
-    }
-
-    void tearDown() {
-        event.reset(nullptr);
-        eventPool.reset(nullptr);
-        DeviceFixture::tearDown();
-    }
-
-    std::unique_ptr<L0::EventPool> eventPool;
-    std::unique_ptr<L0::EventImp<uint32_t>> event;
-};
-
-struct TimestampEventCreateMultiKernelFixture : public TimestampEventCreateFixture {
+struct TimestampEventCreateMultiKernelFixture : public EventFixture<1, 1> {
     void setUp() {
         DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
-        TimestampEventCreateFixture::setUp();
+        DebugManager.flags.SignalAllEventPackets.set(0);
+        EventFixture<1, 1>::setUp();
     }
 
     DebugManagerStateRestore restorer;
 };
 
-using TimestampEventCreate = Test<TimestampEventCreateFixture>;
+using TimestampEventCreate = Test<EventFixture<1, 1>>;
 using TimestampEventCreateMultiKernel = Test<TimestampEventCreateMultiKernelFixture>;
+using TimestampEventUsedPacketSignalCreate = Test<EventUsedPacketSignalFixture<1, 1>>;
 
 TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventFlagSet) {
     EXPECT_TRUE(event->isEventTimestampFlagSet());
@@ -1301,7 +1245,7 @@ TEST_F(TimestampEventCreate, givenpCountZeroCallingQueryTimestampExpThenpCountSe
     EXPECT_NE(0u, pCount);
 }
 
-TEST_F(TimestampEventCreate, givenpCountLargerThanSupportedWhenCallingQueryTimestampExpThenpCountSetProperly) {
+TEST_F(TimestampEventUsedPacketSignalCreate, givenpCountLargerThanSupportedWhenCallingQueryTimestampExpThenpCountSetProperly) {
     uint32_t pCount = 10;
     event->setPacketsInUse(2u);
     auto result = event->queryTimestampsExp(device, &pCount, nullptr);
@@ -1320,36 +1264,7 @@ TEST_F(TimestampEventCreate, givenEventWithStaticPartitionOffThenQueryTimestampE
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-class TimestampDeviceEventCreate : public Test<DeviceFixture> {
-  public:
-    void SetUp() override {
-        DeviceFixture::setUp();
-        ze_event_pool_desc_t eventPoolDesc = {};
-        eventPoolDesc.count = 1;
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-        ze_event_desc_t eventDesc = {};
-        eventDesc.index = 0;
-        eventDesc.signal = 0;
-        eventDesc.wait = 0;
-
-        ze_result_t result = ZE_RESULT_SUCCESS;
-        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        ASSERT_NE(nullptr, eventPool);
-        event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device)));
-        ASSERT_NE(nullptr, event);
-    }
-
-    void TearDown() override {
-        event.reset(nullptr);
-        eventPool.reset(nullptr);
-        DeviceFixture::tearDown();
-    }
-
-    std::unique_ptr<L0::EventPool> eventPool;
-    std::unique_ptr<L0::EventImp<uint32_t>> event;
-};
+using TimestampDeviceEventCreate = Test<EventFixture<0, 1>>;
 
 TEST_F(TimestampDeviceEventCreate, givenTimestampDeviceEventThenAllocationsIsOfGpuDeviceTimestampType) {
     auto allocation = &eventPool->getAllocation();
@@ -1361,6 +1276,9 @@ TEST_F(TimestampDeviceEventCreate, givenTimestampDeviceEventThenAllocationsIsOfG
 using EventQueryTimestampExpWithSubDevice = Test<MultiDeviceFixture>;
 
 TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithSubDeviceThenReturnsCorrectValueReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
+
     std::unique_ptr<L0::EventPool> eventPool;
     std::unique_ptr<L0::EventImp<uint32_t>> event;
     uint32_t deviceCount = 1;
@@ -1450,7 +1368,7 @@ HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryK
     EXPECT_EQ(data.globalEnd, result.global.kernelEnd);
 }
 
-TEST_F(TimestampEventCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSet) {
+TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSet) {
     typename MockTimestampPackets32::Packet packetData[2];
     event->setPacketsInUse(2u);
 
@@ -1891,36 +1809,11 @@ TEST_F(EventPoolCreateNegativeTest, whenInitializingEventPoolButMemoryManagerFai
     delete[] devices;
 }
 
-class EventFixture : public DeviceFixture {
-  public:
-    void setUp() {
-        DeviceFixture::setUp();
-
-        auto hDevice = device->toHandle();
-        ze_result_t result = ZE_RESULT_SUCCESS;
-        eventPool = whiteboxCast(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
-    }
-
-    void tearDown() {
-        eventPool->destroy();
-
-        DeviceFixture::tearDown();
-    }
-
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        4};
-
-    ze_event_desc_t eventDesc = {};
-    EventPool *eventPool;
-};
-
-using EventTests = Test<EventFixture>;
+using EventTests = Test<EventFixture<1, 0>>;
+using EventUsedPacketSignalTests = Test<EventUsedPacketSignalFixture<1, 0>>;
 
 TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
-    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
 
     auto result = event->hostSignal();
@@ -1932,7 +1825,7 @@ TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
 }
 
 TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
-    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
 
     auto result = event->hostSignal();
@@ -1949,7 +1842,7 @@ TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
 }
 
 TEST_F(EventTests, WhenDestroyingAnEventThenSuccessIsReturned) {
-    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
 
     auto result = event->destroy();
@@ -1965,10 +1858,10 @@ TEST_F(EventTests, givenTwoEventsCreatedThenTheyHaveDifferentAddresses) {
     eventDesc1.index = 1;
     eventDesc.index = 1;
 
-    auto event0 = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc0, device));
+    auto event0 = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc0, device));
     ASSERT_NE(event0, nullptr);
 
-    auto event1 = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc1, device));
+    auto event1 = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc1, device));
     ASSERT_NE(event1, nullptr);
 
     EXPECT_NE(event0->hostAddress, event1->hostAddress);
@@ -1982,7 +1875,7 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     eventDesc.index = 0;
     eventDesc.signal = 0;
     eventDesc.wait = 0;
-    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool,
+    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
                                                                                                                            &eventDesc,
                                                                                                                            device)));
     ASSERT_NE(event, nullptr);
@@ -2004,11 +1897,11 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     }
 }
 
-TEST_F(EventTests, givenEventUseMultiplePacketsWhenHostSignalThenExpectAllPacketsAreSignaled) {
+TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThenExpectAllPacketsAreSignaled) {
     eventDesc.index = 0;
     eventDesc.signal = 0;
     eventDesc.wait = 0;
-    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool,
+    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
                                                                                                                            &eventDesc,
                                                                                                                            device)));
     ASSERT_NE(event, nullptr);
@@ -2034,11 +1927,11 @@ TEST_F(EventTests, givenEventUseMultiplePacketsWhenHostSignalThenExpectAllPacket
     }
 }
 
-HWTEST2_F(EventTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel, IsAtLeastXeHpCore) {
+HWTEST2_F(EventUsedPacketSignalTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
 
-    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
     EXPECT_FALSE(event->getL3FlushForCurrenKernel());
 
@@ -2220,7 +2113,7 @@ HWTEST_F(EventTests,
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
 
-    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
     ASSERT_NE(nullptr, event->csr);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csr);
@@ -2305,7 +2198,7 @@ struct MockEventCompletion : public EventImp<uint32_t> {
 };
 
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndReturnSuccess) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     auto result = event->hostSignal();
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2313,7 +2206,7 @@ TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndRetur
 }
 
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThatFailedThenAccessMemoryAndReturnSuccess) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     event->shouldHostEventSetValueFail = true;
     event->hostSignal();
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2321,14 +2214,14 @@ TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThatFailedThenAccessMemoryAn
 }
 
 TEST_F(EventTests, WhenQueryingStatusThenAccessMemoryOnce) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
 }
 
 TEST_F(EventTests, WhenQueryingStatusAfterResetThenAccessMemory) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->reset(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2336,7 +2229,7 @@ TEST_F(EventTests, WhenQueryingStatusAfterResetThenAccessMemory) {
 }
 
 TEST_F(EventTests, WhenResetEventThenZeroCpuTimestamps) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     EXPECT_EQ(event->reset(), ZE_RESULT_SUCCESS);
@@ -2345,7 +2238,7 @@ TEST_F(EventTests, WhenResetEventThenZeroCpuTimestamps) {
 }
 
 TEST_F(EventTests, WhenEventResetIsCalledThenKernelCountAndPacketsUsedHaveNotBeenReset) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     event->zeroKernelCount();
@@ -2359,7 +2252,7 @@ TEST_F(EventTests, WhenEventResetIsCalledThenKernelCountAndPacketsUsedHaveNotBee
 }
 
 TEST_F(EventTests, GivenResetAllPacketsWhenResetPacketsThenOneKernelCountAndOnePacketUsed) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     event->zeroKernelCount();
@@ -2373,7 +2266,7 @@ TEST_F(EventTests, GivenResetAllPacketsWhenResetPacketsThenOneKernelCountAndOneP
 }
 
 TEST_F(EventTests, GivenResetAllPacketsFalseWhenResetPacketsThenKernelCountAndPacketsUsedHaveNotBeenReset) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool, 1u, device);
+    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
     event->gpuStartTimestamp = 10u;
     event->gpuEndTimestamp = 20u;
     event->zeroKernelCount();

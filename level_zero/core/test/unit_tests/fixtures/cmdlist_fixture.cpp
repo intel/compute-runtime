@@ -168,5 +168,11 @@ void AppendFillFixture::tearDown() {
     delete[] dstPtr;
 }
 
+void CommandListEventUsedPacketSignalFixture::setUp() {
+    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
+
+    CommandListFixture::setUp();
+}
+
 } // namespace ult
 } // namespace L0

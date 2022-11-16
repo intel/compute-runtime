@@ -193,5 +193,11 @@ struct TestExpectedValues {
     bool workloadPartition = false;
 };
 
+struct CommandListEventUsedPacketSignalFixture : public CommandListFixture {
+    void setUp();
+
+    DebugManagerStateRestore restorer;
+};
+
 } // namespace ult
 } // namespace L0

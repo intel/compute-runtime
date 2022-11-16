@@ -180,11 +180,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryStatus() {
     if (metricStreamer != nullptr) {
-        TagSizeT *hostAddr = static_cast<TagSizeT *>(hostAddress);
-        if (usingContextEndOffset) {
-            hostAddr = ptrOffset(hostAddr, this->getContextEndOffset());
-        }
-        *hostAddr = metricStreamer->getNotificationState();
+        hostEventSetValue(metricStreamer->getNotificationState());
     }
     this->csr->downloadAllocations();
     this->csr->downloadAllocation(*eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));

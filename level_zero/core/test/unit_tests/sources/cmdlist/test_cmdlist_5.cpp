@@ -682,6 +682,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -708,6 +709,10 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
 
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events);
+    size_t endOffset = commandContainer.getCommandStream()->getUsed();
+
+    size_t usedBufferSize = (endOffset - startOffset);
+    EXPECT_EQ(expectedUsed, usedBufferSize);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -726,6 +731,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -749,6 +755,10 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
 
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events);
+    size_t endOffset = commandContainer.getCommandStream()->getUsed();
+
+    size_t usedBufferSize = (endOffset - startOffset);
+    EXPECT_EQ(expectedUsed, usedBufferSize);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

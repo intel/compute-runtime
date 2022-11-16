@@ -90,6 +90,9 @@ class MockEvent : public ::L0::Event {
         this->globalStartOffset = 8;
         this->globalEndOffset = 12;
         this->singlePacketSize = 16;
+
+        this->maxKernelCount = EventPacketsCount::maxKernelSplit;
+        this->maxPacketCount = EventPacketsCount::eventPackets;
     }
     NEO::GraphicsAllocation &getAllocation(L0::Device *device) override {
         return *mockAllocation.get();
