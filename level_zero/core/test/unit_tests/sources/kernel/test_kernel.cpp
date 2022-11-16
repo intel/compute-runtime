@@ -1618,7 +1618,7 @@ struct KernelIsaTests : Test<ModuleFixture> {
 
         if (createBcsEngine) {
             auto &engine = device->getNEODevice()->getEngine(0);
-            bcsOsContext.reset(OsContext::create(nullptr, 0,
+            bcsOsContext.reset(OsContext::create(nullptr, device->getNEODevice()->getRootDeviceIndex(), 0,
                                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, device->getNEODevice()->getDeviceBitfield())));
             engine.osContext = bcsOsContext.get();
             engine.commandStreamReceiver->setupContext(*bcsOsContext);

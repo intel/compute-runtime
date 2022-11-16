@@ -425,7 +425,7 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenAssignedTaskCountEqualZe
 
 HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenAssignedTaskCountAbovelZeroThenPrepareForResidencyGetTaskCountWasCalled) {
     executionEnvironment.initializeMemoryManager();
-    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor()));
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
     csr.osContext = osContext.get();
     MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes = 0;
@@ -438,7 +438,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenAssignedTaskCountAb
 
 HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountHigherThanInCsrThenUpdateTaskCountWasNotCalled) {
     executionEnvironment.initializeMemoryManager();
-    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor()));
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
     csr.osContext = osContext.get();
     MockGraphicsAllocationTaskCount graphicsAllocation;
@@ -452,7 +452,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountHigherTha
 
 HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThanInCsrThenUpdateTaskCountWasCalled) {
     executionEnvironment.initializeMemoryManager();
-    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor()));
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
     csr.osContext = osContext.get();
     MockGraphicsAllocationTaskCount graphicsAllocation;
@@ -466,7 +466,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
 
 HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThanInCsrThenAssignmentCountIsDecremented) {
     executionEnvironment.initializeMemoryManager();
-    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor()));
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
     csr.osContext = osContext.get();
     MockGraphicsAllocationTaskCount graphicsAllocation;

@@ -1412,7 +1412,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     auto operationHandler = static_cast<MockMergeResidencyContainerMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
     operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::FAILED;
 
-    auto osContext = std::make_unique<OsContextLinux>(*mock, 0u,
+    auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
                                                       EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
@@ -1443,7 +1443,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     auto operationHandler = static_cast<MockMergeResidencyContainerMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
     operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::OUT_OF_MEMORY;
 
-    auto osContext = std::make_unique<OsContextLinux>(*mock, 0u,
+    auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
                                                       EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
@@ -1477,7 +1477,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenNoAllocsInMemoryOperationH
         }
     };
 
-    auto osContext = std::make_unique<OsContextLinux>(*mock, 0u,
+    auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
                                                       EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
@@ -1508,7 +1508,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocsInMemoryOperationHan
         }
     };
 
-    auto osContext = std::make_unique<OsContextLinux>(*mock, 0u,
+    auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
                                                       EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 

@@ -17,7 +17,7 @@ using namespace NEO;
 TEST(DrmBindTest, givenBindAlreadyCompleteWhenWaitForBindThenWaitUserFenceIoctlIsNotCalled) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     drm.pagingFence[0] = 31u;
@@ -38,7 +38,7 @@ TEST(DrmBindTest, givenBindAlreadyCompleteWhenWaitForBindThenWaitUserFenceIoctlI
 TEST(DrmBindTest, givenBindNotCompleteWhenWaitForBindThenWaitUserFenceIoctlIsCalled) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     drm.pagingFence[0] = 26u;

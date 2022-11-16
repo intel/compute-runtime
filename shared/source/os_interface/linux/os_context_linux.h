@@ -20,7 +20,7 @@ class OsContextLinux : public OsContext {
   public:
     OsContextLinux() = delete;
     ~OsContextLinux() override;
-    OsContextLinux(Drm &drm, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    OsContextLinux(Drm &drm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
     unsigned int getEngineFlag() const { return engineFlag; }
     void setEngineFlag(unsigned int engineFlag) { this->engineFlag = engineFlag; }
@@ -41,7 +41,7 @@ class OsContextLinux : public OsContext {
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
     Drm &getDrm() const;
     void waitForPagingFence();
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;
 
   protected:

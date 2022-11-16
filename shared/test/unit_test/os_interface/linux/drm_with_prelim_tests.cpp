@@ -477,7 +477,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
 
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
 
-    OsContextLinux osContext(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
     osContext.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
@@ -487,7 +487,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
         EXPECT_FALSE(drm->capturedCooperativeContextRequest);
     }
 
-    OsContextLinux osContext2(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
+    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
     osContext2.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);

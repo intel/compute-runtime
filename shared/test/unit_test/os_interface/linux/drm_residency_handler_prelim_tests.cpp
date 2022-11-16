@@ -613,13 +613,13 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
-struct DrmMemoryOperationsHandlerBindWithPerContextVms : public DrmMemoryOperationsHandlerBindFixture<1> {
+struct DrmMemoryOperationsHandlerBindWithPerContextVms : public DrmMemoryOperationsHandlerBindFixture<2> {
     void SetUp() override {
-        DrmMemoryOperationsHandlerBindFixture<1>::setUp(true);
+        DrmMemoryOperationsHandlerBindFixture<2>::setUp(true);
     }
 
     void TearDown() override {
-        DrmMemoryOperationsHandlerBindFixture<1>::TearDown();
+        DrmMemoryOperationsHandlerBindFixture<2>::TearDown();
     }
 };
 
@@ -698,6 +698,87 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleSub
     EXPECT_EQ(vmBindCalledBefore + 1, mock->context.vmBindCalled);
     EXPECT_EQ(vmIdForContext1, mock->context.receivedVmBind->vmId);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRootDevicesAndPerContextVmsWhenValidateHostptrThenCorrectContextsVmIdIsUsed) {
+    mock->bindAvailable = true;
+    mock->incrementVmId = true;
+
+    auto device1 = devices[1].get();
+    auto mock1 = executionEnvironment->rootDeviceEnvironments[1]->osInterface->getDriverModel()->as<DrmQueryMock>();
+    mock1->bindAvailable = true;
+    mock1->incrementVmId = true;
+
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(true,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    *executionEnvironment));
+
+    uint32_t vmIdForDevice0 = 0;
+    uint32_t vmIdForDevice0Subdevice0 = 0;
+    uint32_t vmIdForDevice1 = 0;
+
+    memoryManager->registeredEngines = EngineControlContainer{this->device->allEngines};
+    memoryManager->registeredEngines.insert(memoryManager->registeredEngines.end(), this->device->getSubDevice(0)->getAllEngines().begin(), this->device->getSubDevice(0)->getAllEngines().end());
+    memoryManager->registeredEngines.insert(memoryManager->registeredEngines.end(), device1->getAllEngines().begin(), device1->getAllEngines().end());
+
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+        if (engine.osContext->isDefaultContext()) {
+
+            if (engine.osContext->getRootDeviceIndex() == 0) {
+
+                if (engine.osContext->getDeviceBitfield().to_ulong() == 3) {
+                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
+                    vmIdForDevice0 = osContexLinux->getDrmVmIds()[0];
+                } else if (engine.osContext->getDeviceBitfield().to_ulong() == 1) {
+                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
+                    vmIdForDevice0Subdevice0 = osContexLinux->getDrmVmIds()[0];
+                }
+            } else {
+                if (engine.osContext->getDeviceBitfield().to_ulong() == 3) {
+                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
+                    vmIdForDevice1 = osContexLinux->getDrmVmIds()[0];
+                }
+            }
+        }
+    }
+
+    EXPECT_NE(0u, vmIdForDevice0);
+    EXPECT_NE(0u, vmIdForDevice0Subdevice0);
+    EXPECT_NE(0u, vmIdForDevice1);
+
+    AllocationData allocationData;
+    allocationData.size = 13u;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = device1->getRootDeviceIndex();
+    allocationData.storageInfo.subDeviceBitfield = device1->getDeviceBitfield();
+
+    mock->context.vmBindCalled = 0;
+    mock1->context.vmBindCalled = 0;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    EXPECT_NE(nullptr, allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    EXPECT_EQ(mock->context.vmBindCalled, 0u);
+    EXPECT_EQ(mock1->context.vmBindCalled, 1u);
+    EXPECT_EQ(vmIdForDevice1, mock1->context.receivedVmBind->vmId);
+
+    auto vmBindCalledBefore = mock1->context.vmBindCalled;
+
+    allocationData.storageInfo.subDeviceBitfield = device->getSubDevice(0)->getDeviceBitfield();
+    allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+
+    EXPECT_NE(nullptr, allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    EXPECT_EQ(vmBindCalledBefore + 1, mock1->context.vmBindCalled);
+
+    EXPECT_FALSE(mock->context.receivedVmBind.has_value());
+    EXPECT_EQ(vmIdForDevice1, mock1->context.receivedVmBind->vmId);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenVmBindIsCalledInsteadOfExec) {

@@ -25,7 +25,7 @@ class OsContextWin : public OsContext {
     OsContextWin() = delete;
     ~OsContextWin() override;
 
-    OsContextWin(Wddm &wddm, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
     D3DKMT_HANDLE getWddmContextHandle() const { return wddmContextHandle; }
     void setWddmContextHandle(D3DKMT_HANDLE wddmContextHandle) { this->wddmContextHandle = wddmContextHandle; }
@@ -33,7 +33,7 @@ class OsContextWin : public OsContext {
     void setHwQueue(HardwareQueue hardwareQueue) { this->hardwareQueue = hardwareQueue; }
     Wddm *getWddm() const { return &wddm; }
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;
     void getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize);
 

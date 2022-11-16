@@ -4148,7 +4148,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBuffe
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_FALSE(drm.pageFaultSupported);
 
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
@@ -4174,7 +4174,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedAndKmdMigrationEnabledForB
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_FALSE(drm.pageFaultSupported);
 
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
@@ -4206,7 +4206,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBindBoOnAllocat
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.pageFaultSupported = true;
 
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 

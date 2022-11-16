@@ -39,7 +39,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
 
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                         PreemptionMode::ThreadGroup, deviceBitfield)));
     csr.setupContext(*osContext.get());
@@ -83,7 +83,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
 
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                         PreemptionMode::ThreadGroup, deviceBitfield)));
     csr.setupContext(*osContext.get());
@@ -140,31 +140,31 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     DeviceBitfield deviceBitfield(1);
 
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                         PreemptionMode::ThreadGroup, deviceBitfield)));
     csr.setupContext(*osContext.get());
 
     MockCommandStreamReceiver csr1(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext1(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext1(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr1.setupContext(*osContext1.get());
 
     MockCommandStreamReceiver csr2(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext2(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext2(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr2.setupContext(*osContext2.get());
 
     MockCommandStreamReceiver csr3(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext3(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext3(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr3.setupContext(*osContext3.get());
 
     MockCommandStreamReceiver csr4(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext4(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext4(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr4.setupContext(*osContext4.get());
@@ -208,67 +208,67 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     DeviceBitfield deviceBitfield1(0b10);
 
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                         PreemptionMode::ThreadGroup, deviceBitfield)));
     csr.setupContext(*osContext.get());
 
     MockCommandStreamReceiver csr1(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext1(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext1(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr1.setupContext(*osContext1.get());
 
     MockCommandStreamReceiver csr2(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext2(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext2(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr2.setupContext(*osContext2.get());
 
     MockCommandStreamReceiver csr3(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext3(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext3(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr3.setupContext(*osContext3.get());
 
     MockCommandStreamReceiver csr4(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext4(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext4(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr4.setupContext(*osContext4.get());
 
     MockCommandStreamReceiver csr5(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext5(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext5(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield1)));
     csr5.setupContext(*osContext5.get());
 
     MockCommandStreamReceiver csr6(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext6(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext6(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield1)));
     csr6.setupContext(*osContext6.get());
 
     MockCommandStreamReceiver csr7(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext7(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext7(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield1)));
     csr7.setupContext(*osContext7.get());
 
     MockCommandStreamReceiver csr8(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext8(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext8(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield1)));
     csr8.setupContext(*osContext8.get());
 
     MockCommandStreamReceiver csr9(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext9(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext9(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield1)));
     csr9.setupContext(*osContext9.get());
 
     MockCommandStreamReceiver csr10(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext10(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext10(OsContext::create(nullptr, 0, 0,
                                                              EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
                                                                                                           PreemptionMode::ThreadGroup, deviceBitfield1)));
     csr10.setupContext(*osContext10.get());
@@ -327,31 +327,31 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerDirectSubmi
     DeviceBitfield deviceBitfield(1);
 
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                         PreemptionMode::ThreadGroup, deviceBitfield)));
     csr.setupContext(*osContext.get());
 
     MockCommandStreamReceiver csr1(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext1(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext1(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr1.setupContext(*osContext1.get());
 
     MockCommandStreamReceiver csr2(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext2(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext2(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr2.setupContext(*osContext2.get());
 
     MockCommandStreamReceiver csr3(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext3(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext3(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr3.setupContext(*osContext3.get());
 
     MockCommandStreamReceiver csr4(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext4(OsContext::create(nullptr, 0,
+    std::unique_ptr<OsContext> osContext4(OsContext::create(nullptr, 0, 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
                                                                                                          PreemptionMode::ThreadGroup, deviceBitfield)));
     csr4.setupContext(*osContext4.get());

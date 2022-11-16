@@ -276,8 +276,10 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     updateLatestContextIdForRootDevice(rootDeviceIndex);
 
     auto contextId = ++latestContextId;
-    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), contextId, engineDescriptor);
+    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), rootDeviceIndex, contextId, engineDescriptor);
     osContext->incRefInternal();
+
+    UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);
 
@@ -882,7 +884,8 @@ OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, Devi
     OsContext *defaultContext = nullptr;
     for (auto engineIndex = 0u; engineIndex < this->getRegisteredEnginesCount(); engineIndex++) {
         OsContext *engine = this->getRegisteredEngines()[engineIndex].osContext;
-        if (engine->isDefaultContext() && engine->getDeviceBitfield() == subdevicesBitfield) {
+        if ((engine->getRootDeviceIndex() == rootDeviceIndex) &&
+            (engine->isDefaultContext() && engine->getDeviceBitfield() == subdevicesBitfield)) {
             defaultContext = engine;
             break;
         }

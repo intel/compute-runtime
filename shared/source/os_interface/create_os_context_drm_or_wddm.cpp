@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,15 +12,15 @@
 
 namespace NEO {
 
-OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
+OsContext *OsContext::create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
     if (osInterface) {
         if (osInterface->getDriverModel()->getDriverModelType() == DriverModelType::DRM) {
-            return OsContextLinux::create(osInterface, contextId, engineDescriptor);
+            return OsContextLinux::create(osInterface, rootDeviceIndex, contextId, engineDescriptor);
         } else {
-            return OsContextWin::create(osInterface, contextId, engineDescriptor);
+            return OsContextWin::create(osInterface, rootDeviceIndex, contextId, engineDescriptor);
         }
     }
-    return OsContextLinux::create(osInterface, contextId, engineDescriptor);
+    return OsContextLinux::create(osInterface, rootDeviceIndex, contextId, engineDescriptor);
 }
 
 } // namespace NEO

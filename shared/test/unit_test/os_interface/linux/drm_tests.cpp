@@ -348,7 +348,7 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     {
-        OsContextLinux osContext1(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        OsContextLinux osContext1(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
         osContext1.ensureContextInitialized();
 
         EXPECT_EQ(1u, osContext1.getDrmContextIds().size());
@@ -356,7 +356,7 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
         EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
 
         {
-            OsContextLinux osContext2(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+            OsContextLinux osContext2(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
             osContext2.ensureContextInitialized();
             EXPECT_EQ(1u, osContext2.getDrmContextIds().size());
             EXPECT_EQ(drmMock.storedDrmContextId, osContext2.getDrmContextIds()[0]);
@@ -376,7 +376,7 @@ TEST(DrmTest, whenCreatingDrmContextWithVirtualMemoryAddressSpaceThenProperVmIdI
 
     ASSERT_EQ(1u, drmMock.virtualMemoryIds.size());
 
-    OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     EXPECT_EQ(drmMock.receivedContextParamRequest.value, drmMock.getVirtualMemoryAddressSpace(0u));
@@ -392,7 +392,7 @@ TEST(DrmTest, whenCreatingDrmContextWithNoVirtualMemoryAddressSpaceThenProperCon
 
     ASSERT_EQ(0u, drmMock.virtualMemoryIds.size());
 
-    OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
@@ -410,7 +410,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         drmMock.storedRetValForPersistant = -1;
         drmMock.checkNonPersistentContextsSupport();
         expectedCount += 2;
-        OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
         osContext.ensureContextInitialized();
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
@@ -418,7 +418,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         drmMock.storedRetValForPersistant = 0;
         drmMock.checkNonPersistentContextsSupport();
         ++expectedCount;
-        OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
         osContext.ensureContextInitialized();
         expectedCount += 2;
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
@@ -433,20 +433,20 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     drmMock.preemptionSupported = false;
 
-    OsContextLinux osContext1(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext1(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext1.ensureContextInitialized();
-    OsContextLinux osContext2(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}));
+    OsContextLinux osContext2(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}));
     osContext2.ensureContextInitialized();
 
     EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
     drmMock.preemptionSupported = true;
 
-    OsContextLinux osContext3(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext3(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext3.ensureContextInitialized();
     EXPECT_EQ(3u, drmMock.receivedContextParamRequestCount);
 
-    OsContextLinux osContext4(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}));
+    OsContextLinux osContext4(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}));
     osContext4.ensureContextInitialized();
     EXPECT_EQ(5u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.storedDrmContextId, drmMock.receivedContextParamRequest.contextId);
@@ -633,7 +633,7 @@ TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     drmMock.latestCreatedVmId = 0u;
@@ -652,10 +652,10 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
 
-    OsContextLinux osContext1(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext1(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext1.ensureContextInitialized();
 
-    OsContextLinux osContext2(drmMock, 5u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext2(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext2.ensureContextInitialized();
 }
 
@@ -669,7 +669,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPer
 
     drmMock.storedRetValForVmId = 20;
 
-    OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
@@ -690,7 +690,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImpl
     drmMock.storedRetValForVmId = 4;
     DeviceBitfield deviceBitfield(1 << 3);
 
-    OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
+    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
     osContext.ensureContextInitialized();
     EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
@@ -714,7 +714,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenIm
     drmMock.storedRetValForVmId = 4;
     DeviceBitfield deviceBitfield(1 | 1 << 1);
 
-    OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
+    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
     osContext.ensureContextInitialized();
     EXPECT_EQ(2 * 2u, drmMock.receivedContextParamRequestCount);
 
@@ -737,7 +737,7 @@ TEST(DrmTest, givenNoPerContextVmsDrmWhenCreatingOsContextsThenVmIdIsNotQueriedA
 
     drmMock.storedRetValForVmId = 1;
 
-    OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
 
@@ -758,7 +758,7 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextTh
     drmMock.contextDebugSupported = true;
     drmMock.callBaseCreateDrmContext = false;
 
-    OsContextLinux osContext(drmMock, 5u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     // drmMock returns ctxId == 0
@@ -777,7 +777,7 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextFo
     DrmMockNonFailing drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     drmMock.contextDebugSupported = true;
 
-    OsContextLinux osContext(drmMock, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Internal}));
+    OsContextLinux osContext(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Internal}));
     osContext.ensureContextInitialized();
 
     EXPECT_EQ(static_cast<uint32_t>(-1), drmMock.passedContextDebugId);
@@ -798,7 +798,7 @@ TEST(DrmTest, givenNotEnabledDebuggingOrContextDebugUnsupportedWhenCreatingConte
 
     EXPECT_FALSE(executionEnvironment->isDebuggingEnabled());
 
-    OsContextLinux osContext(drmMock, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
     osContext.ensureContextInitialized();
 
     EXPECT_FALSE(drmMock.capturedCooperativeContextRequest);
@@ -808,7 +808,7 @@ TEST(DrmTest, givenNotEnabledDebuggingOrContextDebugUnsupportedWhenCreatingConte
     drmMock.callBaseCreateDrmContext = false;
     drmMock.capturedCooperativeContextRequest = true;
 
-    OsContextLinux osContext2(drmMock, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext2(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
     osContext2.ensureContextInitialized();
 
     EXPECT_FALSE(drmMock.capturedCooperativeContextRequest);
@@ -868,7 +868,7 @@ TEST(DrmTest, givenProgramDebuggingWhenCreatingContextThenUnrecoverableContextIs
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
     EXPECT_EQ(0u, drm.receivedRecoverableContextValue);
@@ -1237,7 +1237,7 @@ TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
 
-    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
@@ -1251,7 +1251,7 @@ TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCa
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
 
-    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
@@ -1274,7 +1274,7 @@ TEST(DrmTest, GivenBatchActiveGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThen
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
 
-    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
@@ -1298,7 +1298,7 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
 
-    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(8);
 
     ResetStats resetStats{};

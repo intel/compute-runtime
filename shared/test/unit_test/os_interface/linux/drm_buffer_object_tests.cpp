@@ -201,7 +201,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenValidateHostptrIsCalledThenErr
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
-    OsContextLinux osContext(*mock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
@@ -226,7 +226,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
-    OsContextLinux osContext(*mock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
@@ -259,7 +259,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
     ASSERT_NE(nullptr, mock.get());
-    OsContextLinux osContext(*mock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
 
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
@@ -293,7 +293,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenValidatedThenAllBosArePinned)
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
     ASSERT_NE(nullptr, mock.get());
-    OsContextLinux osContext(*mock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
 
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
@@ -373,7 +373,7 @@ TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectRetur
     MockBufferObject bo(drm, 3, 0, 0, osContextCount);
 
     std::unique_ptr<OsContextLinux> osContext;
-    osContext.reset(new OsContextLinux(*drm, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
+    osContext.reset(new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
 
     ExecObject execObjectsStorage = {};
     auto ret = bo.exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);

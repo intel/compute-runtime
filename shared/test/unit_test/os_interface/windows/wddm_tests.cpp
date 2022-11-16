@@ -100,7 +100,7 @@ TEST_F(WddmTests, whenftrEuDebugIsFalseThenDebuggingEnabledReturnsFalse) {
 TEST_F(WddmTests, whenProgramDebugIsEnabledAndCreatingContextWithInternalEngineThenDebuggableContextReturnsFalse) {
     executionEnvironment->setDebuggingEnabled();
     wddm->init();
-    OsContextWin osContext(*wddm, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}));
+    OsContextWin osContext(*wddm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}));
     osContext.ensureContextInitialized();
     EXPECT_FALSE(osContext.isDebuggableContext());
 }
@@ -434,7 +434,7 @@ struct WddmSkipResourceCleanupFixtureWithMockGdiDll : public GdiDllFixture, publ
 
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
+        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
     }
 

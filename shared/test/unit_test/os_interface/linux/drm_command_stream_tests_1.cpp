@@ -172,7 +172,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
 
     mock->storedDrmContextId = expectedDrmContextId;
 
-    osContext = std::make_unique<OsContextLinux>(*mock, 1,
+    osContext = std::make_unique<OsContextLinux>(*mock, csr->getRootDeviceIndex(), 1,
                                                  EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     osContext->ensureContextInitialized();
@@ -678,7 +678,7 @@ struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDire
         DrmCommandStreamDirectSubmissionTest::setUpT<GfxFamily>();
         executionEnvironment->incRefInternal();
 
-        osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
+        osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,
                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
         osContext->ensureContextInitialized();
 

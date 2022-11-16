@@ -14,8 +14,9 @@
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
-OsContext::OsContext(uint32_t contextId, const EngineDescriptor &engineDescriptor)
-    : contextId(contextId),
+OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+    : rootDeviceIndex(rootDeviceIndex),
+      contextId(contextId),
       deviceBitfield(engineDescriptor.deviceBitfield),
       preemptionMode(engineDescriptor.preemptionMode),
       numSupportedDevices(static_cast<uint32_t>(engineDescriptor.deviceBitfield.count())),

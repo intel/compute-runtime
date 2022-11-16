@@ -131,8 +131,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenOsCont
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->memoryManager.reset(new MockMemoryManager(false, true, *executionEnvironment));
     uint32_t tileMask = 0b11;
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}, PreemptionMode::MidThread, tileMask)));
-    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*executionEnvironment, 0, tileMask);
+    uint32_t rootDeviceIndex = 0;
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, rootDeviceIndex, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}, PreemptionMode::MidThread, tileMask)));
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*executionEnvironment, rootDeviceIndex, tileMask);
     initPlatform();
 
     void *ssh = alignedMalloc(512, 4096);
@@ -716,10 +717,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenBlock
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenOsContextSupportsMultipleDevicesThenCommandStreamReceiverIsMultiOsContextCapable) {
     uint32_t multiDeviceMask = 0b11;
     uint32_t singleDeviceMask = 0b10;
-    std::unique_ptr<OsContext> multiDeviceOsContext(OsContext::create(nullptr, 0u,
+    std::unique_ptr<OsContext> multiDeviceOsContext(OsContext::create(nullptr, pDevice->getRootDeviceIndex(), 0u,
                                                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::MidThread,
                                                                                                                    multiDeviceMask)));
-    std::unique_ptr<OsContext> singleDeviceOsContext(OsContext::create(nullptr, 0u,
+    std::unique_ptr<OsContext> singleDeviceOsContext(OsContext::create(nullptr, pDevice->getRootDeviceIndex(), 0u,
                                                                        EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::MidThread,
                                                                                                                     singleDeviceMask)));
 
