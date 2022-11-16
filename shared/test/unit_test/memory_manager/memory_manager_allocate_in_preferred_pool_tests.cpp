@@ -582,6 +582,14 @@ TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThen48Bi
     EXPECT_TRUE(allocData.flags.resource48Bit);
 }
 
+TEST(MemoryManagerTest, givenDeferredTasksListTypeWhenGetAllocationDataIsCalledThen48BitResourceIsTrue) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::DEFERRED_TASKS_LIST, mockDeviceBitfield};
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_TRUE(allocData.flags.resource48Bit);
+}
+
 TEST(MemoryManagerTest, givenSharedContextImageTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
@@ -1094,6 +1102,7 @@ static const AllocationType allocationHaveToBeForcedTo48Bit[] = {
     AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
     AllocationType::RING_BUFFER,
     AllocationType::SEMAPHORE_BUFFER,
+    AllocationType::DEFERRED_TASKS_LIST,
 };
 
 static const AllocationType allocationHaveNotToBeForcedTo48Bit[] = {

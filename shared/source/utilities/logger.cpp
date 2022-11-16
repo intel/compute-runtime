@@ -230,6 +230,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "UNIFIED_SHARED_MEMORY";
     case AllocationType::SW_TAG_BUFFER:
         return "SW_TAG_BUFFER";
+    case AllocationType::DEFERRED_TASKS_LIST:
+        return "DEFERRED_TASKS_LIST";
     default:
         return "ILLEGAL_VALUE";
     }

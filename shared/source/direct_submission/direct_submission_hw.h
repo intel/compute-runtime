@@ -120,6 +120,9 @@ class DirectSubmissionHw {
     void dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress);
     size_t getSizeSwitchRingBufferSection();
 
+    void dispatchTaskStoreSection(uint64_t taskStartSectionVa);
+    MOCKABLE_VIRTUAL void preinitializeTaskStoreSection();
+
     void setReturnAddress(void *returnCmd, uint64_t returnAddress);
 
     void *dispatchWorkloadSection(BatchBuffer &batchBuffer);
@@ -160,6 +163,7 @@ class DirectSubmissionHw {
         GraphicsAllocation *ringBuffer = nullptr;
     };
     std::vector<RingBufferUse> ringBuffers;
+    std::unique_ptr<uint8_t[]> preinitializedTaskStoreSection;
     uint32_t currentRingBuffer = 0u;
     uint32_t previousRingBuffer = 0u;
     uint32_t maxRingBufferCount = std::numeric_limits<uint32_t>::max();
@@ -181,6 +185,7 @@ class DirectSubmissionHw {
     GraphicsAllocation *completionFenceAllocation = nullptr;
     GraphicsAllocation *semaphores = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
+    GraphicsAllocation *deferredTasksListAllocation = nullptr;
     void *semaphorePtr = nullptr;
     volatile RingSemaphoreData *semaphoreData = nullptr;
     volatile void *workloadModeOneStoreAddress = nullptr;
@@ -205,5 +210,7 @@ class DirectSubmissionHw {
     bool completionFenceSupported = false;
     bool isDisablePrefetcherRequired = false;
     bool dcFlushRequired = false;
+    bool relaxedOrderingEnabled = false;
+    bool relaxedOrderingInitialized = false;
 };
 } // namespace NEO

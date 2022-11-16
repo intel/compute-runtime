@@ -86,6 +86,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         break;
     case AllocationType::SCRATCH_SURFACE:
     case AllocationType::PREEMPTION:
+    case AllocationType::DEFERRED_TASKS_LIST:
         if (properties.flags.multiOsContextCapable) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;

@@ -11,6 +11,7 @@
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -901,4 +902,227 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
 
         EXPECT_EQ(initialCounterValue + expectedCount, CpuIntrinsicsTests::sfenceCounter);
     }
+}
+
+struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBufferTest {
+    void SetUp() override {
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        DirectSubmissionDispatchBufferTest::SetUp();
+    }
+
+    DebugManagerStateRestore restore;
+};
+
+HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenAllocatingResourcesThenCreateDeferredTasksAllocation) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    auto mockMemoryOperations = new MockMemoryOperations();
+    mockMemoryOperations->captureGfxAllocationsForMakeResident = true;
+
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(mockMemoryOperations);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.callBaseResident = true;
+
+    directSubmission.initialize(false, false);
+
+    EXPECT_EQ(AllocationType::DEFERRED_TASKS_LIST, directSubmission.deferredTasksListAllocation->getAllocationType());
+    EXPECT_NE(nullptr, directSubmission.deferredTasksListAllocation);
+    EXPECT_EQ(directSubmission.deferredTasksListAllocation, mockMemoryOperations->gfxAllocationsForMakeResident.back());
+}
+
+HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenPreinitializeTaskStoreSection) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    {
+        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        directSubmission.initialize(false, false);
+
+        EXPECT_EQ(0u, directSubmission.preinitializeTaskStoreSectionCalled);
+        EXPECT_FALSE(directSubmission.relaxedOrderingInitialized);
+        EXPECT_EQ(nullptr, directSubmission.preinitializedTaskStoreSection.get());
+    }
+
+    {
+        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        directSubmission.initialize(true, false);
+
+        EXPECT_EQ(1u, directSubmission.preinitializeTaskStoreSectionCalled);
+        EXPECT_TRUE(directSubmission.relaxedOrderingInitialized);
+        EXPECT_NE(nullptr, directSubmission.preinitializedTaskStoreSection.get());
+
+        directSubmission.startRingBuffer();
+
+        EXPECT_EQ(1u, directSubmission.preinitializeTaskStoreSectionCalled);
+    }
+
+    {
+        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        directSubmission.initialize(false, false);
+        EXPECT_EQ(0u, directSubmission.preinitializeTaskStoreSectionCalled);
+
+        directSubmission.startRingBuffer();
+
+        EXPECT_EQ(1u, directSubmission.preinitializeTaskStoreSectionCalled);
+        EXPECT_TRUE(directSubmission.relaxedOrderingInitialized);
+        EXPECT_NE(nullptr, directSubmission.preinitializedTaskStoreSection.get());
+
+        directSubmission.startRingBuffer();
+        EXPECT_EQ(1u, directSubmission.preinitializeTaskStoreSectionCalled);
+    }
+}
+
+HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTaskStoreSection) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    directSubmission.initialize(true, false);
+    auto offset = directSubmission.ringCommandStream.getUsed() + directSubmission.getSizeStartSection();
+
+    FlushStampTracker flushStamp(true);
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    auto taskStoreSection = ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset);
+
+    if constexpr (FamilyType::isUsingMiSetPredicate) {
+        using MI_SET_PREDICATE = typename FamilyType::MI_SET_PREDICATE;
+        using PREDICATE_ENABLE = typename MI_SET_PREDICATE::PREDICATE_ENABLE;
+
+        auto miSetPredicate = reinterpret_cast<MI_SET_PREDICATE *>(taskStoreSection);
+        EXPECT_EQ(PREDICATE_ENABLE::PREDICATE_ENABLE_PREDICATE_DISABLE, miSetPredicate->getPredicateEnable());
+
+        taskStoreSection = ptrOffset(taskStoreSection, sizeof(MI_SET_PREDICATE));
+    }
+
+    uint64_t deferredTasksVa = directSubmission.deferredTasksListAllocation->getGpuAddress();
+
+    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(taskStoreSection);
+
+    EXPECT_EQ(CS_GPR_R6, lriCmd->getRegisterOffset());
+    EXPECT_EQ(static_cast<uint32_t>(deferredTasksVa & 0xFFFF'FFFFULL), lriCmd->getDataDword());
+
+    lriCmd++;
+    EXPECT_EQ(CS_GPR_R6 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(static_cast<uint32_t>(deferredTasksVa >> 32), lriCmd->getDataDword());
+
+    lriCmd++;
+    EXPECT_EQ(CS_GPR_R7, lriCmd->getRegisterOffset());
+    EXPECT_EQ(0u, lriCmd->getDataDword());
+
+    lriCmd++;
+    EXPECT_EQ(CS_GPR_R7 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(0u, lriCmd->getDataDword());
+
+    lriCmd++;
+    EXPECT_EQ(CS_GPR_R8, lriCmd->getRegisterOffset());
+    EXPECT_EQ(8u, lriCmd->getDataDword());
+
+    lriCmd++;
+    EXPECT_EQ(CS_GPR_R8 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(0u, lriCmd->getDataDword());
+
+    auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
+    EXPECT_EQ(8u, miMathCmd->DW0.BitField.DwordLength);
+
+    auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCA), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_1), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCB), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_8), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_SHL), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_STORE), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_8), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_ACCU), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCA), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_8), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCB), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_6), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_ADD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_STOREIND), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_ACCU), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_7), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_FENCE_WR), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand2);
+
+    // increment
+    lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++miAluCmd);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R7);
+    EXPECT_EQ(lriCmd->getDataDword(), 1u);
+
+    lriCmd++;
+    EXPECT_EQ(CS_GPR_R7 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(0u, lriCmd->getDataDword());
+
+    miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
+    EXPECT_EQ(3u, miMathCmd->DW0.BitField.DwordLength);
+
+    miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCA), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_1), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCB), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_7), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_ADD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_STORE), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_1), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_ACCU), miAluCmd->DW0.BitField.Operand2);
+}
+
+HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenNotEnoughSpaceForTaskStoreSectionWhenDispatchingThenSwitchRingBuffers) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    directSubmission.initialize(true, false);
+    directSubmission.ringCommandStream.getUsed();
+
+    auto sizeToConsume = directSubmission.ringCommandStream.getAvailableSpace() -
+                         (directSubmission.getSizeDispatch() + directSubmission.getSizeEnd() + directSubmission.getSizeSwitchRingBufferSection());
+
+    directSubmission.ringCommandStream.getSpace(sizeToConsume);
+
+    auto oldAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+
+    FlushStampTracker flushStamp(true);
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    EXPECT_NE(oldAllocation, directSubmission.ringCommandStream.getGraphicsAllocation());
 }

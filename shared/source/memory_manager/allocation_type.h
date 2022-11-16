@@ -55,6 +55,7 @@ enum class AllocationType {
     WORK_PARTITION_SURFACE,
     GPU_TIMESTAMP_DEVICE_BUFFER,
     SW_TAG_BUFFER,
+    DEFERRED_TASKS_LIST,
     COUNT
 };
 } // namespace NEO

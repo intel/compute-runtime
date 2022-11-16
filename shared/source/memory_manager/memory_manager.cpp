@@ -386,6 +386,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
+    case AllocationType::DEFERRED_TASKS_LIST:
     case AllocationType::COMMAND_BUFFER:
     case AllocationType::IMAGE:
     case AllocationType::INDIRECT_OBJECT_HEAP:

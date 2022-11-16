@@ -114,6 +114,8 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "GPUTSDBF";
     case AllocationType::SW_TAG_BUFFER:
         return "SWTAGBF";
+    case AllocationType::DEFERRED_TASKS_LIST:
+        return "TSKLIST";
     default:
         return "NOTFOUND";
     }

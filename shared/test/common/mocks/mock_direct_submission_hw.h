@@ -23,6 +23,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::currentRingBuffer;
     using BaseClass::dcFlushRequired;
     using BaseClass::deallocateResources;
+    using BaseClass::deferredTasksListAllocation;
     using BaseClass::diagnostic;
     using BaseClass::DirectSubmissionHw;
     using BaseClass::disableCacheFlush;
@@ -53,6 +54,8 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::partitionedMode;
     using BaseClass::performDiagnosticMode;
     using BaseClass::postSyncOffset;
+    using BaseClass::preinitializedTaskStoreSection;
+    using BaseClass::relaxedOrderingInitialized;
     using BaseClass::reserved;
     using BaseClass::ringBuffers;
     using BaseClass::ringCommandStream;
@@ -82,6 +85,11 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
 
     bool allocateOsResources() override {
         return allocateOsResourcesReturn;
+    }
+
+    void preinitializeTaskStoreSection() override {
+        preinitializeTaskStoreSectionCalled++;
+        BaseClass::preinitializeTaskStoreSection();
     }
 
     bool makeResourcesResident(DirectSubmissionAllocations &allocations) override {
@@ -139,6 +147,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     uint32_t submitCount = 0u;
     uint32_t handleResidencyCount = 0u;
     uint32_t disabledDiagnosticCalled = 0u;
+    uint32_t preinitializeTaskStoreSectionCalled = 0;
     uint32_t makeResourcesResidentVectorSize = 0u;
     bool allocateOsResourcesReturn = true;
     bool submitReturn = true;

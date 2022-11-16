@@ -212,6 +212,23 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForP
     EXPECT_EQ(singleTileMask, storageInfo.pageTablesVisibility);
 }
 
+TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForDeferredTasksListAllocationThenAllMemoryBankAreOnAndPageTableClonningIsNotRequired) {
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::DEFERRED_TASKS_LIST, true, false, singleTileMask};
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_FALSE(storageInfo.cloningOfPageTables);
+    EXPECT_TRUE(storageInfo.tileInstanced);
+    EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
+    EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForDeferredTasksListAllocationThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::DEFERRED_TASKS_LIST, false, false, singleTileMask};
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_TRUE(storageInfo.cloningOfPageTables);
+    EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
+    EXPECT_EQ(singleTileMask, storageInfo.pageTablesVisibility);
+}
+
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForWorkPartitionSurfaceThenAllMemoryBankAreOnAndPageTableClonningIsNotRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::WORK_PARTITION_SURFACE, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
