@@ -5,7 +5,8 @@
  *
  */
 
-#include "shared/source/helpers/product_config_helper.h"
+#include "shared/test/unit_test/helpers/product_config_helper_tests.h"
+
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
@@ -14,10 +15,8 @@
 
 #include <algorithm>
 
-using ProductConfigHelperTests = ::testing::Test;
-
 TEST_F(ProductConfigHelperTests, givenProductAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
-    for (const auto &[acronym, value] : AOT::productConfigAcronyms) {
+    for (const auto &[acronym, value] : AOT::deviceAcronyms) {
         EXPECT_EQ(ProductConfigHelper::getProductConfigForAcronym(acronym), value);
     }
 }
@@ -87,7 +86,7 @@ TEST_F(ProductConfigHelperTests, givenDeviceStringWithUnderscoreAndCapitalLetter
 }
 
 TEST_F(ProductConfigHelperTests, givenProductAcronymWhenAdjustDeviceNameThenNothingIsChangedAndSameStringIsPreserved) {
-    for (const auto &product : AOT::productConfigAcronyms) {
+    for (const auto &product : AOT::deviceAcronyms) {
         std::string acronymCopy = product.first;
         ProductConfigHelper::adjustDeviceName(acronymCopy);
         EXPECT_STREQ(acronymCopy.c_str(), product.first.c_str());
@@ -111,7 +110,7 @@ TEST_F(ProductConfigHelperTests, givenFamilyAcronymWhenAdjustDeviceNameThenNothi
 }
 
 TEST_F(ProductConfigHelperTests, givenProductAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
-    for (const auto &[acronym, value] : AOT::productConfigAcronyms) {
+    for (const auto &[acronym, value] : AOT::deviceAcronyms) {
         std::string acronymCopy = acronym;
 
         auto findDash = acronymCopy.find("-");
@@ -174,7 +173,7 @@ TEST_F(ProductConfigHelperTests, givenAcronymWithoutDashesWhenSearchMatchInSampl
 }
 
 TEST_F(ProductConfigHelperTests, givenProductConfigValueWhenParseVersionThenCorrectValueIsReturned) {
-    for (const auto &configMap : AOT::productConfigAcronyms) {
+    for (const auto &configMap : AOT::deviceAcronyms) {
         auto version = ProductConfigHelper::parseMajorMinorRevisionValue(configMap.second);
         auto productConfig = ProductConfigHelper::getProductConfigForVersionValue(version);
         EXPECT_EQ(productConfig, configMap.second);
@@ -232,18 +231,6 @@ TEST_F(ProductConfigHelperTests, GivenDifferentHwInfoInDeviceAotInfosWhenCompari
 
     rhs.hwInfo = NEO::defaultHwInfo.get();
     ASSERT_TRUE(lhs == rhs);
-}
-
-struct AotDeviceInfoTests : public ::testing::Test {
-    AotDeviceInfoTests() {
-        productConfigHelper = std::make_unique<ProductConfigHelper>();
-    }
-    std::unique_ptr<ProductConfigHelper> productConfigHelper;
-};
-
-template <typename EqComparableT>
-auto findAcronym(const EqComparableT &lhs) {
-    return [&lhs](const auto &rhs) { return lhs == rhs; };
 }
 
 TEST_F(AotDeviceInfoTests, givenProductOrAotConfigWhenParseMajorMinorRevisionValueThenCorrectStringIsReturned) {
@@ -504,4 +491,12 @@ TEST_F(AotDeviceInfoTests, givenUnknownIsaWhenGetDeviceAotInfoThenFalseIsReturne
 
     EXPECT_FALSE(productConfigHelper->getDeviceAotInfoForProductConfig(AOT::UNKNOWN_ISA, aotInfo));
     EXPECT_TRUE(aotInfo == emptyInfo);
+}
+
+TEST_F(AotDeviceInfoTests, givenProductConfigHelperWhenGetDeviceAcronymsThenCorrectResultsAreReturned) {
+    auto acronyms = productConfigHelper->getDeviceAcronyms();
+
+    for (const auto &acronym : AOT::deviceAcronyms) {
+        EXPECT_TRUE(std::any_of(acronyms.begin(), acronyms.end(), findAcronym(acronym.first)));
+    }
 }

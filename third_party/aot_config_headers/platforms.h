@@ -115,7 +115,7 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #endif
 };
 
-inline const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = {
+inline const std::map<std::string, AOT::PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_BDW
     {"bdw", BDW},
 #endif

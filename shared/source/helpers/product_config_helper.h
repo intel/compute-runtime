@@ -66,6 +66,7 @@ struct ProductConfigHelper {
         return parseMajorMinorRevisionValue(aotConfig);
     }
 
+    static std::vector<NEO::ConstStringRef> getDeviceAcronyms();
     static NEO::ConstStringRef getAcronymForAFamily(AOT::FAMILY family);
     static AOT::PRODUCT_CONFIG getProductConfigForVersionValue(const std::string &device);
     static AOT::PRODUCT_CONFIG getProductConfigForAcronym(const std::string &device);
@@ -101,11 +102,12 @@ struct ProductConfigHelper {
         return [&lhs](const auto &rhs) { return lhs == rhs.aotConfig.ProductConfig; };
     }
 
+    void initialize();
     bool isFamily(const std::string &device);
     bool isRelease(const std::string &device);
     bool isProductConfig(const std::string &device);
-
     bool getDeviceAotInfoForProductConfig(AOT::PRODUCT_CONFIG config, DeviceAotInfo &out) const;
+
     std::vector<DeviceAotInfo> &getDeviceAotInfo();
     std::vector<NEO::ConstStringRef> getRepresentativeProductAcronyms();
     std::vector<NEO::ConstStringRef> getReleasesAcronyms();

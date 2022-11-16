@@ -19,13 +19,7 @@ ProductConfigHelper::ProductConfigHelper() : deviceAotInfo({
 #undef DEVICE_CONFIG
                                              }) {
     std::sort(deviceAotInfo.begin(), deviceAotInfo.end(), compareConfigs);
-    for (auto &device : deviceAotInfo) {
-        for (const auto &[acronym, value] : AOT::productConfigAcronyms) {
-            if (value == device.aotConfig.ProductConfig) {
-                device.acronyms.push_back(NEO::ConstStringRef(acronym));
-            }
-        }
-    }
+    initialize();
 }
 
 bool ProductConfigHelper::compareConfigs(DeviceAotInfo deviceAotInfo0, DeviceAotInfo deviceAotInfo1) {
@@ -41,7 +35,6 @@ bool ProductConfigHelper::getDeviceAotInfoForProductConfig(AOT::PRODUCT_CONFIG c
     if (ret == deviceAotInfo.end()) {
         return false;
     }
-
     out = *ret;
     return true;
 }
@@ -80,13 +73,6 @@ AOT::FAMILY ProductConfigHelper::getFamilyForAcronym(const std::string &device) 
     auto it = std::find_if(AOT::familyAcronyms.begin(), AOT::familyAcronyms.end(), findMapAcronymWithoutDash(device));
     if (it == AOT::familyAcronyms.end())
         return AOT::UNKNOWN_FAMILY;
-    return it->second;
-}
-
-AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForAcronym(const std::string &device) {
-    auto it = std::find_if(AOT::productConfigAcronyms.begin(), AOT::productConfigAcronyms.end(), findMapAcronymWithoutDash(device));
-    if (it == AOT::productConfigAcronyms.end())
-        return AOT::UNKNOWN_ISA;
     return it->second;
 }
 
@@ -148,6 +134,14 @@ std::vector<NEO::ConstStringRef> ProductConfigHelper::getFamiliesAcronyms() {
         }
     }
     return enabledAcronyms;
+}
+
+std::vector<NEO::ConstStringRef> ProductConfigHelper::getDeviceAcronyms() {
+    std::vector<NEO::ConstStringRef> allSupportedAcronyms{};
+    for (const auto &device : AOT::deviceAcronyms) {
+        allSupportedAcronyms.push_back(NEO::ConstStringRef(device.first));
+    }
+    return allSupportedAcronyms;
 }
 
 std::vector<NEO::ConstStringRef> ProductConfigHelper::getAllProductAcronyms() {
