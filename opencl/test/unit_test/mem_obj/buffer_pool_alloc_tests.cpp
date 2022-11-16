@@ -115,6 +115,25 @@ TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
     EXPECT_EQ(retVal, CL_SUCCESS);
 }
 
+TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenClReleaseMemObjectCalledThenWaitForEnginesCompletionCalled) {
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_NE(poolAllocator->mainStorage, nullptr);
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
+
+    ASSERT_NE(buffer, nullptr);
+    ASSERT_EQ(retVal, CL_SUCCESS);
+
+    ASSERT_NE(poolAllocator->mainStorage, nullptr);
+    auto mockBuffer = static_cast<MockBuffer *>(buffer.get());
+    ASSERT_TRUE(mockBuffer->isSubBuffer());
+    ASSERT_EQ(poolAllocator->mainStorage, mockBuffer->associatedMemObject);
+
+    ASSERT_EQ(mockMemoryManager->waitForEnginesCompletionCalled, 0u);
+    retVal = clReleaseMemObject(buffer.release());
+    ASSERT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(mockMemoryManager->waitForEnginesCompletionCalled, 1u);
+}
+
 TEST_F(aggregatedSmallBuffersEnabledTest, givenCopyHostPointerWhenCreatingBufferButCopyFailedThenDoNotUsePool) {
     class MockCommandQueueFailFirstEnqueueWrite : public MockCommandQueue {
       public:

@@ -94,6 +94,8 @@ MemObj::~MemObj() {
                 }
                 destroyGraphicsAllocation(graphicsAllocation, doAsyncDestructions);
                 graphicsAllocation = nullptr;
+            } else if (graphicsAllocation && context->getBufferPoolAllocator().isPoolBuffer(associatedMemObject)) {
+                memoryManager->waitForEnginesCompletion(*graphicsAllocation);
             }
             if (!associatedMemObject) {
                 releaseMapAllocation(rootDeviceIndex, doAsyncDestructions);
