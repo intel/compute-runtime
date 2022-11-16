@@ -159,6 +159,31 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGetHostPtrAllocCalledThenCor
     commandList->hostPtrMap.clear();
 }
 
+template <NEO::AllocationType AllocType>
+class DeviceHostPtrFailMock : public Mock<DeviceImp> {
+  public:
+    using Mock<L0::DeviceImp>::Mock;
+    NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override {
+        return nullptr;
+    }
+    const NEO::HardwareInfo &getHwInfo() const override {
+        return neoDevice->getHardwareInfo();
+    }
+};
+
+HWTEST2_F(CommandListCreate, givenGetAlignedAllocationCalledWithInvalidPtrThenNullptrReturned, IsAtLeastSkl) {
+    auto failDevice = std::make_unique<DeviceHostPtrFailMock<NEO::AllocationType::INTERNAL_HOST_MEMORY>>(device->getNEODevice(), execEnv);
+    failDevice->neoDevice = device->getNEODevice();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(failDevice.get(), NEO::EngineGroupType::Copy, 0u);
+
+    size_t cmdListHostPtrSize = MemoryConstants::pageSize;
+    void *cmdListHostBuffer = reinterpret_cast<void *>(0x1234);
+    AlignedAllocationData outData = {};
+    outData = commandList->getAlignedAllocation(device, cmdListHostBuffer, cmdListHostPtrSize, false);
+    EXPECT_EQ(nullptr, outData.alloc);
+}
+
 HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrIsInMapThenAllocationReturned, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);

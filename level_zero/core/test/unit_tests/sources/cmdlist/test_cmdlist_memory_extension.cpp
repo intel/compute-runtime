@@ -7,6 +7,7 @@
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
@@ -64,6 +65,154 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
     void *ptr = nullptr;
 };
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+  public:
+    MockCommandListExtensionHw() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
+    MockCommandListExtensionHw(bool failOnFirst) : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>(), failOnFirstCopy(failOnFirst) {}
+
+    AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
+        getAlignedAllocationCalledTimes++;
+        if (buffer) {
+            return {0, 0, &alignedAlloc, true};
+        }
+        return {0, 0, nullptr, false};
+    }
+
+    ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr,
+                                             NEO::GraphicsAllocation *dstPtrAlloc,
+                                             uint64_t dstOffset,
+                                             void *srcPtr,
+                                             NEO::GraphicsAllocation *srcPtrAlloc,
+                                             uint64_t srcOffset,
+                                             uint64_t size,
+                                             uint64_t elementSize,
+                                             Builtin builtin,
+                                             Event *signalEvent,
+                                             bool isStateless,
+                                             CmdListKernelLaunchParams &launchParams) override {
+        appendMemoryCopyKernelWithGACalledTimes++;
+        if (isStateless) {
+            appendMemoryCopyKernelWithGAStatelessCalledTimes++;
+        }
+        if (signalEvent) {
+            useEvents = true;
+        } else {
+            useEvents = false;
+        }
+        if (failOnFirstCopy &&
+            (appendMemoryCopyKernelWithGACalledTimes == 1 || appendMemoryCopyKernelWithGAStatelessCalledTimes == 1)) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
+                                     NEO::GraphicsAllocation *dstPtrAlloc,
+                                     uint64_t dstOffset, uintptr_t srcPtr,
+                                     NEO::GraphicsAllocation *srcPtrAlloc,
+                                     uint64_t srcOffset,
+                                     uint64_t size) override {
+        appendMemoryCopyBlitCalledTimes++;
+        if (failOnFirstCopy && appendMemoryCopyBlitCalledTimes == 1) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAllocation,
+                                           NEO::GraphicsAllocation *dstAllocation,
+                                           size_t srcOffset,
+                                           size_t dstOffset,
+                                           ze_copy_region_t srcRegion,
+                                           ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
+                                           size_t srcRowPitch, size_t srcSlicePitch,
+                                           size_t dstRowPitch, size_t dstSlicePitch,
+                                           const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
+                                           Event *signalEvent,
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+        if (signalEvent) {
+            useEvents = true;
+        } else {
+            useEvents = false;
+        }
+        appendMemoryCopyBlitRegionCalledTimes++;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
+                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         uint32_t dstPitch, size_t dstOffset,
+                                         const ze_copy_region_t *srcRegion, uint32_t srcPitch,
+                                         size_t srcOffset, Event *signalEvent,
+                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+        appendMemoryCopyKernel2dCalledTimes++;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
+                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
+                                         const ze_copy_region_t *srcRegion, uint32_t srcPitch,
+                                         uint32_t srcSlicePitch, size_t srcOffset,
+                                         Event *signalEvent, uint32_t numWaitEvents,
+                                         ze_event_handle_t *phWaitEvents) override {
+        appendMemoryCopyKernel3dCalledTimes++;
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t appendBlitFill(void *ptr, const void *pattern,
+                               size_t patternSize, size_t size,
+                               Event *signalEvent, uint32_t numWaitEvents,
+                               ze_event_handle_t *phWaitEvents) override {
+        appendBlitFillCalledTimes++;
+        if (signalEvent) {
+            useEvents = true;
+        } else {
+            useEvents = false;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t appendCopyImageBlit(NEO::GraphicsAllocation *src,
+                                    NEO::GraphicsAllocation *dst,
+                                    const Vec3<size_t> &srcOffsets, const Vec3<size_t> &dstOffsets,
+                                    size_t srcRowPitch, size_t srcSlicePitch,
+                                    size_t dstRowPitch, size_t dstSlicePitch,
+                                    size_t bytesPerPixel, const Vec3<size_t> &copySize,
+                                    const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
+                                    Event *signalEvent) override {
+        appendCopyImageBlitCalledTimes++;
+        appendImageRegionCopySize = copySize;
+        appendImageRegionSrcOrigin = srcOffsets;
+        appendImageRegionDstOrigin = dstOffsets;
+        if (signalEvent) {
+            useEvents = true;
+        } else {
+            useEvents = false;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+    uint8_t mockAlignedAllocData[2 * MemoryConstants::pageSize]{};
+
+    Vec3<size_t> appendImageRegionCopySize = {0, 0, 0};
+    Vec3<size_t> appendImageRegionSrcOrigin = {9, 9, 9};
+    Vec3<size_t> appendImageRegionDstOrigin = {9, 9, 9};
+
+    void *alignedDataPtr = alignUp(mockAlignedAllocData, MemoryConstants::pageSize);
+
+    NEO::MockGraphicsAllocation alignedAlloc{alignedDataPtr, reinterpret_cast<uint64_t>(alignedDataPtr), MemoryConstants::pageSize};
+
+    uint32_t appendMemoryCopyKernelWithGACalledTimes = 0;
+    uint32_t appendMemoryCopyKernelWithGAStatelessCalledTimes = 0;
+    uint32_t appendMemoryCopyBlitCalledTimes = 0;
+    uint32_t appendMemoryCopyBlitRegionCalledTimes = 0;
+    uint32_t appendMemoryCopyKernel2dCalledTimes = 0;
+    uint32_t appendMemoryCopyKernel3dCalledTimes = 0;
+    uint32_t appendBlitFillCalledTimes = 0;
+    uint32_t appendCopyImageBlitCalledTimes = 0;
+    uint32_t getAlignedAllocationCalledTimes = 0;
+    bool failOnFirstCopy = false;
+    bool useEvents = false;
+};
+
 using CommandListAppendWaitOnMem = Test<CommandListWaitOnMemFixture>;
 
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataAndNotEqualOpThenSemaphoreWaitProgrammedCorrectly) {
@@ -89,6 +238,19 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndData
 
     EXPECT_EQ(cmd->getWaitMode(),
               MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+}
+
+HWTEST2_F(CommandListAppendWaitOnMem, givenCommandListWaitOnMemoryCalledWithNullPtrThenAppendWaitOnMemoryReturnsError, IsAtLeastSkl) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MockCommandListExtensionHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    uint32_t waitMemData = 1u;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+    void *badPtr = nullptr;
+    result = cmdList.appendWaitOnMemory(reinterpret_cast<void *>(&desc), badPtr, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
 }
 
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataAndEqualOpThenSemaphoreWaitProgrammedCorrectly) {
@@ -474,6 +636,19 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithNoScopeThenPipeCo
     }
     ASSERT_TRUE(postSyncFound);
 }
+
+HWTEST2_F(CommandListAppendWriteToMem, givenCommandListWriteToMemCalledWithNullPtrThenAppendWriteToMemoryReturnsError, IsAtLeastSkl) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MockCommandListExtensionHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    zex_write_to_mem_desc_t desc = {};
+    uint64_t data = 0xabc;
+    void *badPtr = nullptr;
+    result = cmdList.appendWriteToMemory(reinterpret_cast<void *>(&desc), badPtr, data);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+}
+
 HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemOnBcsWithNoScopeThenFlushDwEncodedCorrectly) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     ze_result_t result = ZE_RESULT_SUCCESS;

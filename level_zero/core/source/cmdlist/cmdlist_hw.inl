@@ -527,6 +527,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pDstRegion);
 
     auto allocationStruct = getAlignedAllocation(this->device, srcPtr, bufferSize, true);
+    if (allocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
 
     auto rowPitch = pDstRegion->width * bytesPerPixel;
     auto slicePitch =
@@ -652,6 +655,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pSrcRegion);
 
     auto allocationStruct = getAlignedAllocation(this->device, dstPtr, bufferSize, false);
+    if (allocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
 
     auto rowPitch = pSrcRegion->width * bytesPerPixel;
     auto slicePitch =
@@ -1182,7 +1188,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, size, true);
 
     if (dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
     if (size >= 4ull * MemoryConstants::gigaByte) {
@@ -1340,6 +1346,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     Event *signalEvent = nullptr;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
+    }
+
+    if (dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -1595,6 +1605,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     auto dstAllocation = this->getAlignedAllocation(this->device, ptr, size, false);
+    if (dstAllocation.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
     }
@@ -1897,6 +1910,9 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             offset += reinterpret_cast<size_t>(ptr) - reinterpret_cast<size_t>(alloc->getUnderlyingBuffer());
         } else {
             alloc = getHostPtrAlloc(buffer, bufferSize, hostCopyAllowed);
+            if (alloc == nullptr) {
+                return {0u, 0, nullptr, false};
+            }
             alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
             if (alloc->getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
                 auto hostAllocCpuPtr = reinterpret_cast<uintptr_t>(alloc->getUnderlyingBuffer());
@@ -2225,6 +2241,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     appendSignalEventPostWalker(signalEvent);
 
     auto allocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(uint64_t), false);
+    if (allocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
     commandContainer.addToResidencyContainer(allocationStruct.alloc);
 
     return ZE_RESULT_SUCCESS;
@@ -2245,6 +2264,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
     auto dstPtrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents, false);
+    if (dstPtrAllocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
     commandContainer.addToResidencyContainer(dstPtrAllocationStruct.alloc);
 
     std::unique_ptr<EventData[]> timestampsData = std::make_unique<EventData[]>(numEvents);
@@ -2288,6 +2310,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         builtinKernel->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestamps);
     } else {
         auto pOffsetAllocationStruct = getAlignedAllocation(this->device, pOffsets, sizeof(size_t) * numEvents, false);
+        if (pOffsetAllocationStruct.alloc == nullptr) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
         auto offsetValPtr = static_cast<uintptr_t>(pOffsetAllocationStruct.alloc->getGpuAddress());
         commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
         builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestampsWithOffsets);
@@ -2666,6 +2691,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     }
 
     auto srcAllocationStruct = getAlignedAllocation(this->device, ptr, sizeof(uint32_t), true);
+    if (srcAllocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
     UNRECOVERABLE_IF(srcAllocationStruct.alloc == nullptr);
     commandContainer.addToResidencyContainer(srcAllocationStruct.alloc);
     uint64_t gpuAddress = static_cast<uint64_t>(srcAllocationStruct.alignedAllocationPtr);
@@ -2709,6 +2737,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
 
     size_t bufSize = sizeof(uint64_t);
     auto dstAllocationStruct = getAlignedAllocation(this->device, ptr, bufSize, false);
+    if (dstAllocationStruct.alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
     UNRECOVERABLE_IF(dstAllocationStruct.alloc == nullptr);
     commandContainer.addToResidencyContainer(dstAllocationStruct.alloc);
 

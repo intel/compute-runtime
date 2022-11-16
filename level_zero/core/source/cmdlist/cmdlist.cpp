@@ -89,7 +89,9 @@ NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64
         return alloc;
     }
     alloc = device->allocateMemoryFromHostPtr(buffer, bufferSize, hostCopyAllowed);
-    UNRECOVERABLE_IF(alloc == nullptr);
+    if (alloc == nullptr) {
+        return nullptr;
+    }
     if (this->storeExternalPtrAsTemporary()) {
         this->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     } else if (alloc->getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
