@@ -787,10 +787,10 @@ HWTEST2_F(L0HwHelperEventMultiKernelDisabledL3FlushCompactEnabledTest,
     EXPECT_EQ(expectedPacket, l0CoreHelper.getEventBaseMaxPacketCount(hwInfo));
 }
 
-TEST_F(L0CoreHelperTest, givenL0CoreHelperWhenGettingDefaultValueForSignalAllEventPacketThenReturnFalse) {
+TEST_F(L0CoreHelperTest, givenL0CoreHelperWhenGettingDefaultValueForSignalAllEventPacketThenReturnTrue) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     bool defaultValue = L0::L0CoreHelper::useSignalAllEventPackets(hwInfo);
-    EXPECT_FALSE(defaultValue);
+    EXPECT_TRUE(defaultValue);
 }
 
 } // namespace ult

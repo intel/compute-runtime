@@ -313,6 +313,7 @@ template <int32_t compactL3FlushEventPacket, uint32_t multiTile>
 struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFixture {
     void setUp() {
         DebugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
+        DebugManager.flags.SignalAllEventPackets.set(0);
         if constexpr (multiTile == 1) {
             DebugManager.flags.CreateMultipleSubDevices.set(2);
             DebugManager.flags.EnableImplicitScaling.set(1);
@@ -337,6 +338,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
         using OPERATION = typename POSTSYNC_DATA::OPERATION;
+        using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
         Mock<::L0::Kernel> kernel;
         auto module = std::unique_ptr<Module>(new Mock<Module>(input.device, nullptr));
@@ -410,6 +412,13 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         }
         EXPECT_EQ(arg.expectedPostSyncPipeControls, postSyncPipeControls);
         EXPECT_EQ(arg.expectDcFlush, dcFlushFound);
+
+        auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        if constexpr (multiTile == 1) {
+            EXPECT_EQ(3u, itorStoreDataImm.size());
+        } else {
+            EXPECT_EQ(0u, itorStoreDataImm.size());
+        }
     }
 
     DebugManagerStateRestore restorer;
