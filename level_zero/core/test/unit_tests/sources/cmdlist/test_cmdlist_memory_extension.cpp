@@ -580,7 +580,40 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMe
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeThenMiMemFenceEncodedCorrectly, IsXeHpcCore) {
+HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithHostMemAndNoScopeThenMiMemFenceEncoded, IsXeHpcCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto &commandContainer = commandList->commandContainer;
+
+    auto hwInfo = commandList->commandContainer.getDevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->platform.usRevId = 0x03;
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
+
+    constexpr size_t allocSize = sizeof(uint32_t);
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), dstBuffer, waitMemData, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_MEM_FENCE *>(*itor);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE, cmd->getFenceType());
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithDeviceMemAndNoScopeThenMiMemFenceNotEncoded, IsXeHpcCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -599,9 +632,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeThenMiMemFe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_MEM_FENCE *>(*itor);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE, cmd->getFenceType());
+    EXPECT_EQ(cmdList.end(), itor);
 }
 
 using CommandListAppendWriteToMem = Test<CommandListWaitOnMemFixture>;

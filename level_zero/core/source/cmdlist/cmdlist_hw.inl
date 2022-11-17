@@ -2704,7 +2704,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
                                                                comparator);
 
     const auto &hwInfo = this->device->getHwInfo();
-    NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, hwInfo);
+    auto allocType = srcAllocationStruct.alloc->getAllocationType();
+    bool isSystemMemoryUsed =
+        (allocType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
+        (allocType == NEO::AllocationType::EXTERNAL_HOST_PTR);
+    if (isSystemMemoryUsed) {
+        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, hwInfo);
+    }
+
     if (hSignalEvent) {
         auto event = Event::fromHandle(hSignalEvent);
 
