@@ -21,30 +21,35 @@ HWTEST_EXCLUDE_PRODUCT(L0HwHelperTest, givenBitmaskWithAttentionBitsForAllEUsWhe
 HWTEST_EXCLUDE_PRODUCT(L0HwHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThenCorrectThreadsAreReturned, IGFX_XE_HP_CORE);
 HWTEST_EXCLUDE_PRODUCT(L0HwHelperTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWhenGettingThreadsThenCorrectThreadsAreReturned, IGFX_XE_HP_CORE);
 
-using L0HwHelperTestXeHp = ::testing::Test;
+using L0HwHelperTestXeHp = Test<DeviceFixture>;
 
 XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForMultiTileCapablePlatformThenReturnTrue) {
-    EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().multiTileCapablePlatform());
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    EXPECT_TRUE(l0CoreHelper.multiTileCapablePlatform());
 }
 
 XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsCmdListHeapSharing(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.platformSupportsCmdListHeapSharing(hwInfo));
 }
 
 XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnTrue) {
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsStateComputeModeTracking(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.platformSupportsStateComputeModeTracking(hwInfo));
 }
 
 XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnTrue) {
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsFrontEndTracking(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.platformSupportsFrontEndTracking(hwInfo));
 }
 
 XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnTrue) {
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsPipelineSelectTracking(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.platformSupportsPipelineSelectTracking(hwInfo));
 }
 
 } // namespace ult

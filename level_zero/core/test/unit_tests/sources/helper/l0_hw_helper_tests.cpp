@@ -657,13 +657,14 @@ HWTEST2_F(L0HwHelperFusedEuTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWh
 }
 
 HWTEST2_F(L0HwHelperTest, GivenNonMultiTilePlatformsWhenCheckingL0HelperForMultiTileCapablePlatformThenReturnFalse, NonMultiTilePlatforms) {
-    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().multiTileCapablePlatform());
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    EXPECT_FALSE(l0CoreHelper.multiTileCapablePlatform());
 }
 
 HWTEST2_F(L0HwHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse, IsNotXeHpcCore) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0HwHelper = L0::L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    EXPECT_FALSE(l0HwHelper.alwaysAllocateEventInLocalMem());
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+
+    EXPECT_FALSE(l0CoreHelper.alwaysAllocateEventInLocalMem());
 }
 
 TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForUsePipeControlMultiKernelEventSyncThenReturnTrue) {

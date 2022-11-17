@@ -76,7 +76,8 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     rootDeviceIndices.remove_duplicates();
 
     auto &hwInfo = getDevice()->getHwInfo();
-    useDeviceAlloc |= L0HwHelper::get(hwInfo.platform.eRenderCoreFamily).alwaysAllocateEventInLocalMem();
+    auto &l0CoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    useDeviceAlloc |= l0CoreHelper.alwaysAllocateEventInLocalMem();
 
     initializeSizeParameters(numDevices, phDevices, *driverHandleImp, hwInfo);
 

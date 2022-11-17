@@ -280,7 +280,10 @@ TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    if (L0HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).alwaysAllocateEventInLocalMem()) {
+
+    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+
+    if (l0CoreHelper.alwaysAllocateEventInLocalMem()) {
         EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, eventPool->getAllocation().getAllocationType());
     } else {
         EXPECT_EQ(NEO::AllocationType::BUFFER_HOST_MEMORY, eventPool->getAllocation().getAllocationType());
@@ -740,8 +743,9 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
 HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, IsXeHpOrXeHpcCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
 
-    bool useContextEndOffset = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).multiTileCapablePlatform();
+    bool useContextEndOffset = l0CoreHelper.multiTileCapablePlatform();
     EXPECT_TRUE(useContextEndOffset);
 
     ze_event_pool_desc_t eventPoolDesc = {
@@ -777,8 +781,8 @@ HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseCont
 HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, IsNotXeHpOrXeHpcCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
-
-    bool useContextEndOffset = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).multiTileCapablePlatform();
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    bool useContextEndOffset = l0CoreHelper.multiTileCapablePlatform();
     EXPECT_FALSE(useContextEndOffset);
 
     ze_event_pool_desc_t eventPoolDesc = {
@@ -1238,7 +1242,9 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsDependentIfAllo
     auto allocation = &eventPool->getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    if (L0HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).alwaysAllocateEventInLocalMem()) {
+    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+
+    if (l0CoreHelper.alwaysAllocateEventInLocalMem()) {
         EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, allocation->getAllocationType());
     } else {
         EXPECT_EQ(NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());

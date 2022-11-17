@@ -719,9 +719,10 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
           givenCommandListAndEventWithSignalScopeWhenImmediateProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernelsAndL3FlushWithPostSyncAddedOnce,
           IsXeHpOrXeHpgCore) {
+    auto &l0CoreHelper = input.device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 3;
-    arg.expectedWalkerPostSyncOp = L0HwHelper::get(gfxCoreFamily).multiTileCapablePlatform() ? 3 : 1;
+    arg.expectedWalkerPostSyncOp = l0CoreHelper.multiTileCapablePlatform() ? 3 : 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
 
@@ -755,9 +756,10 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
           givenCommandListAndEventWithSignalScopeWhenImmediateProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSingleSeparateKernelAndL3FlushWithPostSyncAddedOnce,
           IsXeHpOrXeHpgCore) {
+    auto &l0CoreHelper = input.device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = L0HwHelper::get(gfxCoreFamily).multiTileCapablePlatform() ? 3 : 1;
+    arg.expectedWalkerPostSyncOp = l0CoreHelper.multiTileCapablePlatform() ? 3 : 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
 
@@ -868,9 +870,10 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
           givenCommandListAndEventWithSignalScopeWhenImmediateProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSingleSeparateKernelAndL3FlushWithPostSyncAddedOnce,
           IsXeHpOrXeHpgCore) {
+    auto &l0CoreHelper = input.device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = L0HwHelper::get(gfxCoreFamily).multiTileCapablePlatform() ? 3 : 1;
+    arg.expectedWalkerPostSyncOp = l0CoreHelper.multiTileCapablePlatform() ? 3 : 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
 

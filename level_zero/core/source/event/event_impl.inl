@@ -23,11 +23,11 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     }
     auto neoDevice = device->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
     uint32_t maxKernels = EventPacketsCount::maxKernelSplit;
-    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxKernels = l0HwHelper.getEventMaxKernelCount(hwInfo);
+    if (l0CoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxKernels = l0CoreHelper.getEventMaxKernelCount(hwInfo);
     }
 
     event->signalAllEventPackets = L0HwHelper::useSignalAllEventPackets(hwInfo);
@@ -44,7 +44,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     event->maxKernelCount = maxKernels;
     event->maxPacketCount = eventPool->getEventMaxPackets();
-    bool useContextEndOffset = l0HwHelper.multiTileCapablePlatform();
+    bool useContextEndOffset = l0CoreHelper.multiTileCapablePlatform();
     int32_t overrideUseContextEndOffset = NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.get();
     if (overrideUseContextEndOffset != -1) {
         useContextEndOffset = !!overrideUseContextEndOffset;
