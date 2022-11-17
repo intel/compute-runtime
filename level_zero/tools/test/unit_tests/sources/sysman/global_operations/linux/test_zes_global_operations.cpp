@@ -220,9 +220,17 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesGlobal
 
         if ((--fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             if (supportedFiles[fd].second == "dummy") {
-                uint64_t data = 0x3e8c9dfe1c2e4d5c;
-                memcpy(buf, &data, sizeof(data));
-                return count;
+                if (count == sizeof(uint64_t)) {
+                    uint64_t data = 0x3e8c9dfe1c2e4d5c;
+                    memcpy(buf, &data, sizeof(data));
+                    return count;
+                } else {
+                    // Board number will be in ASCII format, Expected board number should be decoded value
+                    // i.e 0821VPTW910091000821VPTW91009100 for data provided below.
+                    uint64_t data[] = {0x5754505631323830, 0x3030313930303139, 0x5754505631323830, 0x3030313930303139};
+                    memcpy(buf, &data, sizeof(data));
+                    return count;
+                }
             }
             memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
             return count;
@@ -236,21 +244,22 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesGlobal
     pLinuxSysmanImp->pDrm = pDrmMock.get();
 
     zes_device_properties_t properties;
-    const std::string expectedData("0x3e8c9dfe1c2e4d5c");
+    const std::string expectedSerialNumber("0x3e8c9dfe1c2e4d5c");
+    const std::string expectedBoardNumber("0821VPTW910091000821VPTW91009100");
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(properties.numSubdevices, 0u);
-    EXPECT_TRUE(0 == expectedData.compare(properties.boardNumber));
+    EXPECT_TRUE(0 == expectedBoardNumber.compare(properties.boardNumber));
     EXPECT_TRUE(0 == vendorIntel.compare(properties.brandName));
     EXPECT_TRUE(0 == driverVersion.compare(properties.driverVersion));
     EXPECT_TRUE(0 == expectedModelName.compare(properties.modelName));
-    EXPECT_TRUE(0 == expectedData.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == expectedSerialNumber.compare(properties.serialNumber));
     EXPECT_TRUE(0 == vendorIntel.compare(properties.vendorName));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadTelemOffsetFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadTelemOffsetFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberAndBoardNumberAreReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
@@ -310,10 +319,11 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadTelemOffsetFa
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndInvalidGuidWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndInvalidGuidWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberAndBoardNumberAreReturned) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
             {"/sys/dev/char/226:128", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8a:00.0/drm/renderD128"},
@@ -371,10 +381,11 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndInvalidGuidWhenCa
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndPpinOffsetIsAbsentWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndPpinandBoardNumberOffsetAreAbsentWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberAndBoardNumberAreReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
@@ -433,10 +444,11 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndPpinOffsetIsAbsen
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadPpinInfoFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadTelemDataFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberAndBoardNumberAreReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
@@ -493,10 +505,11 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadPpinInfoFails
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndOpenSysCallFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndOpenSysCallFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberAndBoardNumberAreReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
@@ -525,10 +538,11 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndOpenSysCallFailsW
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndTelemNodeReadLinkFailsWhenCallingzesGlobalOperationsGetPropertiesThenVerifyInvalidSerialNumberIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndTelemNodeReadLinkFailsWhenCallingzesGlobalOperationsGetPropertiesThenVerifyInvalidSerialNumberAndBoardNumberAreReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
@@ -551,10 +565,11 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndTelemNodeReadLink
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadLinkFailsWhenCallingzesGlobalOperationsGetPropertiesThenVerifyInvalidSerialNumberIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadLinkFailsWhenCallingzesGlobalOperationsGetPropertiesThenVerifyInvalidSerialNumberAndBoardNumberAreReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         return -1;
@@ -569,6 +584,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadLinkFailsWhen
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
     pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
