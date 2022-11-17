@@ -155,6 +155,6 @@ struct DeviceImp : public Device {
     std::unique_ptr<DebugSession> debugSession;
 };
 
-void handleGpuDomainTransferForHwWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData);
+void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData);
 
 } // namespace L0

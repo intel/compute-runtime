@@ -451,7 +451,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerThenGpuDom
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.device_preferred_location);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -490,7 +490,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.device_preferred_location);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -531,7 +531,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.read_only);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -600,7 +600,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.read_only);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -655,7 +655,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.cached_memory);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -701,7 +701,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.device_preferred_location);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -747,7 +747,7 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidPtrAndPageFaultHandlerAndGpuDo
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.device_preferred_location);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 

@@ -917,7 +917,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
                 }
             }
             /* Given MemAdvise hints, use different gpu Domain Handler for the Page Fault Handling */
-            pageFaultManager->setGpuDomainHandler(L0::handleGpuDomainTransferForHwWithHints);
+            pageFaultManager->setGpuDomainHandler(L0::transferAndUnprotectMemoryWithHints);
         }
 
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());

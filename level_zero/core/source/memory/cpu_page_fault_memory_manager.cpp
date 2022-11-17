@@ -43,7 +43,7 @@ void PageFaultManager::transferToGpu(void *ptr, void *device) {
 } // namespace NEO
 
 namespace L0 {
-void handleGpuDomainTransferForHwWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData) {
+void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData) {
     bool migration = true;
     if (pageFaultData.domain == NEO::PageFaultManager::AllocationDomain::Gpu) {
         L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);

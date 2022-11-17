@@ -14,12 +14,12 @@ using namespace NEO;
 class MockPageFaultManager : public PageFaultManager {
   public:
     using PageFaultManager::gpuDomainHandler;
-    using PageFaultManager::handleGpuDomainTransferForAubAndTbx;
-    using PageFaultManager::handleGpuDomainTransferForHw;
     using PageFaultManager::memoryData;
     using PageFaultManager::PageFaultData;
     using PageFaultManager::PageFaultManager;
     using PageFaultManager::selectGpuDomainHandler;
+    using PageFaultManager::transferAndUnprotectMemory;
+    using PageFaultManager::unprotectAndTransferMemory;
     using PageFaultManager::verifyPageFault;
 
     void allowCPUMemoryAccess(void *ptr, size_t size) override {
@@ -56,11 +56,11 @@ class MockPageFaultManager : public PageFaultManager {
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override {}
 
     void *getHwHandlerAddress() {
-        return reinterpret_cast<void *>(PageFaultManager::handleGpuDomainTransferForHw);
+        return reinterpret_cast<void *>(PageFaultManager::transferAndUnprotectMemory);
     }
 
     void *getAubAndTbxHandlerAddress() {
-        return reinterpret_cast<void *>(PageFaultManager::handleGpuDomainTransferForAubAndTbx);
+        return reinterpret_cast<void *>(PageFaultManager::unprotectAndTransferMemory);
     }
     void moveAllocationToGpuDomain(void *ptr) override {
         moveAllocationToGpuDomainCalled++;

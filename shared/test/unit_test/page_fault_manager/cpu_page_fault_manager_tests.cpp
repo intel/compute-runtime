@@ -405,7 +405,7 @@ TEST_F(PageFaultManagerTest, givenAllocsMovedToGpuDomainWhenVerifyingPageFaultTh
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 1u);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[0], alloc2);
 
-    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::handleGpuDomainTransferForAubAndTbx;
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::unprotectAndTransferMemory;
 
     pageFaultManager->verifyPageFault(alloc1);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 2u);
@@ -430,7 +430,7 @@ TEST_F(PageFaultManagerTest, givenAllocsFromCpuDomainWhenVerifyingPageFaultThenD
     EXPECT_EQ(pageFaultManager->memoryData.at(alloc2).domain, PageFaultManager::AllocationDomain::Cpu);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 0u);
 
-    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::handleGpuDomainTransferForAubAndTbx;
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::unprotectAndTransferMemory;
     pageFaultManager->memoryData.at(alloc1).domain = PageFaultManager::AllocationDomain::None;
     pageFaultManager->verifyPageFault(alloc1);
     EXPECT_EQ(pageFaultManager->memoryData.at(alloc1).domain, PageFaultManager::AllocationDomain::Cpu);
@@ -440,7 +440,7 @@ TEST_F(PageFaultManagerTest, givenAllocsFromCpuDomainWhenVerifyingPageFaultThenD
 TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultThenVerifyPagefaultUnprotectsAndTransfersMemory) {
     void *alloc = reinterpret_cast<void *>(0x1);
 
-    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::handleGpuDomainTransferForAubAndTbx;
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::unprotectAndTransferMemory;
     memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, unifiedMemoryManager.get(), nullptr, memoryProperties);
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
@@ -465,7 +465,7 @@ TEST_F(PageFaultManagerTest, whenVerifyingPagefaultWithPrintUsmSharedMigrationDe
 
     void *alloc = reinterpret_cast<void *>(0x1);
 
-    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::handleGpuDomainTransferForHw;
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::transferAndUnprotectMemory;
     memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, unifiedMemoryManager.get(), nullptr, memoryProperties);
 
@@ -505,7 +505,7 @@ TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultWithPrintUsmSharedMig
 
     void *alloc = reinterpret_cast<void *>(0x1);
 
-    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::handleGpuDomainTransferForAubAndTbx;
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::unprotectAndTransferMemory;
     memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, unifiedMemoryManager.get(), nullptr, memoryProperties);
     pageFaultManager->moveAllocationToGpuDomain(alloc);
@@ -541,7 +541,7 @@ TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultWithPrintUsmSharedMig
 TEST_F(PageFaultManagerTest, givenTbxAndInitialPlacementGpuWhenVerifyingPagefaultThenMemoryIsUnprotectedOnly) {
     void *alloc = reinterpret_cast<void *>(0x1);
 
-    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::handleGpuDomainTransferForAubAndTbx;
+    pageFaultManager->gpuDomainHandler = &MockPageFaultManager::unprotectAndTransferMemory;
     memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, unifiedMemoryManager.get(), nullptr, memoryProperties);
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
@@ -635,6 +635,17 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledTh
     EXPECT_FALSE(gpuAlloc->isAubWritable(GraphicsAllocation::allBanks));
 
     unifiedMemoryManager->freeSVMAlloc(alloc1);
+}
+
+TEST_F(PageFaultManagerTest, givenCalWhenSelectingHandlerThenAubTbxAndCalGpuDomainHandlerIsSet) {
+    EXPECT_EQ(pageFaultManager->getHwHandlerAddress(), reinterpret_cast<void *>(pageFaultManager->gpuDomainHandler));
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.NEO_CAL_ENABLED.set(true);
+
+    pageFaultManager->selectGpuDomainHandler();
+
+    EXPECT_EQ(pageFaultManager->gpuDomainHandler, pageFaultManager->getAubAndTbxHandlerAddress());
 }
 
 TEST_F(PageFaultManagerTest, givenAubOrTbxCsrWhenSelectingHandlerThenAubAndTbxGpuDomainHandlerIsSet) {

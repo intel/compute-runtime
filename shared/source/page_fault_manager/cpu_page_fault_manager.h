@@ -59,13 +59,13 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void transferToGpu(void *ptr, void *cmdQ);
     MOCKABLE_VIRTUAL void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
 
-    static void handleGpuDomainTransferForHw(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
-    static void handleGpuDomainTransferForAubAndTbx(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
+    static void transferAndUnprotectMemory(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
+    static void unprotectAndTransferMemory(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
     void selectGpuDomainHandler();
     inline void migrateStorageToGpuDomain(void *ptr, PageFaultData &pageFaultData);
     inline void migrateStorageToCpuDomain(void *ptr, PageFaultData &pageFaultData);
 
-    decltype(&handleGpuDomainTransferForHw) gpuDomainHandler = &handleGpuDomainTransferForHw;
+    decltype(&transferAndUnprotectMemory) gpuDomainHandler = &transferAndUnprotectMemory;
 
     std::unordered_map<void *, PageFaultData> memoryData;
     SpinLock mtx;

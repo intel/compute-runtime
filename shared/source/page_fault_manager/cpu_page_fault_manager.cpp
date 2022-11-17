@@ -106,12 +106,12 @@ void PageFaultManager::setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPt
     this->gpuDomainHandler = gpuHandlerFuncPtr;
 }
 
-void PageFaultManager::handleGpuDomainTransferForHw(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
+void PageFaultManager::transferAndUnprotectMemory(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
     pageFaultHandler->migrateStorageToCpuDomain(allocPtr, pageFaultData);
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
 }
 
-void PageFaultManager::handleGpuDomainTransferForAubAndTbx(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
+void PageFaultManager::unprotectAndTransferMemory(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
     pageFaultHandler->migrateStorageToCpuDomain(allocPtr, pageFaultData);
 }
@@ -135,8 +135,8 @@ inline void PageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultData
 }
 
 void PageFaultManager::selectGpuDomainHandler() {
-    if (DebugManager.flags.SetCommandStreamReceiver.get() > CommandStreamReceiverType::CSR_HW) {
-        this->gpuDomainHandler = &PageFaultManager::handleGpuDomainTransferForAubAndTbx;
+    if (DebugManager.flags.SetCommandStreamReceiver.get() > CommandStreamReceiverType::CSR_HW || DebugManager.flags.NEO_CAL_ENABLED.get()) {
+        this->gpuDomainHandler = &PageFaultManager::unprotectAndTransferMemory;
     }
 }
 
