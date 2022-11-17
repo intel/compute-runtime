@@ -158,7 +158,7 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
                                                                   bool &scratchSurfaceDirty,
                                                                   bool &vfeStateDirty) {
     uint32_t requiredPerThreadScratchSizeAlignedUp = alignUp(requiredPerThreadScratchSize, 64);
-    size_t requiredScratchSizeInBytes = requiredPerThreadScratchSizeAlignedUp * computeUnitsUsedForScratch;
+    size_t requiredScratchSizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeAlignedUp) * computeUnitsUsedForScratch;
     scratchSurfaceDirty = false;
     auto multiTileCapable = osContext.getNumSupportedDevices() > 1;
     if (scratchSizeBytes < requiredScratchSizeInBytes) {
@@ -174,7 +174,7 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
     }
     if (privateScratchSpaceSupported) {
         uint32_t requiredPerThreadPrivateScratchSizeAlignedUp = alignUp(requiredPerThreadPrivateScratchSize, 64);
-        size_t requiredPrivateScratchSizeInBytes = requiredPerThreadPrivateScratchSizeAlignedUp * computeUnitsUsedForScratch;
+        size_t requiredPrivateScratchSizeInBytes = static_cast<size_t>(requiredPerThreadPrivateScratchSizeAlignedUp) * computeUnitsUsedForScratch;
         if (privateScratchSizeBytes < requiredPrivateScratchSizeInBytes) {
             if (privateScratchAllocation) {
                 privateScratchAllocation->updateTaskCount(currentTaskCount, osContext.getContextId());

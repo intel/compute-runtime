@@ -803,6 +803,9 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto &kernelDescriptor = kernelImmData->getDescriptor();
     auto ret = NEO::KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, neoDevice);
+    if (ret == NEO::KernelHelper::ErrorCode::INVALID_KERNEL) {
+        return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
+    }
     if (ret == NEO::KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }

@@ -78,6 +78,23 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasTooBigPrivateSizeThenOutOfMemor
     EXPECT_EQ(kernel->initialize(&desc), ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
 
+TEST_F(KernelInitTest, givenKernelToInitWhenItHasTooBigScratchSizeThenInvalidBinaryIsRetutned) {
+    auto globalSize = device->getNEODevice()->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().to_ulong()));
+    uint32_t perHwThreadPrivateMemorySizeRequested = (static_cast<uint32_t>((globalSize + device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch) / device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch)) / 2;
+    auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    uint32_t maxScratchSize = hwHelper.getMaxScratchSize();
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested, maxScratchSize + 1, 0x100);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(1);
+    EXPECT_EQ(kernel->initialize(&desc), ZE_RESULT_ERROR_INVALID_NATIVE_BINARY);
+}
+
 using KernelBaseAddressTests = Test<ModuleImmutableDataFixture>;
 TEST_F(KernelBaseAddressTests, whenQueryingKernelBaseAddressThenCorrectAddressIsReturned) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;

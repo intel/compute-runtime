@@ -786,6 +786,21 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     EXPECT_EQ(CL_OUT_OF_RESOURCES, kernel->patchPrivateSurface());
 }
 
+TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenScratchSizeIsGreaterThanMaxScratchSizeThenReturnInvalidKernel) {
+    auto &hwHelper = NEO::HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    uint32_t maxScratchSize = hwHelper.getMaxScratchSize();
+
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setPrivateMemory(0x100, false, 0, 0, 0);
+    pKernelInfo->setPerThreadScratchSize(maxScratchSize + 100, 0);
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
+    EXPECT_EQ(CL_INVALID_KERNEL, kernel->initialize());
+}
+
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4And32BitAllocationsThenReturnOutOfResources) {
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;

@@ -77,7 +77,35 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
                                                                         canonizedGpuAddress));
             kernelInfo->kernelAllocation = isaGraphicsAllocation.get();
         }
+        MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSize, uint32_t perThreaddPrivateScratchSize) {
+            mockKernelDescriptor = new NEO::KernelDescriptor;
+            mockKernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize = perHwThreadPrivateMemorySize;
+            mockKernelDescriptor->kernelAttributes.perThreadScratchSize[0] = perThreadScratchSize;
+            mockKernelDescriptor->kernelAttributes.perThreadScratchSize[1] = perThreaddPrivateScratchSize;
+            kernelDescriptor = mockKernelDescriptor;
 
+            mockKernelInfo = new NEO::KernelInfo;
+            mockKernelInfo->heapInfo.pKernelHeap = kernelHeap;
+            mockKernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+            kernelInfo = mockKernelInfo;
+
+            if (getIsaGraphicsAllocation() != nullptr) {
+                device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*isaGraphicsAllocation);
+                isaGraphicsAllocation.release();
+            }
+            auto ptr = reinterpret_cast<void *>(0x1234);
+            auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+            auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
+            isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
+                                                                        NEO::AllocationType::KERNEL_ISA,
+                                                                        ptr,
+                                                                        0x1000,
+                                                                        0u,
+                                                                        MemoryPool::System4KBPages,
+                                                                        MemoryManager::maxOsContextCount,
+                                                                        canonizedGpuAddress));
+            kernelInfo->kernelAllocation = isaGraphicsAllocation.get();
+        }
         void setDevice(L0::Device *inDevice) {
             device = inDevice;
         }

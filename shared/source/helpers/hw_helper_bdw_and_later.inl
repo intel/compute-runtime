@@ -146,6 +146,11 @@ bool HwHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
 }
 
 template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getMaxScratchSize() const {
+    return 2 * MB;
+}
+
+template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const {
     return false;
 }

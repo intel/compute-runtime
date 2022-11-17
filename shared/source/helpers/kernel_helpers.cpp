@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_helper.h"
 
 #include <algorithm>
 
@@ -48,6 +49,11 @@ uint32_t KernelHelper::getMaxWorkGroupCount(uint32_t simd, uint32_t availableThr
 }
 
 KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device) {
+    auto &coreHelper = device->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    uint32_t maxScratchSize = coreHelper.getMaxScratchSize();
+    if ((attributes.perThreadScratchSize[0] > maxScratchSize) || (attributes.perThreadScratchSize[1] > maxScratchSize)) {
+        return KernelHelper::ErrorCode::INVALID_KERNEL;
+    }
     auto globalMemorySize = device->getDeviceInfo().globalMemSize;
     uint32_t sizes[] = {attributes.perHwThreadPrivateMemorySize,
                         attributes.perThreadScratchSize[0],

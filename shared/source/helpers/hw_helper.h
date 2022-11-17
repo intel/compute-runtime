@@ -136,6 +136,7 @@ class HwHelper {
     virtual size_t getSamplerStateSize() const = 0;
     virtual bool preferInternalBcsEngine() const = 0;
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
+    virtual uint32_t getMaxScratchSize() const = 0;
     virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const = 0;
     virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState) const = 0;
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
@@ -354,6 +355,7 @@ class HwHelperHw : public HwHelper {
     void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
 
     bool isScratchSpaceSurfaceStateAccessible() const override;
+    uint32_t getMaxScratchSize() const override;
     bool preferInternalBcsEngine() const override;
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
