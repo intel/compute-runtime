@@ -278,12 +278,12 @@ size_t DebugSession::getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId t
 
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     uint32_t threadEuRatio = hwInfoConfig.getThreadEuRatioForScratch(hwInfo);
-
+    uint32_t multiplyFactor = 1;
     if (threadEuRatio / numThreadsPerEu > 1) {
-        ptss *= threadEuRatio / numThreadsPerEu;
+        multiplyFactor = threadEuRatio / numThreadsPerEu;
     }
 
-    auto threadOffset = (((threadId.slice * numSubslicesPerSlice + threadId.subslice) * numEuPerSubslice + threadId.eu) * numThreadsPerEu + threadId.thread) * ptss;
+    auto threadOffset = (((threadId.slice * numSubslicesPerSlice + threadId.subslice) * numEuPerSubslice + threadId.eu) * numThreadsPerEu * multiplyFactor + threadId.thread) * ptss;
     return threadOffset;
 }
 
