@@ -6082,7 +6082,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyn
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
@@ -6096,19 +6096,19 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyn
         ;
 
     EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThread.threadFinished);
+    EXPECT_FALSE(session->asyncThreadFinished);
 
     session->closeAsyncThread();
 
     EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThread.threadFinished);
+    EXPECT_TRUE(session->asyncThreadFinished);
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosingConnectionThenAsyncThreadIsTerminated) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
@@ -6122,19 +6122,19 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosing
         ;
 
     EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThread.threadFinished);
+    EXPECT_FALSE(session->asyncThreadFinished);
 
     session->closeConnection();
 
     EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThread.threadFinished);
+    EXPECT_TRUE(session->asyncThreadFinished);
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenNoEventsAvailableWithinTimeoutWhenReadingEventThenNotReadyReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;

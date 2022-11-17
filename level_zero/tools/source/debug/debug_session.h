@@ -98,17 +98,12 @@ struct DebugSession : _zet_debug_session_handle_t {
             threadActive.store(false);
 
             if (thread) {
-                while (!threadFinished.load()) {
-                    thread->yield();
-                }
-
                 thread->join();
                 thread.reset();
             }
         }
         std::unique_ptr<NEO::Thread> thread;
         std::atomic<bool> threadActive{true};
-        std::atomic<bool> threadFinished{false};
     };
 
   protected:

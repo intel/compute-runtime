@@ -121,7 +121,6 @@ void *DebugSessionWindows::asyncThreadFunction(void *arg) {
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
 
-    self->asyncThread.threadFinished.store(true);
     return nullptr;
 }
 

@@ -450,6 +450,21 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     bool synchronousInternalEventRead = false;
 };
 
+struct MockAsyncThreadDebugSessionLinux : public MockDebugSessionLinux {
+    using MockDebugSessionLinux::MockDebugSessionLinux;
+    static void *mockAsyncThreadFunction(void *arg) {
+        DebugSessionLinux::asyncThreadFunction(arg);
+        reinterpret_cast<MockAsyncThreadDebugSessionLinux *>(arg)->asyncThreadFinished = true;
+        return nullptr;
+    }
+
+    void startAsyncThread() override {
+        asyncThread.thread = NEO::Thread::create(mockAsyncThreadFunction, reinterpret_cast<void *>(this));
+    }
+
+    std::atomic<bool> asyncThreadFinished{false};
+};
+
 struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     using DebugSession::allThreads;
     using DebugSessionImp::apiEvents;

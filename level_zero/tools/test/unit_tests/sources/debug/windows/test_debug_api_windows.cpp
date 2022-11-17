@@ -125,6 +125,21 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
 };
 
+struct MockAsyncThreadDebugSessionWindows : public MockDebugSessionWindows {
+    using MockDebugSessionWindows::MockDebugSessionWindows;
+    static void *mockAsyncThreadFunction(void *arg) {
+        DebugSessionWindows::asyncThreadFunction(arg);
+        reinterpret_cast<MockAsyncThreadDebugSessionWindows *>(arg)->asyncThreadFinished = true;
+        return nullptr;
+    }
+
+    void startAsyncThread() override {
+        asyncThread.thread = NEO::Thread::create(mockAsyncThreadFunction, reinterpret_cast<void *>(this));
+    }
+
+    std::atomic<bool> asyncThreadFinished{false};
+};
+
 struct DebugApiWindowsFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
@@ -1191,7 +1206,7 @@ TEST(DebugSessionWindowsTest, whenTranslateEscapeErrorStatusCalledThenCorrectZeR
 
 using DebugApiWindowsAsyncThreadTest = Test<DebugApiWindowsFixture>;
 
-TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyncThreadThenThreadIsStartedAndFinishes) {
+TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAsyncThreadThenThreadIsStarted) {
     auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
     ASSERT_NE(nullptr, session);
     session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
@@ -1199,28 +1214,42 @@ TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAs
     session->startAsyncThread();
 
     EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThread.threadFinished);
 
     session->closeAsyncThread();
 
     EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThread.threadFinished);
 }
 
-TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosingConnectionThenAsyncThreadIsTerminated) {
-    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyncThreadThenThreadIsStartedAndFinishes) {
+    auto session = std::make_unique<MockAsyncThreadDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
     ASSERT_NE(nullptr, session);
     session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
     session->wddm = mockWddm;
     session->startAsyncThread();
 
     EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThread.threadFinished);
+    EXPECT_FALSE(session->asyncThreadFinished);
+
+    session->closeAsyncThread();
+
+    EXPECT_FALSE(session->asyncThread.threadActive);
+    EXPECT_TRUE(session->asyncThreadFinished);
+}
+
+TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosingConnectionThenAsyncThreadIsTerminated) {
+    auto session = std::make_unique<MockAsyncThreadDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->wddm = mockWddm;
+    session->startAsyncThread();
+
+    EXPECT_TRUE(session->asyncThread.threadActive);
+    EXPECT_FALSE(session->asyncThreadFinished);
 
     session->closeConnection();
 
     EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThread.threadFinished);
+    EXPECT_TRUE(session->asyncThreadFinished);
 }
 
 TEST_F(DebugApiWindowsTest, WhenCallingReadGpuMemoryThenMemoryIsRead) {

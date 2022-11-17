@@ -341,7 +341,6 @@ void *DebugSessionLinux::asyncThreadFunction(void *arg) {
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
 
-    self->asyncThread.threadFinished.store(true);
     return nullptr;
 }
 
@@ -356,7 +355,6 @@ void *DebugSessionLinux::readInternalEventsThreadFunction(void *arg) {
 
     PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread closing\n", "");
 
-    self->internalEventThread.threadFinished.store(true);
     return nullptr;
 }
 
