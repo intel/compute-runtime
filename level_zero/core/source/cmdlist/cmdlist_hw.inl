@@ -148,11 +148,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
 
     if (this->isFlushTaskSubmissionEnabled) {
         commandContainer.setFlushTaskUsedForImmediate(this->isFlushTaskSubmissionEnabled);
+        commandContainer.setNumIddPerBlock(1);
     }
 
     if (this->immediateCmdListHeapSharing) {
         commandContainer.enableHeapSharing();
-        commandContainer.setNumIddPerBlock(1);
     }
 
     commandContainer.setReservedSshSize(getReserveSshSize());

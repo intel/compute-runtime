@@ -1286,7 +1286,7 @@ HWTEST2_F(HwHelperTest, givenPvcHwHelperWhenGettingIsPlatformFlushTaskEnabledThe
 
 HWTEST2_F(HwHelperTest, givenAtMostGen12lpHwHelperWhenGettingIsPlatformFlushTaskEnabledThenFalseIsReturned, IsAtMostGen12lp) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
+    EXPECT_TRUE(hwHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
 }
 
 struct CoherentWANotNeeded {
