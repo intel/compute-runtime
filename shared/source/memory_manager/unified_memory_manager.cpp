@@ -425,8 +425,8 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationD
     }
 
     auto pageFaultManager = this->memoryManager->getPageFaultManager();
-    if (pageFaultManager) {
-        pageFaultManager->removeAllocation(ptr);
+    if (svmData->cpuAllocation && pageFaultManager) {
+        pageFaultManager->removeAllocation(svmData->cpuAllocation->getUnderlyingBuffer());
     }
     std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
     std::unique_lock<std::shared_mutex> lock(mtx);
