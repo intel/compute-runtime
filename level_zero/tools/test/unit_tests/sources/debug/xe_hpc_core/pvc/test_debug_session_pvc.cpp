@@ -36,9 +36,10 @@ PVCTEST_F(PVCDebugSession, givenPVCRevId3WhenGettingPerThreadScratchOffsetThenPe
     EuThread::ThreadId thread0Eu0 = {0, 0, 0, 0, 0};
     EuThread::ThreadId thread0Eu1 = {0, 0, 0, 1, 0};
     EuThread::ThreadId thread2Subslice1 = {0, 0, 1, 0, 2};
+    EuThread::ThreadId thread2EuLastSubslice1 = {0, 0, 1, hwInfo.gtSystemInfo.MaxEuPerSubSlice - 1, 2};
 
     const uint32_t ptss = 128;
-    const uint32_t adjustedPtss = hwInfoConfig.getThreadEuRatioForScratch(hwInfo) / numThreadsPerEu * ptss;
+    const uint32_t ratio = hwInfoConfig.getThreadEuRatioForScratch(hwInfo) / numThreadsPerEu;
 
     EXPECT_EQ(2u, hwInfoConfig.getThreadEuRatioForScratch(hwInfo) / numThreadsPerEu);
 
@@ -46,8 +47,11 @@ PVCTEST_F(PVCDebugSession, givenPVCRevId3WhenGettingPerThreadScratchOffsetThenPe
     EXPECT_EQ(0u, offset);
 
     offset = debugSession->getPerThreadScratchOffset(ptss, thread0Eu1);
-    EXPECT_EQ(adjustedPtss * numThreadsPerEu, offset);
+    EXPECT_EQ(ptss * numThreadsPerEu * ratio, offset);
 
     offset = debugSession->getPerThreadScratchOffset(ptss, thread2Subslice1);
-    EXPECT_EQ(2 * adjustedPtss + adjustedPtss * hwInfo.gtSystemInfo.MaxEuPerSubSlice * numThreadsPerEu, offset);
+    EXPECT_EQ((thread2Subslice1.subslice * hwInfo.gtSystemInfo.MaxEuPerSubSlice * numThreadsPerEu * ratio + thread2Subslice1.thread) * ptss, offset);
+
+    offset = debugSession->getPerThreadScratchOffset(ptss, thread2EuLastSubslice1);
+    EXPECT_EQ(((thread2EuLastSubslice1.subslice * hwInfo.gtSystemInfo.MaxEuPerSubSlice + thread2EuLastSubslice1.eu) * numThreadsPerEu * ratio + thread2EuLastSubslice1.thread) * ptss, offset);
 }
