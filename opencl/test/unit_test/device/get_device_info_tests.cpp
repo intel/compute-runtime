@@ -1084,8 +1084,8 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         case CL_DEVICE_IP_VERSION_INTEL: {
             auto pDeviceIpVersion = reinterpret_cast<cl_version *>(object.get());
             auto &hwInfo = device.getHardwareInfo();
-            auto &clHwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            EXPECT_EQ(clHwHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
+            auto &clCoreHelper = device.getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+            EXPECT_EQ(clCoreHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
             EXPECT_EQ(sizeof(cl_version), sizeReturned);
             break;
         }
@@ -1126,8 +1126,8 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
             auto pCapabilities = reinterpret_cast<cl_device_feature_capabilities_intel *>(object.get());
             auto &hwInfo = device.getHardwareInfo();
-            auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            EXPECT_EQ(clHwHelper.getSupportedDeviceFeatureCapabilities(hwInfo), *pCapabilities);
+            auto &clCoreHelper = device.getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+            EXPECT_EQ(clCoreHelper.getSupportedDeviceFeatureCapabilities(hwInfo), *pCapabilities);
             EXPECT_EQ(sizeof(cl_device_feature_capabilities_intel), sizeReturned);
             break;
         }

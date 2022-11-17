@@ -12,7 +12,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-using ClHwHelperTestXeHpAndLater = ::testing::Test;
+using ClHwHelperTestXeHpAndLater = Test<ClDeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ClHwHelperTestXeHpAndLater, givenCLImageFormatsWhenCallingIsFormatRedescribableThenFalseIsReturned) {
     static const cl_image_format redescribeFormats[] = {
@@ -23,9 +23,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ClHwHelperTestXeHpAndLater, givenCLImageFormatsWhen
         {CL_RGBA, CL_UNSIGNED_INT32},
     };
     MockContext context;
-    auto &clHwHelper = ClHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
-
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
     for (const auto &format : redescribeFormats) {
-        EXPECT_EQ(false, clHwHelper.isFormatRedescribable(format));
+        EXPECT_EQ(false, clCoreHelper.isFormatRedescribable(format));
     }
+}
+
+HWTEST2_F(ClHwHelperTestXeHpAndLater, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue, IsAtLeastXeHpCore) {
+    cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
+    EXPECT_EQ(expectedCapabilities, clCoreHelper.getSupportedDeviceFeatureCapabilities(*defaultHwInfo));
 }

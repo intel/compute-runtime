@@ -23,10 +23,12 @@ using ClHwHelperTestsXeHpgCore = Test<ClDeviceFixture>;
 using namespace NEO;
 
 XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
+
     if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
-        EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 7, 0), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+        EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 7, 0), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
     } else {
-        EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 7, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+        EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 7, 1), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
     }
 }
 

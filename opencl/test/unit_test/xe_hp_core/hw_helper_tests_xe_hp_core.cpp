@@ -69,6 +69,11 @@ XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenXE_HP_COREWhenEnableStatelessCom
     EXPECT_FALSE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
 
+XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
+    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 5, 1), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+}
+
 using HwHelperTestXE_HP_CORE = HwHelperTest;
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
@@ -285,10 +290,6 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenGettingThreadsPerEUCo
     EXPECT_EQ(8U, configs[1]);
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 5, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
-}
-
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, whenGettingDefaultRevisionThenB0IsReturned) {
     EXPECT_EQ(HwInfoConfigHw<IGFX_XE_HP_SDV>::get()->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo), HwHelperHw<FamilyType>::get().getDefaultRevisionId(*defaultHwInfo));
 }
@@ -373,10 +374,4 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
     pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
-}
-
-using HwHelperTestXeHpCoreAndLater = HwHelperTest;
-HWTEST2_F(HwHelperTestXeHpCoreAndLater, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue, IsAtLeastXeHpCore) {
-    cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
-    EXPECT_EQ(expectedCapabilities, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities(hardwareInfo));
 }

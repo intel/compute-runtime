@@ -828,5 +828,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExt
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 8, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
+
+    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 8, 1), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
