@@ -3510,10 +3510,10 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     Kernel *pKernel = pMultiDeviceKernel->getKernel(pCommandQueue->getDevice().getRootDeviceIndex());
 
     auto localMemSize = static_cast<uint32_t>(pCommandQueue->getDevice().getDeviceInfo().localMemSize);
-    auto slmInlineSize = pKernel->getDescriptor().kernelAttributes.slmInlineSize;
+    auto slmTotalSize = pKernel->getSlmTotalSize();
 
-    if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
+    if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         retVal = CL_OUT_OF_RESOURCES;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
