@@ -17,7 +17,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/api/additional_extensions.h"

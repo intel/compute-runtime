@@ -13,7 +13,6 @@
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <string>
 

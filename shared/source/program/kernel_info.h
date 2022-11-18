@@ -9,7 +9,6 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/heap_info.h"
 #include "shared/source/utilities/arrayref.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
 #include <string>

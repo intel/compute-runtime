@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw_bdw_and_later.inl"
 #include "shared/source/helpers/array_count.h"

@@ -20,9 +20,6 @@
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
-#include "shared/source/utilities/stackvec.h"
-
-#include <tuple>
 
 namespace NEO {
 

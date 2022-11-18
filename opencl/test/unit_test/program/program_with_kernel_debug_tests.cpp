@@ -5,33 +5,23 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/test/common/device_binary_format/elf/elf_tests_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/kernel_filename_helper.h"
-#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/program_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_debug_program.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_tests.h"
 
-#include "gtest/gtest.h"
 #include "program_debug_data.h"
-
-#include <memory>
-#include <string>
-#include <vector>
 
 using namespace NEO;
 

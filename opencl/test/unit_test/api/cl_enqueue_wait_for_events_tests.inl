@@ -17,6 +17,8 @@
 
 #include "cl_api_tests.h"
 
+#include <queue>
+
 using namespace NEO;
 
 using clEnqueueWaitForEventsTests = api_tests;

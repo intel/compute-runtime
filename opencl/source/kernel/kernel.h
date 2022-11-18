@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/csr_properties_flags.h"
-#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/address_patch.h"
@@ -18,10 +17,8 @@
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/properties_helper.h"

@@ -16,7 +16,6 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -32,7 +31,6 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <algorithm>
 

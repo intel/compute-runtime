@@ -15,7 +15,6 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_arg_metadata.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <array>
 #include <cstddef>

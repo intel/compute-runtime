@@ -8,29 +8,18 @@
 #include "program.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
-#include "shared/source/compiler_interface/oclc_extensions.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-
-#include <sstream>
 
 namespace NEO {
 

@@ -31,7 +31,6 @@
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/adapter_factory.h"
-#include "shared/source/os_interface/windows/wddm/adapter_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
@@ -40,7 +39,6 @@
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "gmm_memory.h"
 

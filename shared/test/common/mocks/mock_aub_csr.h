@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/wait_status.h"

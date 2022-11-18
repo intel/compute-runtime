@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "third_party/aub_stream/headers/allocation_params.h"
 

@@ -9,7 +9,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/idlist.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <atomic>
 #include <cstdint>

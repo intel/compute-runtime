@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/aub/aub_stream_provider.h"
 #include "shared/source/aub/aub_subcapture.h"

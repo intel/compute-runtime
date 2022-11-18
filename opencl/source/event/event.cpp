@@ -16,7 +16,6 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/range.h"
-#include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -27,7 +26,6 @@
 #include "opencl/source/event/event_tracker.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/source/mem_obj/mem_obj.h"
 
 #include <algorithm>
 

@@ -7,23 +7,14 @@
 
 #pragma once
 #include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device_binary_format/debug_zebin.h"
-#include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
-#include "shared/source/utilities/const_stringref.h"
 
-#include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/base_object.h"
 
-#include "cif/builtins/memory/buffer/buffer.h"
-#include "patch_list.h"
-
 #include <functional>
-#include <string>
-#include <vector>
 
 namespace NEO {
 namespace PatchTokenBinary {

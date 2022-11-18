@@ -17,7 +17,6 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <errno.h>
 #include <string.h>
