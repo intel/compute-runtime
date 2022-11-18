@@ -15,10 +15,13 @@
 
 namespace aub_stream {
 
+enum class ProductFamily : uint32_t;
+
 struct AllocationParams;
 struct HardwareContext;
 
 struct AubManagerOptions {
+    uint32_t version{};
     uint32_t productFamily{};
     uint32_t devicesCount{};
     uint64_t memoryBankSize{};
@@ -53,9 +56,10 @@ class AubManager {
     static AubManager *create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping,
                               bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace);
 
+    static AubManager *create(ProductFamily productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping,
+                              bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace);
+
     virtual void writeMemory2(AllocationParams allocationParams) = 0;
-    static AubManager *create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping,
-                              bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace, SharedMemoryInfo sharedMemoryInfo);
 
     static AubManager *create(const struct AubManagerOptions &options);
 
