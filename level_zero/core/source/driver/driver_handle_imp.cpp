@@ -650,16 +650,37 @@ ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vert
         this->initializeVertexes();
     }
 
-    uint32_t fabricVertexCount = static_cast<uint32_t>(this->fabricVertices.size());
+    bool exposeSubDevices = false;
+    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
+        exposeSubDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
+    }
+
     if (*pCount == 0) {
-        *pCount = fabricVertexCount;
+        if (exposeSubDevices) {
+            for (auto &vertex : this->fabricVertices) {
+                *pCount += std::max(static_cast<uint32_t>(vertex->subVertices.size()), 1u);
+            }
+        } else {
+            *pCount = static_cast<uint32_t>(this->fabricVertices.size());
+        }
         return ZE_RESULT_SUCCESS;
     }
 
-    *pCount = std::min(fabricVertexCount, *pCount);
-
-    for (uint32_t index = 0; index < *pCount; index++) {
-        phVertices[index] = this->fabricVertices[index]->toHandle();
+    uint32_t i = 0;
+    for (auto vertex : this->fabricVertices) {
+        if (vertex->subVertices.size() > 0 && exposeSubDevices) {
+            for (auto subVertex : vertex->subVertices) {
+                phVertices[i++] = subVertex->toHandle();
+                if (i == *pCount) {
+                    return ZE_RESULT_SUCCESS;
+                }
+            }
+        } else {
+            phVertices[i++] = vertex->toHandle();
+            if (i == *pCount) {
+                return ZE_RESULT_SUCCESS;
+            }
+        }
     }
 
     return ZE_RESULT_SUCCESS;

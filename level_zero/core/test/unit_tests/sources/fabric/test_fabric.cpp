@@ -215,6 +215,58 @@ TEST_F(FabricVertexFixture, GivenDevicesAreCreatedWhenFabricVertexIsNotSetToDevi
     EXPECT_EQ(hVertex, nullptr);
 }
 
+class FabricVertexSubdeviceAsDeviceTestFixture : public MultiDeviceFixture,
+                                                 public ::testing::Test {
+    void SetUp() override {
+        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+        NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
+        MultiDeviceFixture::setUp();
+    }
+
+    void TearDown() override {
+        MultiDeviceFixture::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(FabricVertexSubdeviceAsDeviceTestFixture, GivenReturnSubDevicesAsApiDevicesIsSetWhenFabricVerticesGetExpIsCalledCorrectVerticesAreReturned) {
+
+    uint32_t count = 0;
+    std::vector<ze_fabric_vertex_handle_t> phVertices;
+    EXPECT_EQ(driverHandle->fabricVertexGetExp(&count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 5u);
+
+    // Requesting for a reduced count
+    count -= 1;
+    phVertices.resize(count);
+    EXPECT_EQ(driverHandle->fabricVertexGetExp(&count, phVertices.data()), ZE_RESULT_SUCCESS);
+
+    ze_device_handle_t hDevice{};
+    // 0.0
+    EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[0], &hDevice), ZE_RESULT_SUCCESS);
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(hDevice);
+    EXPECT_TRUE(deviceImp->isSubdevice);
+    EXPECT_EQ(deviceImp->getPhysicalSubDeviceId(), 0u);
+
+    // 0.1
+    EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[1], &hDevice), ZE_RESULT_SUCCESS);
+    deviceImp = static_cast<DeviceImp *>(hDevice);
+    EXPECT_TRUE(deviceImp->isSubdevice);
+    EXPECT_EQ(deviceImp->getPhysicalSubDeviceId(), 1u);
+
+    // 1.1
+    EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[2], &hDevice), ZE_RESULT_SUCCESS);
+    deviceImp = static_cast<DeviceImp *>(hDevice);
+    EXPECT_FALSE(deviceImp->isSubdevice);
+    EXPECT_EQ(deviceImp->getPhysicalSubDeviceId(), 1u);
+
+    // 2.0
+    EXPECT_EQ(L0::zeFabricVertexGetDeviceExp(phVertices[3], &hDevice), ZE_RESULT_SUCCESS);
+    deviceImp = static_cast<DeviceImp *>(hDevice);
+    EXPECT_TRUE(deviceImp->isSubdevice);
+    EXPECT_EQ(deviceImp->getPhysicalSubDeviceId(), 0u);
+}
+
 using FabricEdgeFixture = Test<MultiDeviceFixture>;
 
 TEST_F(FabricEdgeFixture, GivenFabricVerticesAreCreatedWhenZeFabricEdgeGetExpIsCalledThenReturnSuccess) {
