@@ -50,6 +50,8 @@ class Context : public BaseObject<_cl_context> {
         static constexpr auto startingOffset = chunkAlignment;
 
         static_assert(aggregatedSmallBuffersPoolSize > smallBufferThreshold, "Largest allowed buffer needs to fit in pool");
+        static_assert(aggregatedSmallBuffersPoolSize <= GraphicsAllocation::largestLockableBufferSize, "Pool buffer should be lockable");
+
         Buffer *allocateBufferFromPool(const MemoryProperties &memoryProperties,
                                        cl_mem_flags flags,
                                        cl_mem_flags_intel flagsIntel,

@@ -84,6 +84,12 @@ TEST_F(aggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWh
 
 using aggregatedSmallBuffersEnabledTest = AggregatedSmallBuffersTestTemplate<1>;
 
+TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenCheckingMainStorageAllocationStorageInfoThenItIsLockable) {
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_NE(poolAllocator->mainStorage, nullptr);
+    EXPECT_TRUE(poolAllocator->mainStorage->getGraphicsAllocation(mockRootDeviceIndex)->isAllocationLockable());
+}
+
 TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLargerThanThresholdWhenBufferCreateCalledThenDoNotUsePool) {
     ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
     ASSERT_NE(poolAllocator->mainStorage, nullptr);

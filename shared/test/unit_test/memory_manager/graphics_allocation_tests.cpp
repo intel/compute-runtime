@@ -198,6 +198,18 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsImageThenAllocationIsNotLockabl
     EXPECT_FALSE(GraphicsAllocation::isLockable(AllocationType::IMAGE));
 }
 
+TEST(GraphicsAllocationTest, whenAllocationTypeIsNotBufferThenAllocationIsNotSmallBuffer) {
+    EXPECT_FALSE(GraphicsAllocation::isSmallBuffer(AllocationType::IMAGE, GraphicsAllocation::largestLockableBufferSize));
+}
+
+TEST(GraphicsAllocationTest, whenAllocationSizeIsAboveThresholdThenAllocationIsNotSmallBuffer) {
+    EXPECT_FALSE(GraphicsAllocation::isSmallBuffer(AllocationType::BUFFER, GraphicsAllocation::largestLockableBufferSize + 1));
+}
+
+TEST(GraphicsAllocationTest, whenAllocationTypeIsBufferAndSizeIsAtMostThresholdThenAllocationIsSmallBuffer) {
+    EXPECT_TRUE(GraphicsAllocation::isSmallBuffer(AllocationType::BUFFER, GraphicsAllocation::largestLockableBufferSize));
+}
+
 TEST(GraphicsAllocationTest, givenNumMemoryBanksWhenGettingNumHandlesForKmdSharedAllocationThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 

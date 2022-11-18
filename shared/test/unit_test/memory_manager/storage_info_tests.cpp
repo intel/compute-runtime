@@ -459,15 +459,19 @@ TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationWithCpuAccessRequiredW
 TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationThatIsLockableWhenCreatingStorageInfoThenIsLockableFlagIsEnabled) {
     auto firstAllocationIdx = static_cast<int>(AllocationType::UNKNOWN);
     auto lastAllocationIdx = static_cast<int>(AllocationType::COUNT);
+    std::array<size_t, 2> allocationSizes = {1u, GraphicsAllocation::largestLockableBufferSize + 1};
 
-    for (int allocationIdx = firstAllocationIdx; allocationIdx != lastAllocationIdx; allocationIdx++) {
-        auto allocationType = static_cast<AllocationType>(allocationIdx);
-        AllocationProperties properties{mockRootDeviceIndex, false, 1u, allocationType, false, singleTileMask};
-        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-        if (GraphicsAllocation::isLockable(properties.allocationType)) {
-            EXPECT_TRUE(storageInfo.isLockable);
-        } else {
-            EXPECT_FALSE(storageInfo.isLockable);
+    for (auto allocationSize : allocationSizes) {
+        for (int allocationIdx = firstAllocationIdx; allocationIdx != lastAllocationIdx; allocationIdx++) {
+            auto allocationType = static_cast<AllocationType>(allocationIdx);
+            AllocationProperties properties{mockRootDeviceIndex, false, allocationSize, allocationType, false, singleTileMask};
+            auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+            if (GraphicsAllocation::isLockable(properties.allocationType) ||
+                GraphicsAllocation::isSmallBuffer(properties.allocationType, allocationSize)) {
+                EXPECT_TRUE(storageInfo.isLockable);
+            } else {
+                EXPECT_FALSE(storageInfo.isLockable);
+            }
         }
     }
 }
