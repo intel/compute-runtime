@@ -1355,7 +1355,7 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
 
 template <typename GfxFamily>
 struct MockL0HwHelperSupportsCmdListHeapSharingHw : L0::L0HwHelperHw<GfxFamily> {
-    bool platformSupportsCmdListHeapSharing(const HardwareInfo &hwInfo) const override { return true; }
+    bool platformSupportsCmdListHeapSharing() const override { return true; }
 };
 
 HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsFollowsTheSameSetting, IsAtLeastSkl) {
@@ -1385,7 +1385,7 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdLis
 
 template <typename GfxFamily>
 struct MockL0HwHelperNoSupportsCmdListHeapSharingHw : L0::L0HwHelperHw<GfxFamily> {
-    bool platformSupportsCmdListHeapSharing(const HardwareInfo &hwInfo) const override { return false; }
+    bool platformSupportsCmdListHeapSharing() const override { return false; }
 };
 
 HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsIsNotEnabled, IsAtLeastSkl) {

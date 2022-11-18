@@ -19,22 +19,22 @@ bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const {
+bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing() const {
     return false;
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const {
+bool L0HwHelperHw<Family>::platformSupportsStateComputeModeTracking() const {
     return false;
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const {
+bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking() const {
     return false;
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const {
+bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking() const {
     return false;
 }
 

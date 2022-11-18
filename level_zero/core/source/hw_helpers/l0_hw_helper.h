@@ -19,6 +19,7 @@ namespace NEO {
 enum class EngineGroupType : uint32_t;
 struct HardwareInfo;
 struct EngineGroupT;
+struct RootDeviceEnvironment;
 } // namespace NEO
 
 namespace L0 {
@@ -33,10 +34,10 @@ using L0CoreHelper = L0HwHelper;
 class L0HwHelper {
   public:
     static L0HwHelper &get(GFXCORE_FAMILY gfxCore);
-    static bool enableFrontEndStateTracking(const NEO::HardwareInfo &hwInfo);
-    static bool enablePipelineSelectStateTracking(const NEO::HardwareInfo &hwInfo);
-    static bool enableStateComputeModeTracking(const NEO::HardwareInfo &hwInfo);
-    static bool enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwInfo, bool cmdlistSupport);
+    static bool enableFrontEndStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+    static bool enablePipelineSelectStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+    static bool enableStateComputeModeTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+    static bool enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool cmdlistSupport);
     static bool usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo);
     static bool useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo);
     static bool useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo);
@@ -53,10 +54,10 @@ class L0HwHelper {
     virtual std::vector<EuThread::ThreadId> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, uint32_t tile, const uint8_t *bitmask, const size_t bitmaskSize) const = 0;
     virtual bool multiTileCapablePlatform() const = 0;
     virtual bool alwaysAllocateEventInLocalMem() const = 0;
-    virtual bool platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const = 0;
-    virtual bool platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const = 0;
-    virtual bool platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const = 0;
-    virtual bool platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual bool platformSupportsCmdListHeapSharing() const = 0;
+    virtual bool platformSupportsStateComputeModeTracking() const = 0;
+    virtual bool platformSupportsFrontEndTracking() const = 0;
+    virtual bool platformSupportsPipelineSelectTracking() const = 0;
 
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const = 0;
@@ -84,10 +85,10 @@ class L0HwHelperHw : public L0HwHelper {
     std::vector<EuThread::ThreadId> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, uint32_t tile, const uint8_t *bitmask, const size_t bitmaskSize) const override;
     bool multiTileCapablePlatform() const override;
     bool alwaysAllocateEventInLocalMem() const override;
-    bool platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const override;
-    bool platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const override;
-    bool platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const override;
-    bool platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const override;
+    bool platformSupportsCmdListHeapSharing() const override;
+    bool platformSupportsStateComputeModeTracking() const override;
+    bool platformSupportsFrontEndTracking() const override;
+    bool platformSupportsPipelineSelectTracking() const override;
 
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const override;

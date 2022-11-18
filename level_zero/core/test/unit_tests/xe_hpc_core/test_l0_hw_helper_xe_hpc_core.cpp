@@ -31,26 +31,22 @@ XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenHpcPlatformsWhenAlwaysAllocateEventI
 
 XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
     auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_TRUE(l0CoreHelper.platformSupportsCmdListHeapSharing(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.platformSupportsCmdListHeapSharing());
 }
 
 XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnTrue) {
     auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_TRUE(l0CoreHelper.platformSupportsStateComputeModeTracking(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.platformSupportsStateComputeModeTracking());
 }
 
 XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnTrue) {
     auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_TRUE(l0CoreHelper.platformSupportsFrontEndTracking(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.platformSupportsFrontEndTracking());
 }
 
 XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnTrue) {
     auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_TRUE(l0CoreHelper.platformSupportsPipelineSelectTracking(hwInfo));
+    EXPECT_TRUE(l0CoreHelper.platformSupportsPipelineSelectTracking());
 }
 
 } // namespace ult

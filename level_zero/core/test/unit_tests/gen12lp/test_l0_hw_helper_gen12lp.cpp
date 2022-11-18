@@ -20,26 +20,26 @@ HWTEST_EXCLUDE_PRODUCT(L0HwHelperTest, givenBitmaskWithAttentionBitsForAllEUsWhe
 HWTEST_EXCLUDE_PRODUCT(L0HwHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThenCorrectThreadsAreReturned, IGFX_GEN12LP_CORE);
 HWTEST_EXCLUDE_PRODUCT(L0HwHelperTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWhenGettingThreadsThenCorrectThreadsAreReturned, IGFX_GEN12LP_CORE);
 
-using L0HwHelperTestGen12Lp = ::testing::Test;
+using L0HwHelperTestGen12Lp = Test<DeviceFixture>;
 
 GEN12LPTEST_F(L0HwHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnFalse) {
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsCmdListHeapSharing(hwInfo));
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    EXPECT_FALSE(l0CoreHelper.platformSupportsCmdListHeapSharing());
 }
 
 GEN12LPTEST_F(L0HwHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnFalse) {
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsStateComputeModeTracking(hwInfo));
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    EXPECT_FALSE(l0CoreHelper.platformSupportsStateComputeModeTracking());
 }
 
 GEN12LPTEST_F(L0HwHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnFalse) {
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsFrontEndTracking(hwInfo));
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    EXPECT_FALSE(l0CoreHelper.platformSupportsFrontEndTracking());
 }
 
 GEN12LPTEST_F(L0HwHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnFalse) {
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsPipelineSelectTracking(hwInfo));
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    EXPECT_FALSE(l0CoreHelper.platformSupportsPipelineSelectTracking());
 }
 
 } // namespace ult

@@ -70,10 +70,10 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
             device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
         }
-        auto &hwInfo = device->getHwInfo();
-        this->stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking(hwInfo);
-        this->frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking(hwInfo);
-        this->pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking(hwInfo);
+        auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        this->stateComputeModeTracking = L0CoreHelper::enableStateComputeModeTracking(rootDeviceEnvironment);
+        this->frontEndStateTracking = L0CoreHelper::enableFrontEndStateTracking(rootDeviceEnvironment);
+        this->pipelineSelectStateTracking = L0CoreHelper::enablePipelineSelectStateTracking(rootDeviceEnvironment);
     }
     return returnValue;
 }

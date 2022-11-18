@@ -133,14 +133,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->flags = flags;
 
     auto &hwInfo = device->getHwInfo();
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     this->dcFlushSupport = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     this->systolicModeSupport = NEO::PreambleHelper<GfxFamily>::isSystolicModeConfigurable(hwInfo);
-    this->stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking(hwInfo);
-    this->frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking(hwInfo);
-    this->pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking(hwInfo);
-    this->pipeControlMultiKernelEventSync = L0HwHelper::usePipeControlMultiKernelEventSync(hwInfo);
-    this->compactL3FlushEventPacket = L0HwHelper::useCompactL3FlushEventPacket(hwInfo);
-    this->signalAllEventPackets = L0HwHelper::useSignalAllEventPackets(hwInfo);
+    this->stateComputeModeTracking = L0CoreHelper::enableStateComputeModeTracking(rootDeviceEnvironment);
+    this->frontEndStateTracking = L0CoreHelper::enableFrontEndStateTracking(rootDeviceEnvironment);
+    this->pipelineSelectStateTracking = L0CoreHelper::enablePipelineSelectStateTracking(rootDeviceEnvironment);
+    this->pipeControlMultiKernelEventSync = L0CoreHelper::usePipeControlMultiKernelEventSync(hwInfo);
+    this->compactL3FlushEventPacket = L0CoreHelper::useCompactL3FlushEventPacket(hwInfo);
+    this->signalAllEventPackets = L0CoreHelper::useSignalAllEventPackets(hwInfo);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
