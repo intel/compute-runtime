@@ -10,7 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/kernel/kernel_arg_metadata.h"
 #include "shared/source/utilities/arrayref.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <limits>
 

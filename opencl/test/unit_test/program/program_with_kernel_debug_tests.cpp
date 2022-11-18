@@ -11,7 +11,6 @@
 #include "shared/test/common/device_binary_format/elf/elf_tests_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/kernel_filename_helper.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
@@ -28,8 +27,8 @@
 #include "opencl/test/unit_test/program/program_tests.h"
 
 #include "gtest/gtest.h"
+#include "program_debug_data.h"
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>

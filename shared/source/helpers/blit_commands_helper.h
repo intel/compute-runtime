@@ -12,7 +12,6 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/vec.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
 #include <functional>

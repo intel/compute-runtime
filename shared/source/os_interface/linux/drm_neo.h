@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -17,16 +16,11 @@
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/api_intercept.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "engine_node.h"
 #include "igfxfmid.h"
 
 #include <array>
-#include <atomic>
-#include <cerrno>
-#include <fcntl.h>
 #include <limits>
 #include <memory>
 #include <mutex>

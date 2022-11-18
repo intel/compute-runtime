@@ -7,7 +7,7 @@
 
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 
-#include "shared/source/utilities/range.h"
+#include "shared/source/helpers/aligned_memory.h"
 
 #include <algorithm>
 

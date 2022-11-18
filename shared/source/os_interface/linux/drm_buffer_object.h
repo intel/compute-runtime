@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"

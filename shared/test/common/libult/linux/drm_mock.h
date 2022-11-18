@@ -16,6 +16,7 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 #include <cstdio>
+#include <fcntl.h>
 #include <fstream>
 #include <limits.h>
 #include <map>

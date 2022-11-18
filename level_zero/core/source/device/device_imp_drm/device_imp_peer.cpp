@@ -11,6 +11,8 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 
+#include <fcntl.h>
+
 namespace L0 {
 
 const std::string iafDirectoryLegacy = "iaf.";

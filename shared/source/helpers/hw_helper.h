@@ -13,7 +13,6 @@
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/options.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "igfxfmid.h"
 #include "sku_info.h"

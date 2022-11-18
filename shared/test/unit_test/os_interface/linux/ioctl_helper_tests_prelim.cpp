@@ -17,6 +17,8 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include <fcntl.h>
+
 using namespace NEO;
 
 extern std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions);

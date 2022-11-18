@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,7 @@
 
 #pragma once
 
-#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
 
 #include "level_zero/core/source/image/image_imp.h"
 

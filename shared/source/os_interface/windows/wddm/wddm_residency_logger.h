@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/os_interface/windows/wddm/wddm_defs.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <chrono>

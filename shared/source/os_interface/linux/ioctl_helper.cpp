@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 
+#include <fcntl.h>
 #include <sstream>
 
 namespace NEO {

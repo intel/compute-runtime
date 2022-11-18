@@ -15,7 +15,6 @@
 #include "patch_g7.h"
 #include "patch_list.h"
 #include "patch_shared.h"
-#include "program_debug_data.h"
 
 #include <cstdint>
 

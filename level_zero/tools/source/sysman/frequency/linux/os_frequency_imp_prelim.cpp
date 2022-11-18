@@ -10,6 +10,8 @@
 #include "igfxfmid.h"
 #include "sysman/linux/os_sysman_imp.h"
 
+#include <cmath>
+
 namespace L0 {
 
 const bool LinuxFrequencyImp::canControl = true; // canControl is true on i915 (GEN9 Hardcode)

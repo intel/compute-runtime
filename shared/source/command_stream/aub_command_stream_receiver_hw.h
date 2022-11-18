@@ -11,10 +11,10 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/array_count.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/page_table.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
+#include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include "aub_mapper.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
+
+#include <unordered_map>
 
 template <NEO::Elf::ELF_IDENTIFIER_CLASS NumBits = NEO::Elf::EI_CLASS_64>
 struct MockElf : public NEO::Elf::Elf<NumBits> {

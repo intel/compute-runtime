@@ -16,7 +16,6 @@
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/utilities/idlist.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <atomic>
 #include <cstddef>

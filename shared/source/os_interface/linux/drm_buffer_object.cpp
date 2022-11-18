@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"

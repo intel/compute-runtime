@@ -9,7 +9,6 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/pipe_control_args.h"
-#include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/stackvec.h"
 

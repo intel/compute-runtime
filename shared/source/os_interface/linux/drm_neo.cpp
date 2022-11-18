@@ -36,10 +36,12 @@
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/directory.h"
 
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
 #include <map>
 
 namespace NEO {

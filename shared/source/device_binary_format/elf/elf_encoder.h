@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/device_binary_format/elf/elf.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/stackvec.h"

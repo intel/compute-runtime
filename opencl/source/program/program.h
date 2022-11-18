@@ -21,7 +21,7 @@
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "patch_list.h"
 
-#include <list>
+#include <functional>
 #include <string>
 #include <vector>
 
