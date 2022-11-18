@@ -1161,7 +1161,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
-    size_t expectedSize = directSubmission->getSizeSemaphoreSection() +
+    size_t expectedSize = directSubmission->getSizeSemaphoreSection(false) +
                           Dispatcher::getSizePreemption() +
                           directSubmission->getSizeDispatch();
 
@@ -1202,7 +1202,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->blitterDirectSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
-    size_t expectedSize = directSubmission->getSizeSemaphoreSection() +
+    size_t expectedSize = directSubmission->getSizeSemaphoreSection(false) +
                           Dispatcher::getSizePreemption() +
                           directSubmission->getSizeDispatch();
 

@@ -110,8 +110,10 @@ class DirectSubmissionHw {
 
     void cpuCachelineFlush(void *ptr, size_t size);
 
-    void dispatchSemaphoreSection(uint32_t value);
-    size_t getSizeSemaphoreSection();
+    void dispatchSemaphoreSection(uint32_t value, bool firstSubmission);
+    size_t getSizeSemaphoreSection(bool firstSubmission);
+
+    void dispatchRelaxedOrderingSchedulerSection(uint32_t value);
 
     void dispatchStartSection(uint64_t gpuStartAddress);
     size_t getSizeStartSection();
@@ -121,6 +123,8 @@ class DirectSubmissionHw {
 
     void dispatchTaskStoreSection(uint64_t taskStartSectionVa);
     MOCKABLE_VIRTUAL void preinitializeTaskStoreSection();
+
+    void initRelaxedOrderingRegisters();
 
     void setReturnAddress(void *returnCmd, uint64_t returnAddress);
 

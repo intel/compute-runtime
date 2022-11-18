@@ -352,7 +352,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedAnd
     auto expectedRingBuffer = directSubmission.currentRingBuffer;
     GraphicsAllocation *oldRingBuffer = directSubmission.ringCommandStream.getGraphicsAllocation();
 
-    auto requiredSize = directSubmission.getSizeSemaphoreSection();
+    auto requiredSize = directSubmission.getSizeSemaphoreSection(false);
     if (directSubmission.miMemFenceRequired) {
         requiredSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
@@ -441,8 +441,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSemaphoreThenExp
     bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
-    directSubmission.dispatchSemaphoreSection(1u);
-    EXPECT_EQ(directSubmission.getSizeSemaphoreSection(), directSubmission.ringCommandStream.getUsed());
+    directSubmission.dispatchSemaphoreSection(1u, false);
+    EXPECT_EQ(directSubmission.getSizeSemaphoreSection(false), directSubmission.ringCommandStream.getUsed());
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchStartSectionThenExpectCorrectSizeUsed) {
@@ -509,7 +509,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpec
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
                           Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
-                          directSubmission.getSizeSemaphoreSection();
+                          directSubmission.getSizeSemaphoreSection(false);
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
 }
@@ -525,7 +525,7 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = Dispatcher::getSizeStoreDwordCommand() +
                           Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
                           Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
-                          directSubmission.getSizeSemaphoreSection();
+                          directSubmission.getSizeSemaphoreSection(false);
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
 }
@@ -540,7 +540,7 @@ HWTEST_F(DirectSubmissionTest,
     directSubmission.workloadMode = 2;
     size_t expectedSize = Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
                           Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
-                          directSubmission.getSizeSemaphoreSection();
+                          directSubmission.getSizeSemaphoreSection(false);
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
 }
@@ -553,7 +553,7 @@ HWTEST_F(DirectSubmissionTest,
     directSubmission.disableCacheFlush = true;
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
-                          directSubmission.getSizeSemaphoreSection();
+                          directSubmission.getSizeSemaphoreSection(false);
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
 }
@@ -567,7 +567,7 @@ HWTEST_F(DirectSubmissionTest,
     directSubmission.disableMonitorFence = true;
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
-                          directSubmission.getSizeSemaphoreSection();
+                          directSubmission.getSizeSemaphoreSection(false);
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
 }
@@ -797,7 +797,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(0u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
     size_t expectedSize = Dispatcher::getSizePreemption() +
-                          directSubmission.getSizeSemaphoreSection();
+                          directSubmission.getSizeSemaphoreSection(false);
     if (directSubmission.miMemFenceRequired) {
         expectedSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
@@ -870,7 +870,7 @@ HWTEST_F(DirectSubmissionTest,
     expectedSemaphoreValue += expectedExecCount;
     EXPECT_EQ(expectedExecCount, directSubmission.diagnostic->getExecutionsCount());
     size_t expectedSize = Dispatcher::getSizePreemption() +
-                          directSubmission.getSizeSemaphoreSection() +
+                          directSubmission.getSizeSemaphoreSection(false) +
                           directSubmission.getDiagnosticModeSection();
     expectedSize += expectedExecCount * directSubmission.getSizeDispatch();
 
@@ -967,8 +967,8 @@ HWTEST_F(DirectSubmissionTest,
     expectedSemaphoreValue += expectedExecCount;
     EXPECT_EQ(expectedExecCount, directSubmission.diagnostic->getExecutionsCount());
     size_t expectedSize = Dispatcher::getSizePreemption() +
-                          directSubmission.getSizeSemaphoreSection();
-    size_t expectedDispatch = directSubmission.getSizeSemaphoreSection();
+                          directSubmission.getSizeSemaphoreSection(false);
+    size_t expectedDispatch = directSubmission.getSizeSemaphoreSection(false);
     EXPECT_EQ(expectedDispatch, directSubmission.getSizeDispatch());
     expectedSize += expectedExecCount * expectedDispatch;
 
