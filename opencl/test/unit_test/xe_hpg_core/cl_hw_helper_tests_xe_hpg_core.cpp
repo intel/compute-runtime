@@ -114,11 +114,11 @@ XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, givenDifferentCLImageFormatsWhenCall
         {{CL_R, CL_UNORM_INT8}, true},
         {{CL_R, CL_UNORM_INT16}, true},
     };
-    MockContext context;
-    auto &clHwHelper = ClHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
 
     for (const auto &format : imageFormats) {
-        bool result = clHwHelper.allowImageCompression(format.imageFormat);
+        bool result = clCoreHelper.allowImageCompression(format.imageFormat);
         EXPECT_EQ(format.isCompressable, result);
     }
 }

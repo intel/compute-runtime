@@ -22,7 +22,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ClHwHelperTestXeHpAndLater, givenCLImageFormatsWhen
         {CL_RG, CL_UNSIGNED_INT32},
         {CL_RGBA, CL_UNSIGNED_INT32},
     };
-    MockContext context;
+
     auto &clCoreHelper = getHelper<ClCoreHelper>();
     for (const auto &format : redescribeFormats) {
         EXPECT_EQ(false, clCoreHelper.isFormatRedescribable(format));

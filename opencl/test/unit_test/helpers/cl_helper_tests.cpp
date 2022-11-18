@@ -142,15 +142,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ClHwHelperTest, givenCLImageFormatsWhenCallingIsForm
         {CL_RGBA, CL_UNSIGNED_INT32},
     };
 
-    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-
-    const ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::readWrite();
+    auto &clCoreHelper = getHelper<ClCoreHelper>();
+    auto formats = SurfaceFormats::readWrite();
     for (const auto &format : formats) {
         const cl_image_format oclFormat = format.OCLImageFormat;
         bool expectedResult = true;
         for (const auto &nonRedescribableFormat : redescribeFormats) {
             expectedResult &= (memcmp(&oclFormat, &nonRedescribableFormat, sizeof(cl_image_format)) != 0);
         }
-        EXPECT_EQ(expectedResult, clHwHelper.isFormatRedescribable(oclFormat));
+        EXPECT_EQ(expectedResult, clCoreHelper.isFormatRedescribable(oclFormat));
     }
 }
