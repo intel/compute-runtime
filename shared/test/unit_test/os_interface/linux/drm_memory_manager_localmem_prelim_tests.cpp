@@ -2270,7 +2270,7 @@ struct DrmCommandStreamEnhancedPrelimTest : public DrmCommandStreamEnhancedTempl
         LinearStream cs(commandBuffer);
         CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
         EncodeNoop<FamilyType>::alignToCacheLine(cs);
-        this->batchBuffer = BatchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+        this->batchBuffer = BatchBuffer{cs.getGraphicsAllocation(), 0, 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
         this->allocation = this->mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
         this->csr->makeResident(*this->allocation);
     }

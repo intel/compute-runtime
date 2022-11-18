@@ -1643,9 +1643,15 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
 
     EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R6 + 4, static_cast<uint32_t>(deferredTasksVa >> 32)));
 
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R7, 0));
+    EXPECT_NE(0u, batchBuffer.taskStartAddress);
 
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R7 + 4, 0));
+    uint32_t taskStartAddressLow = static_cast<uint32_t>(batchBuffer.taskStartAddress & 0xFFFF'FFFFULL);
+    EXPECT_NE(0u, taskStartAddressLow);
+    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R7, taskStartAddressLow));
+
+    uint32_t taskStartHigh = static_cast<uint32_t>(batchBuffer.taskStartAddress >> 32);
+    EXPECT_NE(0u, taskStartHigh);
+    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R7 + 4, taskStartHigh));
 
     EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, 8));
 

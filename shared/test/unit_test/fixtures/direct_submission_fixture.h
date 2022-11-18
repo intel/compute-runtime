@@ -44,6 +44,7 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
         batchBuffer.endCmdPtr = &bbStart[0];
         batchBuffer.commandBufferAllocation = commandBuffer;
         batchBuffer.usedSize = 0x40;
+        batchBuffer.taskStartAddress = 0x881112340000;
     }
 
     void tearDown() {

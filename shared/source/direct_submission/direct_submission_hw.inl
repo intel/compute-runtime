@@ -615,7 +615,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     // mode 2 does not dispatch any commands
 
     if (this->relaxedOrderingEnabled) {
-        dispatchTaskStoreSection(0);
+        dispatchTaskStoreSection(batchBuffer.taskStartAddress);
     }
 
     if (!disableCacheFlush) {
@@ -649,9 +649,9 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeTaskStoreSection() 
 
     EncodeMiPredicate<GfxFamily>::encode(stream, MiPredicateType::Disable);
 
-    uint64_t deferredWalkerListGpuVa = deferredTasksListAllocation->getGpuAddress();
-    LriHelper<GfxFamily>::program(&stream, CS_GPR_R6, static_cast<uint32_t>(deferredWalkerListGpuVa & 0xFFFF'FFFFULL), true);
-    LriHelper<GfxFamily>::program(&stream, CS_GPR_R6 + 4, static_cast<uint32_t>(deferredWalkerListGpuVa >> 32), true);
+    uint64_t deferredTasksListGpuVa = deferredTasksListAllocation->getGpuAddress();
+    LriHelper<GfxFamily>::program(&stream, CS_GPR_R6, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&stream, CS_GPR_R6 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
 
     // Task start VA
     LriHelper<GfxFamily>::program(&stream, CS_GPR_R7, 0, true);

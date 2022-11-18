@@ -605,6 +605,33 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     EXPECT_EQ(newTaskCount, csr.latestWaitForCompletionWithTimeoutTaskCount.load());
 }
 
+HWTEST_F(BcsTests, givenTaskStreamWhenFlushingThenStoreTaskStartAddress) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.recordFlusheBatchBuffer = true;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+
+    constexpr size_t hostAllocationSize = MemoryConstants::pageSize;
+    auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
+    void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
+
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto &commandStream = csr.getCS(MemoryConstants::pageSize);
+    size_t commandStreamOffset = 4;
+    commandStream.getSpace(commandStreamOffset);
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                          csr, graphicsAllocation, nullptr, hostPtr,
+                                                                          graphicsAllocation->getGpuAddress(), 0,
+                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
+
+    EXPECT_EQ((commandStream.getGpuBase() + commandStreamOffset), csr.latestFlushedBatchBuffer.taskStartAddress);
+}
+
 template <typename FamilyType>
 class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
   public:
@@ -1291,7 +1318,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     flushBcsTask(&csr, blitProperties, true, *pDevice);
     hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
-    //1st rectangle  xCopy = maxWidthToCopy, yCopy = maxHeightToCopy, zCopy = 1
+    // 1st rectangle  xCopy = maxWidthToCopy, yCopy = maxHeightToCopy, zCopy = 1
     auto cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
     auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
@@ -1334,7 +1361,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     srcAddressOffset += maxWidthToCopy;
     dstAddressOffset += maxWidthToCopy;
 
-    //4th rectangle  xCopy = (region[0] - maxWidthToCopy), yCopy = (region[0] - maxHeightToCopy), zCopy = 1
+    // 4th rectangle  xCopy = (region[0] - maxWidthToCopy), yCopy = (region[0] - maxHeightToCopy), zCopy = 1
     cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(++cmdIterator, hwParser.cmdList.end());
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
@@ -1353,7 +1380,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     dstAddressOffset += (dstRowPitch * (region[1] - maxHeightToCopy - 1));
     dstAddressOffset += (dstSlicePitch - (dstRowPitch * region[1]));
 
-    //5th rectangle xCopy = maxWidthToCopy, yCopy = maxHeightToCopy, zCopy = 1
+    // 5th rectangle xCopy = maxWidthToCopy, yCopy = maxHeightToCopy, zCopy = 1
     cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(++cmdIterator, hwParser.cmdList.end());
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);

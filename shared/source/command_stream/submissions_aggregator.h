@@ -22,6 +22,7 @@ struct BatchBuffer {
     BatchBuffer(GraphicsAllocation *commandBufferAllocation,
                 size_t startOffset,
                 size_t chainedBatchBufferStartOffset,
+                uint64_t taskStartAddress,
                 GraphicsAllocation *chainedBatchBuffer,
                 bool requiresCoherency,
                 bool lowPriority,
@@ -35,6 +36,8 @@ struct BatchBuffer {
     GraphicsAllocation *commandBufferAllocation = nullptr;
     size_t startOffset = 0u;
     size_t chainedBatchBufferStartOffset = 0u;
+    uint64_t taskStartAddress = 0; // if task not available, use CSR stream
+
     GraphicsAllocation *chainedBatchBuffer = nullptr;
     bool requiresCoherency = false;
     bool low_priority = false;
@@ -42,7 +45,7 @@ struct BatchBuffer {
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     size_t usedSize = 0u;
 
-    //only used in drm csr in gem close worker active mode
+    // only used in drm csr in gem close worker active mode
     LinearStream *stream = nullptr;
     void *endCmdPtr = nullptr;
 

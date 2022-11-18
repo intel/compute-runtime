@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
@@ -82,7 +83,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenExecBufferErrorWhenFlushInternalTh
 
     LinearStream cs(&cmdBuffer, buff, 128);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     auto ret = static_cast<MockDrmCsr<FamilyType> *>(csr)->flushInternal(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, ret);

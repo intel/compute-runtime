@@ -97,7 +97,7 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::Res
                                                          bool isCooperative) {
     UNRECOVERABLE_IF(csr == nullptr);
 
-    NEO::BatchBuffer batchBuffer(commandStream.getGraphicsAllocation(), offset, 0u, nullptr, false, false,
+    NEO::BatchBuffer batchBuffer(commandStream.getGraphicsAllocation(), offset, 0, 0, nullptr, false, false,
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
                                  commandStream.getUsed(), &commandStream, endingCmdPtr, isCooperative);
 

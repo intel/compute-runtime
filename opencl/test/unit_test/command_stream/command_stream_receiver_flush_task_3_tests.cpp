@@ -69,31 +69,60 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
 
     EXPECT_EQ(cmdBufferList.peekHead(), cmdBufferList.peekTail());
     auto cmdBuffer = cmdBufferList.peekHead();
-    //two more because of preemption allocation and sipKernel in Mid Thread preemption mode
+    // two more because of preemption allocation and sipKernel in Mid Thread preemption mode
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
     csrSurfaceCount += mockCsr->clearColorAllocation ? 1 : 0;
     csrSurfaceCount += mockCsr->getKernelArgsBufferAllocation() ? 1 : 0;
 
-    //we should have 3 heaps, tag allocation and csr command stream + cq
+    // we should have 3 heaps, tag allocation and csr command stream + cq
     EXPECT_EQ(5u + csrSurfaceCount, cmdBuffer->surfaces.size());
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
 
-    //we should be submitting via csr
+    // we should be submitting via csr
     EXPECT_EQ(cmdBuffer->batchBuffer.commandBufferAllocation, mockCsr->commandStream.getGraphicsAllocation());
     EXPECT_EQ(cmdBuffer->batchBuffer.startOffset, 0u);
     EXPECT_FALSE(cmdBuffer->batchBuffer.requiresCoherency);
     EXPECT_FALSE(cmdBuffer->batchBuffer.low_priority);
 
-    //find BB END
+    // find BB END
     parseCommands<FamilyType>(commandStream, 0);
 
     auto itBBend = find<MI_BATCH_BUFFER_END *>(cmdList.begin(), cmdList.end());
     void *bbEndAddress = *itBBend;
 
     EXPECT_EQ(bbEndAddress, cmdBuffer->batchBufferEndLocation);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTaskStreamWhenFlushingThenStoreTaskStartAddress) {
+    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    size_t startOffset = 0x1234;
+    mockCsr->flushTask(commandStream, startOffset, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
+
+    auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
+    EXPECT_FALSE(cmdBufferList.peekIsEmpty());
+
+    EXPECT_EQ(cmdBufferList.peekHead(), cmdBufferList.peekTail());
+    auto cmdBuffer = cmdBufferList.peekHead();
+
+    uint64_t expectedAddress = commandStream.getGpuBase() + startOffset;
+
+    EXPECT_EQ(cmdBuffer->batchBuffer.taskStartAddress, expectedAddress);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndTwoRecordedCommandBuffersWhenFlushTaskIsCalledThenBatchBuffersAreCombined) {
@@ -328,7 +357,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                        dispatchFlags,
                        *pDevice);
 
-    //ensure command stream still used
+    // ensure command stream still used
     EXPECT_EQ(initialBase, commandStream.getCpuBase());
     auto baseAfterFirstFlushTask = commandStream.getCpuBase();
     auto usedAfterFirstFlushTask = commandStream.getUsed();
@@ -417,13 +446,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
     EXPECT_FALSE(cmdBufferList.peekIsEmpty());
     auto cmdBuffer = cmdBufferList.peekHead();
 
-    //preemption allocation + sip kernel
+    // preemption allocation + sip kernel
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
 
     EXPECT_EQ(4u + csrSurfaceCount, cmdBuffer->surfaces.size());
 
-    //copy those surfaces
+    // copy those surfaces
     std::vector<GraphicsAllocation *> residentSurfaces = cmdBuffer->surfaces;
 
     for (auto &graphicsAllocation : residentSurfaces) {
@@ -761,7 +790,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenEnqueueI
 
     EXPECT_EQ(expectedUsed, mockCsr->peekTotalMemoryUsed());
 
-    //after flush it goes to 0
+    // after flush it goes to 0
     mockCsr->flushBatchedSubmissions();
 
     EXPECT_EQ(0u, mockCsr->peekTotalMemoryUsed());
@@ -882,7 +911,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
                        dispatchFlags,
                        *pDevice);
 
-    //expect 2 flushes, since we cannot batch those submissions
+    // expect 2 flushes, since we cannot batch those submissions
     EXPECT_EQ(2u, mockCsr->peekLatestFlushedTaskCount());
     EXPECT_EQ(0u, mockCsr->peekTotalMemoryUsed());
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().peekIsEmpty());
@@ -918,7 +947,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
                        dispatchFlags,
                        *pDevice);
 
-    //now emit with the same taskLevel
+    // now emit with the same taskLevel
     mockCsr->flushTask(commandStream,
                        0,
                        &dsh,
@@ -930,7 +959,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
 
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
-    //validate if we recorded ppc positions
+    // validate if we recorded ppc positions
     auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     EXPECT_NE(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
     auto secondCmdBuffer = firstCmdBuffer->next;
@@ -942,18 +971,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
     auto ppc2 = genCmdCast<typename FamilyType::PIPE_CONTROL *>(secondCmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(nullptr, ppc2);
 
-    //flush needs to bump the taskLevel
+    // flush needs to bump the taskLevel
     mockCsr->flushBatchedSubmissions();
     EXPECT_EQ(taskLevelPriorToSubmission + 1, mockCsr->peekTaskLevel());
 
-    //decode commands to confirm no pipe controls between Walkers
+    // decode commands to confirm no pipe controls between Walkers
 
     parseCommands<FamilyType>(commandQueue);
 
     auto itorBatchBufferStartFirst = find<typename FamilyType::MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
     auto itorBatchBufferStartSecond = find<typename FamilyType::MI_BATCH_BUFFER_START *>(++itorBatchBufferStartFirst, cmdList.end());
 
-    //make sure they are not the same
+    // make sure they are not the same
     EXPECT_NE(cmdList.end(), itorBatchBufferStartFirst);
     EXPECT_NE(cmdList.end(), itorBatchBufferStartSecond);
     EXPECT_NE(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
@@ -961,7 +990,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
     EXPECT_EQ(itorPipeControl, itorBatchBufferStartSecond);
 
-    //first pipe control is nooped, second pipe control is untouched
+    // first pipe control is nooped, second pipe control is untouched
     auto noop1 = genCmdCast<typename FamilyType::MI_NOOP *>(ppc);
     auto noop2 = genCmdCast<typename FamilyType::MI_NOOP *>(ppc2);
     EXPECT_NE(nullptr, noop1);
@@ -1353,7 +1382,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
                        dispatchFlags,
                        *pDevice);
 
-    //now emit with the same taskLevel
+    // now emit with the same taskLevel
     mockCsr->flushTask(commandStream,
                        0,
                        &dsh,
@@ -1365,7 +1394,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
 
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
-    //validate if we recorded ppc positions
+    // validate if we recorded ppc positions
     auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     EXPECT_EQ(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
     auto secondCmdBuffer = firstCmdBuffer->next;
@@ -1373,7 +1402,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
 
     mockCsr->flushBatchedSubmissions();
 
-    //decode commands to confirm no pipe controls between Walkers
+    // decode commands to confirm no pipe controls between Walkers
 
     parseCommands<FamilyType>(commandQueue);
 
@@ -1453,7 +1482,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenPipeCont
                        dispatchFlags,
                        *pDevice);
 
-    //now emit with the same taskLevel
+    // now emit with the same taskLevel
     mockCsr->flushTask(commandStream,
                        0,
                        &dsh,
@@ -1463,7 +1492,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenPipeCont
                        dispatchFlags,
                        *pDevice);
 
-    //validate if we recorded ppc positions
+    // validate if we recorded ppc positions
     auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     auto ppc1Location = firstCmdBuffer->pipeControlThatMayBeErasedLocation;
 
@@ -1472,11 +1501,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenPipeCont
     auto ppc = genCmdCast<typename FamilyType::PIPE_CONTROL *>(ppc1Location);
     EXPECT_NE(nullptr, ppc);
 
-    //call flush, both pipe controls must remain untouched
+    // call flush, both pipe controls must remain untouched
     mockCsr->flushBatchedSubmissions();
     EXPECT_EQ(taskLevelPriorToSubmission + 1, mockCsr->peekTaskLevel());
 
-    //decode commands to confirm no pipe controls between Walkers
+    // decode commands to confirm no pipe controls between Walkers
     parseCommands<FamilyType>(commandQueue);
 
     auto itorBatchBufferStartFirst = find<typename FamilyType::MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
@@ -1516,7 +1545,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
                        dispatchFlags,
                        *pDevice);
 
-    //now emit with the same taskLevel
+    // now emit with the same taskLevel
     mockCsr->flushTask(commandStream,
                        0,
                        &dsh,
@@ -1537,7 +1566,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
 
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
-    //validate if we recorded ppc positions
+    // validate if we recorded ppc positions
     auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     auto secondCmdBuffer = firstCmdBuffer->next;
     auto thirdCmdBuffer = firstCmdBuffer->next->next;
@@ -1551,11 +1580,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
     EXPECT_NE(nullptr, ppc2);
     EXPECT_NE(nullptr, ppc3);
 
-    //flush needs to bump the taskLevel
+    // flush needs to bump the taskLevel
     mockCsr->flushBatchedSubmissions();
     EXPECT_EQ(taskLevelPriorToSubmission + 1, mockCsr->peekTaskLevel());
 
-    //decode commands to confirm no pipe controls between Walkers
+    // decode commands to confirm no pipe controls between Walkers
 
     parseCommands<FamilyType>(commandQueue);
 
@@ -1563,7 +1592,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
     auto itorBatchBufferStartSecond = find<typename FamilyType::MI_BATCH_BUFFER_START *>(++itorBatchBufferStartFirst, cmdList.end());
     auto itorBatchBufferStartThird = find<typename FamilyType::MI_BATCH_BUFFER_START *>(++itorBatchBufferStartSecond, cmdList.end());
 
-    //make sure they are not the same
+    // make sure they are not the same
     EXPECT_NE(cmdList.end(), itorBatchBufferStartFirst);
     EXPECT_NE(cmdList.end(), itorBatchBufferStartSecond);
     EXPECT_NE(cmdList.end(), itorBatchBufferStartThird);
@@ -1576,7 +1605,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
     itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartSecond, itorBatchBufferStartThird);
     EXPECT_EQ(itorPipeControl, itorBatchBufferStartThird);
 
-    //first pipe control is nooped, second pipe control is untouched
+    // first pipe control is nooped, second pipe control is untouched
     auto noop1 = genCmdCast<typename FamilyType::MI_NOOP *>(ppc);
     auto noop2 = genCmdCast<typename FamilyType::MI_NOOP *>(ppc2);
     auto noop3 = genCmdCast<typename FamilyType::MI_NOOP *>(ppc3);
