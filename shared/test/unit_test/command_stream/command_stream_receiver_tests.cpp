@@ -2426,3 +2426,13 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenInitiali
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
     EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, commandStreamReceiver.initializeDeviceWithFirstSubmission());
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ultCsr.recordFlusheBatchBuffer = true;
+
+    EXPECT_EQ(SubmissionStatus::SUCCESS, ultCsr.flushTagUpdate());
+
+    EXPECT_TRUE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
+}

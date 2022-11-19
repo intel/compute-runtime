@@ -351,11 +351,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamForceTileTest, givenForceExecutionTileThenCor
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(),
-                            0, 0, 0, nullptr, false, false,
-                            QueueThrottle::MEDIUM,
-                            QueueSliceCount::defaultSliceCount,
-                            cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
@@ -609,7 +605,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenUseSingle
     csr->CommandStreamReceiver::makeResident(*allocation);
 
     auto &cs = csr->getCS();
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, true};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+    batchBuffer.useSingleSubdevice = true;
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 

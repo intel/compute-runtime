@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -20,6 +21,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_image.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
 namespace ult {
@@ -970,6 +973,99 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
+}
+
+HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    uint8_t srcPtr[64] = {};
+    uint8_t dstPtr[64] = {};
+    const ze_copy_region_t region = {0U, 0U, 0U, 1, 1, 0U};
+
+    driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    auto verifyFlags = [&ultCsr](ze_result_t result, bool dispatchFlag, bool bbFlag) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(ultCsr->recordedDispatchFlags.hasStallingCmds, dispatchFlag);
+        EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.hasStallingCmds, bbFlag);
+    };
+    // non-pipelined state
+    verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams), false, true);
+
+    // non-pipelined state already programmed
+    verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams), false, false);
+
+    verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, nullptr, 0, nullptr), false, false);
+
+    verifyFlags(commandList->appendBarrier(nullptr, 0, nullptr), true, true);
+
+    verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr), false, false);
+
+    verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 0, nullptr), false, false);
+
+    verifyFlags(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, nullptr, 0, nullptr), false, false);
+
+    verifyFlags(commandList->appendEventReset(event), true, true);
+
+    verifyFlags(commandList->appendSignalEvent(event), true, true);
+
+    verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false, false);
+
+    verifyFlags(commandList->appendWaitOnEvents(1, &event), true, true);
+
+    verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr), true, true);
+
+    if constexpr (FamilyType::supportsSampler) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+        auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+        auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+        ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
+        ze_image_desc_t zeDesc = {};
+        zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        image->initialize(device, &zeDesc);
+
+        verifyFlags(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, nullptr, 0, nullptr), false, false);
+
+        verifyFlags(commandList->appendImageCopyFromMemory(image->toHandle(), dstPtr, &imgRegion, nullptr, 0, nullptr), false, false);
+
+        verifyFlags(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, nullptr, 0, nullptr), false, false);
+    }
+
+    size_t rangeSizes = 1;
+    const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
+    verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr), true, true);
+
+    verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr), false, false);
+
+    driverHandle->releaseImportedPointer(dstPtr);
 }
 
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {

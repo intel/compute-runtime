@@ -24,10 +24,10 @@ namespace NEO {
 struct FlushStampTrackingObj;
 
 namespace CSRequirements {
-//cleanup section usually contains 1-2 pipeControls BB end and place for BB start
-//that makes 16 * 2 + 4 + 8 = 40 bytes
-//then command buffer is aligned to cacheline that can take up to 63 bytes
-//to be sure everything fits minimal size is at 2 x cacheline.
+// cleanup section usually contains 1-2 pipeControls BB end and place for BB start
+// that makes 16 * 2 + 4 + 8 = 40 bytes
+// then command buffer is aligned to cacheline that can take up to 63 bytes
+// to be sure everything fits minimal size is at 2 x cacheline.
 
 constexpr auto minCommandQueueCommandStreamSize = 2 * MemoryConstants::cacheLineSize;
 constexpr auto csOverfetchSize = MemoryConstants::pageSize;
@@ -56,35 +56,37 @@ struct DispatchFlags {
                   KernelExecutionType kernelExecutionTypeP, MemoryCompressionState memoryCompressionStateP,
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
                   bool requiresCoherencyP, bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
-                  bool usePerDSSbackedBufferP, bool useSingleSubdeviceP, bool useGlobalAtomicsP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush) : csrDependencies(csrDependenciesP),
-                                                                                                                                                                                                barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
-                                                                                                                                                                                                pipelineSelectArgs(pipelineSelectArgsP),
-                                                                                                                                                                                                flushStampReference(flushStampReferenceP),
-                                                                                                                                                                                                throttle(throttleP),
-                                                                                                                                                                                                preemptionMode(preemptionModeP),
-                                                                                                                                                                                                numGrfRequired(numGrfRequiredP),
-                                                                                                                                                                                                l3CacheSettings(l3CacheSettingsP),
-                                                                                                                                                                                                threadArbitrationPolicy(threadArbitrationPolicyP),
-                                                                                                                                                                                                additionalKernelExecInfo(additionalKernelExecInfoP),
-                                                                                                                                                                                                kernelExecutionType(kernelExecutionTypeP),
-                                                                                                                                                                                                memoryCompressionState(memoryCompressionStateP),
-                                                                                                                                                                                                sliceCount(sliceCountP),
-                                                                                                                                                                                                blocking(blockingP),
-                                                                                                                                                                                                dcFlush(dcFlushP),
-                                                                                                                                                                                                useSLM(useSLMP),
-                                                                                                                                                                                                guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControlP),
-                                                                                                                                                                                                gsba32BitRequired(gsba32BitRequiredP),
-                                                                                                                                                                                                requiresCoherency(requiresCoherencyP),
-                                                                                                                                                                                                lowPriority(lowPriorityP),
-                                                                                                                                                                                                implicitFlush(implicitFlushP),
-                                                                                                                                                                                                outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
-                                                                                                                                                                                                epilogueRequired(epilogueRequiredP),
-                                                                                                                                                                                                usePerDssBackedBuffer(usePerDSSbackedBufferP),
-                                                                                                                                                                                                useSingleSubdevice(useSingleSubdeviceP),
-                                                                                                                                                                                                useGlobalAtomics(useGlobalAtomicsP),
-                                                                                                                                                                                                areMultipleSubDevicesInContext(areMultipleSubDevicesInContextP),
-                                                                                                                                                                                                memoryMigrationRequired(memoryMigrationRequiredP),
-                                                                                                                                                                                                textureCacheFlush(textureCacheFlush){};
+                  bool usePerDSSbackedBufferP, bool useSingleSubdeviceP, bool useGlobalAtomicsP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
+                  bool hasStallingCmds) : csrDependencies(csrDependenciesP),
+                                          barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
+                                          pipelineSelectArgs(pipelineSelectArgsP),
+                                          flushStampReference(flushStampReferenceP),
+                                          throttle(throttleP),
+                                          preemptionMode(preemptionModeP),
+                                          numGrfRequired(numGrfRequiredP),
+                                          l3CacheSettings(l3CacheSettingsP),
+                                          threadArbitrationPolicy(threadArbitrationPolicyP),
+                                          additionalKernelExecInfo(additionalKernelExecInfoP),
+                                          kernelExecutionType(kernelExecutionTypeP),
+                                          memoryCompressionState(memoryCompressionStateP),
+                                          sliceCount(sliceCountP),
+                                          blocking(blockingP),
+                                          dcFlush(dcFlushP),
+                                          useSLM(useSLMP),
+                                          guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControlP),
+                                          gsba32BitRequired(gsba32BitRequiredP),
+                                          requiresCoherency(requiresCoherencyP),
+                                          lowPriority(lowPriorityP),
+                                          implicitFlush(implicitFlushP),
+                                          outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
+                                          epilogueRequired(epilogueRequiredP),
+                                          usePerDssBackedBuffer(usePerDSSbackedBufferP),
+                                          useSingleSubdevice(useSingleSubdeviceP),
+                                          useGlobalAtomics(useGlobalAtomicsP),
+                                          areMultipleSubDevicesInContext(areMultipleSubDevicesInContextP),
+                                          memoryMigrationRequired(memoryMigrationRequiredP),
+                                          textureCacheFlush(textureCacheFlush),
+                                          hasStallingCmds(hasStallingCmds){};
 
     CsrDependencies csrDependencies;
     TimestampPacketContainer *barrierTimestampPacketNodes = nullptr;
@@ -116,6 +118,7 @@ struct DispatchFlags {
     bool areMultipleSubDevicesInContext = false;
     bool memoryMigrationRequired = false;
     bool textureCacheFlush = false;
+    bool hasStallingCmds = false;
     bool disableEUFusion = false;
 };
 

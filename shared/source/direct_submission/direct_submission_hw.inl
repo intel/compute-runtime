@@ -433,6 +433,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
 
     ringStart = submit(gpuStartVa, startSize);
 
+    firstSubmissionAfterRingStart = true;
+
     return ringStart;
 }
 
@@ -440,6 +442,10 @@ template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     if (!ringStart) {
         return true;
+    }
+
+    if (this->relaxedOrderingEnabled && !firstSubmissionAfterRingStart) {
+        dispatchRelaxedOrderingQueueStall();
     }
 
     void *flushPtr = ringCommandStream.getSpace(0);
@@ -546,6 +552,9 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd() {
     if (disableMonitorFence) {
         size += Dispatcher::getSizeMonitorFence(*hwInfo);
     }
+    if (this->relaxedOrderingEnabled) {
+        size += getSizeDispatchRelaxedOrderingQueueStall();
+    }
     return size;
 }
 
@@ -649,6 +658,17 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
 }
 
 template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingQueueStall() {
+    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5, 1, true);
+    dispatchSemaphoreSection(currentQueueWorkCount, false);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatchRelaxedOrderingQueueStall() {
+    return getSizeSemaphoreSection(false) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+}
+
+template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr) {
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL), true);
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32), true);
@@ -736,6 +756,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     size_t cycleSize = getSizeSwitchRingBufferSection();
     size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd();
     if (this->relaxedOrderingEnabled) {
+        if (batchBuffer.hasStallingCmds && !firstSubmissionAfterRingStart) {
+            requiredMinimalSize += getSizeDispatchRelaxedOrderingQueueStall();
+        }
         requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>() + RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
     }
 
@@ -743,6 +766,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     if (ringCommandStream.getAvailableSpace() < requiredMinimalSize) {
         switchRingBuffers();
+    }
+
+    if (this->relaxedOrderingEnabled && batchBuffer.hasStallingCmds && !firstSubmissionAfterRingStart) {
+        dispatchRelaxedOrderingQueueStall();
     }
 
     handleNewResourcesSubmission();
@@ -770,6 +797,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     uint64_t flushValue = updateTagValue();
     flushStamp.setStamp(flushValue);
+
+    firstSubmissionAfterRingStart = false;
 
     return ringStart;
 }

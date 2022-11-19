@@ -31,7 +31,8 @@ struct BatchBuffer {
                 size_t usedSize,
                 LinearStream *stream,
                 void *endCmdPtr,
-                bool useSingleSubdevice);
+                bool useSingleSubdevice,
+                bool hasStallingCmds);
     BatchBuffer() {}
     GraphicsAllocation *commandBufferAllocation = nullptr;
     size_t startOffset = 0u;
@@ -50,6 +51,7 @@ struct BatchBuffer {
     void *endCmdPtr = nullptr;
 
     bool useSingleSubdevice = false;
+    bool hasStallingCmds = false;
     bool ringBufferRestartRequest = false;
 };
 

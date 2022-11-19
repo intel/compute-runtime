@@ -102,12 +102,12 @@ NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_
                               size_t chainedBatchBufferStartOffset, uint64_t taskStartAddress, GraphicsAllocation *chainedBatchBuffer,
                               bool requiresCoherency, bool lowPriority,
                               QueueThrottle throttle, uint64_t sliceCount,
-                              size_t usedSize, LinearStream *stream, void *endCmdPtr, bool useSingleSubdevice)
+                              size_t usedSize, LinearStream *stream, void *endCmdPtr, bool useSingleSubdevice, bool hasStallingCmds)
     : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset),
       chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), taskStartAddress(taskStartAddress), chainedBatchBuffer(chainedBatchBuffer),
       requiresCoherency(requiresCoherency), low_priority(lowPriority),
       throttle(throttle), sliceCount(sliceCount),
-      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), useSingleSubdevice(useSingleSubdevice) {}
+      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), useSingleSubdevice(useSingleSubdevice), hasStallingCmds(hasStallingCmds) {}
 
 NEO::CommandBuffer::CommandBuffer(Device &device) : device(device) {
     flushStamp.reset(new FlushStampTracker(false));

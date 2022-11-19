@@ -227,6 +227,16 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenMiFlushDwIsFlu
     EXPECT_NE(cmdFound, cmdListBcs.end());
 }
 
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenSetStallingCmdsFlag) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
+
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    EXPECT_EQ(SubmissionStatus::SUCCESS, bcsCsr->flushTagUpdate());
+
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+}
+
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingCommandBufferThenSynchronizeBcsOutput) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
@@ -1412,7 +1422,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
 
     auto offset = mockCmdQueue->getCS(0).getUsed();
 
-    //marker needs to program semaphore
+    // marker needs to program semaphore
     commandQueue->enqueueMarkerWithWaitList(0, nullptr, &outEvent1);
 
     auto cmdListQueue = getCmdList<FamilyType>(mockCmdQueue->getCS(0), offset);
@@ -1475,7 +1485,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
     auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
 
-    //make sure we wait for both
+    // make sure we wait for both
     clWaitForEvents(1, &outEvent1);
     EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
@@ -1503,7 +1513,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
     auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
 
-    //make sure we wait for both
+    // make sure we wait for both
     clWaitForEvents(1, &outEvent2);
     EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);

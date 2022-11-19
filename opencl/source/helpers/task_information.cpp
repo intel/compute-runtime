@@ -79,7 +79,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         false,                                                                       // useGlobalAtomics
         false,                                                                       // areMultipleSubDevicesInContext
         false,                                                                       // memoryMigrationRequired
-        false);                                                                      // textureCacheFlush
+        false,                                                                       // textureCacheFlush
+        false);                                                                      // hasStallingCmds
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
@@ -208,7 +209,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                         // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                // memoryMigrationRequired
-        commandQueue.isTextureCacheFlushNeeded(this->commandType));                       // textureCacheFlush
+        commandQueue.isTextureCacheFlushNeeded(this->commandType),                        // textureCacheFlush
+        false);                                                                           // hasStallingCmds
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
@@ -382,7 +384,8 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         false,                                                                 // useGlobalAtomics
         commandQueue.getContext().containsMultipleSubDevices(rootDeviceIndex), // areMultipleSubDevicesInContext
         false,                                                                 // memoryMigrationRequired
-        false);                                                                // textureCacheFlush
+        false,                                                                 // textureCacheFlush
+        false);                                                                // hasStallingCmds
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);

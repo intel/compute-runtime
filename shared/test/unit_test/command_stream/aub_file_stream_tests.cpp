@@ -592,7 +592,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     aubCsr.initializeTagAllocation();
 
     LinearStream cs(commandBuffer);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 1, 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 1, 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false, false};
     ResidencyContainer allocationsForResidency;
 
     aubCsr.flush(batchBuffer, allocationsForResidency);
@@ -761,9 +761,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenNoPatc
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-
     aubCsr->stream = mockAubFileStream.get();
 
     bool result = aubCsr->addPatchInfoComments();
@@ -781,9 +778,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenFirstA
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-
     aubCsr->stream = mockAubFileStream.get();
     mockAubFileStream->addCommentResult = false;
 
@@ -796,9 +790,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSecond
     auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     aubCsr->stream = mockAubFileStream.get();
 
@@ -813,9 +804,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenPatchI
     auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     aubCsr->stream = mockAubFileStream.get();
 
@@ -879,9 +867,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSource
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-
     aubCsr->stream = mockAubFileStream.get();
 
     PatchInfoData patchInfoData = {0x0, 0u, PatchInfoAllocationType::Default, 0xBBBBBBBB, 0u, PatchInfoAllocationType::Default};
@@ -925,9 +910,6 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTarget
     auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
 
     aubCsr->stream = mockAubFileStream.get();
 

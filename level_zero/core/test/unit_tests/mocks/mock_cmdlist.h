@@ -514,7 +514,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
         return executeCommandListImmediateReturnValue;
     }
 
-    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration) override {
+    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds) override {
         ++executeCommandListImmediateWithFlushTaskCalledCount;
         return executeCommandListImmediateWithFlushTaskReturnValue;
     }

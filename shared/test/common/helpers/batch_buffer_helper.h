@@ -11,11 +11,11 @@
 using namespace NEO;
 
 struct BatchBufferHelper {
-    static BatchBuffer createDefaultBatchBuffer(GraphicsAllocation *commandBufferAllocation, LinearStream *stream, size_t usedSize) {
+    static BatchBuffer createDefaultBatchBuffer(GraphicsAllocation *commandBufferAllocation, LinearStream *stream, size_t usedSize, size_t chainedBatchBufferStartOffset) {
         return BatchBuffer(
             commandBufferAllocation,            // commandBufferAllocation
             0,                                  // startOffset
-            0,                                  // chainedBatchBufferStartOffset
+            chainedBatchBufferStartOffset,      // chainedBatchBufferStartOffset
             0,                                  // taskStartAddress
             nullptr,                            // chainedBatchBuffer
             false,                              // requiresCoherency
@@ -25,7 +25,12 @@ struct BatchBufferHelper {
             usedSize,                           // usedSize
             stream,                             // stream
             nullptr,                            // endCmdPtr
-            false                               // useSingleSubdevice
+            false,                              // useSingleSubdevice
+            false                               // hasStallingCmds
         );
+    }
+
+    static BatchBuffer createDefaultBatchBuffer(GraphicsAllocation *commandBufferAllocation, LinearStream *stream, size_t usedSize) {
+        return createDefaultBatchBuffer(commandBufferAllocation, stream, usedSize, 0);
     }
 };

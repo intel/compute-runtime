@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
+#include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
@@ -2270,7 +2271,7 @@ struct DrmCommandStreamEnhancedPrelimTest : public DrmCommandStreamEnhancedTempl
         LinearStream cs(commandBuffer);
         CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
         EncodeNoop<FamilyType>::alignToCacheLine(cs);
-        this->batchBuffer = BatchBuffer{cs.getGraphicsAllocation(), 0, 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+        this->batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
         this->allocation = this->mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
         this->csr->makeResident(*this->allocation);
     }

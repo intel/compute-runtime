@@ -127,6 +127,9 @@ class DirectSubmissionHw {
     void dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress);
     size_t getSizeSwitchRingBufferSection();
 
+    void dispatchRelaxedOrderingQueueStall();
+    size_t getSizeDispatchRelaxedOrderingQueueStall();
+
     void dispatchTaskStoreSection(uint64_t taskStartSectionVa);
     MOCKABLE_VIRTUAL void preinitializeTaskStoreSection();
 
@@ -221,5 +224,6 @@ class DirectSubmissionHw {
     bool dcFlushRequired = false;
     bool relaxedOrderingEnabled = false;
     bool relaxedOrderingInitialized = false;
+    bool firstSubmissionAfterRingStart = true;
 };
 } // namespace NEO

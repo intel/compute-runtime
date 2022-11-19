@@ -913,7 +913,7 @@ struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBuf
     }
 
     template <typename FamilyType>
-    bool verifySchedulerProgramming(LinearStream &cs, uint64_t deferredTaskListVa, uint64_t semaphoreGpuVa, uint32_t semaphoreValue, size_t offset);
+    bool verifySchedulerProgramming(LinearStream &cs, uint64_t deferredTaskListVa, uint64_t semaphoreGpuVa, uint32_t semaphoreValue, size_t offset, size_t &endOffset);
 
     template <typename FamilyType>
     bool verifyMiPredicate(void *miPredicateCmd, MiPredicateType predicateType);
@@ -1187,7 +1187,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyConditionalDataRegBbStart(void 
 }
 
 template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifySchedulerProgramming(LinearStream &cs, uint64_t deferredTaskListVa, uint64_t semaphoreGpuVa, uint32_t semaphoreValue, size_t offset) {
+bool DirectSubmissionRelaxedOrderingTests::verifySchedulerProgramming(LinearStream &cs, uint64_t deferredTaskListVa, uint64_t semaphoreGpuVa, uint32_t semaphoreValue, size_t offset, size_t &endOffset) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_SET_PREDICATE = typename FamilyType::MI_SET_PREDICATE;
@@ -1501,6 +1501,8 @@ bool DirectSubmissionRelaxedOrderingTests::verifySchedulerProgramming(LinearStre
             if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R5, 0)) {
                 continue;
             }
+            lriCmd++;
+            endOffset = ptrDiff(lriCmd, cs.getCpuBase());
 
             success = true;
             break;
@@ -1704,9 +1706,6 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenNotEnoughSpaceForTaskStoreSe
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchScheduler, IsAtLeastXeHpcCore) {
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
-    using MI_MATH = typename FamilyType::MI_MATH;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -1717,18 +1716,209 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchS
     uint64_t deferredTasksListVa = directSubmission.deferredTasksListAllocation->getGpuAddress();
     uint64_t semaphoreGpuVa = directSubmission.semaphoreGpuVa;
 
-    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, 0));
+    size_t endOffset = 0;
+
+    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, 0, endOffset));
 
     FlushStampTracker flushStamp(true);
     directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
 
-    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, offset));
+    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, offset, endOffset));
 
     offset = directSubmission.ringCommandStream.getUsed();
 
     directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
 
-    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, offset));
+    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, offset, endOffset));
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsWhenDispatchingThenProgramSchedulerWithR5, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    directSubmission.initialize(true, false);
+    size_t offset = directSubmission.ringCommandStream.getUsed();
+
+    uint64_t deferredTasksListVa = directSubmission.deferredTasksListAllocation->getGpuAddress();
+    uint64_t semaphoreGpuVa = directSubmission.semaphoreGpuVa;
+
+    size_t endOffset = 0;
+
+    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, 0, endOffset));
+
+    FlushStampTracker flushStamp(true);
+    batchBuffer.hasStallingCmds = false;
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, offset, endOffset));
+    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, endOffset, endOffset));
+
+    offset = directSubmission.ringCommandStream.getUsed();
+
+    batchBuffer.hasStallingCmds = true;
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool success = false;
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+
+    for (auto &it : hwParse.cmdList) {
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        if (lriCmd) {
+            if (CS_GPR_R5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
+                success = true;
+                break;
+            }
+        }
+    }
+
+    ASSERT_TRUE(success);
+    offset = ptrDiff(++lriCmd, directSubmission.ringCommandStream.getCpuBase());
+    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount - 1, offset, endOffset));
+
+    EXPECT_TRUE(endOffset > offset);
+
+    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, endOffset, endOffset));
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenFirstBbWithStallingCmdsWhenDispatchingThenDontProgramSchedulerWithR5, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    directSubmission.initialize(true, false);
+    size_t offset = directSubmission.ringCommandStream.getUsed();
+
+    uint64_t deferredTasksListVa = directSubmission.deferredTasksListAllocation->getGpuAddress();
+    uint64_t semaphoreGpuVa = directSubmission.semaphoreGpuVa;
+
+    size_t endOffset = 0;
+
+    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, 0, endOffset));
+
+    FlushStampTracker flushStamp(true);
+    batchBuffer.hasStallingCmds = true;
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool success = false;
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+
+    for (auto &it : hwParse.cmdList) {
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        if (lriCmd) {
+            if (CS_GPR_R5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
+                success = true;
+                break;
+            }
+        }
+    }
+
+    EXPECT_FALSE(success);
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenStoppingRingThenProgramSchedulerWithR5, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    directSubmission.initialize(true, false);
+    size_t offset = directSubmission.ringCommandStream.getUsed();
+
+    uint64_t deferredTasksListVa = directSubmission.deferredTasksListAllocation->getGpuAddress();
+    uint64_t semaphoreGpuVa = directSubmission.semaphoreGpuVa;
+
+    size_t endOffset = 0;
+
+    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, 0, endOffset));
+
+    FlushStampTracker flushStamp(true);
+    batchBuffer.hasStallingCmds = false;
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, offset, endOffset));
+    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, endOffset, endOffset));
+
+    offset = directSubmission.ringCommandStream.getUsed();
+
+    directSubmission.stopRingBuffer();
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool success = false;
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+
+    for (auto &it : hwParse.cmdList) {
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        if (lriCmd) {
+            if (CS_GPR_R5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
+                success = true;
+                break;
+            }
+        }
+    }
+
+    ASSERT_TRUE(success);
+    offset = ptrDiff(lriCmd, directSubmission.ringCommandStream.getCpuBase());
+    EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, offset, endOffset));
+
+    EXPECT_TRUE(endOffset > offset);
+
+    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, endOffset, endOffset));
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, WhenStoppingRingWithoutSubmissionThenDontProgramSchedulerWithR5, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    directSubmission.initialize(true, false);
+    size_t offset = directSubmission.ringCommandStream.getUsed();
+
+    uint64_t deferredTasksListVa = directSubmission.deferredTasksListAllocation->getGpuAddress();
+    uint64_t semaphoreGpuVa = directSubmission.semaphoreGpuVa;
+
+    size_t endOffset = 0;
+
+    EXPECT_FALSE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, 0, endOffset));
+
+    directSubmission.stopRingBuffer();
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool success = false;
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+
+    for (auto &it : hwParse.cmdList) {
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        if (lriCmd) {
+            if (CS_GPR_R5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
+                success = true;
+                break;
+            }
+        }
+    }
+
+    EXPECT_FALSE(success);
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSetReturnRegisters, IsAtLeastXeHpcCore) {
