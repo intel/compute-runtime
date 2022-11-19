@@ -56,8 +56,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         GPU
     };
 
-    static constexpr auto largestLockableBufferSize = 64 * KB;
-
     ~GraphicsAllocation() override;
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
@@ -211,10 +209,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return type == AllocationType::KERNEL_ISA ||
                type == AllocationType::KERNEL_ISA_INTERNAL ||
                type == AllocationType::DEBUG_MODULE_AREA;
-    }
-
-    static bool isSmallBuffer(AllocationType type, size_t size) {
-        return type == AllocationType::BUFFER && size <= largestLockableBufferSize;
     }
 
     static bool isDebugSurfaceAllocationType(AllocationType type) {
