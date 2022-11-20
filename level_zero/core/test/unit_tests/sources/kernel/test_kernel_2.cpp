@@ -363,8 +363,11 @@ class KernelImpSuggestMaxCooperativeGroupCountTests : public KernelImp {
     uint32_t maxBarrierCount;
     WhiteBox<::L0::KernelImmutableData> kernelInfo;
     NEO::KernelDescriptor kernelDescriptor;
+    DebugManagerStateRestore restorer;
 
     void SetUp() override {
+        NEO::DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+
         KernelImp::SetUp();
         kernelInfo.kernelDescriptor = &kernelDescriptor;
         auto &hardwareInfo = device->getHwInfo();

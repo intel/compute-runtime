@@ -6047,7 +6047,9 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         auto &gfxCoreHelper = device.getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
                                                                 pCommandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+        if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo) &&
+            (DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.get() == false) &&
+            (DebugManager.flags.OverrideMaxWorkGroupCount.get() == -1)) {
             retVal = CL_INVALID_COMMAND_QUEUE;
             return retVal;
         }

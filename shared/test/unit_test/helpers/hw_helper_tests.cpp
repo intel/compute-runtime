@@ -1433,3 +1433,88 @@ TEST(GfxCoreHelperTests, whenIsDynamicallyPopulatedisTrueThengetHighestEnabledSl
     auto maxSlice = gfxCoreHelper.getHighestEnabledSlice(hwInfo);
     EXPECT_EQ(maxSlice, 7u);
 }
+
+HWTEST2_F(GfxCoreHelperTest, WhenIsRcsAvailableIsCalledThenTrueIsReturned, IsAtMostXeHpgCore) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_TRUE(gfxCoreHelper.isRcsAvailable(*defaultHwInfo));
+}
+
+using GfxCoreHelperAdjustMaxWorkGroupCountTests = ::testing::Test;
+
+HWTEST_F(GfxCoreHelperAdjustMaxWorkGroupCountTests, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustMaxWorkGroupCountIsCalledThenSmallerValueIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCS;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
+
+    uint32_t revisions[] = {REVISION_A0, REVISION_B};
+    for (auto &revision : revisions) {
+        auto hwRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        if (hwRevId == CommonConstants::invalidStepping) {
+            continue;
+        }
+        hwInfo.platform.usRevId = hwRevId;
+
+        for (auto isEngineInstanced : ::testing::Bool()) {
+            for (auto isRcsEnabled : ::testing::Bool()) {
+                hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
+                for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute, EngineGroupType::CooperativeCompute}) {
+                    if (productHelper.isCooperativeEngineSupported(hwInfo)) {
+                        bool disallowDispatch = (engineGroupType == EngineGroupType::RenderCompute) ||
+                                                ((engineGroupType == EngineGroupType::Compute) && isRcsEnabled);
+                        bool applyLimitation = !isEngineInstanced &&
+                                               (engineGroupType != EngineGroupType::CooperativeCompute);
+                        if (disallowDispatch) {
+                            EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, hwInfo, isEngineInstanced));
+                            EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, hwInfo, isEngineInstanced));
+                        } else if (applyLimitation) {
+                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+                            EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, hwInfo, isEngineInstanced));
+                            EXPECT_EQ(256u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, hwInfo, isEngineInstanced));
+                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+                            EXPECT_EQ(2u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, hwInfo, isEngineInstanced));
+                            EXPECT_EQ(512u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, hwInfo, isEngineInstanced));
+                        } else {
+                            EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, hwInfo, isEngineInstanced));
+                            EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, hwInfo, isEngineInstanced));
+                        }
+                    } else {
+                        EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, hwInfo, isEngineInstanced));
+                        EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, hwInfo, isEngineInstanced));
+                    }
+                }
+            }
+        }
+    }
+}
+
+template <typename FamilyType>
+struct MockGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
+    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const override {
+        return isCooperativeDispatchSupportedValue;
+    }
+    bool isCooperativeDispatchSupportedValue = true;
+};
+HWTEST_F(GfxCoreHelperAdjustMaxWorkGroupCountTests, GivenDebugTogglesInfluencingMaxWorkGroupCountSetWhenAdjustMaxWorkGroupCountIsCalledThenDontChangeResult) {
+    MockGfxCoreHelper<FamilyType> gfxCoreHelper{};
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    for (auto isCooperativeDispatchSupported : ::testing::Bool()) {
+        gfxCoreHelper.isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
+        {
+            DebugManagerStateRestore dbgRestorer;
+            DebugManager.flags.OverrideMaxWorkGroupCount.set(1);
+            EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, EngineGroupType::RenderCompute, hwInfo, false));
+            EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::RenderCompute, hwInfo, false));
+        }
+        {
+            DebugManagerStateRestore dbgRestorer;
+            DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+            EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, EngineGroupType::RenderCompute, hwInfo, false));
+            EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::RenderCompute, hwInfo, false));
+        }
+    }
+}

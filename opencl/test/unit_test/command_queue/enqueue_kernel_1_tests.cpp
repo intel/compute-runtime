@@ -10,6 +10,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
@@ -175,6 +176,9 @@ TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThen
 }
 
 TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalledTwiceThenClEnqueueNDRangeKernelReturnsError) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+
     const size_t n = 512;
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
@@ -310,13 +314,6 @@ TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingNDCountKernelINTELThenInva
 using clEnqueueNDCountKernelTests = api_tests;
 
 TEST_F(clEnqueueNDCountKernelTests, GivenQueueIncapableWhenEnqueuingNDCountKernelINTELThenInvalidOperationIsReturned) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(::defaultHwInfo->platform.eRenderCoreFamily);
-    auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
-                                                            pCommandQueue->getGpgpuEngine().getEngineUsage(), *::defaultHwInfo);
-    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, *::defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workgroupCount[3] = {1, 1, 1};
@@ -338,6 +335,9 @@ TEST_F(clEnqueueNDCountKernelTests, GivenQueueIncapableWhenEnqueuingNDCountKerne
 }
 
 TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernelINTELReturnsSuccess) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+
     const size_t n = 512;
     size_t workgroupCount[3] = {2, 1, 1};
     size_t localWorkSize[3] = {64, 1, 1};
@@ -345,9 +345,11 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
     GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    if (productHelper.isCooperativeEngineSupported(hardwareInfo) &&
+        !gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
@@ -386,6 +388,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
 }
 
 TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalledTwiceThenClEnqueueNDCountKernelINTELReturnsError) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+
     const size_t n = 512;
     size_t workgroupCount[3] = {2, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
@@ -393,9 +398,11 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
     GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    if (productHelper.isCooperativeEngineSupported(hardwareInfo) &&
+        !gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
@@ -434,6 +441,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
 }
 
 TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeastFailsThenClEnqueueNDCountKernelINTELReturnsError) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+
     const size_t n = 512;
     size_t workgroupCount[3] = {2, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
@@ -441,9 +451,11 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
     GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    if (productHelper.isCooperativeEngineSupported(hardwareInfo) &&
+        !gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
@@ -496,6 +508,64 @@ TEST_F(EnqueueKernelTest, GivenInvalidEventListCountWhenEnqueuingNDCountKernelIN
         nullptr);
 
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
+}
+
+template <typename FamilyType>
+struct MockGfxCoreHelperCooperativeDispatchSupportedOverride : GfxCoreHelperHw<FamilyType> {
+    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const override {
+        return isCooperativeDispatchSupportedValue;
+    }
+    bool isCooperativeDispatchSupportedValue = false;
+};
+
+HWTEST_F(EnqueueKernelTest, GivenCommandQueueNotSupportingCooperativeDispatchWhenCallingClEnqueueNDCountKernelINTELWithConcurrenteKernelThenCorrectReturnValueIsReturned) {
+    MockGfxCoreHelperCooperativeDispatchSupportedOverride<FamilyType> gfxCoreHelper{};
+    VariableBackup<GfxCoreHelper *> gfxCoreHelperFactoryBackup{&NEO::gfxCoreHelperFactory[static_cast<size_t>(hardwareInfo.platform.eRenderCoreFamily)]};
+    gfxCoreHelperFactoryBackup = &gfxCoreHelper;
+    auto pMockCommandQueueHw = std::make_unique<MockCommandQueue>(context, pClDevice, nullptr, false);
+
+    MockKernelWithInternals mockKernel(*pClDevice, context);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = true;
+    mockKernel.mockMultiDeviceKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
+
+    auto getClEnqueueNDCountKernelINTELResult = [&pMockCommandQueueHw, &mockKernel]() -> cl_int {
+        size_t workgroupCount[3] = {1, 1, 1};
+        size_t localWorkSize[3] = {1, 1, 1};
+
+        return clEnqueueNDCountKernelINTEL(
+            pMockCommandQueueHw.get(),
+            mockKernel.mockMultiDeviceKernel,
+            1,
+            nullptr,
+            workgroupCount,
+            localWorkSize,
+            0,
+            nullptr,
+            nullptr);
+    };
+
+    for (auto useDebugFlagForceTheoreticalMaxWgCount : ::testing::Bool()) {
+        DebugManagerStateRestore stateRestore;
+        if (useDebugFlagForceTheoreticalMaxWgCount) {
+            DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+        }
+
+        for (auto useDebugFlagOverrideMaxWgCount : ::testing::Bool()) {
+            if (useDebugFlagOverrideMaxWgCount) {
+                DebugManager.flags.OverrideMaxWorkGroupCount.set(1);
+            }
+
+            for (auto isCooperativeDispatchSupported : ::testing::Bool()) {
+                gfxCoreHelper.isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
+
+                if (isCooperativeDispatchSupported || useDebugFlagForceTheoreticalMaxWgCount || useDebugFlagOverrideMaxWgCount) {
+                    EXPECT_EQ(CL_SUCCESS, getClEnqueueNDCountKernelINTELResult());
+                } else {
+                    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, getClEnqueueNDCountKernelINTELResult());
+                }
+            }
+        }
+    }
 }
 
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenTaskLevelIsIncremented) {

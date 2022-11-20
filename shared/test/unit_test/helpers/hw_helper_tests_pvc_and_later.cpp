@@ -160,7 +160,7 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCo
                         EXPECT_TRUE(isCooperativeDispatchSupported);
                     }
                 } else {
-                    EXPECT_TRUE(isCooperativeDispatchSupported);
+                    EXPECT_FALSE(isCooperativeDispatchSupported);
                 }
             }
         }

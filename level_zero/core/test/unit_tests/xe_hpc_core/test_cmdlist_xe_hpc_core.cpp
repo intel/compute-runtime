@@ -34,6 +34,9 @@ using CommandListAppendLaunchKernelXeHpcCore = Test<LocalMemoryModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsXeHpcCore) {
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
+    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -54,9 +57,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
 
     {
         VariableBackup<EngineGroupType> engineGroupType{&pCommandList->engineGroupType};
-        VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
         engineGroupType = EngineGroupType::RenderCompute;
-        hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
         result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 

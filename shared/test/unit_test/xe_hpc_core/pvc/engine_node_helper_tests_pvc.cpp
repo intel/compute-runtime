@@ -149,7 +149,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledWhenGetGpgpuEnginesCalledTh
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
 }
 
-PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispatchSupportedThenTrueIsReturned) {
+PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispatchSupportedThenFalseIsReturned) {
     const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
@@ -157,7 +157,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispat
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
                                                             pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
     auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
-    EXPECT_TRUE(retVal);
+    EXPECT_FALSE(retVal);
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCCSEngineAndRevisionBWhenCallingIsCooperativeDispatchSupportedThenFalseIsReturned) {
@@ -169,7 +169,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCCCSEngineAndRevisionBWhenCallingIsCoop
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
                                                             pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
     auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
-    EXPECT_TRUE(retVal);
+    EXPECT_FALSE(retVal);
 
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
