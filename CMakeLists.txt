@@ -465,6 +465,10 @@ else()
 endif()
 message(STATUS "Engine node dir: ${ENGINE_NODE_DIR}")
 
+if(NEO_FORCE_USE_AUB_STREAM AND NOT DEFINED AUB_STREAM_PROJECT_NAME)
+  message(FATAL_ERROR "Aubstream is not available but required by user")
+endif()
+
 # We want to organize our IDE targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
