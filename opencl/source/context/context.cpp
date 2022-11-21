@@ -475,10 +475,14 @@ bool Context::isSingleDeviceContext() {
 void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {
     static constexpr cl_mem_flags flags{};
     [[maybe_unused]] cl_int errcodeRet{};
+    Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
+    bufferCreateArgs.doNotProvidePerformanceHints = true;
+    bufferCreateArgs.makeAllocationLockable = true;
     this->mainStorage = Buffer::create(context,
                                        flags,
                                        BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
                                        nullptr,
+                                       bufferCreateArgs,
                                        errcodeRet);
     if (this->mainStorage) {
         this->chunkAllocator.reset(new HeapAllocator(BufferPoolAllocator::startingOffset,

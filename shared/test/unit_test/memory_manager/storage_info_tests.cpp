@@ -472,6 +472,25 @@ TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationThatIsLockableWhenCrea
     }
 }
 
+TEST_F(MultiDeviceStorageInfoTest, givenAllocationTypeBufferWhenCreatingStorageInfoThenIsLockableFlagIsSetCorrectly) {
+    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::BUFFER, false, singleTileMask};
+    {
+        properties.makeDeviceBufferLockable = false;
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+        EXPECT_FALSE(storageInfo.isLockable);
+    }
+    {
+        properties.makeDeviceBufferLockable = true;
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+        EXPECT_TRUE(storageInfo.isLockable);
+    }
+    {
+        properties.allocationType = AllocationType::IMAGE;
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+        EXPECT_FALSE(storageInfo.isLockable);
+    }
+}
+
 TEST_F(MultiDeviceStorageInfoTest, givenGpuTimestampAllocationWhenUsingSingleTileDeviceThenExpectRegularAllocationStorageInfo) {
     AllocationProperties properties{mockRootDeviceIndex,
                                     false,

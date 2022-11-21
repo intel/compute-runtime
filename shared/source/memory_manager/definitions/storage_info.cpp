@@ -35,7 +35,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
 
     StorageInfo storageInfo{preferredTile, allTilesValue};
     storageInfo.subDeviceBitfield = properties.subDevicesBitfield;
-    storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType);
+    storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::BUFFER);
     storageInfo.cpuVisibleSegment = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
 
     AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,

@@ -91,19 +91,23 @@ TEST_P(PerformanceHintBufferTest, GivenHostPtrAndSizeAlignmentsWhenBufferIsCreat
         flags |= CL_MEM_FORCE_HOST_MEMORY_INTEL;
     }
 
+    Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
+    bufferCreateArgs.doNotProvidePerformanceHints = !providePerformanceHint;
+
     buffer = Buffer::create(
         context,
         flags,
         sizeForBuffer,
         (void *)addressForBuffer,
+        bufferCreateArgs,
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForBuffer, sizeForBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+    EXPECT_EQ(providePerformanceHint && !(alignedSize && alignedAddress), containsHint(expectedHint, userData));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_NEEDS_ALLOCATE_MEMORY], 0);
-    EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+    EXPECT_EQ(providePerformanceHint && !(alignedSize && alignedAddress), containsHint(expectedHint, userData));
 }
 
 TEST_P(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenCommandQueueIsCreatingThenContextProvidesProperHints) {
@@ -916,6 +920,7 @@ INSTANTIATE_TEST_CASE_P(
     DriverDiagnosticsTests,
     PerformanceHintBufferTest,
     testing::Combine(
+        ::testing::Bool(),
         ::testing::Bool(),
         ::testing::Bool()));
 

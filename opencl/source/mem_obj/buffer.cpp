@@ -170,9 +170,20 @@ Buffer *Buffer::create(Context *context,
                        cl_mem_flags flags,
                        size_t size,
                        void *hostPtr,
+                       AdditionalBufferCreateArgs &bufferCreateArgs,
                        cl_int &errcodeRet) {
     return create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-                  flags, 0, size, hostPtr, errcodeRet);
+                  flags, 0, size, hostPtr, bufferCreateArgs, errcodeRet);
+}
+
+Buffer *Buffer::create(Context *context,
+                       cl_mem_flags flags,
+                       size_t size,
+                       void *hostPtr,
+                       cl_int &errcodeRet) {
+    AdditionalBufferCreateArgs bufferCreateArgs{};
+    return create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                  flags, 0, size, hostPtr, bufferCreateArgs, errcodeRet);
 }
 
 bool inline copyHostPointer(Buffer *buffer,
@@ -232,6 +243,18 @@ Buffer *Buffer::create(Context *context,
                        cl_mem_flags_intel flagsIntel,
                        size_t size,
                        void *hostPtr,
+                       cl_int &errcodeRet) {
+    AdditionalBufferCreateArgs bufferCreateArgs{};
+    return create(context, memoryProperties, flags, flagsIntel, size, hostPtr, bufferCreateArgs, errcodeRet);
+}
+
+Buffer *Buffer::create(Context *context,
+                       const MemoryProperties &memoryProperties,
+                       cl_mem_flags flags,
+                       cl_mem_flags_intel flagsIntel,
+                       size_t size,
+                       void *hostPtr,
+                       AdditionalBufferCreateArgs &bufferCreateArgs,
                        cl_int &errcodeRet) {
 
     errcodeRet = CL_SUCCESS;
@@ -355,7 +378,7 @@ Buffer *Buffer::create(Context *context,
             allocationInfo.allocateMemory = false;
         }
 
-        if (hostPtr && context->isProvidingPerformanceHints()) {
+        if (!bufferCreateArgs.doNotProvidePerformanceHints && hostPtr && context->isProvidingPerformanceHints()) {
             if (allocationInfo.zeroCopyAllowed) {
                 context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_MEETS_ALIGNMENT_RESTRICTIONS, hostPtr, size);
             } else {
@@ -367,7 +390,7 @@ Buffer *Buffer::create(Context *context,
             allocationInfo.zeroCopyAllowed = false;
         }
 
-        if (allocationInfo.allocateMemory && context->isProvidingPerformanceHints()) {
+        if (!bufferCreateArgs.doNotProvidePerformanceHints && allocationInfo.allocateMemory && context->isProvidingPerformanceHints()) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
         }
 
@@ -381,6 +404,7 @@ Buffer *Buffer::create(Context *context,
                                                                                                    *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
             allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
             allocProperties.flags.preferCompressed = compressionEnabled;
+            allocProperties.makeDeviceBufferLockable = bufferCreateArgs.makeAllocationLockable;
 
             if (allocationCpuPtr) {
                 allocationInfo.memory = memoryManager->createGraphicsAllocationFromExistingStorage(allocProperties, allocationCpuPtr, multiGraphicsAllocation);

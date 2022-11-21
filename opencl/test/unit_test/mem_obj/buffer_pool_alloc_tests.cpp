@@ -19,24 +19,12 @@ namespace Ult {
 using PoolAllocator = Context::BufferPoolAllocator;
 using MockBufferPoolAllocator = MockContext::MockBufferPoolAllocator;
 
-template <int32_t poolBufferFlag = -1, bool failMainStorageAllocation = false>
+template <int32_t poolBufferFlag = -1, bool failMainStorageAllocation = false, bool runSetup = true>
 class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
     void SetUp() override {
-        this->setUpImpl();
-    }
-
-    void setUpImpl() {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
-        this->deviceFactory = std::make_unique<UltClDeviceFactory>(1, 0);
-        this->device = deviceFactory->rootDevices[0];
-        this->mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
-        this->mockMemoryManager->localMemorySupported[mockRootDeviceIndex] = true;
-        this->setAllocationToFail(failMainStorageAllocation);
-        cl_device_id devices[] = {device};
-        this->context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
-        ASSERT_EQ(retVal, CL_SUCCESS);
-        this->setAllocationToFail(false);
-        this->poolAllocator = static_cast<MockBufferPoolAllocator *>(&context->smallBufferPoolAllocator);
+        if constexpr (runSetup) {
+            this->setUpImpl();
+        }
     }
 
     void TearDown() override {
@@ -62,6 +50,20 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
     cl_int retVal = CL_SUCCESS;
 
     DebugManagerStateRestore restore;
+
+    void setUpImpl() {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
+        this->deviceFactory = std::make_unique<UltClDeviceFactory>(1, 0);
+        this->device = deviceFactory->rootDevices[0];
+        this->mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+        this->mockMemoryManager->localMemorySupported[mockRootDeviceIndex] = true;
+        this->setAllocationToFail(failMainStorageAllocation);
+        cl_device_id devices[] = {device};
+        this->context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
+        ASSERT_EQ(retVal, CL_SUCCESS);
+        this->setAllocationToFail(false);
+        this->poolAllocator = static_cast<MockBufferPoolAllocator *>(&context->smallBufferPoolAllocator);
+    }
 };
 
 using aggregatedSmallBuffersDefaultTest = AggregatedSmallBuffersTestTemplate<-1>;
@@ -83,6 +85,13 @@ TEST_F(aggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWh
 }
 
 using aggregatedSmallBuffersEnabledTest = AggregatedSmallBuffersTestTemplate<1>;
+
+TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenAllocatingMainStorageThenMakeDeviceBufferLockable) {
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_NE(poolAllocator->mainStorage, nullptr);
+    ASSERT_NE(mockMemoryManager->lastAllocationProperties, nullptr);
+    EXPECT_TRUE(mockMemoryManager->lastAllocationProperties->makeDeviceBufferLockable);
+}
 
 TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLargerThanThresholdWhenBufferCreateCalledThenDoNotUsePool) {
     ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
@@ -235,9 +244,9 @@ TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
     }
 }
 
-using aggregatedSmallBuffersEnabledTestDoNotRunSetup = AggregatedSmallBuffersTestTemplate<1, true>;
+using aggregatedSmallBuffersEnabledTestFailPoolInit = AggregatedSmallBuffersTestTemplate<1, true>;
 
-TEST_F(aggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffersEnabledAndSizeEqualToThresholdWhenBufferCreateCalledButPoolCreateFailedThenDoNotUsePool) {
+TEST_F(aggregatedSmallBuffersEnabledTestFailPoolInit, givenAggregatedSmallBuffersEnabledAndSizeEqualToThresholdWhenBufferCreateCalledButPoolCreateFailedThenDoNotUsePool) {
     ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
     ASSERT_EQ(poolAllocator->mainStorage, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
@@ -245,6 +254,19 @@ TEST_F(aggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffe
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(buffer.get(), nullptr);
     EXPECT_EQ(poolAllocator->mainStorage, nullptr);
+}
+
+using aggregatedSmallBuffersEnabledTestDoNotRunSetup = AggregatedSmallBuffersTestTemplate<1, false, false>;
+
+TEST_F(aggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffersEnabledWhenPoolInitializedThenPerformanceHintsNotProvided) {
+    testing::internal::CaptureStdout();
+    DebugManager.flags.PrintDriverDiagnostics.set(1);
+    setUpImpl();
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_NE(poolAllocator->mainStorage, nullptr);
+    ASSERT_NE(context->driverDiagnostics, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(0u, output.size());
 }
 
 template <int32_t poolBufferFlag = -1>

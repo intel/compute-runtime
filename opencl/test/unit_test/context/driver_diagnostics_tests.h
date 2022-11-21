@@ -84,11 +84,11 @@ struct PerformanceHintTest : public DriverDiagnosticsTest,
 };
 
 struct PerformanceHintBufferTest : public PerformanceHintTest,
-                                   public ::testing::WithParamInterface<std::tuple<bool /*address aligned*/, bool /*size aligned*/>> {
+                                   public ::testing::WithParamInterface<std::tuple<bool /*address aligned*/, bool /*size aligned*/, bool /*provide performance hint*/>> {
 
     void SetUp() override {
         PerformanceHintTest::SetUp();
-        std::tie(alignedAddress, alignedSize) = GetParam();
+        std::tie(alignedAddress, alignedSize, providePerformanceHint) = GetParam();
         address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
     }
 
@@ -99,6 +99,7 @@ struct PerformanceHintBufferTest : public PerformanceHintTest,
     }
     bool alignedSize = false;
     bool alignedAddress = false;
+    bool providePerformanceHint = false;
     void *address = nullptr;
     Buffer *buffer = nullptr;
 };

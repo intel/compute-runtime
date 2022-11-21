@@ -57,6 +57,10 @@ extern ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer;
 
 class Buffer : public MemObj {
   public:
+    struct AdditionalBufferCreateArgs {
+        bool doNotProvidePerformanceHints;
+        bool makeAllocationLockable;
+    };
     constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MB;
     constexpr static size_t maxBufferSizeForCopyOnCpu = 64 * KB;
     constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
@@ -81,11 +85,27 @@ class Buffer : public MemObj {
                           cl_int &errcodeRet);
 
     static Buffer *create(Context *context,
+                          cl_mem_flags flags,
+                          size_t size,
+                          void *hostPtr,
+                          AdditionalBufferCreateArgs &bufferCreateArgs,
+                          cl_int &errcodeRet);
+
+    static Buffer *create(Context *context,
                           const MemoryProperties &properties,
                           cl_mem_flags flags,
                           cl_mem_flags_intel flagsIntel,
                           size_t size,
                           void *hostPtr,
+                          cl_int &errcodeRet);
+
+    static Buffer *create(Context *context,
+                          const MemoryProperties &properties,
+                          cl_mem_flags flags,
+                          cl_mem_flags_intel flagsIntel,
+                          size_t size,
+                          void *hostPtr,
+                          AdditionalBufferCreateArgs &bufferCreateArgs,
                           cl_int &errcodeRet);
 
     static Buffer *createSharedBuffer(Context *context,
