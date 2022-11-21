@@ -18,19 +18,15 @@ constexpr uint8_t memory0MaxTemperature = 0x12;
 constexpr uint8_t memory1MaxTemperature = 0x45;
 constexpr uint8_t memory2MaxTemperature = 0x32;
 constexpr uint8_t memory3MaxTemperature = 0x36;
-constexpr uint8_t tempArrForSubDevices[28] = {memory0MaxTemperature, 0, 0, 0, 0, 0, 0, 0, memory1MaxTemperature, 0, 0, 0, 0x6f, 0, 0, 0, 0x34, 0, 0, 0, 0x16, 0, 0, 0, 0x1d, 0, 0, 0};
-constexpr uint64_t offsetForSubDevices = 28;
-constexpr uint16_t memory0MaxTempIndex = 0;
-constexpr uint16_t memory1MaxTempIndex = 8;
-constexpr uint16_t memory2MaxTempIndex = 300;
-constexpr uint16_t memory3MaxTempIndex = 308;
-constexpr uint8_t subDeviceMaxTempIndex = 16;
-constexpr uint8_t gtMaxTempIndex = 24;
+constexpr uint32_t gtMaxTemperature = 0x1d;
+constexpr uint32_t tileMaxTemperature = 0x34;
 
+constexpr uint8_t computeTempIndex = 8;
+constexpr uint8_t coreTempIndex = 12;
+constexpr uint8_t socTempIndex = 0;
 constexpr uint8_t tempArrForNoSubDevices[19] = {0x12, 0x23, 0x43, 0xde, 0xa3, 0xce, 0x23, 0x11, 0x45, 0x32, 0x67, 0x47, 0xac, 0x21, 0x03, 0x90, 0, 0, 0};
-constexpr uint64_t offsetForNoSubDevices = 0x60;
 constexpr uint8_t computeIndexForNoSubDevices = 9;
-constexpr uint8_t globalIndexForNoSubDevices = 3;
+constexpr uint8_t gtTempIndexForNoSubDevices = 0;
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
 std::string gpuUpstreamPortPathInTemperature = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
 const std::string realPathTelem1 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
@@ -55,6 +51,10 @@ class TemperaturePmt : public PlatformMonitoringTech {
 
 template <>
 struct Mock<TemperaturePmt> : public TemperaturePmt {
+    ze_result_t mockReadValueResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadCoreTempResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadComputeTempResult = ZE_RESULT_SUCCESS;
+
     Mock<TemperaturePmt>(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : TemperaturePmt(pFsAccess, onSubdevice, subdeviceId) {}
     ~Mock() override {
         rootDeviceTelemNodeIndex = 0;
@@ -65,6 +65,65 @@ struct Mock<TemperaturePmt> : public TemperaturePmt {
             return;
         }
         telemetryDeviceEntry = "/sys/class/intel_pmt/telem2/telem";
+    }
+
+    ze_result_t readValue(const std::string key, uint32_t &val) override {
+
+        if (mockReadValueResult != ZE_RESULT_SUCCESS) {
+            return mockReadValueResult;
+        }
+
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        if (key.compare("HBM0MaxDeviceTemperature") == 0) {
+            val = memory0MaxTemperature;
+        } else if (key.compare("HBM1MaxDeviceTemperature") == 0) {
+            val = memory1MaxTemperature;
+        } else if (key.compare("HBM2MaxDeviceTemperature") == 0) {
+            val = memory2MaxTemperature;
+        } else if (key.compare("HBM3MaxDeviceTemperature") == 0) {
+            val = memory3MaxTemperature;
+        } else if (key.compare("GTMaxTemperature") == 0) {
+            val = gtMaxTemperature;
+        } else if (key.compare("TileMaxTemperature") == 0) {
+            val = tileMaxTemperature;
+        } else if (key.compare("COMPUTE_TEMPERATURES") == 0) {
+            if (mockReadComputeTempResult != ZE_RESULT_SUCCESS) {
+                return mockReadComputeTempResult;
+            }
+            val = 0;
+            for (uint8_t i = 0; i < sizeof(uint32_t); i++) {
+                val |= (uint32_t)tempArrForNoSubDevices[(computeTempIndex) + i] << (i * 8);
+            }
+        } else if (key.compare("CORE_TEMPERATURES") == 0) {
+            if (mockReadCoreTempResult != ZE_RESULT_SUCCESS) {
+                return mockReadCoreTempResult;
+            }
+            val = 0;
+            for (uint8_t i = 0; i < sizeof(uint32_t); i++) {
+                val |= (uint32_t)tempArrForNoSubDevices[(coreTempIndex) + i] << (i * 8);
+            }
+        } else {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
+        return result;
+    }
+
+    ze_result_t readValue(const std::string key, uint64_t &val) override {
+
+        if (mockReadValueResult != ZE_RESULT_SUCCESS) {
+            return mockReadValueResult;
+        }
+
+        if (key.compare("SOC_TEMPERATURES") == 0) {
+            val = 0;
+            for (uint8_t i = 0; i < sizeof(uint64_t); i++) {
+                val |= (uint64_t)tempArrForNoSubDevices[(socTempIndex) + i] << (i * 8);
+            }
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
     }
 };
 
