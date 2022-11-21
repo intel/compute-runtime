@@ -21,7 +21,7 @@ TEST(DependencyResolverTests, GivenEmptyGraphReturnEmptyResolve) {
     EXPECT_TRUE(resolve.empty());
 }
 
-TEST(DependencyResolverTests, GivenGraphWithLoopReturnEmptyResolveAndSetLoopDeteckted) {
+TEST(DependencyResolverTests, GivenGraphWithLoopReturnCorrectResolve) {
     /*
         0 -> 1
         ^    |
@@ -29,10 +29,23 @@ TEST(DependencyResolverTests, GivenGraphWithLoopReturnEmptyResolveAndSetLoopDete
         3 <- 2
     */
     std::vector<std::vector<size_t>> graph = {{1}, {2}, {3}, {0}};
+    std::vector<size_t> expectedResolve = {3, 2, 1, 0};
     DependencyResolver resolver(graph);
     const auto &resolve = resolver.resolveDependencies();
-    EXPECT_TRUE(resolve.empty());
-    EXPECT_TRUE(resolver.hasLoop());
+    EXPECT_EQ(expectedResolve, resolve);
+}
+
+TEST(DependencyResolverTests, GivenGraphWithNodeConnectedToItselfThenReturnCorrectResolve) {
+    /*
+        0-->
+        ^  |
+        |<-v
+    */
+    std::vector<std::vector<size_t>> graph = {{0}};
+    std::vector<size_t> expectedResolve = {0};
+    DependencyResolver resolver(graph);
+    const auto &resolve = resolver.resolveDependencies();
+    EXPECT_EQ(expectedResolve, resolve);
 }
 
 TEST(DependencyResolverTests, GivenOneConnectedGraphReturnCorrectResolve) {
@@ -56,7 +69,7 @@ TEST(DependencyResolverTests, GivenMultipleDisconnectedGraphsReturnCorrectResolv
        4 -> 3
     */
     std::vector<std::vector<size_t>> graph = {{}, {2}, {5}, {}, {3}, {}};
-    std::vector<size_t> expectedResolve = {5, 2, 1, 3, 4};
+    std::vector<size_t> expectedResolve = {0, 5, 2, 1, 3, 4};
     DependencyResolver resolver(graph);
     const auto &resolve = resolver.resolveDependencies();
     EXPECT_EQ(expectedResolve, resolve);
@@ -137,16 +150,6 @@ TEST_F(ExternalFunctionsTests, GivenMissingExtFuncInLookupMapWhenResolvingExtFun
     EXPECT_EQ(ERROR_EXTERNAL_FUNCTION_INFO_MISSING, error);
 }
 
-TEST_F(ExternalFunctionsTests, GivenLoopWhenResolvingExtFuncDependenciesThenReturnError) {
-    addExternalFunction("fun0", 0);
-    addExternalFunction("fun1", 0);
-    addFuncDependency("fun0", "fun1");
-    addFuncDependency("fun1", "fun0");
-    set();
-    auto error = resolveExtFuncDependencies(extFuncInfo, funcNameToId, functionDependencies);
-    EXPECT_EQ(ERROR_LOOP_DETECTED, error);
-}
-
 TEST_F(ExternalFunctionsTests, GivenMissingExtFuncInLookupMapWhenResolvingKernelDependenciesThenReturnError) {
     addKernel("kernel");
     addKernelDependency("fun0", "kernel");
@@ -182,6 +185,18 @@ TEST_F(ExternalFunctionsTests, GivenMissingExtFuncInKernelDependenciesWhenResolv
     set();
     auto error = resolveBarrierCount(extFuncInfo, kernelDependencies, functionDependencies, nameToKernelDescriptor);
     EXPECT_EQ(ERROR_EXTERNAL_FUNCTION_INFO_MISSING, error);
+}
+
+TEST_F(ExternalFunctionsTests, GivenLoopWhenResolvingExtFuncDependenciesThenReturnSuccess) {
+    addExternalFunction("fun0", 4);
+    addExternalFunction("fun1", 2);
+    addFuncDependency("fun0", "fun1");
+    addFuncDependency("fun1", "fun0");
+    set();
+    auto retVal = resolveExtFuncDependencies(extFuncInfo, funcNameToId, functionDependencies);
+    EXPECT_EQ(RESOLVE_SUCCESS, retVal);
+    EXPECT_EQ(4U, extFuncInfo[funcNameToId["fun0"]]->barrierCount);
+    EXPECT_EQ(4U, extFuncInfo[funcNameToId["fun1"]]->barrierCount);
 }
 
 TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingBarrierCountThenSetAppropriateBarrierCountAndReturnSuccess) {
