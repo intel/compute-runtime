@@ -172,6 +172,28 @@ HWTEST2_F(HwHelperTestPvcAndLater, givenHwHelperWhenGettingISAPaddingThenCorrect
     EXPECT_EQ(helper.getPaddingForISAAllocation(), 0xE00u);
 }
 
+HWTEST2_F(HwHelperTestPvcAndLater, givenForceBCSForInternalCopyEngineVariableSetWhenGetGpgpuEnginesCalledThenForceInternalBCSEngineIndex, IsAtLeastXeHpcCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceBCSForInternalCopyEngine.set(2);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    EXPECT_GE(engines.size(), 9u);
+
+    bool found = false;
+    for (auto engine : engines) {
+        if ((engine.first == aub_stream::ENGINE_BCS2) && (engine.second == EngineUsage::Internal)) {
+            found = true;
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
 using HwHelperTestCooperativeEngine = HwHelperTestPvcAndLater;
 HWTEST2_F(HwHelperTestCooperativeEngine, givenCooperativeContextSupportedWhenGetEngineInstancesThenReturnCorrectAmountOfCooperativeCcs, IsXeHpcCore) {
     HardwareInfo hwInfo = *defaultHwInfo;
