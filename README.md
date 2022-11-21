@@ -43,10 +43,14 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 ## Release cadence
 
-* Once a week, we run extended validation cycle on a selected driver.
-* When the extended validation cycle tests pass, the corresponding commit on github is tagged using
-the format yy.ww.bbbb (yy - year, ww - work week, bbbb - incremental build number).
-* Typically for weekly tags we will post a binary release (e.g. deb).
+_Release cadence changed from weekly to monthly late 2022_
+
+* At the beginning of each calendar month, we identify a well-tested driver version from the previous month as a release candidate for our monthly release.
+* We create a release branch and apply selected fixes for significant issues. 
+* The branch naming convention is releases/yy.ww (yy - year, ww - work week of release candidate)
+* The builds are tagged using the following format: yy.ww.bbbbb.hh (yy - year, ww - work week, bbbbb - incremental build number from the master branch, hh - incremental commit number on release branch).
+* We publish and document a monthly release from the tip of that branch. 
+* During subsequent weeks of a given month, we continue to cherry-pick fixes to that branch and may publish a hotfix release. 
 * Quality level of the driver (per platform) will be provided in the Release Notes.
 
 ## Installation Options
