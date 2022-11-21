@@ -589,6 +589,9 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
 
     if (ctx.isDirectSubmissionEnabled) {
         linearStreamSizeEstimate += NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
+        if (NEO::DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1) {
+            linearStreamSizeEstimate += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_REG);
+        }
     } else {
         linearStreamSizeEstimate += NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize();
     }
@@ -1040,8 +1043,17 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
             startAddress = 0;
         }
 
+        bool indirect = false;
+        if (csr->directSubmissionRelaxedOrderingEnabled()) {
+            // Indirect BB_START operates only on GPR_0
+            NEO::EncodeSetMMIO<GfxFamily>::encodeREG(innerCommandStream, CS_GPR_R0, CS_GPR_R3);
+            NEO::EncodeSetMMIO<GfxFamily>::encodeREG(innerCommandStream, CS_GPR_R0 + 4, CS_GPR_R3 + 4);
+
+            indirect = true;
+        }
+
         endingCmd = innerCommandStream.getSpace(0);
-        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&innerCommandStream, startAddress, false, false, false);
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&innerCommandStream, startAddress, false, indirect, false);
     } else {
         auto buffer = innerCommandStream.getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;

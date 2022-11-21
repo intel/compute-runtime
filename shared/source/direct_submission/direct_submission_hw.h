@@ -89,6 +89,10 @@ class DirectSubmissionHw {
 
     virtual uint32_t *getCompletionValuePointer() { return nullptr; }
 
+    bool isRelaxedOrderingEnabled() const {
+        return relaxedOrderingEnabled;
+    }
+
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
     static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);
@@ -114,6 +118,8 @@ class DirectSubmissionHw {
     size_t getSizeSemaphoreSection(bool firstSubmission);
 
     void dispatchRelaxedOrderingSchedulerSection(uint32_t value);
+
+    void dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr);
 
     void dispatchStartSection(uint64_t gpuStartAddress);
     size_t getSizeStartSection();

@@ -562,6 +562,9 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch() {
     size_t size = getSizeSemaphoreSection(false);
     if (workloadMode == 0) {
         size += getSizeStartSection();
+        if (this->relaxedOrderingEnabled) {
+            size += RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
+        }
     } else if (workloadMode == 1) {
         size += getDiagnosticModeSection();
     }
@@ -604,10 +607,22 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
         void *returnCmd = batchBuffer.endCmdPtr;
 
+        LinearStream relaxedOrderingReturnPtrCmdStream;
+        if (this->relaxedOrderingEnabled) {
+            // preallocate and patch after start section
+            auto relaxedOrderingReturnPtrCmds = ringCommandStream.getSpace(RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
+            relaxedOrderingReturnPtrCmdStream.replaceBuffer(relaxedOrderingReturnPtrCmds, RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
+        }
+
         dispatchStartSection(commandStreamAddress);
         void *returnPosition = ringCommandStream.getSpace(0);
+        uint64_t returnGpuPointer = getCommandBufferPositionGpuAddress(returnPosition);
 
-        setReturnAddress(returnCmd, getCommandBufferPositionGpuAddress(returnPosition));
+        if (this->relaxedOrderingEnabled) {
+            dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer);
+        } else {
+            setReturnAddress(returnCmd, returnGpuPointer);
+        }
     } else if (workloadMode == 1) {
         DirectSubmissionDiagnostics::diagnosticModeOneDispatch(diagnostic.get());
         dispatchDiagnosticModeSection();
@@ -631,6 +646,17 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
 
     dispatchSemaphoreSection(currentQueueWorkCount + 1, false);
     return currentPosition;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr) {
+    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32), true);
+
+    uint64_t returnPtrAfterTaskStoreSection = returnPtr + RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
+
+    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3, static_cast<uint32_t>(returnPtrAfterTaskStoreSection & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtrAfterTaskStoreSection >> 32), true);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -710,7 +736,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     size_t cycleSize = getSizeSwitchRingBufferSection();
     size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd();
     if (this->relaxedOrderingEnabled) {
-        requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
+        requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>() + RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
     }
 
     getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));

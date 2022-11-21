@@ -2084,6 +2084,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
     }
 
+    bool relaxedOrdering = ((this->cmdListType == TYPE_IMMEDIATE) && csr->directSubmissionRelaxedOrderingEnabled());
+
+    if (relaxedOrdering) {
+        // Indirect BB_START operates only on GPR_0
+        NEO::EncodeSetMMIO<GfxFamily>::encodeREG(*commandContainer.getCommandStream(), CS_GPR_R0, CS_GPR_R4);
+        NEO::EncodeSetMMIO<GfxFamily>::encodeREG(*commandContainer.getCommandStream(), CS_GPR_R0 + 4, CS_GPR_R4 + 4);
+    }
+
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
@@ -2094,10 +2102,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             gpuAddr += event->getContextEndOffset();
         }
         for (uint32_t i = 0u; i < packetsToWait; i++) {
-            NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
-                                                                       gpuAddr,
-                                                                       eventStateClear,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+            if (relaxedOrdering) {
+                NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddr, eventStateClear,
+                                                                                                       NEO::CompareOperation::Equal, true);
+            } else {
+                NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                           gpuAddr,
+                                                                           eventStateClear,
+                                                                           COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+            }
 
             gpuAddr += event->getSinglePacketSize();
         }

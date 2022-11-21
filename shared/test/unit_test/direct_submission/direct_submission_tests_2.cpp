@@ -1622,7 +1622,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     directSubmission.initialize(true, false);
-    auto offset = directSubmission.ringCommandStream.getUsed() + directSubmission.getSizeStartSection();
+    auto offset = directSubmission.ringCommandStream.getUsed() + directSubmission.getSizeStartSection() + RelaxedOrderingHelper::getSizeReturnPtrRegs<FamilyType>();
 
     FlushStampTracker flushStamp(true);
     directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
@@ -1729,4 +1729,59 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchS
     directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
 
     EXPECT_TRUE(verifySchedulerProgramming<FamilyType>(directSubmission.ringCommandStream, deferredTasksListVa, semaphoreGpuVa, directSubmission.currentQueueWorkCount, offset));
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSetReturnRegisters, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    directSubmission->initialize(true, false);
+
+    ultCsr->directSubmission.reset(directSubmission);
+
+    auto &commandStream = ultCsr->getCS(0x100);
+
+    auto endingPtr = commandStream.getSpace(0);
+
+    ultCsr->programEndingCmd(commandStream, &endingPtr, true, false);
+
+    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(commandStream.getCpuBase());
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+
+    lrrCmd++;
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+
+    auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
+    EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkloadSectionThenProgramReturnPtrs, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.initialize(true, false);
+
+    auto offset = directSubmission.ringCommandStream.getUsed();
+
+    auto originalBbStart = *reinterpret_cast<MI_BATCH_BUFFER_START *>(batchBuffer.endCmdPtr);
+
+    directSubmission.dispatchWorkloadSection(batchBuffer);
+
+    uint64_t returnPtr = directSubmission.ringCommandStream.getGpuBase() + offset + (4 * sizeof(MI_LOAD_REGISTER_IMM)) + directSubmission.getSizeStartSection();
+
+    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset));
+    EXPECT_TRUE(verifyLri<FamilyType>(lriCmd, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
+
+    uint64_t returnPtr2 = returnPtr + RelaxedOrderingHelper::getSizeTaskStoreSection<FamilyType>();
+    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
+
+    EXPECT_EQ(0, memcmp(&originalBbStart, batchBuffer.endCmdPtr, sizeof(MI_BATCH_BUFFER_START)));
 }

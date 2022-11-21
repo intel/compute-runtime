@@ -8,6 +8,8 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -57,6 +59,110 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWait
         EXPECT_EQ(cmd->getWaitMode(),
                   MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
     }
+}
+
+HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingWaitOnEventsThenUseConditionalStartInsteadOfSemaphore, IsAtLeastXeHpcCore) {
+    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_SET_PREDICATE = typename FamilyType::MI_SET_PREDICATE;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename FamilyType::MI_MATH;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, immCommandList);
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(immCommandList->csr);
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+
+    ze_event_handle_t hEventHandle = event->toHandle();
+    auto result = immCommandList->appendWaitOnEvents(1, &hEventHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = immCommandList->commandContainer.getCommandStream()->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      immCommandList->commandContainer.getCommandStream()->getCpuBase(),
+                                                      usedSpaceAfter));
+
+    auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+    lrrCmd++;
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+
+    auto eventGpuAddr = event->getGpuAddress(this->device);
+    if (event->isUsingContextEndOffset()) {
+        eventGpuAddr += event->getContextEndOffset();
+    }
+
+    // conditional bb_start
+    auto lrmCmd = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(++lrrCmd);
+    EXPECT_EQ(lrmCmd->getRegisterAddress(), CS_GPR_R7);
+    EXPECT_EQ(lrmCmd->getMemoryAddress(), eventGpuAddr);
+
+    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R7 + 4);
+    EXPECT_EQ(lriCmd->getDataDword(), 0u);
+
+    lriCmd++;
+    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R8);
+    EXPECT_EQ(lriCmd->getDataDword(), static_cast<uint32_t>(Event::State::STATE_CLEARED));
+
+    lriCmd++;
+    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R8 + 4);
+    EXPECT_EQ(lriCmd->getDataDword(), 0u);
+
+    auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
+    EXPECT_EQ(miMathCmd->DW0.BitField.DwordLength, 3u);
+
+    auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCA), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_7), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCB), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_8), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_SUB), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_NONE), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_NONE), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_STORE), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_7), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_ZF), miAluCmd->DW0.BitField.Operand2);
+
+    lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++miAluCmd);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R7);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_PREDICATE_RESULT_2);
+
+    auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
+    EXPECT_EQ(static_cast<typename MI_SET_PREDICATE::PREDICATE_ENABLE>(MiPredicateType::NoopOnResult2Clear), predicateCmd->getPredicateEnable());
+
+    auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++predicateCmd);
+    EXPECT_EQ(1u, bbStartCmd->getPredicationEnable());
+    EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
+
+    predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++bbStartCmd);
+    EXPECT_EQ(static_cast<typename MI_SET_PREDICATE::PREDICATE_ENABLE>(MiPredicateType::Disable), predicateCmd->getPredicateEnable());
 }
 
 HWTEST_F(CommandListAppendWaitOnEvent, givenTwoEventsWhenWaitOnEventsAppendedThenTwoSemaphoreWaitCmdsAreGenerated) {

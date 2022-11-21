@@ -271,6 +271,10 @@ class CommandStreamReceiver {
         return false;
     }
 
+    virtual bool directSubmissionRelaxedOrderingEnabled() const {
+        return false;
+    }
+
     virtual void stopDirectSubmission() {}
 
     bool isStaticWorkPartitioningEnabled() const {

@@ -120,6 +120,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return blitterDirectSubmission.get() != nullptr;
     }
 
+    bool directSubmissionRelaxedOrderingEnabled() const override;
+
     void stopDirectSubmission() override;
 
     virtual bool isKmdWaitModeActive() { return true; }

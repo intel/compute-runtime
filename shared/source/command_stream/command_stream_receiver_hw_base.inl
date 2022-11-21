@@ -107,12 +107,18 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
             startAddress = 0;
         }
 
-        *patchLocation = commandStream.getSpace(sizeof(MI_BATCH_BUFFER_START));
-        auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*patchLocation);
-        MI_BATCH_BUFFER_START cmd = {};
+        bool indirect = false;
+        if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1) {
+            NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, CS_GPR_R0, CS_GPR_R3);
+            NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, CS_GPR_R0 + 4, CS_GPR_R3 + 4);
 
-        addBatchBufferStart(&cmd, startAddress, false);
-        *bbStart = cmd;
+            indirect = true;
+        }
+
+        *patchLocation = commandStream.getSpace(0);
+
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStream, startAddress, false, indirect, false);
+
     } else {
         if (sipWaAllowed) {
             PreemptionHelper::programStateSipEndWa<GfxFamily>(commandStream, peekHwInfo(), executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->debugger.get());
@@ -1529,6 +1535,12 @@ void CommandStreamReceiverHw<GfxFamily>::handlePipelineSelectStateTransition(Dis
         (this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired)) && this->pipelineSupportFlags.mediaSamplerDopClockGate;
     csrSizeRequestFlags.systolicPipelineSelectMode =
         (this->lastSystolicPipelineSelectMode != !!dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode) && this->pipelineSupportFlags.systolicMode;
+}
+
+template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::directSubmissionRelaxedOrderingEnabled() const {
+    return ((directSubmission.get() && directSubmission->isRelaxedOrderingEnabled()) ||
+            (blitterDirectSubmission.get() && blitterDirectSubmission->isRelaxedOrderingEnabled()));
 }
 
 } // namespace NEO

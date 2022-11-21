@@ -27,6 +27,11 @@ constexpr size_t getSizeRegistersInit() {
 }
 
 template <typename GfxFamily>
+constexpr size_t getSizeReturnPtrRegs() {
+    return (4 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM));
+}
+
+template <typename GfxFamily>
 struct SchedulerSizeAndOffsetSection {
     using MI_MATH = typename GfxFamily::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
