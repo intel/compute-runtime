@@ -197,6 +197,7 @@ constexpr ConstStringRef samplerType("sampler_type");
 constexpr ConstStringRef addrMode("sampler_desc_addrmode");
 constexpr ConstStringRef filterMode("sampler_desc_filtermode");
 constexpr ConstStringRef normalized("sampler_desc_normalized");
+constexpr ConstStringRef isPipe("is_pipe");
 
 namespace ArgType {
 constexpr ConstStringRef localSize("local_size");
@@ -686,6 +687,7 @@ struct PayloadArgumentBaseT {
     ImageType imageType = ImageTypeUnknown;
     bool imageTransformable = false;
     SamplerType samplerType = SamplerTypeUnknown;
+    bool isPipe = false;
 };
 
 } // namespace PayloadArgument
