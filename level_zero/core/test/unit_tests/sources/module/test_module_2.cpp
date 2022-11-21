@@ -266,7 +266,7 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(0u, indirectFlags);
 
-    const char attributeString[] = "work_group_size_hint(1, 1, 1)";
+    const char attributeString[] = "work_group_size_hint(1,1,1)";
     uint32_t strSize = 0;
 
     result = kernel->getSourceAttributes(&strSize, nullptr);

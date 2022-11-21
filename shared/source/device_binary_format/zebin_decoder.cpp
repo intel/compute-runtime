@@ -1523,7 +1523,7 @@ std::string attributeToString(const int32_t &attribute) {
     return std::to_string(attribute);
 }
 std::string attributeToString(const std::array<int32_t, 3> &attribute) {
-    return std::to_string(attribute[0]) + ", " + std::to_string(attribute[1]) + ", " + std::to_string(attribute[2]);
+    return std::to_string(attribute[0]) + "," + std::to_string(attribute[1]) + "," + std::to_string(attribute[2]);
 }
 std::string attributeToString(ConstStringRef attribute) {
     return attribute.str();

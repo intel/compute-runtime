@@ -1967,7 +1967,7 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
-    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0, 1, 2) reqd_work_group_size(256, 2, 1) work_group_size_hint(256, 2, 1) vec_type_hint(uint)", programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.kernelLanguageAttributes.c_str());
+    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0,1,2) reqd_work_group_size(256,2,1) work_group_size_hint(256,2,1) vec_type_hint(uint)", programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.kernelLanguageAttributes.c_str());
     EXPECT_EQ(16U, programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.requiredSubGroupSize);
     EXPECT_FALSE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.isInvalid);
 }
