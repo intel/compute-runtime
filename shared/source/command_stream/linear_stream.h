@@ -50,7 +50,7 @@ class LinearStream {
     }
 
   protected:
-    size_t sizeUsed = 0;
+    std::atomic<size_t> sizeUsed{0};
     size_t maxAvailableSpace{0};
     void *buffer{nullptr};
     GraphicsAllocation *graphicsAllocation{nullptr};
