@@ -147,13 +147,13 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, uint32_t regOffset, uint32_t immVal, uint64_t dstAddress,
                                                  bool workloadPartition) {
-    EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, regOffset);
-    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, immVal, true);
-    EncodeMath<Family>::bitwiseAnd(container, AluRegisters::R_0,
-                                   AluRegisters::R_1,
-                                   AluRegisters::R_2);
+    EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R13, regOffset);
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R14, immVal, true);
+    EncodeMath<Family>::bitwiseAnd(container, AluRegisters::R_13,
+                                   AluRegisters::R_14,
+                                   AluRegisters::R_15);
     EncodeStoreMMIO<Family>::encode(*container.getCommandStream(),
-                                    CS_GPR_R2, dstAddress, workloadPartition);
+                                    CS_GPR_R15, dstAddress, workloadPartition);
 }
 
 /*

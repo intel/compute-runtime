@@ -171,17 +171,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
 
     auto itor = find<MI_LOAD_REGISTER_REG *>(commands.begin(), commands.end());
 
-    // load regOffset to R0
+    // load regOffset to R13
     ASSERT_NE(commands.end(), itor);
     auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
     EXPECT_EQ(regOffset, cmdLoadReg->getSourceRegisterAddress());
-    EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
+    EXPECT_EQ(CS_GPR_R13, cmdLoadReg->getDestinationRegisterAddress());
 
-    // load immVal to R1
+    // load immVal to R14
     itor++;
     ASSERT_NE(commands.end(), itor);
     auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
+    EXPECT_EQ(CS_GPR_R14, cmdLoadImm->getRegisterOffset());
     EXPECT_EQ(immVal, cmdLoadImm->getDataDword());
 
     // encodeAluAnd should have its own unit tests, so we only check
@@ -191,11 +191,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
     auto cmdMath = genCmdCast<MI_MATH *>(*itor);
     EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
 
-    // store R2 to address
+    // store R15 to address
     itor++;
     ASSERT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
+    EXPECT_EQ(CS_GPR_R15, cmdMem->getRegisterAddress());
     EXPECT_EQ(dstAddress, cmdMem->getMemoryAddress());
     EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
 }

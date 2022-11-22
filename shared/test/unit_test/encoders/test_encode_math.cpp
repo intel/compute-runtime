@@ -188,17 +188,17 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
 
     auto itor = find<MI_LOAD_REGISTER_REG *>(commands.begin(), commands.end());
 
-    // load regOffset to R0
+    // load regOffset to R13
     EXPECT_NE(commands.end(), itor);
     auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
     EXPECT_EQ(cmdLoadReg->getSourceRegisterAddress(), regOffset);
-    EXPECT_EQ(cmdLoadReg->getDestinationRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(cmdLoadReg->getDestinationRegisterAddress(), CS_GPR_R13);
 
-    // load immVal to R1
+    // load immVal to R14
     itor++;
     EXPECT_NE(commands.end(), itor);
     auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(cmdLoadImm->getRegisterOffset(), CS_GPR_R1);
+    EXPECT_EQ(cmdLoadImm->getRegisterOffset(), CS_GPR_R14);
     EXPECT_EQ(cmdLoadImm->getDataDword(), immVal);
 
     // encodeAluAnd should have its own unit tests, so we only check
@@ -208,11 +208,11 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
     auto cmdMath = genCmdCast<MI_MATH *>(*itor);
     EXPECT_EQ(cmdMath->DW0.BitField.DwordLength, 3u);
 
-    // store R2 to address
+    // store R15 to address
     itor++;
     EXPECT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmdMem->getRegisterAddress(), CS_GPR_R2);
+    EXPECT_EQ(cmdMem->getRegisterAddress(), CS_GPR_R15);
     EXPECT_EQ(cmdMem->getMemoryAddress(), dstAddress);
 }
 
