@@ -632,12 +632,12 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
     ze_event_handle_t eventHandles[1] = {event->toHandle()};
-    EXPECT_FALSE(static_cast<MockEvent *>(event.get())->isCompleted);
+    EXPECT_EQ(MockEvent::STATE_CLEARED, static_cast<MockEvent *>(event.get())->isCompleted);
 
     result = CommandList::fromHandle(cmdListHandle)->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, eventHandles, launchParams);
 
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_TRUE(static_cast<MockEvent *>(event.get())->isCompleted);
+    EXPECT_EQ(MockEvent::STATE_SIGNALED, static_cast<MockEvent *>(event.get())->isCompleted);
 
     CommandList::fromHandle(cmdListHandle)->destroy();
 }

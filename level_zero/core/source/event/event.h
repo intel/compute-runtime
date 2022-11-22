@@ -45,6 +45,7 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) = 0;
     enum State : uint32_t {
         STATE_SIGNALED = 0u,
+        HOST_CACHING_DISABLED = std::numeric_limits<uint32_t>::max() - 1,
         STATE_CLEARED = std::numeric_limits<uint32_t>::max(),
         STATE_INITIAL = STATE_CLEARED
     };
@@ -121,8 +122,18 @@ struct Event : _ze_event_handle_t {
         l3FlushAppliedOnKernel.set(kernelCount - 1);
     }
 
-    void resetCompletionStatus() {
-        this->isCompleted = false;
+    void resetCompletionStatus(bool disableHostSideStatusCaching) {
+        this->isCompleted.store(disableHostSideStatusCaching ? HOST_CACHING_DISABLED : STATE_CLEARED);
+    }
+
+    void setIsCompleted() {
+        if (this->isCompleted.load() != HOST_CACHING_DISABLED) {
+            this->isCompleted = STATE_SIGNALED;
+        }
+    }
+
+    bool isAlreadyCompleted() {
+        return this->isCompleted == STATE_SIGNALED;
     }
 
     uint32_t getMaxPacketsCount() const {
@@ -172,7 +183,7 @@ struct Event : _ze_event_handle_t {
     bool isTimestampEvent = false;
     bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
-    std::atomic<bool> isCompleted{false};
+    std::atomic<State> isCompleted{STATE_INITIAL};
 };
 
 template <typename TagSizeT>

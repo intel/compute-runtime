@@ -2455,7 +2455,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         result = event->queryStatus();
         EXPECT_EQ(ZE_RESULT_NOT_READY, result);
-        event->resetCompletionStatus();
+        event->resetCompletionStatus(false);
 
         event->hostSignal();
 
@@ -2472,7 +2472,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         result = event->queryStatus();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        event->resetCompletionStatus();
+        event->resetCompletionStatus(false);
 
         remainingPacketsAddress = ptrOffset(eventHostAddress, (usedPackets * packetSize));
         if (event->isUsingContextEndOffset()) {
@@ -2485,13 +2485,13 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
             result = event->queryStatus();
             EXPECT_EQ(queryRetAfterPartialReset, result);
-            event->resetCompletionStatus();
+            event->resetCompletionStatus(false);
 
             *completionField = Event::STATE_SIGNALED;
 
             result = event->queryStatus();
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-            event->resetCompletionStatus();
+            event->resetCompletionStatus(false);
         }
 
         event->reset();

@@ -200,12 +200,27 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenEve
     }
 }
 
-HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenIsCompletedResetted) {
+HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenIsCompletedFlagDisabled) {
     MockEvent event;
-    event.isCompleted = true;
+    event.isCompleted = MockEvent::STATE_SIGNALED;
     auto result = commandList->appendEventReset(event.toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_FALSE(event.isCompleted);
+    ASSERT_EQ(MockEvent::HOST_CACHING_DISABLED, event.isCompleted);
+}
+
+HWTEST_F(CommandListAppendEventReset, WhenIsCompletedClearedThenSetStateSignaledWhenSignalAgain) {
+    event->reset();
+    EXPECT_FALSE(event->isAlreadyCompleted());
+    event->hostSignal();
+    EXPECT_TRUE(event->isAlreadyCompleted());
+}
+
+HWTEST_F(CommandListAppendEventReset, WhenIsCompletedDisabledThenDontSetStateSignaledWhenSignalAgain) {
+    auto result = commandList->appendEventReset(event->toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(event->isAlreadyCompleted());
+    event->hostSignal();
+    EXPECT_FALSE(event->isAlreadyCompleted());
 }
 
 HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenCommandsAreExecuted, IsAtLeastSkl) {

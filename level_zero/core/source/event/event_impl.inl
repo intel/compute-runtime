@@ -172,7 +172,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
             remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->singlePacketSize);
         }
     }
-    isCompleted = true;
+    this->setIsCompleted();
     this->csr->getInternalAllocationStorage()->cleanAllocationList(this->csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     return ZE_RESULT_SUCCESS;
 }
@@ -184,7 +184,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
     }
     this->csr->downloadAllocations();
     this->csr->downloadAllocation(*eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));
-    if (isCompleted == true) {
+    if (isAlreadyCompleted()) {
         return ZE_RESULT_SUCCESS;
     } else {
         return queryStatusEventPackets();
@@ -273,7 +273,7 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostSignal() {
     auto status = hostEventSetValue(Event::STATE_SIGNALED);
     if (status == ZE_RESULT_SUCCESS) {
-        isCompleted = true;
+        this->setIsCompleted();
     }
     return status;
 }
@@ -328,7 +328,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
-    this->resetCompletionStatus();
+    this->resetCompletionStatus(false);
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();
     return ZE_RESULT_SUCCESS;
