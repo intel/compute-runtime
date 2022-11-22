@@ -190,12 +190,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
         this->mergeOneCmdListPipelinedState(commandList);
+
+        this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
     }
 
     this->updateBaseAddressState(CommandList::fromHandle(phCommandLists[numCommandLists - 1]));
     this->collectPrintfContentsFromAllCommandsLists(phCommandLists, numCommandLists);
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, phCommandLists[0]);
-    this->prefetchMemoryIfRequested(ctx.performMemoryPrefetch);
 
     this->programStateSipEndWA(ctx.stateSipRequired, child);
 
@@ -458,9 +459,6 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
             this->cachedMOCSAllowed = false;
         }
 
-        if (commandList->isMemoryPrefetchRequested()) {
-            this->performMemoryPrefetch = true;
-        }
         hasIndirectAccess |= commandList->hasIndirectAllocationsAllowed();
         if (commandList->hasIndirectAllocationsAllowed()) {
             unifiedMemoryControls.indirectDeviceAllocationsAllowed |= commandList->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed;
@@ -959,12 +957,12 @@ void CommandQueueHw<gfxCoreFamily>::migrateSharedAllocationsIfRequested(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::prefetchMemoryIfRequested(bool &isMemoryPrefetchRequested) {
-    if (isMemoryPrefetchRequested) {
+void CommandQueueHw<gfxCoreFamily>::prefetchMemoryToDeviceAssociatedWithCmdList(CommandList *commandList) {
+    if (commandList->isMemoryPrefetchRequested()) {
         auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
-        prefetchManager->migrateAllocationsToGpu(*this->device->getDriverHandle()->getSvmAllocsManager(),
-                                                 *this->device->getNEODevice());
-        isMemoryPrefetchRequested = false;
+        prefetchManager->migrateAllocationsToGpu(commandList->getPrefetchContext(),
+                                                 *this->device->getDriverHandle()->getSvmAllocsManager(),
+                                                 *commandList->device->getNEODevice());
     }
 }
 

@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include <level_zero/ze_api.h>
@@ -228,6 +229,7 @@ struct CommandList : _ze_command_list_handle_t {
     void storePrintfKernel(Kernel *kernel);
     void removeDeallocationContainerData();
     void removeHostPtrAllocations();
+    void removeMemoryPrefetchAllocations();
     void eraseDeallocationContainerEntry(NEO::GraphicsAllocation *allocation);
     void eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocation);
     bool isCopyOnly() const {
@@ -285,6 +287,10 @@ struct CommandList : _ze_command_list_handle_t {
         return systolicModeSupport;
     }
 
+    NEO::PrefetchContext &getPrefetchContext() {
+        return prefetchContext;
+    }
+
     ze_context_handle_t hContext = nullptr;
     std::vector<Kernel *> printfKernelContainer;
     CommandQueue *cmdQImmediate = nullptr;
@@ -322,6 +328,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::StreamProperties finalStreamState{};
     CommandsToPatch commandsToPatch{};
     UnifiedMemoryControls unifiedMemoryControls;
+    NEO::PrefetchContext prefetchContext;
 
     ze_command_list_flags_t flags = 0u;
     NEO::EngineGroupType engineGroupType;

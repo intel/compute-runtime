@@ -19,19 +19,22 @@ namespace NEO {
 class Device;
 class SVMAllocsManager;
 
+struct PrefetchContext {
+    std::vector<SvmAllocationData> allocations;
+    SpinLock lock;
+};
+
 class PrefetchManager : public NonCopyableOrMovableClass {
   public:
     static std::unique_ptr<PrefetchManager> create();
 
     virtual ~PrefetchManager() = default;
 
-    void insertAllocation(SvmAllocationData &svmData);
+    void insertAllocation(PrefetchContext &context, SvmAllocationData &svmData);
 
-    MOCKABLE_VIRTUAL void migrateAllocationsToGpu(SVMAllocsManager &unifiedMemoryManager, Device &device);
+    MOCKABLE_VIRTUAL void migrateAllocationsToGpu(PrefetchContext &context, SVMAllocsManager &unifiedMemoryManager, Device &device);
 
-  protected:
-    std::vector<SvmAllocationData> allocations;
-    SpinLock mtx;
+    MOCKABLE_VIRTUAL void removeAllocations(PrefetchContext &context);
 };
 
 } // namespace NEO

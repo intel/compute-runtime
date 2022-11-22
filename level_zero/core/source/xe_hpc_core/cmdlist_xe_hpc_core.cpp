@@ -38,7 +38,7 @@ ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const 
         this->performMemoryPrefetch = true;
         auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
         if (prefetchManager) {
-            prefetchManager->insertAllocation(*allocData);
+            prefetchManager->insertAllocation(this->prefetchContext, *allocData);
         }
     }
 

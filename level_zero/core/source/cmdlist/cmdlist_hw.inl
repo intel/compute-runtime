@@ -87,9 +87,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     printfKernelContainer.clear();
     removeDeallocationContainerData();
     removeHostPtrAllocations();
+    removeMemoryPrefetchAllocations();
     commandContainer.reset();
     containsStatelessUncachedResource = false;
-    performMemoryPrefetch = false;
     indirectAllocationsAllowed = false;
     unifiedMemoryControls.indirectHostAllocationsAllowed = false;
     unifiedMemoryControls.indirectSharedAllocationsAllowed = false;

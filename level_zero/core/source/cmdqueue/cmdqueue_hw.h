@@ -84,7 +84,6 @@ struct CommandQueueHw : public CommandQueueImp {
         bool anyCommandListWithoutCooperativeKernels = false;
         bool anyCommandListRequiresDisabledEUFusion = false;
         bool cachedMOCSAllowed = true;
-        bool performMemoryPrefetch = false;
         bool containsAnyRegularCmdList = false;
         bool gsbaStateDirty = false;
         bool frontEndStateDirty = false;
@@ -160,7 +159,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                  NEO::StreamProperties &csrState);
     inline void collectPrintfContentsFromAllCommandsLists(ze_command_list_handle_t *phCommandLists, uint32_t numCommandLists);
     inline void migrateSharedAllocationsIfRequested(bool isMigrationRequested, ze_command_list_handle_t hCommandList);
-    inline void prefetchMemoryIfRequested(bool &isMemoryPrefetchRequested);
+    inline void prefetchMemoryToDeviceAssociatedWithCmdList(CommandList *commandList);
     inline void programStateSipEndWA(bool isStateSipRequired, NEO::LinearStream &commandStream);
     inline void assignCsrTaskCountToFenceIfAvailable(ze_fence_handle_t hFence);
     inline void dispatchTaskCountPostSyncRegular(bool isDispatchTaskCountPostSyncRequired, NEO::LinearStream &commandStream);

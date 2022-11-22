@@ -14,12 +14,16 @@ using namespace NEO;
 
 class MockPrefetchManager : public PrefetchManager {
   public:
-    using PrefetchManager::allocations;
-
-    void migrateAllocationsToGpu(SVMAllocsManager &unifiedMemoryManager, Device &device) override {
-        PrefetchManager::migrateAllocationsToGpu(unifiedMemoryManager, device);
+    void migrateAllocationsToGpu(PrefetchContext &prefetchContext, SVMAllocsManager &unifiedMemoryManager, Device &device) override {
+        PrefetchManager::migrateAllocationsToGpu(prefetchContext, unifiedMemoryManager, device);
         migrateAllocationsToGpuCalled = true;
     }
 
+    void removeAllocations(PrefetchContext &prefetchContext) override {
+        PrefetchManager::removeAllocations(prefetchContext);
+        removeAllocationsCalled = true;
+    }
+
     bool migrateAllocationsToGpuCalled = false;
+    bool removeAllocationsCalled = false;
 };

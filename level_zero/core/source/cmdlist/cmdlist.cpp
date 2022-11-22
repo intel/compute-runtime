@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/prefetch_manager.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -30,6 +31,7 @@ CommandList::~CommandList() {
     if (this->cmdListType == CommandListType::TYPE_REGULAR || !this->isFlushTaskSubmissionEnabled) {
         removeHostPtrAllocations();
     }
+    removeMemoryPrefetchAllocations();
     printfKernelContainer.clear();
 }
 
@@ -49,6 +51,16 @@ void CommandList::removeHostPtrAllocations() {
         memoryManager->freeGraphicsMemory(allocation.second);
     }
     hostPtrMap.clear();
+}
+
+void CommandList::removeMemoryPrefetchAllocations() {
+    if (this->performMemoryPrefetch) {
+        auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+        if (prefetchManager) {
+            prefetchManager->removeAllocations(prefetchContext);
+        }
+        performMemoryPrefetch = false;
+    }
 }
 
 NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize) {

@@ -144,8 +144,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
 
-    auto prefetchManager = static_cast<MockPrefetchManager *>(memoryManager->prefetchManager.get());
-    EXPECT_EQ(1u, prefetchManager->allocations.size());
+    EXPECT_EQ(1u, pCommandList->getPrefetchContext().allocations.size());
 
     context->freeMem(ptr);
 }
@@ -176,8 +175,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
 
-    auto prefetchManager = static_cast<MockPrefetchManager *>(memoryManager->prefetchManager.get());
-    EXPECT_EQ(0u, prefetchManager->allocations.size());
+    EXPECT_EQ(0u, pCommandList->getPrefetchContext().allocations.size());
 
     context->freeMem(ptr);
 }
@@ -208,8 +206,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
 
-    auto prefetchManager = static_cast<MockPrefetchManager *>(memoryManager->prefetchManager.get());
-    EXPECT_EQ(0u, prefetchManager->allocations.size());
+    EXPECT_EQ(0u, pCommandList->getPrefetchContext().allocations.size());
 
     context->freeMem(ptr);
 }
@@ -367,7 +364,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto prefetchManager = static_cast<MockPrefetchManager *>(memoryManager->prefetchManager.get());
-    EXPECT_EQ(1u, prefetchManager->allocations.size());
+    EXPECT_EQ(1u, commandList->getPrefetchContext().allocations.size());
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -381,7 +378,11 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     EXPECT_EQ(3u, memoryManager->memPrefetchSubDeviceId);
 
     EXPECT_TRUE(prefetchManager->migrateAllocationsToGpuCalled);
-    EXPECT_EQ(0u, prefetchManager->allocations.size());
+    EXPECT_EQ(1u, commandList->getPrefetchContext().allocations.size());
+
+    commandList->reset();
+    EXPECT_TRUE(prefetchManager->removeAllocationsCalled);
+    EXPECT_EQ(0u, commandList->getPrefetchContext().allocations.size());
 
     context->freeMem(ptr);
     commandList->destroy();

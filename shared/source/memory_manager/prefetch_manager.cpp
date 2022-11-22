@@ -16,19 +16,23 @@ std::unique_ptr<PrefetchManager> PrefetchManager::create() {
     return std::make_unique<PrefetchManager>();
 }
 
-void PrefetchManager::insertAllocation(SvmAllocationData &svmData) {
-    std::unique_lock<SpinLock> lock{mtx};
+void PrefetchManager::insertAllocation(PrefetchContext &context, SvmAllocationData &svmData) {
+    std::unique_lock<SpinLock> lock{context.lock};
     if (svmData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
-        allocations.push_back(svmData);
+        context.allocations.push_back(svmData);
     }
 }
 
-void PrefetchManager::migrateAllocationsToGpu(SVMAllocsManager &unifiedMemoryManager, Device &device) {
-    std::unique_lock<SpinLock> lock{mtx};
-    for (auto allocData : allocations) {
+void PrefetchManager::migrateAllocationsToGpu(PrefetchContext &context, SVMAllocsManager &unifiedMemoryManager, Device &device) {
+    std::unique_lock<SpinLock> lock{context.lock};
+    for (auto allocData : context.allocations) {
         unifiedMemoryManager.prefetchMemory(device, allocData);
     }
-    allocations.clear();
+}
+
+void PrefetchManager::removeAllocations(PrefetchContext &context) {
+    std::unique_lock<SpinLock> lock{context.lock};
+    context.allocations.clear();
 }
 
 } // namespace NEO
