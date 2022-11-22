@@ -31,7 +31,7 @@ class Debugger {
     static std::unique_ptr<Debugger> create(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     virtual ~Debugger() = default;
     bool isLegacy() const { return isLegacyMode; }
-    virtual void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) = 0;
+    virtual void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) = 0;
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
 
     void *getDebugSurfaceReservedSurfaceState(IndirectHeap &ssh);

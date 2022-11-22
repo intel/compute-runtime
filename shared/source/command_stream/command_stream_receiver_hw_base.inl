@@ -15,6 +15,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
@@ -436,10 +437,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, commandStreamCSR);
 
         bool sbaTrackingEnabled = (debuggingEnabled && !device.getDebugger()->isLegacy());
+        if (sbaTrackingEnabled) {
+            device.getL0Debugger()->programSbaAddressLoad(commandStreamCSR,
+                                                          device.getL0Debugger()->getSbaTrackingBuffer(this->getOsContext().getContextId())->getGpuAddress());
+        }
         NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
                                                                                      device,
                                                                                      commandStreamCSR,
-                                                                                     stateBaseAddressCmd);
+                                                                                     stateBaseAddressCmd, true);
 
         if (sshDirty) {
             bindingTableBaseAddressRequired = true;

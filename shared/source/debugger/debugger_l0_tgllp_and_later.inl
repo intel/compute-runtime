@@ -21,7 +21,7 @@ size_t DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(size_t trackedAddress
 }
 
 template <typename GfxFamily>
-void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::LinearStream &cmdStream, const SbaAddresses &sba) {
+void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::LinearStream &cmdStream, const SbaAddresses &sba, bool useFirstLevelBB) {
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
@@ -57,6 +57,8 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
     const auto cmdStreamGpuBase = cmdStream.getGpuBase();
     const auto cmdStreamCpuBase = reinterpret_cast<uint64_t>(cmdStream.getCpuBase());
 
+    auto bbLevel = useFirstLevelBB ? MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH : MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH;
+
     if (fieldOffsetAndValue.size()) {
         auto arb = cmdStream.getSpaceForCmd<MI_ARB_CHECK>();
         auto arbCmd = GfxFamily::cmdInitArbCheck;
@@ -70,7 +72,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         MI_BATCH_BUFFER_START bbCmd = GfxFamily::cmdInitBatchBufferStart;
         bbCmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
         bbCmd.setBatchBufferStartAddress(nextCommand);
-        bbCmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
+        bbCmd.setSecondLevelBatchBuffer(bbLevel);
         *newBuffer = bbCmd;
     }
 
@@ -129,7 +131,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         MI_BATCH_BUFFER_START bbCmd = GfxFamily::cmdInitBatchBufferStart;
         bbCmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
         bbCmd.setBatchBufferStartAddress(addressOfSDI);
-        bbCmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
+        bbCmd.setSecondLevelBatchBuffer(bbLevel);
         *newBuffer = bbCmd;
 
         auto storeSbaField = GfxFamily::cmdInitStoreDataImm;
@@ -150,7 +152,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         MI_BATCH_BUFFER_START bbCmd = GfxFamily::cmdInitBatchBufferStart;
         bbCmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
         bbCmd.setBatchBufferStartAddress(addressOfPreviousBuffer);
-        bbCmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
+        bbCmd.setSecondLevelBatchBuffer(bbLevel);
         *previousBuffer = bbCmd;
 
         auto arbCmd = GfxFamily::cmdInitArbCheck;

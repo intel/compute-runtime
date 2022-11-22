@@ -96,6 +96,17 @@ struct L0DebuggerPerContextAddressSpaceFixture : public L0DebuggerHwFixture {
     DebugManagerStateRestore restorer;
 };
 
+struct L0DebuggerSingleAddressSpaceFixture : public L0DebuggerHwFixture {
+    void setUp() {
+        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
+        L0DebuggerHwFixture::setUp();
+    }
+    void tearDown() {
+        L0DebuggerHwFixture::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
 struct L0DebuggerHwParameterizedFixture : ::testing::TestWithParam<int>, public L0DebuggerHwFixture {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());

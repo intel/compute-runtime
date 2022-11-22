@@ -141,12 +141,12 @@ class DebuggerL0Hw : public DebuggerL0 {
   public:
     static DebuggerL0 *allocate(NEO::Device *device);
 
-    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override;
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override;
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override;
     size_t getSbaAddressLoadCommandsSize() override;
     void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) override;
 
-    void programSbaTrackingCommandsSingleAddressSpace(NEO::LinearStream &cmdStream, const SbaAddresses &sba);
+    void programSbaTrackingCommandsSingleAddressSpace(NEO::LinearStream &cmdStream, const SbaAddresses &sba, bool useFirstLevelBB);
 
   protected:
     DebuggerL0Hw(NEO::Device *device) : DebuggerL0(device){};

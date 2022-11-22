@@ -28,6 +28,17 @@ struct SingleAddressSpaceFixture : public Test<NEO::DeviceFixture> {
     DebugManagerStateRestore restorer;
 };
 
+struct L0DebuggerBBlevelParameterizedTest : ::testing::TestWithParam<bool>, public NEO::DeviceFixture {
+    void SetUp() override {
+        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
+        DeviceFixture::setUp();
+    }
+    void TearDown() override {
+        DeviceFixture::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
 HWTEST_F(SingleAddressSpaceFixture, givenDebugFlagForceSbaTrackingModeSetWhenDebuggerIsCreatedThenItHasCorrectSingleAddressSpaceValue) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
@@ -86,13 +97,13 @@ HWTEST2_F(SingleAddressSpaceFixture, WhenProgrammingSbaTrackingCommandsForSingle
     sbaAddresses.DynamicStateBaseAddress = dsba;
     sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
 
-    EXPECT_THROW(debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses), std::exception);
+    EXPECT_THROW(debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses, false), std::exception);
 
     EXPECT_EQ(0u, cmdStream.getUsed());
     EXPECT_THROW(debugger->getSbaTrackingCommandsSize(6), std::exception);
 }
 
-HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenCorrectSequenceOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
+HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenCorrectSequenceOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
@@ -109,7 +120,7 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
                                                     pDevice->getDeviceBitfield()};
     auto streamAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, streamAllocation);
-
+    auto expectedBbLevel = GetParam() ? MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH : MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH;
     NEO::LinearStream cmdStream;
     cmdStream.replaceGraphicsAllocation(streamAllocation);
     cmdStream.replaceBuffer(streamAllocation->getUnderlyingBuffer(), streamAllocation->getUnderlyingBufferSize());
@@ -128,7 +139,7 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
     sbaAddresses.DynamicStateBaseAddress = dsba;
     sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
 
-    debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses);
+    debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses, GetParam());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -156,6 +167,8 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
 
     itor = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
+    auto bbLevel = genCmdCast<MI_BATCH_BUFFER_START *>(*itor)->getSecondLevelBatchBuffer();
+    ASSERT_EQ(bbLevel, expectedBbLevel);
 
     for (int i = 0; i < 6; i++) {
         itor = find<MI_LOAD_REGISTER_IMM *>(itor, cmdList.end());
@@ -188,6 +201,8 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
 
         itor = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
+        bbLevel = genCmdCast<MI_BATCH_BUFFER_START *>(*itor)->getSecondLevelBatchBuffer();
+        ASSERT_EQ(bbLevel, expectedBbLevel);
 
         itor = find<MI_STORE_DATA_IMM *>(itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
@@ -195,6 +210,8 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
 
     itor = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
+    bbLevel = genCmdCast<MI_BATCH_BUFFER_START *>(*itor)->getSecondLevelBatchBuffer();
+    ASSERT_EQ(bbLevel, expectedBbLevel);
 
     itor = find<MI_ARB_CHECK *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -206,7 +223,7 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
     pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
 }
 
-HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenONlyPartOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
+HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenONlyPartOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
@@ -232,9 +249,9 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingS
 
     NEO::Debugger::SbaAddresses sbaAddresses = {0};
     sbaAddresses.SurfaceStateBaseAddress = ssba;
-
+    auto expectedBbLevel = GetParam() ? MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH : MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH;
     debugger->singleAddressSpaceSbaTracking = true;
-    debugger->captureStateBaseAddress(cmdStream, sbaAddresses);
+    debugger->captureStateBaseAddress(cmdStream, sbaAddresses, GetParam());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -259,6 +276,8 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingS
 
     itor = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
+    auto bbLevel = genCmdCast<MI_BATCH_BUFFER_START *>(*itor)->getSecondLevelBatchBuffer();
+    ASSERT_EQ(bbLevel, expectedBbLevel);
 
     itor = find<MI_LOAD_REGISTER_IMM *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -294,12 +313,16 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingS
 
     itor = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
+    bbLevel = genCmdCast<MI_BATCH_BUFFER_START *>(*itor)->getSecondLevelBatchBuffer();
+    ASSERT_EQ(bbLevel, expectedBbLevel);
 
     itor = find<MI_STORE_DATA_IMM *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
 
     itor = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
+    bbLevel = genCmdCast<MI_BATCH_BUFFER_START *>(*itor)->getSecondLevelBatchBuffer();
+    ASSERT_EQ(bbLevel, expectedBbLevel);
 
     itor = find<MI_ARB_CHECK *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -310,6 +333,8 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingS
 
     pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
 }
+
+INSTANTIATE_TEST_CASE_P(BBLevelForSbaTracking, L0DebuggerBBlevelParameterizedTest, ::testing::Values(false, true));
 
 HWTEST2_F(SingleAddressSpaceFixture, GivenAllZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenNoCommandsAreAddedToStream, IsAtLeastGen12lp) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
@@ -327,7 +352,7 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenAllZeroSbaAddressesWhenProgrammingSbaT
     cmdStream.replaceBuffer(streamAllocation->getUnderlyingBuffer(), streamAllocation->getUnderlyingBufferSize());
     NEO::Debugger::SbaAddresses sbaAddresses = {0};
 
-    debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses);
+    debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses, false);
     size_t sizeExpected = 0;
     EXPECT_EQ(sizeExpected, cmdStream.getUsed());
 

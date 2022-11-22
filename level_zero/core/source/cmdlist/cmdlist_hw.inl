@@ -2569,7 +2569,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
                                                                                  *this->device->getNEODevice(),
                                                                                  *container.getCommandStream(),
-                                                                                 sba);
+                                                                                 sba, this->isFlushTaskSubmissionEnabled);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

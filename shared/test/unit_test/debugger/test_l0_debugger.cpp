@@ -314,7 +314,7 @@ TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverable
             isLegacyMode = false;
         }
 
-        void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override{};
+        void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override{};
         size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
             return 0;
         }
@@ -361,7 +361,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammi
     sbaAddresses.DynamicStateBaseAddress = dsba;
     sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
 
-    debugger->captureStateBaseAddress(cmdStream, sbaAddresses);
+    debugger->captureStateBaseAddress(cmdStream, sbaAddresses, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -450,7 +450,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenNonZeroGpuVasWhenProgramming
     sbaAddresses.DynamicStateBaseAddress = dsba;
     sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
 
-    debugger->captureStateBaseAddress(cmdStream, sbaAddresses);
+    debugger->captureStateBaseAddress(cmdStream, sbaAddresses, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -623,7 +623,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTr
     sbaAddresses.GeneralStateBaseAddress = gsba;
     sbaAddresses.SurfaceStateBaseAddress = ssba;
 
-    debugger->captureStateBaseAddress(cmdStream, sbaAddresses);
+    debugger->captureStateBaseAddress(cmdStream, sbaAddresses, false);
 
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
@@ -639,13 +639,13 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenNotChangedSurfaceStateWhenCapt
     NEO::Debugger::SbaAddresses sba = {};
     sba.SurfaceStateBaseAddress = 0x123456000;
 
-    debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
+    debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
     auto sizeUsed = container.getCommandStream()->getUsed();
 
     EXPECT_NE(0u, sizeUsed);
     sba.SurfaceStateBaseAddress = 0;
 
-    debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
+    debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
     auto sizeUsed2 = container.getCommandStream()->getUsed();
 
     EXPECT_EQ(sizeUsed, sizeUsed2);
@@ -662,7 +662,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
         NEO::Debugger::SbaAddresses sba = {};
         sba.SurfaceStateBaseAddress = 0x123456000;
 
-        debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
+        debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
         auto sizeUsed = container.getCommandStream()->getUsed();
 
         EXPECT_NE(0u, sizeUsed);
@@ -675,7 +675,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
         NEO::Debugger::SbaAddresses sba = {};
         sba.GeneralStateBaseAddress = 0x123456000;
 
-        debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
+        debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
         auto sizeUsed = container.getCommandStream()->getUsed();
 
         EXPECT_NE(0u, sizeUsed);
@@ -688,7 +688,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
         NEO::Debugger::SbaAddresses sba = {};
         sba.BindlessSurfaceStateBaseAddress = 0x123456000;
 
-        debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
+        debugger->captureStateBaseAddress(*container.getCommandStream(), sba, false);
         auto sizeUsed = container.getCommandStream()->getUsed();
 
         EXPECT_NE(0u, sizeUsed);

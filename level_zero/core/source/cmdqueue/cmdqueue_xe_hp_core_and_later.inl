@@ -73,7 +73,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
                                                                                      *neoDevice,
                                                                                      commandStream,
-                                                                                     sbaCmd);
+                                                                                     sbaCmd, true);
 
         auto heap = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::GLOBAL_SSH);
         NEO::StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(

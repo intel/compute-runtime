@@ -21,7 +21,7 @@ class MockDebuggerL0 : public NEO::DebuggerL0 {
         isLegacyMode = false;
     }
 
-    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override{};
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override{};
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
         return 0;
     }
@@ -45,9 +45,9 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
         return new MockDebuggerL0Hw<GfxFamily>(device);
     }
 
-    void captureStateBaseAddress(NEO::LinearStream &cmdStream, NEO::Debugger::SbaAddresses sba) override {
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, NEO::Debugger::SbaAddresses sba, bool useFirstLevelBB) override {
         captureStateBaseAddressCount++;
-        NEO::DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(cmdStream, sba);
+        NEO::DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(cmdStream, sba, useFirstLevelBB);
     }
 
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {

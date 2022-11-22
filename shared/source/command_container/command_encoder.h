@@ -312,7 +312,7 @@ struct EncodeStateBaseAddress {
     static void setSbaTrackingForL0DebuggerIfEnabled(bool trackingEnabled,
                                                      Device &device,
                                                      LinearStream &commandStream,
-                                                     STATE_BASE_ADDRESS &sbaCmd);
+                                                     STATE_BASE_ADDRESS &sbaCmd, bool useFirstLevelBB);
 
   protected:
     static void setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd);

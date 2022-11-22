@@ -41,7 +41,7 @@ class SourceLevelDebugger : public Debugger {
     MOCKABLE_VIRTUAL bool notifyKernelDebugData(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize) const;
     MOCKABLE_VIRTUAL bool initialize(bool useLocalMemory);
 
-    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override{};
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override{};
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
         return 0;
     }

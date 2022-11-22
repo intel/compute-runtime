@@ -14,7 +14,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) {
+void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) {
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
@@ -41,7 +41,7 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
                             sbaCanonized.IndirectObjectBaseAddress, sbaCanonized.InstructionBaseAddress, sbaCanonized.BindlessSurfaceStateBaseAddress);
 
     if (singleAddressSpaceSbaTracking) {
-        programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaCanonized);
+        programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaCanonized, useFirstLevelBB);
     } else {
         if (sbaCanonized.GeneralStateBaseAddress) {
             auto generalStateBaseAddress = sbaCanonized.GeneralStateBaseAddress;
