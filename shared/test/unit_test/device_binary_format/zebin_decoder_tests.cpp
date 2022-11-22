@@ -1968,6 +1968,7 @@ kernels:
     EXPECT_TRUE(errors.empty()) << errors;
 
     EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0, 1, 2) reqd_work_group_size(256, 2, 1) work_group_size_hint(256, 2, 1) vec_type_hint(uint)", programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.kernelLanguageAttributes.c_str());
+    EXPECT_EQ(16U, programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.requiredSubGroupSize);
     EXPECT_FALSE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.isInvalid);
 }
 
@@ -4243,7 +4244,6 @@ kernels:
         inline_data_payload_size : 32
         offset_to_skip_per_thread_data_load : 23
         offset_to_skip_set_ffid_gp : 29
-        required_sub_group_size : 16
         simd_size : 32
         slm_size : 1024
         subgroup_independent_forward_progress : true
@@ -4292,7 +4292,6 @@ kernels:
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.passInlineData);
     EXPECT_EQ(23U, kernelDescriptor.entryPoints.skipPerThreadDataLoad);
     EXPECT_EQ(29U, kernelDescriptor.entryPoints.skipSetFFIDGP);
-    EXPECT_EQ(16U, kernelDescriptor.kernelMetadata.requiredSubGroupSize);
     EXPECT_EQ(32U, kernelDescriptor.kernelAttributes.simdSize);
     EXPECT_EQ(1024U, kernelDescriptor.kernelAttributes.slmInlineSize);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress);

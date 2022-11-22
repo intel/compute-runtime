@@ -1298,7 +1298,6 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<n
     kernelDescriptor.kernelAttributes.workgroupWalkOrder[1] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[1]);
     kernelDescriptor.kernelAttributes.workgroupWalkOrder[2] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[2]);
     kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = (execEnv.indirectStatelessCount > 0);
-    kernelDescriptor.kernelMetadata.requiredSubGroupSize = execEnv.requiredSubGroupSize;
 
     using ThreadSchedulingMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ThreadSchedulingMode;
     switch (execEnv.threadSchedulingMode) {
@@ -1558,6 +1557,8 @@ NEO::DecodeError populateKernelSourceAttributes(NEO::KernelDescriptor &dst, NEO:
     appendAttributeIfSet(languageAttributes, AttributeTags::vecTypeHint, attributes.vecTypeHint);
     appendAttributeIfSet(languageAttributes, AttributeTags::invalidKernel, attributes.invalidKernel);
     dst.kernelAttributes.flags.isInvalid = attributes.invalidKernel.has_value();
+
+    dst.kernelMetadata.requiredSubGroupSize = static_cast<uint8_t>(attributes.intelReqdSubgroupSize.value_or(0U));
 
     return DecodeError::Success;
 }
