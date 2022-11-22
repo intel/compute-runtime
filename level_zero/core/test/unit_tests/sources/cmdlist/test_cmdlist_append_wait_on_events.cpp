@@ -545,5 +545,31 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
     EXPECT_EQ(2u, semaphoreWaitsFound);
 }
 
+HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOnNotSignaledEventThenWait, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
+    ze_event_handle_t eventHandle = event->toHandle();
+
+    EXPECT_FALSE(cmdList.dependenciesPresent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle));
+    EXPECT_TRUE(cmdList.dependenciesPresent);
+}
+
+HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOnAlreadySignaledEventThenDontWait, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.dcFlushSupport = false;
+    event->hostSignal();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus());
+    ze_event_handle_t eventHandle = event->toHandle();
+
+    EXPECT_FALSE(cmdList.dependenciesPresent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle));
+    EXPECT_FALSE(cmdList.dependenciesPresent);
+}
+
 } // namespace ult
 } // namespace L0

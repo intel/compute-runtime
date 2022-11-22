@@ -1124,8 +1124,17 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnE
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
-
-    cmdList.appendWaitOnEvents(0, nullptr);
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    auto eventHandle = event->toHandle();
+    cmdList.appendWaitOnEvents(1, &eventHandle);
 
     EXPECT_TRUE(cmdList.dependenciesPresent);
 

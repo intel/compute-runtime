@@ -505,6 +505,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
     MockCommandListImmediateHw() : BaseClass() {}
     using BaseClass::applyMemoryRangesBarrier;
+    using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;

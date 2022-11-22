@@ -436,6 +436,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents) {
+    bool allSignaled = true;
+    for (auto i = 0u; i < numEvents; i++) {
+        allSignaled &= (!this->dcFlushSupport && Event::fromHandle(phWaitEvents[i])->isAlreadyCompleted());
+    }
+    if (allSignaled) {
+        return ZE_RESULT_SUCCESS;
+    }
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
     }
