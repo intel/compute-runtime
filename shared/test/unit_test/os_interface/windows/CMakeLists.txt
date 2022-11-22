@@ -24,6 +24,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_command_stream_l0_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mapper_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_test.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_preemption_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_shared_allocations_test.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp

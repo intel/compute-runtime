@@ -426,6 +426,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties, hwInfo);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
+    allocationData.forceKMDAllocation = properties.forceKMDAllocation;
+    allocationData.makeGPUVaDifferentThanCPUPtr = properties.makeGPUVaDifferentThanCPUPtr;
 
     if (GraphicsAllocation::isDebugSurfaceAllocationType(properties.allocationType)) {
         allocationData.flags.zeroMemory = 1;
