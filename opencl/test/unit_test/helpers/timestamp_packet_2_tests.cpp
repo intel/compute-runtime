@@ -55,7 +55,7 @@ class MockCommandStreamReceiverHW : public UltCommandStreamReceiver<FamilyType> 
         const IndirectHeap *dsh,
         const IndirectHeap *ioh,
         const IndirectHeap *ssh,
-        uint32_t taskLevel,
+        TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override {
         stream = &commandStream;

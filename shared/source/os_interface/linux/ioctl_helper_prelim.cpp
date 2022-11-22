@@ -256,7 +256,7 @@ uint16_t IoctlHelperPrelim20::getWaitUserFenceSoftFlag() {
     return PRELIM_I915_UFENCE_WAIT_SOFT;
 };
 
-int IoctlHelperPrelim20::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
+int IoctlHelperPrelim20::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) {
     prelim_drm_i915_gem_execbuffer_ext_user_fence fenceObject = {};
     if (completionGpuAddress != 0) {
         fenceObject.base.name = PRELIM_DRM_I915_GEM_EXECBUFFER_EXT_USER_FENCE;

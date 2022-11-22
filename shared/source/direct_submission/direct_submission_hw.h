@@ -87,7 +87,7 @@ class DirectSubmissionHw {
 
     static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(const DirectSubmissionInputParams &inputParams);
 
-    virtual uint32_t *getCompletionValuePointer() { return nullptr; }
+    virtual TaskCountType *getCompletionValuePointer() { return nullptr; }
 
     bool isRelaxedOrderingEnabled() const {
         return relaxedOrderingEnabled;

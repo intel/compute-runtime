@@ -60,7 +60,7 @@ CommandQueue *CommandQueue::create(Context *context,
     return funcCreate(context, device, properties, internalUsage);
 }
 
-cl_int CommandQueue::getErrorCodeFromTaskCount(uint32_t taskCount) {
+cl_int CommandQueue::getErrorCodeFromTaskCount(TaskCountType taskCount) {
     switch (taskCount) {
     case CompletionStamp::gpuHang:
     case CompletionStamp::outOfDeviceMemory:
@@ -378,16 +378,16 @@ Device &CommandQueue::getDevice() const noexcept {
     return device->getDevice();
 }
 
-uint32_t CommandQueue::getHwTag() const {
-    uint32_t tag = *getHwTagAddress();
+TagAddressType CommandQueue::getHwTag() const {
+    TagAddressType tag = *getHwTagAddress();
     return tag;
 }
 
-volatile uint32_t *CommandQueue::getHwTagAddress() const {
+volatile TagAddressType *CommandQueue::getHwTagAddress() const {
     return getGpgpuCommandStreamReceiver().getTagAddress();
 }
 
-bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) {
+bool CommandQueue::isCompleted(TaskCountType gpgpuTaskCount, CopyEngineState bcsState) {
     DEBUG_BREAK_IF(getHwTag() == CompletionStamp::notReady);
 
     if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), gpgpuTaskCount)) {
@@ -401,7 +401,7 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
     return false;
 }
 
-WaitStatus CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) {
+WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) {
     WAIT_ENTER()
 
     WaitStatus waitStatus{WaitStatus::Ready};
@@ -496,12 +496,12 @@ cl_int CommandQueue::getCommandQueueInfo(cl_command_queue_info paramName,
     return getQueueInfo(this, paramName, paramValueSize, paramValue, paramValueSizeRet);
 }
 
-uint32_t CommandQueue::getTaskLevelFromWaitList(uint32_t taskLevel,
-                                                cl_uint numEventsInWaitList,
-                                                const cl_event *eventWaitList) {
+TaskCountType CommandQueue::getTaskLevelFromWaitList(TaskCountType taskLevel,
+                                                     cl_uint numEventsInWaitList,
+                                                     const cl_event *eventWaitList) {
     for (auto iEvent = 0u; iEvent < numEventsInWaitList; ++iEvent) {
         auto pEvent = (Event *)(eventWaitList[iEvent]);
-        uint32_t eventTaskLevel = pEvent->peekTaskLevel();
+        TaskCountType eventTaskLevel = pEvent->peekTaskLevel();
         taskLevel = std::max(taskLevel, eventTaskLevel);
     }
     return taskLevel;
@@ -862,13 +862,13 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
     }
 }
 
-void CommandQueue::updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount) {
+void CommandQueue::updateBcsTaskCount(aub_stream::EngineType bcsEngineType, TaskCountType newBcsTaskCount) {
     CopyEngineState &state = bcsStates[EngineHelpers::getBcsIndex(bcsEngineType)];
     state.engineType = bcsEngineType;
     state.taskCount = newBcsTaskCount;
 }
 
-uint32_t CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const {
+TaskCountType CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const {
     const CopyEngineState &state = bcsStates[EngineHelpers::getBcsIndex(bcsEngineType)];
     return state.taskCount;
 }

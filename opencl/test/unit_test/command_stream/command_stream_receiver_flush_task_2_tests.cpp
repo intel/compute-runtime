@@ -164,7 +164,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEmptyQueueWhenFinishingThenTa
     MockContext ctx(pClDevice);
     MockCommandQueueHw<FamilyType> mockCmdQueue(&ctx, pClDevice, nullptr);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     mockCmdQueue.taskCount = taskCount;
     mockCmdQueue.taskLevel = taskCount;
@@ -203,7 +203,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonDcFlushWithInitialTaskCoun
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t gws = 1;
 
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     mockCmdQueue.taskCount = taskCount;
     mockCmdQueue.taskLevel = taskCount;
@@ -237,7 +237,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskC
     auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     mockCmdQueue.taskCount = taskCount;
     mockCmdQueue.taskLevel = taskCount;
@@ -311,7 +311,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEventIsQueriedWhenEnqueuingTh
     auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     commandQueue.taskCount = taskCount;
     commandQueue.taskLevel = taskCount;
@@ -346,7 +346,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingMapEnqueueWhenFini
     MockGraphicsAllocation allocation{cpuAllocation.get(), MemoryConstants::pageSize};
     AlignedBuffer mockBuffer{&ctx, &allocation};
 
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     commandQueue.taskCount = taskCount;
     commandQueue.taskLevel = taskCount;
@@ -588,7 +588,7 @@ struct MockScratchController : public ScratchSpaceController {
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSize,
                                  uint32_t requiredPerThreadPrivateScratchSize,
-                                 uint32_t currentTaskCount,
+                                 TaskCountType currentTaskCount,
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override {
@@ -607,7 +607,7 @@ struct MockScratchController : public ScratchSpaceController {
                       uint32_t scratchSlot,
                       uint32_t requiredPerThreadScratchSize,
                       uint32_t requiredPerThreadPrivateScratchSize,
-                      uint32_t currentTaskCount,
+                      TaskCountType currentTaskCount,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override {
@@ -615,7 +615,7 @@ struct MockScratchController : public ScratchSpaceController {
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                uint32_t requiredPerThreadScratchSize,
                                                uint32_t requiredPerThreadPrivateScratchSize,
-                                               uint32_t currentTaskCount,
+                                               TaskCountType currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,

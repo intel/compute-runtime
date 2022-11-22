@@ -540,10 +540,10 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return NEO::SubmissionStatus::SUCCESS;
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
         return WaitStatus::Ready;
     }
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
+    TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
 
     CompletionStamp flushTask(
         LinearStream &commandStream,
@@ -551,7 +551,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         const IndirectHeap *dsh,
         const IndirectHeap *ioh,
         const IndirectHeap *ssh,
-        uint32_t taskLevel,
+        TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override {
         CompletionStamp cs = {};

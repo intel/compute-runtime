@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ class ScratchSpaceController {
                                          uint32_t scratchSlot,
                                          uint32_t requiredPerThreadScratchSize,
                                          uint32_t requiredPerThreadPrivateScratchSize,
-                                         uint32_t currentTaskCount,
+                                         TaskCountType currentTaskCount,
                                          OsContext &osContext,
                                          bool &stateBaseAddressDirty,
                                          bool &vfeStateDirty) = 0;
@@ -62,14 +62,14 @@ class ScratchSpaceController {
                               uint32_t scratchSlot,
                               uint32_t requiredPerThreadScratchSize,
                               uint32_t requiredPerThreadPrivateScratchSize,
-                              uint32_t currentTaskCount,
+                              TaskCountType currentTaskCount,
                               OsContext &osContext,
                               bool &stateBaseAddressDirty,
                               bool &vfeStateDirty) = 0;
     virtual void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                        uint32_t requiredPerThreadScratchSize,
                                                        uint32_t requiredPerThreadPrivateScratchSize,
-                                                       uint32_t currentTaskCount,
+                                                       TaskCountType currentTaskCount,
                                                        OsContext &osContext,
                                                        bool &stateBaseAddressDirty,
                                                        bool &vfeStateDirty,

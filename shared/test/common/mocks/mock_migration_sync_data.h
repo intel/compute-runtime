@@ -21,7 +21,7 @@ struct MockMigrationSyncData : public MigrationSyncData {
     using MigrationSyncData::latestTaskCountUsed;
     using MigrationSyncData::MigrationSyncData;
     using MigrationSyncData::tagAddress;
-    void signalUsage(volatile uint32_t *tagAddress, uint32_t taskCount) override {
+    void signalUsage(volatile TagAddressType *tagAddress, TaskCountType taskCount) override {
         signalUsageCalled++;
         MigrationSyncData::signalUsage(tagAddress, taskCount);
     }

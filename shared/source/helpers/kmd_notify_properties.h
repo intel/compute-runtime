@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
 
 #include <atomic>
@@ -42,8 +43,8 @@ class KmdNotifyHelper {
     MOCKABLE_VIRTUAL ~KmdNotifyHelper() = default;
 
     WaitParams obtainTimeoutParams(bool quickKmdSleepRequest,
-                                   uint32_t currentHwTag,
-                                   uint32_t taskCountToWait,
+                                   TagAddressType currentHwTag,
+                                   TaskCountType taskCountToWait,
                                    FlushStamp flushStampToWait,
                                    QueueThrottle throttle,
                                    bool kmdWaitModeActive,

@@ -85,7 +85,7 @@ class Command : public IFNode<Command> {
   public:
     // returns command's taskCount obtained from completion stamp
     //   as acquired from command stream receiver
-    virtual CompletionStamp &submit(uint32_t taskLevel, bool terminated) = 0;
+    virtual CompletionStamp &submit(TaskCountType taskLevel, bool terminated) = 0;
 
     Command() = delete;
     Command(CommandQueue &commandQueue);
@@ -117,7 +117,7 @@ class CommandMapUnmap : public Command {
     CommandMapUnmap(MapOperationType operationType, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
                     CommandQueue &commandQueue);
     ~CommandMapUnmap() override = default;
-    CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
+    CompletionStamp &submit(TaskCountType taskLevel, bool terminated) override;
 
   private:
     MemObj &memObj;
@@ -135,7 +135,7 @@ class CommandComputeKernel : public Command {
 
     ~CommandComputeKernel() override;
 
-    CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
+    CompletionStamp &submit(TaskCountType taskLevel, bool terminated) override;
 
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
     Kernel *peekKernel() const { return kernel; }
@@ -155,7 +155,7 @@ class CommandComputeKernel : public Command {
 class CommandWithoutKernel : public Command {
   public:
     using Command::Command;
-    CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
-    uint32_t dispatchBlitOperation();
+    CompletionStamp &submit(TaskCountType taskLevel, bool terminated) override;
+    TaskCountType dispatchBlitOperation();
 };
 } // namespace NEO

@@ -122,7 +122,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     kernel.kernelInfo.createKernelAllocation(*pDevice, false);
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
 
-    uint32_t notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;
+    TaskCountType notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;
 
     firstAllocation->updateTaskCount(notReadyTaskCount, commandStreamReceiver.getOsContext().getContextId());
 

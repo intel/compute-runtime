@@ -375,7 +375,7 @@ class CommandQueueHw : public CommandQueue {
                                       TimestampPacketDependencies &timestampPacketDependencies,
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
-                                      uint32_t taskLevel,
+                                      TaskCountType taskLevel,
                                       PrintfHandler *printfHandler);
 
     void enqueueBlocked(uint32_t commandType,
@@ -399,7 +399,7 @@ class CommandQueueHw : public CommandQueue {
                                                 TimestampPacketDependencies &timestampPacketDependencies,
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,
-                                                uint32_t taskLevel,
+                                                TaskCountType taskLevel,
                                                 CsrDependencies &csrDeps,
                                                 CommandStreamReceiver *bcsCsr);
     void processDispatchForCacheFlush(Surface **surfaces,
@@ -427,7 +427,7 @@ class CommandQueueHw : public CommandQueue {
 
     bool isCacheFlushCommand(uint32_t commandType) const override;
 
-    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override;
+    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, TaskCountType taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override;
 
     MOCKABLE_VIRTUAL bool isCacheFlushForBcsRequired() const;
 
@@ -481,8 +481,8 @@ class CommandQueueHw : public CommandQueue {
 
     bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override;
 
-    bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
-    void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
+    bool isTaskLevelUpdateRequired(const TaskCountType &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
+    void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
     static void computeOffsetsValueForRectCommands(size_t *bufferOffset,
                                                    size_t *hostOffset,
                                                    const size_t *bufferOrigin,

@@ -180,7 +180,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
     makeResident(*gfxAllocation);
 }
 
-WaitStatus CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
+WaitStatus CommandStreamReceiver::waitForTaskCount(TaskCountType requiredTaskCount) {
     auto address = getTagAddress();
     if (!skipResourceCleanup() && address) {
         this->downloadTagAllocation(requiredTaskCount);
@@ -190,7 +190,7 @@ WaitStatus CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
     return WaitStatus::Ready;
 }
 
-WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
+WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage) {
     WaitStatus waitStatus{WaitStatus::Ready};
     auto &list = allocationUsage == TEMPORARY_ALLOCATION ? internalAllocationStorage->getTemporaryAllocations() : internalAllocationStorage->getAllocationsForReuse();
     if (!list.peekIsEmpty()) {
@@ -201,7 +201,7 @@ WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_
     return waitStatus;
 }
 
-WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) {
+WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount) {
     return waitForTaskCountAndCleanAllocationList(requiredTaskCount, TEMPORARY_ALLOCATION);
 }
 
@@ -358,13 +358,13 @@ void CommandStreamReceiver::cleanupResources() {
     }
 }
 
-WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) {
+WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) {
     bool printWaitForCompletion = DebugManager.flags.LogWaitingForCompletion.get();
     if (printWaitForCompletion) {
         printTagAddressContent(taskCountToWait, params.waitTimeout, true);
     }
 
-    uint32_t latestSentTaskCount = this->latestFlushedTaskCount;
+    TaskCountType latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
         if (!this->flushBatchedSubmissions()) {
             const auto isGpuHang{isGpuHangDetected()};
@@ -391,15 +391,15 @@ bool CommandStreamReceiver::checkGpuHangDetected(TimeType currentTime, TimeType 
     return false;
 }
 
-WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, const WaitParams &params, uint32_t taskCountToWait) {
+WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait) {
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     int64_t timeDiff = 0;
 
-    uint32_t latestSentTaskCount = this->latestFlushedTaskCount;
+    TaskCountType latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
         this->flushTagUpdate();
     }
-    volatile uint32_t *partitionAddress = pollAddress;
+    volatile TagAddressType *partitionAddress = pollAddress;
 
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
@@ -438,7 +438,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddres
 void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     this->tagAllocation = allocation;
     UNRECOVERABLE_IF(allocation == nullptr);
-    this->tagAddress = reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer());
+    this->tagAddress = reinterpret_cast<TagAddressType *>(allocation->getUnderlyingBuffer());
     this->debugPauseStateAddress = reinterpret_cast<DebugPauseState *>(
         reinterpret_cast<uint8_t *>(allocation->getUnderlyingBuffer()) + debugPauseStateAddressOffset);
 }
@@ -855,7 +855,7 @@ void CommandStreamReceiver::printDeviceIndex() {
     }
 }
 
-void CommandStreamReceiver::checkForNewResources(uint32_t submittedTaskCount, uint32_t allocationTaskCount, GraphicsAllocation &gfxAllocation) {
+void CommandStreamReceiver::checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation) {
     if (useNewResourceImplicitFlush) {
         if (allocationTaskCount == GraphicsAllocation::objectNotUsed && !GraphicsAllocation::isIsaAllocationType(gfxAllocation.getAllocationType())) {
             newResources = true;
@@ -875,7 +875,7 @@ bool CommandStreamReceiver::checkImplicitFlushForGpuIdle() {
     return false;
 }
 
-void CommandStreamReceiver::downloadTagAllocation(uint32_t taskCountToWait) {
+void CommandStreamReceiver::downloadTagAllocation(TaskCountType taskCountToWait) {
     if (this->getTagAllocation()) {
         if (taskCountToWait && taskCountToWait <= this->peekLatestFlushedTaskCount()) {
             this->downloadAllocation(*this->getTagAllocation());
@@ -883,7 +883,7 @@ void CommandStreamReceiver::downloadTagAllocation(uint32_t taskCountToWait) {
     }
 }
 
-bool CommandStreamReceiver::testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait) {
+bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) {
     this->downloadTagAllocation(taskCountToWait);
     for (uint32_t i = 0; i < activePartitions; i++) {
         if (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
@@ -903,7 +903,7 @@ const RootDeviceEnvironment &CommandStreamReceiver::peekRootDeviceEnvironment() 
     return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
 }
 
-uint32_t CommandStreamReceiver::getCompletionValue(const GraphicsAllocation &gfxAllocation) {
+TaskCountType CommandStreamReceiver::getCompletionValue(const GraphicsAllocation &gfxAllocation) {
     if (completionFenceValuePointer) {
         return *completionFenceValuePointer;
     }
@@ -920,7 +920,7 @@ bool CommandStreamReceiver::createPerDssBackedBuffer(Device &device) {
     return perDssBackedBuffer != nullptr;
 }
 
-void CommandStreamReceiver::printTagAddressContent(uint32_t taskCountToWait, int64_t waitTimeout, bool start) {
+void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start) {
     auto postSyncAddress = getTagAddress();
     if (start) {
         PRINT_DEBUG_STRING(true, stdout,
@@ -941,7 +941,7 @@ LogicalStateHelper *CommandStreamReceiver::getLogicalStateHelper() const {
     return logicalStateHelper.get();
 }
 
-uint32_t CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus status) {
+TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus status) {
     switch (status) {
     case SubmissionStatus::OUT_OF_HOST_MEMORY:
         return CompletionStamp::outOfHostMemory;

@@ -34,7 +34,7 @@ class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHP
     }
     void prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
                                   uint32_t requiredPerThreadPrivateScratchSize,
-                                  uint32_t currentTaskCount,
+                                  TaskCountType currentTaskCount,
                                   OsContext &osContext,
                                   bool &stateBaseAddressDirty,
                                   bool &scratchSurfaceDirty,

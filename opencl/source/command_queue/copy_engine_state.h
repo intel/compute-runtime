@@ -7,12 +7,14 @@
 
 #pragma once
 
+#include "shared/source/command_stream/task_count_helper.h"
+
 #include "aubstream/engine_node.h"
 
 namespace NEO {
 struct CopyEngineState {
     aub_stream::EngineType engineType = aub_stream::EngineType::NUM_ENGINES;
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
 
     bool isValid() const {
         return engineType != aub_stream::EngineType::NUM_ENGINES;

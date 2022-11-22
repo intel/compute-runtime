@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
 
 #include <array>
@@ -35,7 +36,7 @@ class DirectSubmissionController {
   protected:
     struct DirectSubmissionState {
         bool isStopped = true;
-        uint32_t taskCount = 0u;
+        TaskCountType taskCount = 0u;
     };
 
     static void *controlDirectSubmissionsState(void *self);

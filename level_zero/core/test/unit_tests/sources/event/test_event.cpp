@@ -34,8 +34,8 @@ using namespace std::chrono_literals;
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
-extern volatile uint32_t *pauseAddress;
-extern uint32_t pauseValue;
+extern volatile TagAddressType *pauseAddress;
+extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
 extern std::function<void()> setupPauseAddress;
 } // namespace CpuIntrinsicsTests
@@ -902,12 +902,12 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForN
     const size_t eventPacketSize = event->getSinglePacketSize();
     const size_t eventCompletionOffset = event->getContextStartOffset();
 
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
     CpuIntrinsicsTests::pauseCounter = 0u;
-    CpuIntrinsicsTests::pauseAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    CpuIntrinsicsTests::pauseAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
 
     uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
     for (uint32_t i = 0; i < packetsInUse; i++) {
@@ -917,7 +917,7 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForN
 
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
         if (CpuIntrinsicsTests::pauseCounter > 10) {
-            volatile uint32_t *nextPacket = CpuIntrinsicsTests::pauseAddress;
+            volatile TagAddressType *nextPacket = CpuIntrinsicsTests::pauseAddress;
             for (uint32_t i = 0; i < packetsInUse; i++) {
                 *nextPacket = Event::STATE_SIGNALED;
                 nextPacket = ptrOffset(nextPacket, eventPacketSize);
@@ -938,12 +938,12 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForO
     const size_t eventPacketSize = event->getSinglePacketSize();
     const size_t eventCompletionOffset = event->getContextEndOffset();
 
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
     CpuIntrinsicsTests::pauseCounter = 0u;
-    CpuIntrinsicsTests::pauseAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    CpuIntrinsicsTests::pauseAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
 
     uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
     for (uint32_t i = 0; i < packetsInUse; i++) {
@@ -953,7 +953,7 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForO
 
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
         if (CpuIntrinsicsTests::pauseCounter > 10) {
-            volatile uint32_t *nextPacket = CpuIntrinsicsTests::pauseAddress;
+            volatile TagAddressType *nextPacket = CpuIntrinsicsTests::pauseAddress;
             for (uint32_t i = 0; i < packetsInUse; i++) {
                 *nextPacket = Event::STATE_SIGNALED;
                 nextPacket = ptrOffset(nextPacket, eventPacketSize);
@@ -974,12 +974,12 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForT
     const size_t eventPacketSize = event->getSinglePacketSize();
     const size_t eventCompletionOffset = event->getContextEndOffset();
 
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
     CpuIntrinsicsTests::pauseCounter = 0u;
-    CpuIntrinsicsTests::pauseAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    CpuIntrinsicsTests::pauseAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
 
     uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
     for (uint32_t i = 0; i < packetsInUse; i++) {
@@ -989,7 +989,7 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForT
 
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
         if (CpuIntrinsicsTests::pauseCounter > 10) {
-            volatile uint32_t *nextPacket = CpuIntrinsicsTests::pauseAddress;
+            volatile TagAddressType *nextPacket = CpuIntrinsicsTests::pauseAddress;
             for (uint32_t i = 0; i < packetsInUse; i++) {
                 *nextPacket = Event::STATE_SIGNALED;
                 nextPacket = ptrOffset(nextPacket, eventPacketSize);
@@ -2108,8 +2108,8 @@ HWTEST_F(EventTests,
 
     constexpr uint32_t iterations = 5;
 
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
     neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
@@ -2124,7 +2124,7 @@ HWTEST_F(EventTests,
     if (event->isUsingContextEndOffset()) {
         eventCompletionOffset = event->getContextEndOffset();
     }
-    uint32_t *eventAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
     *eventAddress = Event::STATE_INITIAL;
 
     CpuIntrinsicsTests::pauseCounter = 0u;
@@ -2132,7 +2132,7 @@ HWTEST_F(EventTests,
 
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
         if (CpuIntrinsicsTests::pauseCounter >= iterations) {
-            volatile uint32_t *packet = CpuIntrinsicsTests::pauseAddress;
+            volatile TagAddressType *packet = CpuIntrinsicsTests::pauseAddress;
             *packet = Event::STATE_SIGNALED;
         }
     };

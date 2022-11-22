@@ -291,7 +291,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
 
     auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that can be finished...
@@ -478,7 +478,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     EXPECT_NE(nullptr, buffer);
 
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that map buffer needs to wait for
@@ -561,7 +561,7 @@ HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsC
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(1u, taskCount);
 
     auto ptrResult = clEnqueueMapBuffer(

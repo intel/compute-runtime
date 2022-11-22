@@ -254,7 +254,7 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     class MockEventWithSetCompleteOnUpdate : public Event {
       public:
         MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
-                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
+                                         uint32_t taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
         }
         void updateExecutionStatus() override {
             setStatus(CL_COMPLETE);

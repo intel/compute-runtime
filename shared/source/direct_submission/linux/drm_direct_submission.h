@@ -20,7 +20,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     ~DrmDirectSubmission() override;
 
-    uint32_t *getCompletionValuePointer() override;
+    TaskCountType *getCompletionValuePointer() override;
 
   protected:
     bool allocateOsResources() override;
@@ -37,10 +37,10 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     bool isCompleted(uint32_t ringBufferIndex) override;
     bool isCompletionFenceSupported();
 
-    MOCKABLE_VIRTUAL void wait(uint32_t taskCountToWait);
+    MOCKABLE_VIRTUAL void wait(TaskCountType taskCountToWait);
 
     TagData currentTagData{};
-    volatile uint32_t *tagAddress;
-    uint32_t completionFenceValue{};
+    volatile TagAddressType *tagAddress;
+    TaskCountType completionFenceValue{};
 };
 } // namespace NEO

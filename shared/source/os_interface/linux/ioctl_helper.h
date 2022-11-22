@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -87,7 +88,7 @@ class IoctlHelper {
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
     virtual uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
-    virtual int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
+    virtual int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
     virtual std::optional<DrmParam> getHasPageFaultParamId() = 0;
     virtual std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) = 0;
@@ -165,7 +166,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
     uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
-    int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
+    int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
     std::optional<DrmParam> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
@@ -231,7 +232,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
     uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
-    int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
+    int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
     std::optional<DrmParam> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;

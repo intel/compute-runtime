@@ -474,14 +474,14 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations(uint32_t taskCountToWait) {
+void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations(TaskCountType taskCountToWait) {
     this->flushBatchedSubmissions();
 
     if (this->latestFlushedTaskCount < taskCountToWait) {
         this->flushTagUpdate();
     }
 
-    volatile uint32_t *pollAddress = this->getTagAddress();
+    volatile TagAddressType *pollAddress = this->getTagAddress();
     for (uint32_t i = 0; i < this->activePartitions; i++) {
         while (*pollAddress < this->latestFlushedTaskCount) {
             this->downloadAllocation(*this->getTagAllocation());
@@ -497,13 +497,13 @@ void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocatio
 }
 
 template <typename GfxFamily>
-WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
+WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
     flushSubmissionsAndDownloadAllocations(taskCountToWait);
     return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
 }
 
 template <typename GfxFamily>
-WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) {
+WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) {
     flushSubmissionsAndDownloadAllocations(taskCountToWait);
     return BaseClass::waitForCompletionWithTimeout(params, taskCountToWait);
 }
@@ -554,7 +554,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAlloca
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations() {
-    volatile uint32_t *pollAddress = this->getTagAddress();
+    volatile TagAddressType *pollAddress = this->getTagAddress();
     for (uint32_t i = 0; i < this->activePartitions; i++) {
         while (*pollAddress < this->latestFlushedTaskCount) {
             this->downloadAllocation(*this->getTagAllocation());

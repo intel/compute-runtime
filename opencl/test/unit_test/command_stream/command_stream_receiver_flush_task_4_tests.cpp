@@ -765,18 +765,18 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenPolicyValueChangedWhenFlushi
 }
 
 namespace CpuIntrinsicsTests {
-extern volatile uint32_t *pauseAddress;
-extern uint32_t pauseValue;
+extern volatile TagAddressType *pauseAddress;
+extern TaskCountType pauseValue;
 } // namespace CpuIntrinsicsTests
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitWhenTagValueSwitchesThenWaitFunctionReturnsTrue) {
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    uint32_t taskCountToWait = 2u;
+    TaskCountType taskCountToWait = 2u;
 
     *mockCsr->tagAddress = 1u;
 
@@ -788,13 +788,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitAndIndefinitelyPollWhenWaitForCompletionThenDoNotCallWaitUtils) {
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    uint32_t taskCountToWait = 2u;
+    TaskCountType taskCountToWait = 2u;
 
     *mockCsr->tagAddress = 1u;
 

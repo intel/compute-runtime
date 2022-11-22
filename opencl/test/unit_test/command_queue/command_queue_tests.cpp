@@ -1012,7 +1012,7 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
         MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
-        WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
+        WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;
 
@@ -1069,17 +1069,17 @@ class CommandStreamReceiverHwMock : public CommandStreamReceiverHw<GfxFamily> {
                                 const DeviceBitfield deviceBitfield)
         : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
         waitForTaskCountWithKmdNotifyFallbackCounter++;
         return waitForTaskCountWithKmdNotifyFallbackReturnValue;
     }
 
-    WaitStatus waitForTaskCount(uint32_t requiredTaskCount) override {
+    WaitStatus waitForTaskCount(TaskCountType requiredTaskCount) override {
         waitForTaskCountCalledCounter++;
         return waitForTaskCountReturnValue;
     }
 
-    WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) override {
+    WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount) override {
         waitForTaskCountAndCleanTemporaryAllocationListCalledCounter++;
         return waitForTaskCountAndCleanTemporaryAllocationListReturnValue;
     }
@@ -1126,7 +1126,7 @@ HWTEST_F(WaitUntilCompletionTests, givenCleanTemporaryAllocationListEqualsFalseW
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool cleanTemporaryAllocationList = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
@@ -1146,7 +1146,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndCleanTemporaryAllocationListEq
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool cleanTemporaryAllocationList = true;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
@@ -1165,7 +1165,7 @@ HWTEST_F(WaitUntilCompletionTests, givenEmptyBcsStatesAndSkipWaitEqualsTrueWhenW
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = true;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
@@ -1184,7 +1184,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndSkipWaitEqualsFalseWhenWaiting
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
@@ -1212,7 +1212,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 
@@ -1245,7 +1245,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 
@@ -1279,7 +1279,7 @@ HWTEST_F(WaitUntilCompletionTests, givenSuccessOnBcsCsrWhenWaitingUntilCompleteT
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 

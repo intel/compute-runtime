@@ -62,7 +62,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenEnabledDirectSubmissionWhenGetting
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionAddressThenOffsettedTagAddressIsReturned) {
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAddress());
-    uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(csr->getTagAddress()));
+    uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(csr->getTagAddress()));
     auto expectedAddress = tagAddress + Drm::completionFenceOffset;
     EXPECT_EQ(expectedAddress, csr->getCompletionAddress());
 }

@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
@@ -86,7 +87,7 @@ class CommandStreamReceiver {
 
     virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                      uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
+                                      TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
 
     virtual bool flushBatchedSubmissions() = 0;
     MOCKABLE_VIRTUAL SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
@@ -112,9 +113,9 @@ class CommandStreamReceiver {
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
     bool needsPageTableManager() const;
 
-    MOCKABLE_VIRTUAL WaitStatus waitForTaskCount(uint32_t requiredTaskCount);
-    WaitStatus waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage);
-    MOCKABLE_VIRTUAL WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount);
+    MOCKABLE_VIRTUAL WaitStatus waitForTaskCount(TaskCountType requiredTaskCount);
+    WaitStatus waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage);
+    MOCKABLE_VIRTUAL WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount);
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() const;
@@ -129,19 +130,19 @@ class CommandStreamReceiver {
         return tagsMultiAllocation;
     }
     MultiGraphicsAllocation &createTagsMultiAllocation();
-    volatile uint32_t *getTagAddress() const { return tagAddress; }
+    volatile TagAddressType *getTagAddress() const { return tagAddress; }
     uint64_t getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + debugPauseStateAddressOffset; }
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
 
-    uint32_t peekTaskCount() const { return taskCount; }
+    TaskCountType peekTaskCount() const { return taskCount; }
 
-    uint32_t peekTaskLevel() const { return taskLevel; }
+    TaskCountType peekTaskLevel() const { return taskLevel; }
     FlushStamp obtainCurrentFlushStamp() const;
 
-    uint32_t peekLatestSentTaskCount() const { return latestSentTaskCount; }
+    TaskCountType peekLatestSentTaskCount() const { return latestSentTaskCount; }
 
-    uint32_t peekLatestFlushedTaskCount() const { return latestFlushedTaskCount; }
+    TaskCountType peekLatestFlushedTaskCount() const { return latestFlushedTaskCount; }
 
     void enableNTo1SubmissionModel() { this->nTo1SubmissionModelEnabled = true; }
     bool isNTo1SubmissionModelEnabled() const { return this->nTo1SubmissionModelEnabled; }
@@ -165,10 +166,10 @@ class CommandStreamReceiver {
     void requestStallingCommandsOnNextFlush() { stallingCommandsOnNextFlushRequired = true; }
     bool isStallingCommandsOnNextFlushRequired() const { return stallingCommandsOnNextFlushRequired; }
 
-    virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
-    virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait);
-    WaitStatus baseWaitFunction(volatile uint32_t *pollAddress, const WaitParams &params, uint32_t taskCountToWait);
-    MOCKABLE_VIRTUAL bool testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait);
+    virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
+    virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
+    WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
+    MOCKABLE_VIRTUAL bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait);
     virtual void downloadAllocations(){};
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
@@ -225,14 +226,14 @@ class CommandStreamReceiver {
 
     virtual MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const = 0;
 
-    void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
+    void setLatestSentTaskCount(TaskCountType latestSentTaskCount) {
         this->latestSentTaskCount = latestSentTaskCount;
     }
-    void setLatestFlushedTaskCount(uint32_t latestFlushedTaskCount) {
+    void setLatestFlushedTaskCount(TaskCountType latestFlushedTaskCount) {
         this->latestFlushedTaskCount = latestFlushedTaskCount;
     }
 
-    virtual uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) = 0;
+    virtual TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) = 0;
 
     virtual SubmissionStatus flushTagUpdate() = 0;
     virtual void updateTagFromWait() = 0;
@@ -333,7 +334,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL bool checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const;
 
     uint64_t getCompletionAddress() const {
-        uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
+        uint64_t completionFenceAddress = castToUint64(const_cast<TagAddressType *>(tagAddress));
         if (completionFenceAddress == 0) {
             return 0;
         }
@@ -341,7 +342,7 @@ class CommandStreamReceiver {
         return completionFenceAddress;
     }
 
-    uint32_t getCompletionValue(const GraphicsAllocation &gfxAllocation);
+    TaskCountType getCompletionValue(const GraphicsAllocation &gfxAllocation);
     DispatchMode getDispatchMode() const {
         return this->dispatchMode;
     }
@@ -387,10 +388,10 @@ class CommandStreamReceiver {
   protected:
     void cleanupResources();
     void printDeviceIndex();
-    void checkForNewResources(uint32_t submittedTaskCount, uint32_t allocationTaskCount, GraphicsAllocation &gfxAllocation);
+    void checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation);
     bool checkImplicitFlushForGpuIdle();
-    void downloadTagAllocation(uint32_t taskCountToWait);
-    void printTagAddressContent(uint32_t taskCountToWait, int64_t waitTimeout, bool start);
+    void downloadTagAllocation(TaskCountType taskCountToWait);
+    void printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start);
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
@@ -421,7 +422,7 @@ class CommandStreamReceiver {
     const uint64_t debugPauseStateAddressOffset = MemoryConstants::kiloByte;
     uint64_t totalMemoryUsed = 0u;
 
-    volatile uint32_t *tagAddress = nullptr;
+    volatile TagAddressType *tagAddress = nullptr;
     volatile DebugPauseState *debugPauseStateAddress = nullptr;
     SpinLock debugPauseStateLock;
     static void *asyncDebugBreakConfirmation(void *arg);
@@ -441,14 +442,14 @@ class CommandStreamReceiver {
 
     IndirectHeap *indirectHeap[IndirectHeap::Type::NUM_TYPES];
     OsContext *osContext = nullptr;
-    uint32_t *completionFenceValuePointer = nullptr;
+    TaskCountType *completionFenceValuePointer = nullptr;
 
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
-    std::atomic<uint32_t> taskLevel{0};
-    std::atomic<uint32_t> latestSentTaskCount{0};
-    std::atomic<uint32_t> latestFlushedTaskCount{0};
+    std::atomic<TaskCountType> taskLevel{0};
+    std::atomic<TaskCountType> latestSentTaskCount{0};
+    std::atomic<TaskCountType> latestFlushedTaskCount{0};
     // taskCount - # of tasks submitted
-    std::atomic<uint32_t> taskCount{0};
+    std::atomic<TaskCountType> taskCount{0};
 
     std::atomic<uint32_t> numClients = 0u;
 
@@ -470,7 +471,7 @@ class CommandStreamReceiver {
     uint32_t activePartitionsConfig = 1;
     uint32_t postSyncWriteOffset = 0;
     uint32_t completionFenceOffset = 0;
-    uint32_t completionFenceValue = 0;
+    TaskCountType completionFenceValue = 0;
 
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;

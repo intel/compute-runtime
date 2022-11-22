@@ -345,7 +345,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
                                      uint32_t scratchSlot,
                                      uint32_t requiredPerThreadScratchSize,
                                      uint32_t requiredPerThreadPrivateScratchSize,
-                                     uint32_t currentTaskCount,
+                                     TaskCountType currentTaskCount,
                                      OsContext &osContext,
                                      bool &stateBaseAddressDirty,
                                      bool &vfeStateDirty) override {

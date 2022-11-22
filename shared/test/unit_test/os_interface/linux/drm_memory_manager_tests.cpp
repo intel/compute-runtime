@@ -5367,7 +5367,7 @@ TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOf
     auto engine = memoryManager->getRegisteredEngines()[0];
     allocation->updateTaskCount(2, engine.osContext->getContextId());
 
-    uint64_t expectedFenceAddress = castToUint64(const_cast<uint32_t *>(engine.commandStreamReceiver->getTagAddress())) + Drm::completionFenceOffset;
+    uint64_t expectedFenceAddress = castToUint64(const_cast<TagAddressType *>(engine.commandStreamReceiver->getTagAddress())) + Drm::completionFenceOffset;
     constexpr uint64_t expectedValue = 2;
 
     memoryManager->handleFenceCompletion(allocation);

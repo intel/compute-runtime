@@ -1867,7 +1867,7 @@ class UltCommandStreamReceiverForDispatchFlags : public UltCommandStreamReceiver
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         savedDispatchFlags = dispatchFlags;
         return BaseClass::flushTask(commandStream, commandStreamStart,
                                     dsh, ioh, ssh, taskLevel, dispatchFlags, device);
@@ -2043,7 +2043,7 @@ class MockCsrWithFailingFlush : public CommandStreamReceiverHw<GfxFamily> {
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         return SubmissionStatus::FAILED;
     }
-    uint32_t tag = 0;
+    TagAddressType tag = 0;
 };
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutIsCalledWhenFlushBatchedSubmissionsReturnsFailureThenItIsPropagated) {

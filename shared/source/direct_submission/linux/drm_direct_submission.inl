@@ -82,7 +82,7 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-uint32_t *DrmDirectSubmission<GfxFamily, Dispatcher>::getCompletionValuePointer() {
+TaskCountType *DrmDirectSubmission<GfxFamily, Dispatcher>::getCompletionValuePointer() {
     if (this->isCompletionFenceSupported()) {
         return &this->completionFenceValue;
     }
@@ -93,7 +93,7 @@ template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
     this->currentTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
     this->currentTagData.tagValue = 0u;
-    this->tagAddress = reinterpret_cast<volatile uint32_t *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
+    this->tagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
     return true;
 }
 
@@ -116,7 +116,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     bool ret = false;
     uint32_t drmContextId = 0u;
 
-    uint32_t completionValue = 0u;
+    TaskCountType completionValue = 0u;
     uint64_t completionFenceGpuAddress = 0u;
     if (this->isCompletionFenceSupported()) {
         completionValue = ++completionFenceValue;
@@ -246,7 +246,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompletionFenceSupported() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(uint32_t taskCountToWait) {
+void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(TaskCountType taskCountToWait) {
     auto pollAddress = this->tagAddress;
     for (uint32_t i = 0; i < this->activeTiles; i++) {
         while (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {

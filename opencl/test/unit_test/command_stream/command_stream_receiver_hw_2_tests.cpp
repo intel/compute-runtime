@@ -637,7 +637,7 @@ class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
   public:
     using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait,
                                                      bool useQuickKmdSleep, QueueThrottle throttle) override {
         waitForTaskCountWithKmdNotifyFallbackCalled++;
         taskCountToWaitPassed = taskCountToWait;
@@ -648,7 +648,7 @@ class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
     }
 
     FlushStamp flushStampToWaitPassed = 0;
-    uint32_t taskCountToWaitPassed = 0;
+    TaskCountType taskCountToWaitPassed = 0;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     bool useQuickKmdSleepPassed = false;
     QueueThrottle throttlePassed = QueueThrottle::MEDIUM;

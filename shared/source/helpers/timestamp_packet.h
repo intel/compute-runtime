@@ -154,7 +154,7 @@ struct TimestampPacketHelper {
 
             EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream,
                                                                   static_cast<uint64_t>(tagAddressPreviousRootDevice),
-                                                                  taskCountPreviousRootDevice,
+                                                                  static_cast<uint32_t>(taskCountPreviousRootDevice),
                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
         }
     }

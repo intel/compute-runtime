@@ -69,13 +69,13 @@ struct MyUserEvent : public VirtualEvent {
     WaitStatus wait(bool blocking, bool quickKmdSleep) override {
         return VirtualEvent::wait(blocking, quickKmdSleep);
     };
-    uint32_t getTaskLevel() override {
+    TaskCountType getTaskLevel() override {
         return VirtualEvent::getTaskLevel();
     };
 };
 
 struct MyEvent : public Event {
-    MyEvent(CommandQueue *cmdQueue, cl_command_type cmdType, uint32_t taskLevel, uint32_t taskCount)
+    MyEvent(CommandQueue *cmdQueue, cl_command_type cmdType, TaskCountType taskLevel, TaskCountType taskCount)
         : Event(cmdQueue, cmdType, taskLevel, taskCount) {
     }
     TimeStampData getQueueTimeStamp() {

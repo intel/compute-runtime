@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -118,7 +119,7 @@ void BufferObject::fillExecObject(ExecObject &execObject, OsContext *osContext, 
 }
 
 int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-                       BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) {
+                       BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue) {
     for (size_t i = 0; i < residencyCount; i++) {
         residency[i]->fillExecObject(execObjectsStorage[i], osContext, vmHandleId, drmContextId);
     }

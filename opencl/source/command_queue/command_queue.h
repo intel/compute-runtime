@@ -58,7 +58,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                 bool internalUsage,
                                 cl_int &errcodeRet);
 
-    static cl_int getErrorCodeFromTaskCount(uint32_t taskCount);
+    static cl_int getErrorCodeFromTaskCount(TaskCountType taskCount);
 
     CommandQueue() = delete;
 
@@ -199,19 +199,19 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                size_t paramValueSize, void *paramValue,
                                size_t *paramValueSizeRet);
 
-    uint32_t getHwTag() const;
+    TagAddressType getHwTag() const;
 
-    volatile uint32_t *getHwTagAddress() const;
+    volatile TagAddressType *getHwTagAddress() const;
 
-    bool isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState);
+    bool isCompleted(TaskCountType gpgpuTaskCount, CopyEngineState bcsState);
 
     bool isWaitForTimestampsEnabled() const;
-    virtual bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) = 0;
+    virtual bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, TaskCountType taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) = 0;
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
-    MOCKABLE_VIRTUAL WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait);
-    MOCKABLE_VIRTUAL WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
+    MOCKABLE_VIRTUAL WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait);
+    MOCKABLE_VIRTUAL WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
         return this->waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, true, false);
     }
     MOCKABLE_VIRTUAL WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList);
@@ -219,9 +219,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return this->waitForAllEngines(blockedQueue, printfHandler, true);
     }
 
-    static uint32_t getTaskLevelFromWaitList(uint32_t taskLevel,
-                                             cl_uint numEventsInWaitList,
-                                             const cl_event *eventWaitList);
+    static TaskCountType getTaskLevelFromWaitList(TaskCountType taskLevel,
+                                                  cl_uint numEventsInWaitList,
+                                                  const cl_event *eventWaitList);
 
     void initializeGpgpu() const;
     void initializeGpgpuInternals() const;
@@ -330,8 +330,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     template <typename PtrType>
     static PtrType convertAddressWithOffsetToGpuVa(PtrType ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation);
 
-    void updateBcsTaskCount(aub_stream::EngineType bcsEngineType, uint32_t newBcsTaskCount);
-    uint32_t peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const;
+    void updateBcsTaskCount(aub_stream::EngineType bcsEngineType, TaskCountType newBcsTaskCount);
+    TaskCountType peekBcsTaskCount(aub_stream::EngineType bcsEngineType) const;
 
     void updateLatestSentEnqueueType(EnqueueProperties::Operation newEnqueueType) { this->latestSentEnqueueType = newEnqueueType; }
     EnqueueProperties::Operation peekLatestSentEnqueueOperation() { return this->latestSentEnqueueType; }
@@ -343,10 +343,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void clearLastBcsPackets();
 
     // taskCount of last task
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
 
     // current taskLevel. Used for determining if a PIPE_CONTROL is needed.
-    uint32_t taskLevel = 0;
+    TaskCountType taskLevel = 0;
 
     std::unique_ptr<FlushStampTracker> flushStamp;
 
@@ -370,7 +370,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void *enqueueMapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueUnmapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest);
 
-    virtual void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType){};
+    virtual void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType){};
     bool isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue, bool isMarkerWithProfiling) const;
 
     MOCKABLE_VIRTUAL void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, CommandStreamReceiver &csr);

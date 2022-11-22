@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSize,
                                  uint32_t requiredPerThreadPrivateScratchSize,
-                                 uint32_t currentTaskCount,
+                                 TaskCountType currentTaskCount,
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override;
@@ -38,14 +38,14 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
                       uint32_t scratchSlot,
                       uint32_t requiredPerThreadScratchSize,
                       uint32_t requiredPerThreadPrivateScratchSize,
-                      uint32_t currentTaskCount,
+                      TaskCountType currentTaskCount,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override;
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                uint32_t requiredPerThreadScratchSize,
                                                uint32_t requiredPerThreadPrivateScratchSize,
-                                               uint32_t currentTaskCount,
+                                               TaskCountType currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,
@@ -56,7 +56,7 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
     MOCKABLE_VIRTUAL void programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation);
     MOCKABLE_VIRTUAL void prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
                                                    uint32_t requiredPerThreadPrivateScratchSize,
-                                                   uint32_t currentTaskCount,
+                                                   TaskCountType currentTaskCount,
                                                    OsContext &osContext,
                                                    bool &stateBaseAddressDirty,
                                                    bool &scratchSurfaceDirty,

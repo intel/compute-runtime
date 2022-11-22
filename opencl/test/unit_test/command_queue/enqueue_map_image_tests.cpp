@@ -342,7 +342,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
         }
     };
 
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(1u, taskCount);
 
     // enqueue something that can be finished...
@@ -711,7 +711,7 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith2DImageIs
     class MockEventWithSetCompleteOnUpdate : public Event {
       public:
         MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
-                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
+                                         TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
         }
         void updateExecutionStatus() override {
             setStatus(CL_COMPLETE);
@@ -753,7 +753,7 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith1DImageIs
     class MockEventWithSetCompleteOnUpdate : public Event {
       public:
         MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
-                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
+                                         TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
         }
         void updateExecutionStatus() override {
             setStatus(CL_COMPLETE);

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/command_stream/task_count_helper.h"
+
 #include <level_zero/ze_api.h>
 
 #include <chrono>
@@ -39,7 +41,7 @@ struct Fence : _ze_fence_handle_t {
 
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
     CommandQueueImp *cmdQueue;
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
 };
 
 } // namespace L0

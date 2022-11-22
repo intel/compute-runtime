@@ -983,7 +983,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncByMiFlushDw(
     }
 
     uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();
-    uint32_t postSyncData = this->csr->peekTaskCount() + 1;
+    TaskCountType postSyncData = this->csr->peekTaskCount() + 1;
     const auto &hwInfo = this->device->getHwInfo();
 
     NEO::MiFlushArgs args;
@@ -1003,7 +1003,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
     }
 
     uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();
-    uint32_t postSyncData = this->csr->peekTaskCount() + 1;
+    TaskCountType postSyncData = this->csr->peekTaskCount() + 1;
     const auto &hwInfo = this->device->getHwInfo();
 
     NEO::PipeControlArgs args;

@@ -8,12 +8,13 @@
 #include "shared/source/memory_manager/allocations_list.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/task_count_helper.h"
 
 namespace {
 struct ReusableAllocationRequirements {
     const void *requiredPtr;
     size_t requiredMinimalSize;
-    volatile uint32_t *csrTagAddress;
+    volatile TagAddressType *csrTagAddress;
     NEO::AllocationType allocationType;
     uint32_t contextId;
     uint32_t activeTileCount;

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
@@ -46,7 +47,7 @@ class BufferObject {
     MOCKABLE_VIRTUAL int validateHostPtr(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
 
     MOCKABLE_VIRTUAL int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-                              BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue);
+                              BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue);
 
     int bind(OsContext *osContext, uint32_t vmHandleId);
     int unbind(OsContext *osContext, uint32_t vmHandleId);

@@ -63,7 +63,7 @@ struct CommandBuffer : public IDNode<CommandBuffer> {
     BatchBuffer batchBuffer;
     void *batchBufferEndLocation = nullptr;
     uint32_t inspectionId = 0;
-    uint32_t taskCount = 0u;
+    TaskCountType taskCount = 0u;
     void *pipeControlThatMayBeErasedLocation = nullptr;
     void *epiloguePipeControlLocation = nullptr;
     PipeControlArgs epiloguePipeControlArgs;

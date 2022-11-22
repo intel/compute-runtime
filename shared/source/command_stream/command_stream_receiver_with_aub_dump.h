@@ -40,7 +40,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
         return CommandStreamReceiverType::CSR_HW_WITH_AUB;
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait,
                                                      bool useQuickKmdSleep, QueueThrottle throttle) override;
 
     size_t getPreferredTagPoolSize() const override { return 1; }

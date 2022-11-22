@@ -54,7 +54,7 @@ void ScratchSpaceControllerXeHPAndLater::setRequiredScratchSpace(void *sshBaseAd
                                                                  uint32_t offset,
                                                                  uint32_t requiredPerThreadScratchSize,
                                                                  uint32_t requiredPerThreadPrivateScratchSize,
-                                                                 uint32_t currentTaskCount,
+                                                                 TaskCountType currentTaskCount,
                                                                  OsContext &osContext,
                                                                  bool &stateBaseAddressDirty,
                                                                  bool &vfeStateDirty) {
@@ -135,7 +135,7 @@ void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType
 void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                                                uint32_t requiredPerThreadScratchSize,
                                                                                uint32_t requiredPerThreadPrivateScratchSize,
-                                                                               uint32_t currentTaskCount,
+                                                                               TaskCountType currentTaskCount,
                                                                                OsContext &osContext,
                                                                                bool &stateBaseAddressDirty,
                                                                                bool &vfeStateDirty,
@@ -152,7 +152,7 @@ void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(B
 
 void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
                                                                   uint32_t requiredPerThreadPrivateScratchSize,
-                                                                  uint32_t currentTaskCount,
+                                                                  TaskCountType currentTaskCount,
                                                                   OsContext &osContext,
                                                                   bool &stateBaseAddressDirty,
                                                                   bool &scratchSurfaceDirty,
@@ -193,7 +193,7 @@ void ScratchSpaceControllerXeHPAndLater::programHeaps(HeapContainer &heapContain
                                                       uint32_t scratchSlot,
                                                       uint32_t requiredPerThreadScratchSize,
                                                       uint32_t requiredPerThreadPrivateScratchSize,
-                                                      uint32_t currentTaskCount,
+                                                      TaskCountType currentTaskCount,
                                                       OsContext &osContext,
                                                       bool &stateBaseAddressDirty,
                                                       bool &vfeStateDirty) {

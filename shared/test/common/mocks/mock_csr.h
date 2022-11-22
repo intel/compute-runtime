@@ -117,7 +117,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
         const IndirectHeap *dsh,
         const IndirectHeap *ioh,
         const IndirectHeap *ssh,
-        uint32_t taskLevel,
+        TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override {
         this->flushTaskStamp = *this->executionStamp;
@@ -140,7 +140,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
     bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
 
     bool slmUsedInLastFlushTask = false;
-    uint32_t lastTaskLevelToFlushTask = 0;
+    TaskCountType lastTaskLevelToFlushTask = 0;
 };
 
 template <typename GfxFamily>

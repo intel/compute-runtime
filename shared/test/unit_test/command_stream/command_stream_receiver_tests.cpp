@@ -78,7 +78,7 @@ TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionValueTh
 }
 
 TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionAddressThenProperAddressIsReturned) {
-    auto expectedAddress = castToUint64(const_cast<uint32_t *>(commandStreamReceiver->getTagAddress()));
+    auto expectedAddress = castToUint64(const_cast<TagAddressType *>(commandStreamReceiver->getTagAddress()));
     EXPECT_EQ(expectedAddress, commandStreamReceiver->getCompletionAddress());
 }
 
@@ -186,7 +186,7 @@ TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotCh
 }
 
 TEST_F(CommandStreamReceiverTest, WhenCommandStreamReceiverIsCreatedThenItHasATagValue) {
-    EXPECT_NE(nullptr, const_cast<uint32_t *>(commandStreamReceiver->getTagAddress()));
+    EXPECT_NE(nullptr, const_cast<TagAddressType *>(commandStreamReceiver->getTagAddress()));
 }
 
 TEST_F(CommandStreamReceiverTest, WhenGettingCommandStreamerThenValidPointerIsReturned) {
@@ -275,7 +275,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForCompletionWithTi
     csr.activePartitions = 1;
     csr.gpuHangCheckPeriod = 0us;
 
-    volatile std::uint32_t tasksCount[16] = {};
+    volatile TagAddressType tasksCount[16] = {};
     csr.tagAddress = tasksCount;
 
     constexpr auto enableTimeout = false;
@@ -290,7 +290,7 @@ HWTEST_F(CommandStreamReceiverTest, givenNoGpuHangWhenWaititingForCompletionWith
     auto driverModelMock = std::make_unique<MockDriverModel>();
     driverModelMock->isGpuHangDetectedToReturn = false;
 
-    volatile std::uint32_t tasksCount[16] = {};
+    volatile TagAddressType tasksCount[16] = {};
     driverModelMock->isGpuHangDetectedSideEffect = [&tasksCount] {
         tasksCount[0]++;
     };
@@ -367,7 +367,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForTaskCountThenGpu
     csr.activePartitions = 1;
     csr.gpuHangCheckPeriod = 0us;
 
-    volatile std::uint32_t tasksCount[16] = {};
+    volatile TagAddressType tasksCount[16] = {};
     csr.tagAddress = tasksCount;
 
     constexpr auto taskCountToWait = 1;
@@ -413,8 +413,8 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCa
     csr.activePartitions = 1;
     csr.gpuHangCheckPeriod = 0us;
 
-    volatile std::uint32_t tasksCount[16] = {};
-    VariableBackup<volatile std::uint32_t *> csrTagAddressBackup(&csr.tagAddress);
+    volatile TagAddressType tasksCount[16] = {};
+    VariableBackup<volatile TagAddressType *> csrTagAddressBackup(&csr.tagAddress);
     csr.tagAddress = tasksCount;
 
     auto hostPtr = reinterpret_cast<void *>(0x1234);
@@ -1473,8 +1473,8 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuNotIdleImplicitFlushCheckEnabledWh
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
-extern volatile uint32_t *pauseAddress;
-extern uint32_t pauseValue;
+extern volatile TagAddressType *pauseAddress;
+extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
 } // namespace CpuIntrinsicsTests
 
@@ -1505,8 +1505,8 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
     csr.taskCount = 3u;
     csr.activePartitions = 2;
 
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
 
     CpuIntrinsicsTests::pauseAddress = &csr.mockTagAddress[0];
@@ -1532,8 +1532,8 @@ TEST(CommandStreamReceiverSimpleTest, givenEmptyTemporaryAllocationListWhenWaiti
     csr.mockTagAddress[0] = 0u;
     csr.taskCount = 3u;
 
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
 
     CpuIntrinsicsTests::pauseAddress = &csr.mockTagAddress[0];
@@ -2145,15 +2145,15 @@ HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEn
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.activePartitions = 2;
 
-    volatile uint32_t *tagAddress = csr.tagAddress;
-    constexpr uint32_t tagValue = 2;
+    volatile TagAddressType *tagAddress = csr.tagAddress;
+    constexpr TagAddressType tagValue = 2;
     *tagAddress = tagValue;
     tagAddress = ptrOffset(tagAddress, csr.postSyncWriteOffset);
     *tagAddress = tagValue;
 
     WaitParams waitParams;
     waitParams.waitTimeout = std::numeric_limits<int64_t>::max();
-    constexpr uint32_t taskCount = 1;
+    constexpr TaskCountType taskCount = 1;
 
     testing::internal::CaptureStdout();
 
@@ -2166,7 +2166,7 @@ HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEn
 
     expectedOutput << std::endl
                    << "Waiting for task count " << taskCount
-                   << " at location " << const_cast<uint32_t *>(csr.tagAddress)
+                   << " at location " << const_cast<TagAddressType *>(csr.tagAddress)
                    << " with timeout " << std::hex << waitParams.waitTimeout
                    << ". Current value: " << std::dec << tagValue
                    << " " << tagValue
@@ -2298,7 +2298,7 @@ struct MockRequiredScratchSpaceController : public ScratchSpaceControllerBase {
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSize,
                                  uint32_t requiredPerThreadPrivateScratchSize,
-                                 uint32_t currentTaskCount,
+                                 TaskCountType currentTaskCount,
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override {

@@ -156,7 +156,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto commandStreamReceiverOwnership = computeCommandStreamReceiver.obtainUniqueOwnership();
 
     auto blockQueue = false;
-    auto taskLevel = 0u;
+    TaskCountType taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, commandType);
 
     enqueueHandlerHook(commandType, multiDispatchInfo);
@@ -623,7 +623,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForMarkerWithTimestampPacket(Comm
 }
 
 template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) {
+void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) {
     auto isQueueBlockedStatus = isQueueBlocked();
     taskLevel = getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList);
     blockQueueStatus = (taskLevel == CompletionStamp::notReady) || isQueueBlockedStatus;
@@ -638,7 +638,7 @@ void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(unsigned int &ta
 }
 
 template <typename GfxFamily>
-bool CommandQueueHw<GfxFamily>::isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType) {
+bool CommandQueueHw<GfxFamily>::isTaskLevelUpdateRequired(const TaskCountType &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType) {
     bool updateTaskLevel = true;
     // if we are blocked by user event then no update
     if (taskLevel == CompletionStamp::notReady) {
@@ -681,7 +681,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     TimestampPacketDependencies &timestampPacketDependencies,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
-    uint32_t taskLevel,
+    TaskCountType taskLevel,
     PrintfHandler *printfHandler) {
 
     UNRECOVERABLE_IF(multiDispatchInfo.empty());
@@ -991,7 +991,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     TimestampPacketDependencies &timestampPacketDependencies,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
-    uint32_t taskLevel,
+    TaskCountType taskLevel,
     CsrDependencies &csrDeps,
     CommandStreamReceiver *bcsCsr) {
 
@@ -1234,7 +1234,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     }
 
     auto blockQueue = false;
-    auto taskLevel = 0u;
+    TaskCountType taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, cmdType);
     auto clearAllDependencies = queueDependenciesClearRequired();
 

@@ -43,7 +43,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
+                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
     void forcePipeControl(NEO::LinearStream &commandStreamCSR);
 
@@ -77,7 +77,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool isPipelineSelectAlreadyProgrammed() const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo);
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override;
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override;
 
     void collectStateBaseAddresPatchInfo(
         uint64_t commandBufferAddress,
@@ -96,7 +96,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return CommandStreamReceiverType::CSR_HW;
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
+    TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
 
     SubmissionStatus flushTagUpdate() override;
     SubmissionStatus flushMiFlushDW();

@@ -176,7 +176,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         recordedDispatchFlags = dispatchFlags;
         this->lastFlushedCommandStream = &commandStream;
         return BaseClass::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
@@ -196,7 +196,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         downloadAllocationCalled = true;
     }
 
-    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
         waitForCompletionWithTimeoutTaskCountCalled++;
         if (callBaseWaitForCompletionWithTimeout) {
@@ -212,11 +212,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         }
     }
 
-    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, TaskCountType taskCountToWait) {
         return waitForCompletionWithTimeout(WaitParams{false, enableTimeout, timeoutMicroseconds}, taskCountToWait);
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
         if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
             return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
         }
@@ -245,7 +245,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return makeResidentAllocations.find(graphicsAllocation) != makeResidentAllocations.end();
     }
 
-    bool isMadeResident(GraphicsAllocation *graphicsAllocation, uint32_t taskCount) const {
+    bool isMadeResident(GraphicsAllocation *graphicsAllocation, TaskCountType taskCount) const {
         auto it = makeResidentAllocations.find(graphicsAllocation);
         if (it == makeResidentAllocations.end()) {
             return false;
@@ -289,7 +289,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return CommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
+    TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
         blitBufferCalled++;
         receivedBlitProperties = blitPropertiesContainer;
 
@@ -363,13 +363,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     BatchBuffer latestFlushedBatchBuffer = {};
 
     std::atomic<uint32_t> recursiveLockCounter;
-    std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
+    std::atomic<TaskCountType> latestWaitForCompletionWithTimeoutTaskCount{0};
     std::atomic<uint32_t> waitForCompletionWithTimeoutTaskCountCalled{0};
 
     LinearStream *lastFlushedCommandStream = nullptr;
 
     uint32_t makeSurfacePackNonResidentCalled = false;
-    uint32_t latestSentTaskCountValueDuringFlush = 0;
+    TaskCountType latestSentTaskCountValueDuringFlush = 0;
     uint32_t blitBufferCalled = 0;
     uint32_t createPerDssBackedBufferCalled = 0;
     uint32_t initDirectSubmissionCalled = 0;
@@ -400,7 +400,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     bool callBaseFlushBcsTask{true};
-    uint32_t flushBcsTaskReturnValue{};
+    TaskCountType flushBcsTaskReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
 };

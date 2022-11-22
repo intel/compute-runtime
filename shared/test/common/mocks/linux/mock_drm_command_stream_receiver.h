@@ -99,14 +99,14 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 
     struct WaitUserFenceResult {
         uint32_t called = 0u;
-        uint32_t waitValue = 0u;
+        TaskCountType waitValue = 0u;
         int returnValue = 0;
         bool callParent = true;
     };
 
     WaitUserFenceResult waitUserFenceResult;
 
-    int waitUserFence(uint32_t waitValue) override {
+    int waitUserFence(TaskCountType waitValue) override {
         waitUserFenceResult.called++;
         waitUserFenceResult.waitValue = waitValue;
 

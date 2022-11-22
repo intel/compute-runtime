@@ -288,7 +288,7 @@ TEST_F(MigrationSyncDataTests, whenSetTargetLocationIsCalledThenProperLocationIs
 
 TEST(MigrationSyncDataTest, whenWaitOnCpuIsCalledThenWaitForValueSpecifiedInSignalUsageMethod) {
     auto migrationSyncData = std::make_unique<MockMigrationSyncDataWithYield>(MemoryConstants::pageSize);
-    uint32_t tagAddress = 0;
+    TagAddressType tagAddress = 0;
 
     migrationSyncData->signalUsage(&tagAddress, 2u);
     migrationSyncData->waitOnCpu();
@@ -297,7 +297,7 @@ TEST(MigrationSyncDataTest, whenWaitOnCpuIsCalledThenWaitForValueSpecifiedInSign
 
 TEST(MigrationSyncDataTest, whenTaskCountIsHigherThanExpectedThenWaitOnCpuDoesntHang) {
     auto migrationSyncData = std::make_unique<MockMigrationSyncData>(MemoryConstants::pageSize);
-    uint32_t tagAddress = 5u;
+    TagAddressType tagAddress = 5u;
 
     migrationSyncData->signalUsage(&tagAddress, 2u);
     EXPECT_EQ(&tagAddress, migrationSyncData->tagAddress);

@@ -173,7 +173,7 @@ struct UltCommandStreamReceiverTest
     }
 
     DispatchFlags flushTaskFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    uint32_t taskLevel = 42;
+    TaskCountType taskLevel = 42;
     LinearStream commandStream;
     IndirectHeap dsh = {nullptr};
     IndirectHeap ioh = {nullptr};

@@ -169,7 +169,7 @@ void gtpinNotifyPreFlushTask(void *pCmdQueue) {
     }
 }
 
-void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
+void gtpinNotifyFlushTask(TaskCountType flushedTaskCount) {
     if (isGTPinInitialized) {
         std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
@@ -185,7 +185,7 @@ void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
     }
 }
 
-void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
+void gtpinNotifyTaskCompletion(TaskCountType completedTaskCount) {
     std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
     size_t numElems = kernelExecQueue.size();
     for (size_t n = 0; n < numElems;) {

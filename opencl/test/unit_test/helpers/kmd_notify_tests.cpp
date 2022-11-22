@@ -89,7 +89,7 @@ struct KmdNotifyTests : public ::testing::Test {
         bool waitForFlushStampResult = true;
         StackVec<WaitForFlushStampParams, 1> waitForFlushStampParamsPassed{};
 
-        WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
+        WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
             waitForCompletionWithTimeoutCalled++;
             waitForCompletionWithTimeoutParamsPassed.push_back({params.enableTimeout, params.waitTimeout, taskCountToWait});
             return waitForCompletionWithTimeoutResult;
@@ -98,7 +98,7 @@ struct KmdNotifyTests : public ::testing::Test {
         struct WaitForCompletionWithTimeoutParams {
             bool enableTimeout{};
             int64_t timeoutMs{};
-            uint32_t taskCountToWait{};
+            TaskCountType taskCountToWait{};
         };
 
         uint32_t waitForCompletionWithTimeoutCalled = 0u;
@@ -123,7 +123,7 @@ struct KmdNotifyTests : public ::testing::Test {
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockCommandQueue> cmdQ;
     FlushStamp flushStampToWait = 1000;
-    uint32_t taskCountToWait = 5;
+    TaskCountType taskCountToWait = 5;
 };
 
 HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTryCpuPolling) {
@@ -362,7 +362,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffLowerThanMinimumToCheckAcLineWhenObtain
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     uint32_t hwTag = 9;
-    uint32_t taskCountToWait = 10;
+    TaskCountType taskCountToWait = 10;
     EXPECT_TRUE(taskCountToWait - hwTag < KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
@@ -376,7 +376,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndDisab
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     uint32_t hwTag = 10;
-    uint32_t taskCountToWait = 21;
+    TaskCountType taskCountToWait = 21;
     EXPECT_TRUE(taskCountToWait - hwTag > KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
@@ -409,7 +409,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndEnabl
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     uint32_t hwTag = 10;
-    uint32_t taskCountToWait = 21;
+    TaskCountType taskCountToWait = 21;
     EXPECT_TRUE(taskCountToWait - hwTag > KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 

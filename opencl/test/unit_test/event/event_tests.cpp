@@ -102,7 +102,7 @@ TEST(Event, WhenGettingTaskLevelThenCorrectTaskLevelIsReturned) {
       public:
         TempEvent() : Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 5, 7){};
 
-        uint32_t getTaskLevel() override {
+        TaskCountType getTaskLevel() override {
             return Event::getTaskLevel();
         }
     };
@@ -272,7 +272,7 @@ TEST_F(EventTest, WhenGettingClEventCommandExecutionStatusThenCorrectSizeIsRetur
 
 TEST_F(EventTest, GivenTagCsLessThanTaskCountWhenGettingClEventCommandExecutionStatusThenClSubmittedIsReturned) {
     uint32_t tagHW = 4;
-    uint32_t taskCount = 5;
+    TaskCountType taskCount = 5;
     *pTagMemory = tagHW;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, taskCount);
@@ -288,7 +288,7 @@ TEST_F(EventTest, GivenTagCsLessThanTaskCountWhenGettingClEventCommandExecutionS
 
 TEST_F(EventTest, GivenTagCsEqualTaskCountWhenGettingClEventCommandExecutionStatusThenClCompleteIsReturned) {
     uint32_t tagHW = 5;
-    uint32_t taskCount = 5;
+    TaskCountType taskCount = 5;
     *pTagMemory = tagHW;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, taskCount);
@@ -304,7 +304,7 @@ TEST_F(EventTest, GivenTagCsEqualTaskCountWhenGettingClEventCommandExecutionStat
 
 TEST_F(EventTest, GivenTagCsGreaterThanTaskCountWhenGettingClEventCommandExecutionStatusThenClCompleteIsReturned) {
     uint32_t tagHW = 6;
-    uint32_t taskCount = 5;
+    TaskCountType taskCount = 5;
     *pTagMemory = tagHW;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, taskCount);
@@ -1032,7 +1032,7 @@ class MockCommand : public Command {
   public:
     using Command::Command;
 
-    CompletionStamp &submit(uint32_t taskLevel, bool terminated) override {
+    CompletionStamp &submit(TaskCountType taskLevel, bool terminated) override {
         return completionStamp;
     }
 };
@@ -1173,8 +1173,8 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
       public:
         using Event::submitCommand;
         MockEvent(CommandQueue *cmdQueue, cl_command_type cmdType,
-                  uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType,
-                                                                  taskLevel, taskCount) {}
+                  TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType,
+                                                                            taskLevel, taskCount) {}
     };
 
     MockKernelWithInternals kernel(*pClDevice);
@@ -1207,8 +1207,8 @@ HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWitho
       public:
         using Event::submitCommand;
         MockEvent(CommandQueue *cmdQueue, cl_command_type cmdType,
-                  uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType,
-                                                                  taskLevel, taskCount) {}
+                  TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType,
+                                                                            taskLevel, taskCount) {}
     };
 
     auto virtualEvent = makeReleaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
@@ -1642,7 +1642,7 @@ struct TestEventCsr : public UltCommandStreamReceiver<GfxFamily> {
     TestEventCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<GfxFamily>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
 
-    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         waitForCompletionWithTimeoutParamsPassed.push_back({params.enableTimeout, params.waitTimeout, taskCountToWait});
         return waitForCompletionWithTimeoutResult;
@@ -1651,7 +1651,7 @@ struct TestEventCsr : public UltCommandStreamReceiver<GfxFamily> {
     struct WaitForCompletionWithTimeoutParams {
         bool enableTimeout = false;
         int64_t timeoutMs{};
-        uint32_t taskCountToWait{};
+        TaskCountType taskCountToWait{};
     };
 
     uint32_t waitForCompletionWithTimeoutCalled = 0u;

@@ -7,6 +7,7 @@
 
 #include "shared/source/utilities/cpuintrinsics.h"
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include <atomic>
@@ -14,14 +15,14 @@
 #include <functional>
 
 namespace CpuIntrinsicsTests {
-//std::atomic is used for sake of sanitation in MT tests
+// std::atomic is used for sake of sanitation in MT tests
 std::atomic<uintptr_t> lastClFlushedPtr(0u);
 std::atomic<uint32_t> clFlushCounter(0u);
 std::atomic<uint32_t> pauseCounter(0u);
 std::atomic<uint32_t> sfenceCounter(0u);
 
-volatile uint32_t *pauseAddress = nullptr;
-uint32_t pauseValue = 0u;
+volatile TagAddressType *pauseAddress = nullptr;
+TaskCountType pauseValue = 0u;
 uint32_t pauseOffset = 0u;
 
 std::function<void()> setupPauseAddress;

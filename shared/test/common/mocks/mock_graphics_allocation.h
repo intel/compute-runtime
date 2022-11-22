@@ -54,11 +54,11 @@ class MockGraphicsAllocation : public MemoryAllocation {
 
 class MockGraphicsAllocationTaskCount : public MockGraphicsAllocation {
   public:
-    uint32_t getTaskCount(uint32_t contextId) const override {
+    TaskCountType getTaskCount(uint32_t contextId) const override {
         getTaskCountCalleedTimes++;
         return MockGraphicsAllocation::getTaskCount(contextId);
     }
-    void updateTaskCount(uint32_t newTaskCount, uint32_t contextId) override {
+    void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId) override {
         updateTaskCountCalleedTimes++;
         MockGraphicsAllocation::updateTaskCount(newTaskCount, contextId);
     }

@@ -56,7 +56,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     auto blockQueue = false;
-    auto taskLevel = 0u;
+    TaskCountType taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, transferProperties.cmdType);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "taskLevel", taskLevel);

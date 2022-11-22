@@ -58,7 +58,7 @@ TEST_F(DeviceTest, WhenDeviceIsCreatedThenEnabledClVersionMatchesHardwareInfo) {
 TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
     for (auto &engine : pDevice->allEngines) {
         auto tagAddress = engine.commandStreamReceiver->getTagAddress();
-        ASSERT_NE(nullptr, const_cast<uint32_t *>(tagAddress));
+        ASSERT_NE(nullptr, const_cast<TaskCountType *>(tagAddress));
         EXPECT_EQ(initialHardwareTag, *tagAddress);
     }
 }

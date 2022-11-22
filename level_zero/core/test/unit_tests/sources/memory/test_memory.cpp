@@ -2335,9 +2335,9 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(nullptr, ptr1);
 
     auto allocationData1 = svmManager->getSVMAlloc(ptr1);
-    uint32_t prevPeekTaskCount1 = allocationData1->gpuAllocations.getGraphicsAllocation(1u)->getTaskCount(csr0->getOsContext().getContextId());
+    TaskCountType prevPeekTaskCount1 = allocationData1->gpuAllocations.getGraphicsAllocation(1u)->getTaskCount(csr0->getOsContext().getContextId());
     svmManager->prepareIndirectAllocationForDestruction(allocationData1);
-    uint32_t postPeekTaskCount1 = allocationData1->gpuAllocations.getGraphicsAllocation(1u)->getTaskCount(csr0->getOsContext().getContextId());
+    TaskCountType postPeekTaskCount1 = allocationData1->gpuAllocations.getGraphicsAllocation(1u)->getTaskCount(csr0->getOsContext().getContextId());
 
     EXPECT_EQ(postPeekTaskCount1, prevPeekTaskCount1);
 

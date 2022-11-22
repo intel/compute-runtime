@@ -50,7 +50,7 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
 
 GraphicsAllocation::~GraphicsAllocation() = default;
 
-void GraphicsAllocation::updateTaskCount(uint32_t newTaskCount, uint32_t contextId) {
+void GraphicsAllocation::updateTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
     if (usageInfos[contextId].taskCount == objectNotUsed) {
         registeredContextsNum++;
     }
@@ -119,8 +119,7 @@ void GraphicsAllocation::prepareHostPtrForResidency(CommandStreamReceiver *csr) 
 uint32_t GraphicsAllocation::getNumHandlesForKmdSharedAllocation(uint32_t numBanks) {
     return (numBanks > 1) && (DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() != 0) ? numBanks : 1u;
 }
-
-constexpr uint32_t GraphicsAllocation::objectNotUsed;
-constexpr uint32_t GraphicsAllocation::objectNotResident;
-constexpr uint32_t GraphicsAllocation::objectAlwaysResident;
+constexpr TaskCountType GraphicsAllocation::objectNotUsed;
+constexpr TaskCountType GraphicsAllocation::objectNotResident;
+constexpr TaskCountType GraphicsAllocation::objectAlwaysResident;
 } // namespace NEO

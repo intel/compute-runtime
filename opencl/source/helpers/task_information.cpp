@@ -35,7 +35,7 @@ CommandMapUnmap::CommandMapUnmap(MapOperationType operationType, MemObj &memObj,
     memObj.incRefInternal();
 }
 
-CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminated) {
     DecRefInternalAtScopeEnd decRefInternalAtScopeEnd{memObj};
 
     if (terminated) {
@@ -130,7 +130,7 @@ CommandComputeKernel::~CommandComputeKernel() {
     kernel->decRefInternal();
 }
 
-CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool terminated) {
     if (terminated) {
         this->terminated = true;
         for (auto surface : surfaces) {
@@ -295,7 +295,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     return completionStamp;
 }
 
-uint32_t CommandWithoutKernel::dispatchBlitOperation() {
+TaskCountType CommandWithoutKernel::dispatchBlitOperation() {
     auto bcsCsr = kernelOperation->bcsCsr;
     UNRECOVERABLE_IF(bcsCsr == nullptr);
 
@@ -322,7 +322,7 @@ uint32_t CommandWithoutKernel::dispatchBlitOperation() {
     return newTaskCount;
 }
 
-CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool terminated) {
     if (terminated) {
         this->terminated = true;
         return completionStamp;

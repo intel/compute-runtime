@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
@@ -108,8 +109,8 @@ class SVMAllocsManager {
     };
 
     struct InternalAllocationsTracker {
-        uint32_t latestSentTaskCount = 0lu;
-        uint32_t latestResidentObjectId = 0lu;
+        TaskCountType latestSentTaskCount = 0lu;
+        TaskCountType latestResidentObjectId = 0lu;
     };
 
     struct UnifiedMemoryProperties {
@@ -183,7 +184,7 @@ class SVMAllocsManager {
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
     std::atomic<uint32_t> allocationsCounter = 0;
-    MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount);
+    MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount);
     void prepareIndirectAllocationForDestruction(SvmAllocationData *);
     void prefetchMemory(Device &device, SvmAllocationData &svmData);
     std::unique_lock<std::mutex> obtainOwnership();

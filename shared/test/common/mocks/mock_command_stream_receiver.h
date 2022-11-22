@@ -50,10 +50,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     MockCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
         : CommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
         CommandStreamReceiver::tagAddress = &mockTagAddress[0];
-        memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
+        memset(const_cast<TagAddressType *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(TagAddressType));
     }
 
-    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         return waitForCompletionWithTimeoutReturnValue;
     }
@@ -80,7 +80,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         }
     }
 
-    bool testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait) override {
+    bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) override {
         if (testTaskCountReadyReturnValue.has_value()) {
             return *testTaskCountReadyReturnValue;
         } else {
@@ -100,7 +100,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         const IndirectHeap *dsh,
         const IndirectHeap *ioh,
         const IndirectHeap *ssh,
-        uint32_t taskLevel,
+        TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override;
 
@@ -111,15 +111,15 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return true;
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
         return WaitStatus::Ready;
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) {
         return WaitStatus::Ready;
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
+    TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
 
     CommandStreamReceiverType getType() override {
         return commandStreamReceiverType;
@@ -176,7 +176,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     SubmissionStatus initializeDeviceWithFirstSubmission() override { return SubmissionStatus::SUCCESS; }
 
     static constexpr size_t tagSize = 256;
-    static volatile uint32_t mockTagAddress[tagSize];
+    static volatile TagAddressType mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
@@ -286,7 +286,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh,
-                              const IndirectHeap *ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+                              const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         passedDispatchFlags = dispatchFlags;
 
         recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
@@ -306,7 +306,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         return completionStamp;
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
+    TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
         if (!skipBlitCalls) {
             return CommandStreamReceiverHw<GfxFamily>::flushBcsTask(blitPropertiesContainer, blocking, profilingEnabled, device);
         }

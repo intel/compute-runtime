@@ -143,23 +143,23 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
         CommandStreamReceiver::tagAddress = &tagAddressData[0];
-        memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
+        memset(const_cast<TagAddressType *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
     }
 
-    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         enableTimeoutSet = params.enableTimeout;
         waitForComplitionCalledTimes++;
         partitionCountSet = this->activePartitions;
         return waitForCompletionWithTimeoutResult;
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, NEO::QueueThrottle throttle) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, NEO::QueueThrottle throttle) override {
         waitForTaskCountWithKmdNotifyFallbackCalled++;
         return NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, throttle);
     }
 
     static constexpr size_t tagSize = 128;
-    static volatile uint32_t tagAddressData[tagSize];
+    static volatile TagAddressType tagAddressData[tagSize];
     uint32_t waitForComplitionCalledTimes = 0;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     uint32_t partitionCountSet = 0;
@@ -168,7 +168,7 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
 };
 
 template <typename GfxFamily>
-volatile uint32_t SynchronizeCsr<GfxFamily>::tagAddressData[SynchronizeCsr<GfxFamily>::tagSize];
+volatile TagAddressType SynchronizeCsr<GfxFamily>::tagAddressData[SynchronizeCsr<GfxFamily>::tagSize];
 
 HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
     auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
@@ -301,7 +301,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
         csr->createPreemptionAllocation();
     }
     EXPECT_NE(0u, csr->getPostSyncWriteOffset());
-    volatile uint32_t *tagAddress = csr->getTagAddress();
+    volatile TagAddressType *tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
         *tagAddress = 0xFF;
         tagAddress = ptrOffset(tagAddress, csr->getPostSyncWriteOffset());
@@ -341,7 +341,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
         csr->createPreemptionAllocation();
     }
     EXPECT_NE(0u, csr->getPostSyncWriteOffset());
-    volatile uint32_t *tagAddress = csr->getTagAddress();
+    volatile TagAddressType *tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
         *tagAddress = 0xFF;
         tagAddress = ptrOffset(tagAddress, csr->getPostSyncWriteOffset());
@@ -402,7 +402,7 @@ struct TestCmdQueueCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
     }
 
-    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, NEO::WaitStatus, NEO::WaitStatus::NotReady, (const WaitParams &params, uint32_t taskCountToWait));
+    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, NEO::WaitStatus, NEO::WaitStatus::NotReady, (const WaitParams &params, TaskCountType taskCountToWait));
 };
 
 HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {
@@ -490,7 +490,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
 
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     size_t pipeControlsPostSyncNumber = 0u;
-    uint32_t expectedData = commandQueue->getCsr()->peekTaskCount();
+    TaskCountType expectedData = commandQueue->getCsr()->peekTaskCount();
     for (size_t i = 0; i < pipeControls.size(); i++) {
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
         if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
@@ -792,7 +792,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
                           uint32_t scratchSlot,
                           uint32_t requiredPerThreadScratchSize,
                           uint32_t requiredPerThreadPrivateScratchSize,
-                          uint32_t currentTaskCount,
+                          TaskCountType currentTaskCount,
                           OsContext &osContext,
                           bool &stateBaseAddressDirty,
                           bool &vfeStateDirty) override {
@@ -855,7 +855,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
                           uint32_t scratchSlot,
                           uint32_t requiredPerThreadScratchSize,
                           uint32_t requiredPerThreadPrivateScratchSize,
-                          uint32_t currentTaskCount,
+                          TaskCountType currentTaskCount,
                           OsContext &osContext,
                           bool &stateBaseAddressDirty,
                           bool &vfeStateDirty) override {
@@ -908,7 +908,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenBindlessEnabledThenHand
         void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                    uint32_t requiredPerThreadScratchSize,
                                                    uint32_t requiredPerThreadPrivateScratchSize,
-                                                   uint32_t currentTaskCount,
+                                                   TaskCountType currentTaskCount,
                                                    OsContext &osContext,
                                                    bool &stateBaseAddressDirty,
                                                    bool &vfeStateDirty,

@@ -770,8 +770,8 @@ HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitForQueuesWhenFinish
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
-extern volatile uint32_t *pauseAddress;
-extern uint32_t pauseValue;
+extern volatile TagAddressType *pauseAddress;
+extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
 extern std::function<void()> setupPauseAddress;
 } // namespace CpuIntrinsicsTests
@@ -795,18 +795,18 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenCa
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
 
     deferredTimestampPackets->peekNodes()[0]->setPacketsUsed(1u);
     timestampPacketContainer->peekNodes()[0]->setPacketsUsed(1u);
 
-    CpuIntrinsicsTests::pauseAddress = reinterpret_cast<volatile uint32_t *>(const_cast<void *>(timestampPacketContainer->peekNodes()[0]->getContextEndAddress(0u)));
+    CpuIntrinsicsTests::pauseAddress = reinterpret_cast<volatile TagAddressType *>(const_cast<void *>(timestampPacketContainer->peekNodes()[0]->getContextEndAddress(0u)));
     CpuIntrinsicsTests::pauseValue = 2u;
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
-        CpuIntrinsicsTests::pauseAddress = reinterpret_cast<volatile uint32_t *>(const_cast<void *>(deferredTimestampPackets->peekNodes()[0]->getContextEndAddress(0u)));
+        CpuIntrinsicsTests::pauseAddress = reinterpret_cast<volatile TagAddressType *>(const_cast<void *>(deferredTimestampPackets->peekNodes()[0]->getContextEndAddress(0u)));
     };
     CpuIntrinsicsTests::pauseCounter = 0u;
     EXPECT_FALSE(device->getUltCommandStreamReceiver<FamilyType>().downloadAllocationCalled);

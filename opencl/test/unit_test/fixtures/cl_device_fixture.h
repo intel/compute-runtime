@@ -25,7 +25,7 @@ struct ClDeviceFixture {
 
     MockDevice *pDevice = nullptr;
     MockClDevice *pClDevice = nullptr;
-    volatile uint32_t *pTagMemory = nullptr;
+    volatile TagAddressType *pTagMemory = nullptr;
     HardwareInfo hardwareInfo = {};
     PLATFORM platformHelper = {};
     OsContext *osContext = nullptr;

@@ -578,7 +578,7 @@ bool SVMAllocsManager::hasHostAllocations() {
     return false;
 }
 
-void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount) {
+void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     bool parseAllAllocations = false;
     auto entry = indirectAllocationsResidency.find(&commandStreamReceiver);

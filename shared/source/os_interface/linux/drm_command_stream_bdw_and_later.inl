@@ -23,13 +23,13 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
 }
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue) {
+int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue) {
     uint32_t ctxId = 0u;
-    uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
+    uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(getTagAddress()));
     if (useContextForUserFenceWait) {
         ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0];
     }
-    return this->drm->waitUserFence(ctxId, tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout, 0u);
+    return this->drm->waitUserFence(ctxId, tagAddress, waitValue, Drm::ValueWidth::U64, kmdWaitTimeout, 0u);
 }
 
 } // namespace NEO

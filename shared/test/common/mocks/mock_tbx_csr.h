@@ -91,7 +91,7 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
         this->downloadAllocationImpl = nullptr;
     }
     void downloadAllocationTbxMock(GraphicsAllocation &gfxAllocation) {
-        *reinterpret_cast<uint32_t *>(CommandStreamReceiver::getTagAllocation()->getUnderlyingBuffer()) = this->latestFlushedTaskCount;
+        *reinterpret_cast<TaskCountType *>(CommandStreamReceiver::getTagAllocation()->getUnderlyingBuffer()) = this->latestFlushedTaskCount;
         downloadedAllocations.insert(&gfxAllocation);
     }
     bool flushBatchedSubmissions() override {

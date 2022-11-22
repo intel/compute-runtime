@@ -312,7 +312,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             if (this->standalone) {
-                volatile uint32_t *pollAddress = this->tagAddress;
+                volatile TagAddressType *pollAddress = this->tagAddress;
                 for (uint32_t i = 0; i < this->activePartitions; i++) {
                     *pollAddress = this->peekLatestSentTaskCount();
                     pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
@@ -353,7 +353,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
     submitBatchBufferAub(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
     if (this->standalone) {
-        volatile uint32_t *pollAddress = this->tagAddress;
+        volatile TagAddressType *pollAddress = this->tagAddress;
         for (uint32_t i = 0; i < this->activePartitions; i++) {
             *pollAddress = this->peekLatestSentTaskCount();
             pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
@@ -614,7 +614,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
 }
 
 template <typename GfxFamily>
-inline WaitStatus AUBCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
+inline WaitStatus AUBCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
     const auto result = CommandStreamReceiverSimulatedHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
     pollForCompletion();
 

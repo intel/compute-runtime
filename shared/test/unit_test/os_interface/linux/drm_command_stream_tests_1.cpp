@@ -746,7 +746,7 @@ struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily,
         functionsCalled.stopRingBuffer = true;
         return true;
     }
-    void wait(uint32_t taskCountToWait) override {
+    void wait(TaskCountType taskCountToWait) override {
         functionsCalled.wait = true;
     }
     void deallocateResources() override {

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/options.h"
 
@@ -21,8 +22,8 @@ class MemoryManagerWithCsrFixture {
     MockMemoryManager *memoryManager;
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<MockCommandStreamReceiver> csr;
-    uint32_t taskCount = 0;
-    uint32_t currentGpuTag = initialHardwareTag;
+    TaskCountType taskCount = 0;
+    TagAddressType currentGpuTag = initialHardwareTag;
 
     ~MemoryManagerWithCsrFixture() = default;
 

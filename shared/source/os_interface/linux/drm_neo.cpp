@@ -1613,7 +1613,7 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
         if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < value) {
             constexpr int64_t timeout = -1;
             constexpr uint16_t flags = 0;
-            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::U32, timeout, flags);
+            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::U64, timeout, flags);
 
             if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
                 std::cout << "Completion fence waited."

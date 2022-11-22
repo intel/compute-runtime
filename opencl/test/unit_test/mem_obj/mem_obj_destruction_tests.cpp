@@ -32,7 +32,7 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
     MyCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
 
-    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         waitForCompletionWithTimeoutParamsPassed.push_back({params.enableTimeout, params.waitTimeout, taskCountToWait});
         *this->getTagAddress() = getTagAddressValue;
@@ -42,7 +42,7 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
     struct WaitForCompletionWithTimeoutParams {
         bool enableTimeout;
         int64_t timeoutMs;
-        uint32_t taskCountToWait;
+        TaskCountType taskCountToWait;
     };
 
     uint32_t waitForCompletionWithTimeoutCalled = 0u;
@@ -100,7 +100,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountReady;
     }
 
-    constexpr static uint32_t taskCountReady = 3u;
+    constexpr static TaskCountType taskCountReady = 3u;
     ExecutionEnvironment *executionEnvironment = nullptr;
     std::unique_ptr<MockClDevice> device;
     uint32_t contextId = 0;
@@ -223,8 +223,8 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     memObj->getGraphicsAllocation(rootDeviceIndex)->updateTaskCount(taskCountReady, osContextId0);
     memObj->getGraphicsAllocation(rootDeviceIndex)->updateTaskCount(taskCountReady, osContextId1);
 
-    uint32_t expectedTaskCount0{};
-    uint32_t expectedTaskCount1{};
+    TaskCountType expectedTaskCount0{};
+    TaskCountType expectedTaskCount1{};
 
     if (hasCallbacks) {
         expectedTaskCount0 = allocation->getTaskCount(osContextId0);
@@ -266,7 +266,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     *mockCsr->getTagAddress() = 0;
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    uint32_t expectedTaskCount{};
+    TaskCountType expectedTaskCount{};
 
     if (hasAllocatedMappedPtr) {
         expectedTaskCount = allocation->getTaskCount(osContextId);
@@ -310,7 +310,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    uint32_t expectedTaskCount{};
+    TaskCountType expectedTaskCount{};
 
     if (hasAllocatedMappedPtr) {
         expectedTaskCount = allocation->getTaskCount(osContextId);
@@ -346,7 +346,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
 
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    uint32_t expectedTaskCount = allocation->getTaskCount(osContextId);
+    TaskCountType expectedTaskCount = allocation->getTaskCount(osContextId);
 
     delete memObj;
 
@@ -396,7 +396,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
 
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    uint32_t expectedTaskCount{};
+    TaskCountType expectedTaskCount{};
 
     if (isMapAllocationUsed) {
         expectedTaskCount = mapAllocation->getTaskCount(osContextId);

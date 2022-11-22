@@ -22,7 +22,7 @@ class MockScratchSpaceControllerBase : public ScratchSpaceControllerBase {
                       uint32_t offset,
                       uint32_t requiredPerThreadScratchSize,
                       uint32_t requiredPerThreadPrivateScratchSize,
-                      uint32_t currentTaskCount,
+                      TaskCountType currentTaskCount,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override {
@@ -32,7 +32,7 @@ class MockScratchSpaceControllerBase : public ScratchSpaceControllerBase {
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                uint32_t requiredPerThreadScratchSize,
                                                uint32_t requiredPerThreadPrivateScratchSize,
-                                               uint32_t currentTaskCount,
+                                               TaskCountType currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,

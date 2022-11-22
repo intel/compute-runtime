@@ -94,7 +94,7 @@ class MockCommandQueue : public CommandQueue {
         return writeBufferRetValue;
     }
 
-    WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
+    WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
 
         waitUntilCompleteCalledCount++;
@@ -105,7 +105,7 @@ class MockCommandQueue : public CommandQueue {
         return CommandQueue::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList, skipWait);
     }
 
-    WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+    WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
         return CommandQueue::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep);
     }
@@ -212,7 +212,7 @@ class MockCommandQueue : public CommandQueue {
 
     bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override { return isCacheFlushRequired; }
 
-    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
+    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, TaskCountType taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
         waitForTimestampsCalled = true;
         return false;
     };
@@ -227,7 +227,7 @@ class MockCommandQueue : public CommandQueue {
     void *writeBufferPtr = nullptr;
     size_t requestedCmdStreamSize = 0;
     GraphicsAllocation *writeMapAllocation = nullptr;
-    std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
+    std::atomic<TaskCountType> latestTaskCountWaited{std::numeric_limits<TaskCountType>::max()};
     std::optional<WaitStatus> waitUntilCompleteReturnValue{};
     int waitUntilCompleteCalledCount{0};
 };
@@ -353,7 +353,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         useBcsCsrOnNotifyEnabled = notifyBcsCsr;
     }
 
-    WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
+    WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
         if (waitUntilCompleteReturnValue.has_value()) {
             return *waitUntilCompleteReturnValue;
@@ -417,7 +417,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         bool returnValue = false;
     } overrideIsCacheFlushForBcsRequired;
     BuiltinOpParams kernelParams;
-    std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
+    std::atomic<TaskCountType> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
     bool flushCalled = false;
     std::optional<WaitStatus> waitForAllEnginesReturnValue{};
     std::optional<WaitStatus> waitUntilCompleteReturnValue{};

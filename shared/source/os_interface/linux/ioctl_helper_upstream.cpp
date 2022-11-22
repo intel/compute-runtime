@@ -117,7 +117,7 @@ uint16_t IoctlHelperUpstream::getWaitUserFenceSoftFlag() {
     return 0;
 }
 
-int IoctlHelperUpstream::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
+int IoctlHelperUpstream::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) {
     return ioctl(DrmIoctl::GemExecbuffer2, execBuffer);
 }
 

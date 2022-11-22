@@ -17,9 +17,9 @@ class InternalAllocationStorage {
   public:
     MOCKABLE_VIRTUAL ~InternalAllocationStorage() = default;
     InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver);
-    MOCKABLE_VIRTUAL void cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage);
+    MOCKABLE_VIRTUAL void cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage);
     void storeAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage);
-    void storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, uint32_t taskCount);
+    void storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, TaskCountType taskCount);
     std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, AllocationType allocationType);
     std::unique_ptr<GraphicsAllocation> obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, AllocationType allocationType);
     AllocationsList &getTemporaryAllocations() { return allocationLists[TEMPORARY_ALLOCATION]; }
@@ -28,7 +28,7 @@ class InternalAllocationStorage {
     DeviceBitfield getDeviceBitfield() const;
 
   protected:
-    void freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList);
+    void freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList);
     CommandStreamReceiver &commandStreamReceiver;
 
     std::array<AllocationsList, 3> allocationLists = {AllocationsList(TEMPORARY_ALLOCATION), AllocationsList(REUSABLE_ALLOCATION), AllocationsList(DEFERRED_DEALLOCATION)};

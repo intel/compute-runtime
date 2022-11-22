@@ -33,7 +33,7 @@ WaitStatus UserEvent::wait(bool blocking, bool useQuickKmdSleep) {
     return WaitStatus::Ready;
 }
 
-uint32_t UserEvent::getTaskLevel() {
+TaskCountType UserEvent::getTaskLevel() {
     if (peekExecutionStatus() == CL_COMPLETE) {
         return 0;
     }
@@ -64,8 +64,8 @@ WaitStatus VirtualEvent::wait(bool blocking, bool useQuickKmdSleep) {
     return WaitStatus::Ready;
 }
 
-uint32_t VirtualEvent::getTaskLevel() {
-    uint32_t taskLevel = 0;
+TaskCountType VirtualEvent::getTaskLevel() {
+    TaskCountType taskLevel = 0;
     if (cmdQueue != nullptr) {
         auto &csr = cmdQueue->getGpgpuCommandStreamReceiver();
         taskLevel = csr.peekTaskLevel();

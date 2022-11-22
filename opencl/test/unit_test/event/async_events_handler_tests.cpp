@@ -26,7 +26,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
   public:
     class MyEvent : public Event {
       public:
-        MyEvent(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType, uint32_t taskLevel, uint32_t taskCount)
+        MyEvent(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType, TaskCountType taskLevel, TaskCountType taskCount)
             : Event(ctx, cmdQueue, cmdType, taskLevel, taskCount) {
             handler.reset(new MockHandler());
         }
@@ -34,7 +34,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
             //return execution status without updating
             return executionStatus.load();
         }
-        void setTaskStamp(uint32_t taskLevel, uint32_t taskCount) {
+        void setTaskStamp(TaskCountType taskLevel, TaskCountType taskCount) {
             this->taskLevel.store(taskLevel);
             this->updateTaskCount(taskCount, 0);
         }

@@ -24,7 +24,7 @@ void DeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
 
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     pTagMemory = commandStreamReceiver.getTagAddress();
-    ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagMemory));
+    ASSERT_NE(nullptr, const_cast<TagAddressType *>(pTagMemory));
 }
 
 void DeviceFixture::tearDown() {

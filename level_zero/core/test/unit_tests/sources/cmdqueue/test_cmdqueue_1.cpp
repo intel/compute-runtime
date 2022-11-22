@@ -109,7 +109,7 @@ HWTEST_F(CommandQueueCreate, givenGpuHangOnSecondReserveWhenReservingLinearStrea
     auto firstAllocation = commandQueue->commandStream.getGraphicsAllocation();
     EXPECT_EQ(firstAllocation, commandQueue->buffers.getCurrentBufferAllocation());
 
-    uint32_t currentTaskCount = 33u;
+    TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::Ready;
@@ -150,7 +150,7 @@ HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched
     auto firstAllocation = commandQueue->commandStream.getGraphicsAllocation();
     EXPECT_EQ(firstAllocation, commandQueue->buffers.getCurrentBufferAllocation());
 
-    uint32_t currentTaskCount = 33u;
+    TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
 
@@ -624,8 +624,8 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
                                                           false,
                                                           returnValue));
     ResidencyContainer container;
-    uint32_t peekTaskCountBefore = commandQueue->csr->peekTaskCount();
-    uint32_t flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
+    TaskCountType peekTaskCountBefore = commandQueue->csr->peekTaskCount();
+    TaskCountType flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(csr->makeResidentCalledTimes, 0u);
     EXPECT_EQ(ret, NEO::SubmissionStatus::SUCCESS);
@@ -649,8 +649,8 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
                                                           false,
                                                           returnValue));
     ResidencyContainer container;
-    uint32_t peekTaskCountBefore = commandQueue->csr->peekTaskCount();
-    uint32_t flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
+    TaskCountType peekTaskCountBefore = commandQueue->csr->peekTaskCount();
+    TaskCountType flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(ret, NEO::SubmissionStatus::FAILED);
     EXPECT_EQ(peekTaskCountBefore, commandQueue->csr->peekTaskCount());
@@ -1263,7 +1263,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForCompl
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     auto commandListHandle = commandList->toHandle();
-    uint32_t flushedTaskCountPrior = csr->peekTaskCount();
+    TaskCountType flushedTaskCountPrior = csr->peekTaskCount();
     csr->setLatestFlushedTaskCount(flushedTaskCountPrior);
     auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
@@ -1902,7 +1902,7 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
 struct SVMAllocsManagerMock : public NEO::SVMAllocsManager {
     using SVMAllocsManager::mtxForIndirectAccess;
     SVMAllocsManagerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
-    void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount) override {
+    void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount) override {
         makeIndirectAllocationsResidentCalledTimes++;
     }
     void addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,

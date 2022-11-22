@@ -52,7 +52,7 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
 
         auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
         pTagMemory = commandStreamReceiver.getTagAddress();
-        ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagMemory));
+        ASSERT_NE(nullptr, const_cast<TagAddressType *>(pTagMemory));
 
         context = new NEO::MockContext(pClDevice);
     }

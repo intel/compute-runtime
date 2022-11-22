@@ -8,6 +8,7 @@
 #include "opencl/source/event/event.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/get_info.h"
@@ -30,13 +31,12 @@
 #include <algorithm>
 
 namespace NEO {
-
 Event::Event(
     Context *ctx,
     CommandQueue *cmdQueue,
     cl_command_type cmdType,
-    uint32_t taskLevel,
-    uint32_t taskCount)
+    TaskCountType taskLevel,
+    TaskCountType taskCount)
     : taskLevel(taskLevel),
       currentCmdQVirtualEvent(false),
       cmdToSubmit(nullptr),
@@ -90,8 +90,8 @@ Event::Event(
 Event::Event(
     CommandQueue *cmdQueue,
     cl_command_type cmdType,
-    uint32_t taskLevel,
-    uint32_t taskCount)
+    TaskCountType taskLevel,
+    TaskCountType taskCount)
     : Event(nullptr, cmdQueue, cmdType, taskLevel, taskCount) {
 }
 
@@ -224,7 +224,7 @@ void Event::setupBcs(aub_stream::EngineType bcsEngineType) {
     this->bcsState.engineType = bcsEngineType;
 }
 
-uint32_t Event::peekBcsTaskCountFromCommandQueue() {
+TaskCountType Event::peekBcsTaskCountFromCommandQueue() {
     if (bcsState.isValid()) {
         return this->cmdQueue->peekBcsTaskCount(bcsState.engineType);
     } else {
@@ -232,11 +232,11 @@ uint32_t Event::peekBcsTaskCountFromCommandQueue() {
     }
 }
 
-uint32_t Event::getCompletionStamp() const {
+TaskCountType Event::getCompletionStamp() const {
     return this->taskCount;
 }
 
-void Event::updateCompletionStamp(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp) {
+void Event::updateCompletionStamp(TaskCountType gpgpuTaskCount, TaskCountType bcsTaskCount, TaskCountType tasklevel, FlushStamp flushStamp) {
     this->taskCount = gpgpuTaskCount;
     this->bcsState.taskCount = bcsTaskCount;
     this->taskLevel = tasklevel;
@@ -500,7 +500,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
     (void)status;
     DEBUG_BREAK_IF(!(isStatusCompleted(status) || (peekIsSubmitted(status))));
 
-    uint32_t taskLevelToPropagate = CompletionStamp::notReady;
+    TaskCountType taskLevelToPropagate = CompletionStamp::notReady;
 
     if (isStatusCompletedByTermination(transitionStatus) == false) {
         // if we are event on top of the tree , obtain taskLevel from CSR
@@ -728,11 +728,11 @@ bool Event::areTimestampsCompleted() {
     return false;
 }
 
-uint32_t Event::getTaskLevel() {
+TaskCountType Event::getTaskLevel() {
     return taskLevel;
 }
 
-inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus) {
+inline void Event::unblockEventBy(Event &event, TaskCountType taskLevel, int32_t transitionStatus) {
     int32_t numEventsBlockingThis = --parentCount;
     DEBUG_BREAK_IF(numEventsBlockingThis < 0);
 
@@ -901,7 +901,7 @@ bool Event::checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_eve
     return userEventsDependencies;
 }
 
-uint32_t Event::peekTaskLevel() const {
+TaskCountType Event::peekTaskLevel() const {
     return taskLevel;
 }
 

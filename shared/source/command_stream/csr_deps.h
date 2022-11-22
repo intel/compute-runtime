@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/utilities/stackvec.h"
 
 namespace NEO {
@@ -21,7 +22,7 @@ class CsrDependencies {
         All
     };
 
-    StackVec<std::pair<uint32_t, uint64_t>, 32> taskCountContainer;
+    StackVec<std::pair<TaskCountType, uint64_t>, 32> taskCountContainer;
     StackVec<TimestampPacketContainer *, 32> timestampPacketContainer;
 
     void makeResident(CommandStreamReceiver &commandStreamReceiver) const;

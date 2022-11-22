@@ -17,7 +17,7 @@ InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &comm
     : commandStreamReceiver(commandStreamReceiver){};
 
 void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage) {
-    uint32_t taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
+    TaskCountType taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
 
     if (allocationUsage == REUSABLE_ALLOCATION) {
         taskCount = commandStreamReceiver.peekTaskCount();
@@ -25,7 +25,7 @@ void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocati
 
     storeAllocationWithTaskCount(std::move(gfxAllocation), allocationUsage, taskCount);
 }
-void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
+void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, TaskCountType taskCount) {
     if (allocationUsage == REUSABLE_ALLOCATION) {
         if (DebugManager.flags.DisableResourceRecycling.get()) {
             commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(gfxAllocation.release());
@@ -37,7 +37,7 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
 
-void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
+void InternalAllocationStorage::cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) {
     freeAllocationsList(waitTaskCount, allocationLists[allocationUsage]);
 
     if (allocationUsage == TEMPORARY_ALLOCATION) {
@@ -45,7 +45,7 @@ void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint
     }
 }
 
-void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
+void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList) {
     auto memoryManager = commandStreamReceiver.getMemoryManager();
     auto lock = memoryManager->getHostPtrManager()->obtainOwnership();
 

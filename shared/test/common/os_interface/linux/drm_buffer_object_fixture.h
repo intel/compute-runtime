@@ -40,7 +40,7 @@ class TestedBufferObject : public BufferObject {
     }
 
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-             BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) override {
+             BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue) override {
         this->receivedCompletionGpuAddress = completionGpuAddress;
         this->receivedCompletionValue = completionValue;
         this->execCalled++;
@@ -61,7 +61,7 @@ class TestedBufferObject : public BufferObject {
 
     uint64_t receivedCompletionGpuAddress = 0;
     ExecObject *execObjectPointerFilled = nullptr;
-    uint32_t receivedCompletionValue = 0;
+    TaskCountType receivedCompletionValue = 0;
     uint32_t execCalled = 0;
     bool callBaseEvictUnusedAllocations{true};
 };
