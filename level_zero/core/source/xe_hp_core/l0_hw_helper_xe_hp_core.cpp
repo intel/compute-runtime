@@ -33,6 +33,15 @@ bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
     return true;
 }
 
+template <>
+void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
+}
+
+template <>
+bool L0HwHelperHw<Family>::platformSupportsRayTracing() const {
+    return true;
+}
+
 template class L0HwHelperHw<Family>;
 
 } // namespace L0

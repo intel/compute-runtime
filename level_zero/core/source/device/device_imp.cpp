@@ -20,6 +20,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/kernel/grf_config.h"
@@ -666,6 +667,18 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
                     hintProperties->schedulingHintFlags |= ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN;
                     break;
                 }
+            }
+        } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_RAYTRACING_EXT_PROPERTIES) {
+            ze_device_raytracing_ext_properties_t *rtProperties =
+                reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
+            auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+            if (l0HwHelper.platformSupportsRayTracing()) {
+                rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
+                rtProperties->maxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
+            } else {
+                rtProperties->flags = 0;
+                rtProperties->maxBVHLevels = 0;
             }
         }
         pNext = const_cast<void *>(extendedProperties->pNext);

@@ -39,4 +39,9 @@ uint32_t L0HwHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::HardwareInf
     return 1u;
 }
 
+template <typename Family>
+bool L0HwHelperHw<Family>::platformSupportsRayTracing() const {
+    return false;
+}
+
 } // namespace L0

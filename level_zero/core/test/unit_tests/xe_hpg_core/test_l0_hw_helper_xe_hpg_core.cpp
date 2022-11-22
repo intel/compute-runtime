@@ -56,5 +56,11 @@ XE_HPG_CORETEST_F(L0CoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForPipeli
     EXPECT_TRUE(l0CoreHelper.platformSupportsPipelineSelectTracking());
 }
 
+XE_HPG_CORETEST_F(L0CoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForRayTracingSupportThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0CoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0CoreHelper>();
+    EXPECT_TRUE(l0CoreHelper.platformSupportsRayTracing());
+}
+
 } // namespace ult
 } // namespace L0

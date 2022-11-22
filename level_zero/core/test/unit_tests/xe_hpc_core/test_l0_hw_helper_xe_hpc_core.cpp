@@ -49,5 +49,10 @@ XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForPipeline
     EXPECT_TRUE(l0CoreHelper.platformSupportsPipelineSelectTracking());
 }
 
+XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForRayTracingSupportThenReturnTrue) {
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    EXPECT_TRUE(l0CoreHelper.platformSupportsRayTracing());
+}
+
 } // namespace ult
 } // namespace L0

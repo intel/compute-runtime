@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_time.h"
@@ -32,6 +33,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -951,6 +953,34 @@ HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingScheduling
     ze_result_t res = deviceImp.getKernelProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0u, schedulingHintProperties.schedulingHintFlags);
+}
+
+HWTEST2_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenPropertiesWithCorrectFlagIsReturned, MatchAny) {
+    ze_device_module_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
+
+    ze_device_raytracing_ext_properties_t rayTracingProperties = {};
+    rayTracingProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_RAYTRACING_EXT_PROPERTIES;
+    rayTracingProperties.flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_FORCE_UINT32;
+    rayTracingProperties.maxBVHLevels = 37u;
+
+    kernelProperties.pNext = &rayTracingProperties;
+
+    ze_result_t res = device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_NE(ZE_DEVICE_RAYTRACING_EXT_FLAG_FORCE_UINT32, rayTracingProperties.flags);
+    EXPECT_NE(37u, rayTracingProperties.maxBVHLevels);
+
+    unsigned int expectedMaxBVHLevels = 0;
+    const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
+    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    if (l0HwHelper.platformSupportsRayTracing()) {
+        expectedMaxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
+    }
+
+    EXPECT_EQ(expectedMaxBVHLevels, rayTracingProperties.maxBVHLevels);
 }
 
 TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenAllPropertiesAreAssigned) {

@@ -51,5 +51,12 @@ GEN12LPTEST_F(L0CoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForPipeli
     EXPECT_FALSE(l0CoreHelper.platformSupportsPipelineSelectTracking());
 }
 
+GEN12LPTEST_F(L0CoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForRayTracingSupportThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0CoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0CoreHelper>();
+
+    EXPECT_FALSE(l0CoreHelper.platformSupportsRayTracing());
+}
+
 } // namespace ult
 } // namespace L0

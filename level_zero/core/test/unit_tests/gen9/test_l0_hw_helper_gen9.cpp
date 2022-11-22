@@ -36,5 +36,10 @@ GEN9TEST_F(L0HwHelperTestGen9, GivenGen9WhenCheckingL0HelperForPipelineSelectTra
     EXPECT_FALSE(l0CoreHelper.platformSupportsPipelineSelectTracking());
 }
 
+GEN9TEST_F(L0HwHelperTestGen9, GivenGen9WhenCheckingL0HelperForRayTracingSupportThenReturnFalse) {
+    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    EXPECT_FALSE(l0CoreHelper.platformSupportsRayTracing());
+}
+
 } // namespace ult
 } // namespace L0

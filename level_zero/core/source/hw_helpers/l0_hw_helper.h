@@ -58,6 +58,7 @@ class L0HwHelper {
     virtual bool platformSupportsStateComputeModeTracking() const = 0;
     virtual bool platformSupportsFrontEndTracking() const = 0;
     virtual bool platformSupportsPipelineSelectTracking() const = 0;
+    virtual bool platformSupportsRayTracing() const = 0;
 
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const = 0;
@@ -89,6 +90,7 @@ class L0HwHelperHw : public L0HwHelper {
     bool platformSupportsStateComputeModeTracking() const override;
     bool platformSupportsFrontEndTracking() const override;
     bool platformSupportsPipelineSelectTracking() const override;
+    bool platformSupportsRayTracing() const override;
 
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const override;

@@ -54,5 +54,11 @@ XEHPTEST_F(L0CoreHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForPipelineSelectT
     EXPECT_TRUE(l0CoreHelper.platformSupportsPipelineSelectTracking());
 }
 
+XEHPTEST_F(L0CoreHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForRayTracingSupportThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0CoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0CoreHelper>();
+    EXPECT_TRUE(l0CoreHelper.platformSupportsRayTracing());
+}
+
 } // namespace ult
 } // namespace L0
