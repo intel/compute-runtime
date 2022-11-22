@@ -201,3 +201,69 @@ void PipelineSelectProperties::clearIsDirty() {
     mediaSamplerDopClockGate.isDirty = false;
     systolicMode.isDirty = false;
 }
+
+void StateBaseAddressProperties::setProperties(bool globalAtomics, int32_t statelessMocs, int64_t bindingTablePoolBaseAddress,
+                                               int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
+                                               int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
+                                               int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const HardwareInfo &hwInfo) {
+    if (this->propertiesSupportLoaded == false) {
+        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        hwInfoConfig.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport, hwInfo);
+        this->propertiesSupportLoaded = true;
+    }
+
+    clearIsDirty();
+
+    if (this->stateBaseAddressPropertiesSupport.globalAtomics) {
+        this->globalAtomics.set(globalAtomics);
+    }
+
+    if (this->stateBaseAddressPropertiesSupport.statelessMocs) {
+        this->statelessMocs.set(statelessMocs);
+    }
+
+    if (this->stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress) {
+        this->bindingTablePoolBaseAddress.set(bindingTablePoolBaseAddress);
+    }
+
+    this->surfaceStateBaseAddress.set(surfaceStateBaseAddress);
+    this->surfaceStateSize.set(surfaceStateSize);
+    this->dynamicStateBaseAddress.set(dynamicStateBaseAddress);
+    this->dynamicStateSize.set(dynamicStateSize);
+    this->indirectObjectBaseAddress.set(indirectObjectBaseAddress);
+    this->indirectObjectSize.set(indirectObjectSize);
+}
+
+void StateBaseAddressProperties::setProperties(const StateBaseAddressProperties &properties) {
+    clearIsDirty();
+
+    globalAtomics.set(properties.globalAtomics.value);
+    statelessMocs.set(properties.statelessMocs.value);
+    bindingTablePoolBaseAddress.set(properties.bindingTablePoolBaseAddress.value);
+
+    surfaceStateBaseAddress.set(properties.surfaceStateBaseAddress.value);
+    surfaceStateSize.set(properties.surfaceStateSize.value);
+    dynamicStateBaseAddress.set(properties.dynamicStateBaseAddress.value);
+    dynamicStateSize.set(properties.dynamicStateSize.value);
+    indirectObjectBaseAddress.set(properties.indirectObjectBaseAddress.value);
+    indirectObjectSize.set(properties.indirectObjectSize.value);
+}
+
+bool StateBaseAddressProperties::isDirty() const {
+    return globalAtomics.isDirty || statelessMocs.isDirty || bindingTablePoolBaseAddress.isDirty ||
+           surfaceStateBaseAddress.isDirty || surfaceStateSize.isDirty ||
+           dynamicStateBaseAddress.isDirty || dynamicStateSize.isDirty ||
+           indirectObjectBaseAddress.isDirty || indirectObjectSize.isDirty;
+}
+
+void StateBaseAddressProperties::clearIsDirty() {
+    globalAtomics.isDirty = false;
+    statelessMocs.isDirty = false;
+    bindingTablePoolBaseAddress.isDirty = false;
+    surfaceStateBaseAddress.isDirty = false;
+    surfaceStateSize.isDirty = false;
+    dynamicStateBaseAddress.isDirty = false;
+    dynamicStateSize.isDirty = false;
+    indirectObjectBaseAddress.isDirty = false;
+    indirectObjectSize.isDirty = false;
+}

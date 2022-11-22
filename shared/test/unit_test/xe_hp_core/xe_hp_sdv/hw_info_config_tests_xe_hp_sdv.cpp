@@ -41,8 +41,9 @@ XEHPTEST_F(HwInfoConfigTestXeHpSdv, givenHwInfoConfigWhenGetCommandsStreamProper
     EXPECT_TRUE(hwInfoConfig.getScmPropertyLargeGrfModeSupport());
     EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getSbaPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getSbaPropertyStatelessMocsSupport());
+    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());

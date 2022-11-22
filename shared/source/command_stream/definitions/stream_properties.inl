@@ -91,4 +91,35 @@ struct PipelineSelectProperties {
     bool propertiesSupportLoaded = false;
 };
 
+struct StateBaseAddressPropertiesSupport {
+    bool globalAtomics = false;
+    bool statelessMocs = false;
+    bool bindingTablePoolBaseAddress = false;
+};
+
+struct StateBaseAddressProperties {
+    StreamProperty64 bindingTablePoolBaseAddress{};
+    StreamProperty64 surfaceStateBaseAddress{};
+    StreamProperty64 dynamicStateBaseAddress{};
+    StreamProperty64 indirectObjectBaseAddress{};
+    StreamPropertySizeT surfaceStateSize{};
+    StreamPropertySizeT dynamicStateSize{};
+    StreamPropertySizeT indirectObjectSize{};
+    StreamProperty globalAtomics{};
+    StreamProperty statelessMocs{};
+
+    void setProperties(bool globalAtomics, int32_t statelessMocs, int64_t bindingTablePoolBaseAddress,
+                       int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
+                       int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
+                       int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const HardwareInfo &hwInfo);
+    void setProperties(const StateBaseAddressProperties &properties);
+    bool isDirty() const;
+
+  protected:
+    void clearIsDirty();
+
+    StateBaseAddressPropertiesSupport stateBaseAddressPropertiesSupport = {};
+    bool propertiesSupportLoaded = false;
+};
+
 } // namespace NEO

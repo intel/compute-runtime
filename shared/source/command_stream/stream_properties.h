@@ -15,6 +15,7 @@ struct StreamProperties {
     StateComputeModeProperties stateComputeMode{};
     FrontEndProperties frontEndState{};
     PipelineSelectProperties pipelineSelect{};
+    StateBaseAddressProperties stateBaseAddress{};
 };
 
 } // namespace NEO

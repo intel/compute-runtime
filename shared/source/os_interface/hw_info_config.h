@@ -29,6 +29,7 @@ struct FrontEndPropertiesSupport;
 struct HardwareInfo;
 struct PipelineSelectArgs;
 struct PipelineSelectPropertiesSupport;
+struct StateBaseAddressPropertiesSupport;
 struct StateComputeModeProperties;
 struct StateComputeModePropertiesSupport;
 class HwInfoConfig;
@@ -163,8 +164,9 @@ class HwInfoConfig {
     virtual bool getScmPropertyLargeGrfModeSupport() const = 0;
     virtual bool getScmPropertyDevicePreemptionModeSupport() const = 0;
 
-    virtual bool getSbaPropertyGlobalAtomicsSupport() const = 0;
-    virtual bool getSbaPropertyStatelessMocsSupport() const = 0;
+    virtual bool getStateBaseAddressPropertyGlobalAtomicsSupport() const = 0;
+    virtual bool getStateBaseAddressPropertyStatelessMocsSupport() const = 0;
+    virtual bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const = 0;
 
     virtual bool getPreemptionDbgPropertyPreemptionModeSupport() const = 0;
     virtual bool getPreemptionDbgPropertyStateSipSupport() const = 0;
@@ -177,6 +179,7 @@ class HwInfoConfig {
     virtual void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) = 0;
     virtual void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
     virtual void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
+    virtual void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -301,8 +304,9 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool getScmPropertyLargeGrfModeSupport() const override;
     bool getScmPropertyDevicePreemptionModeSupport() const override;
 
-    bool getSbaPropertyGlobalAtomicsSupport() const override;
-    bool getSbaPropertyStatelessMocsSupport() const override;
+    bool getStateBaseAddressPropertyGlobalAtomicsSupport() const override;
+    bool getStateBaseAddressPropertyStatelessMocsSupport() const override;
+    bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const override;
 
     bool getPreemptionDbgPropertyPreemptionModeSupport() const override;
     bool getPreemptionDbgPropertyStateSipSupport() const override;
@@ -314,6 +318,8 @@ class HwInfoConfigHw : public HwInfoConfig {
 
     void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) override;
     void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
+    void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
+    void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
 
   protected:
     HwInfoConfigHw() = default;
@@ -325,7 +331,6 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo);
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) override;
-    void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

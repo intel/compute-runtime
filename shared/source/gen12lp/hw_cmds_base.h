@@ -49,6 +49,7 @@ struct Gen12Lp {
     struct StateBaseAddressStateSupport {
         static constexpr bool globalAtomics = false;
         static constexpr bool statelessMocs = true;
+        static constexpr bool bindingTablePoolBaseAddress = false;
     };
 
     struct PipelineSelectStateSupport {

@@ -46,23 +46,6 @@ struct PVC : public XeHpcCoreFamily {
         static constexpr bool devicePreemptionMode = false;
     };
 
-    struct StateBaseAddressStateSupport {
-        static constexpr bool globalAtomics = false;
-        static constexpr bool statelessMocs = true;
-    };
-
-    struct PipelineSelectStateSupport {
-        static constexpr bool modeSelected = true;
-        static constexpr bool mediaSamplerDopClockGate = false;
-        static constexpr bool systolicMode = true;
-    };
-
-    struct PreemptionDebugSupport {
-        static constexpr bool preemptionMode = true;
-        static constexpr bool stateSip = true;
-        static constexpr bool csrSurface = false;
-    };
-
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);

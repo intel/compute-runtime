@@ -34,6 +34,24 @@ struct XeHpcCore {
     static constexpr bool isUsingMiMemFence = true;
     static constexpr bool isUsingMiSetPredicate = true;
 
+    struct StateBaseAddressStateSupport {
+        static constexpr bool globalAtomics = false;
+        static constexpr bool statelessMocs = true;
+        static constexpr bool bindingTablePoolBaseAddress = true;
+    };
+
+    struct PipelineSelectStateSupport {
+        static constexpr bool modeSelected = true;
+        static constexpr bool mediaSamplerDopClockGate = false;
+        static constexpr bool systolicMode = true;
+    };
+
+    struct PreemptionDebugSupport {
+        static constexpr bool preemptionMode = true;
+        static constexpr bool stateSip = true;
+        static constexpr bool csrSurface = false;
+    };
+
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

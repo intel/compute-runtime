@@ -568,15 +568,28 @@ bool HwInfoConfigHw<gfxProduct>::getScmPropertyDevicePreemptionModeSupport() con
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getSbaPropertyGlobalAtomicsSupport() const {
+bool HwInfoConfigHw<gfxProduct>::getStateBaseAddressPropertyGlobalAtomicsSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateBaseAddressStateSupport::globalAtomics;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getSbaPropertyStatelessMocsSupport() const {
+bool HwInfoConfigHw<gfxProduct>::getStateBaseAddressPropertyStatelessMocsSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateBaseAddressStateSupport::statelessMocs;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::StateBaseAddressStateSupport::bindingTablePoolBaseAddress;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+    propertiesSupport.globalAtomics = getStateBaseAddressPropertyGlobalAtomicsSupport();
+    propertiesSupport.statelessMocs = getStateBaseAddressPropertyStatelessMocsSupport();
+    propertiesSupport.bindingTablePoolBaseAddress = getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>

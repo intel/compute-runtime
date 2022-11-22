@@ -27,6 +27,11 @@ struct MockPipelineSelectProperties : public PipelineSelectProperties {
     using PipelineSelectProperties::propertiesSupportLoaded;
 };
 
+struct MockStateBaseAddressProperties : public StateBaseAddressProperties {
+    using StateBaseAddressProperties::propertiesSupportLoaded;
+    using StateBaseAddressProperties::stateBaseAddressPropertiesSupport;
+};
+
 TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
     NEO::StreamProperty streamProperty;
 
@@ -334,4 +339,182 @@ TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyNotSupportedWhe
 
     // expect clean as changed modeSelected is not supported
     EXPECT_FALSE(pipeProperties.isDirty());
+}
+
+TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingPropertyAndCheckIfDirtyThenExpectCleanStateForNotSupportedAndDirtyForSupported) {
+    MockStateBaseAddressProperties sbaProperties{};
+    sbaProperties.propertiesSupportLoaded = true;
+    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
+    sbaProperties.stateBaseAddressPropertiesSupport.statelessMocs = false;
+    sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
+
+    sbaProperties.setProperties(true, 1, 1, -1, -1, -1, -1, -1, -1, *defaultHwInfo);
+    EXPECT_FALSE(sbaProperties.isDirty());
+
+    EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
+    EXPECT_EQ(-1, sbaProperties.statelessMocs.value);
+    EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
+
+    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
+    sbaProperties.setProperties(true, 1, 0, -1, -1, -1, -1, -1, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_TRUE(sbaProperties.globalAtomics.isDirty);
+    EXPECT_FALSE(sbaProperties.statelessMocs.isDirty);
+    EXPECT_FALSE(sbaProperties.bindingTablePoolBaseAddress.isDirty);
+
+    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
+    EXPECT_EQ(-1, sbaProperties.statelessMocs.value);
+    EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
+
+    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
+    sbaProperties.stateBaseAddressPropertiesSupport.statelessMocs = true;
+    sbaProperties.setProperties(false, 1, 1, -1, -1, -1, -1, -1, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_FALSE(sbaProperties.globalAtomics.isDirty);
+    EXPECT_TRUE(sbaProperties.statelessMocs.isDirty);
+    EXPECT_FALSE(sbaProperties.bindingTablePoolBaseAddress.isDirty);
+
+    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
+    EXPECT_EQ(1, sbaProperties.statelessMocs.value);
+    EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
+
+    sbaProperties.stateBaseAddressPropertiesSupport.statelessMocs = false;
+    sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = true;
+    sbaProperties.setProperties(true, 2, 2, -1, -1, -1, -1, -1, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_FALSE(sbaProperties.globalAtomics.isDirty);
+    EXPECT_FALSE(sbaProperties.statelessMocs.isDirty);
+    EXPECT_TRUE(sbaProperties.bindingTablePoolBaseAddress.isDirty);
+
+    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
+    EXPECT_EQ(1, sbaProperties.statelessMocs.value);
+    EXPECT_EQ(2, sbaProperties.bindingTablePoolBaseAddress.value);
+
+    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
+    sbaProperties.stateBaseAddressPropertiesSupport.statelessMocs = true;
+    sbaProperties.setProperties(true, 1, 2, -1, -1, -1, -1, -1, -1, *defaultHwInfo);
+    EXPECT_FALSE(sbaProperties.isDirty());
+
+    sbaProperties.setProperties(false, 0, 3, -1, -1, -1, -1, -1, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+
+    EXPECT_EQ(0, sbaProperties.globalAtomics.value);
+    EXPECT_EQ(0, sbaProperties.statelessMocs.value);
+    EXPECT_EQ(3, sbaProperties.bindingTablePoolBaseAddress.value);
+
+    MockStateBaseAddressProperties copySbaProperties{};
+
+    copySbaProperties.setProperties(sbaProperties);
+    EXPECT_TRUE(copySbaProperties.isDirty());
+
+    EXPECT_EQ(0, copySbaProperties.globalAtomics.value);
+    EXPECT_EQ(0, copySbaProperties.statelessMocs.value);
+    EXPECT_EQ(3, copySbaProperties.bindingTablePoolBaseAddress.value);
+
+    sbaProperties.setProperties(copySbaProperties);
+    EXPECT_FALSE(sbaProperties.isDirty());
+}
+
+TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagDefaultValueWhenSettingPropertyAndCheckIfDirtyThenExpectValueSetForSupportedAndCleanForNotSupported) {
+    StateBaseAddressPropertiesSupport sbaPropertiesSupport = {};
+    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    hwInfoConfig->fillStateBaseAddressPropertiesSupportStructure(sbaPropertiesSupport, *defaultHwInfo);
+
+    StateBaseAddressProperties sbaProperties{};
+
+    sbaProperties.setProperties(true, 2, 3, -1, -1, -1, -1, -1, -1, *defaultHwInfo);
+    if (sbaPropertiesSupport.globalAtomics) {
+        EXPECT_EQ(1, sbaProperties.globalAtomics.value);
+    } else {
+        EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
+    }
+
+    if (sbaPropertiesSupport.statelessMocs) {
+        EXPECT_EQ(2, sbaProperties.statelessMocs.value);
+    } else {
+        EXPECT_EQ(-1, sbaProperties.statelessMocs.value);
+    }
+
+    if (sbaPropertiesSupport.bindingTablePoolBaseAddress) {
+        EXPECT_EQ(3, sbaProperties.bindingTablePoolBaseAddress.value);
+    } else {
+        EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
+    }
+}
+
+TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSettingAddressSizePropertiesThenExpectCorrectDirtyFlagAndStateValue) {
+    MockStateBaseAddressProperties sbaProperties{};
+    sbaProperties.propertiesSupportLoaded = true;
+    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
+    sbaProperties.stateBaseAddressPropertiesSupport.statelessMocs = false;
+    sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
+
+    sbaProperties.setProperties(false, -1, -1, 10, -1, -1, -1, -1, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(10, sbaProperties.surfaceStateBaseAddress.value);
+
+    EXPECT_TRUE(sbaProperties.surfaceStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.surfaceStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
+
+    sbaProperties.setProperties(false, -1, -1, 10, 20, -1, -1, -1, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(20u, sbaProperties.surfaceStateSize.value);
+
+    EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
+    EXPECT_TRUE(sbaProperties.surfaceStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
+
+    sbaProperties.setProperties(false, -1, -1, 10, 20, 30, -1, -1, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(30, sbaProperties.dynamicStateBaseAddress.value);
+
+    EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.surfaceStateSize.isDirty);
+    EXPECT_TRUE(sbaProperties.dynamicStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
+
+    sbaProperties.setProperties(false, -1, -1, 10, 20, 30, 40, -1, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(40u, sbaProperties.dynamicStateSize.value);
+
+    EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.surfaceStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
+    EXPECT_TRUE(sbaProperties.dynamicStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
+
+    sbaProperties.setProperties(false, -1, -1, 10, 20, 30, 40, 50, -1, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(50, sbaProperties.indirectObjectBaseAddress.value);
+
+    EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.surfaceStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
+    EXPECT_TRUE(sbaProperties.indirectObjectBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
+
+    sbaProperties.setProperties(false, -1, -1, 10, 20, 30, 40, 50, 60, *defaultHwInfo);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(60u, sbaProperties.indirectObjectSize.value);
+
+    EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.surfaceStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
+    EXPECT_TRUE(sbaProperties.indirectObjectSize.isDirty);
+
+    sbaProperties.setProperties(false, -1, -1, 10, 20, 30, 40, 50, 60, *defaultHwInfo);
+    EXPECT_FALSE(sbaProperties.isDirty());
 }

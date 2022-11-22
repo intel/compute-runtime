@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 namespace NEO {
@@ -14,7 +15,11 @@ namespace NEO {
 struct FrontEndProperties;
 struct PipelineSelectProperties;
 struct StateComputeModeProperties;
-struct StreamProperty;
+
+template <typename Type>
+struct StreamPropertyType;
+
+using StreamProperty = StreamPropertyType<int32_t>;
 
 std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeProperties &properties);
 std::vector<StreamProperty *> getAllFrontEndProperties(FrontEndProperties &properties);

@@ -55,6 +55,7 @@ struct XeHpCore {
     struct StateBaseAddressStateSupport {
         static constexpr bool globalAtomics = true;
         static constexpr bool statelessMocs = true;
+        static constexpr bool bindingTablePoolBaseAddress = true;
     };
 
     struct PipelineSelectStateSupport {

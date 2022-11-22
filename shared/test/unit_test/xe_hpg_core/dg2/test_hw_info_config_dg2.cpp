@@ -82,8 +82,9 @@ DG2TEST_F(TestDg2HwInfoConfig, givenHwInfoConfigWhenGetCommandsStreamPropertiesS
     EXPECT_TRUE(hwInfoConfig.getScmPropertyLargeGrfModeSupport());
     EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getSbaPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getSbaPropertyStatelessMocsSupport());
+    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());

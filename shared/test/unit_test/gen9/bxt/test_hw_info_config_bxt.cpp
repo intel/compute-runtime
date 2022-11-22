@@ -107,8 +107,9 @@ BXTTEST_F(BxtHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThen
     EXPECT_FALSE(hwInfoConfig.getScmPropertyLargeGrfModeSupport());
     EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getSbaPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getSbaPropertyStatelessMocsSupport());
+    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());

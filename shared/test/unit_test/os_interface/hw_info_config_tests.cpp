@@ -547,3 +547,14 @@ HWTEST_F(HwInfoConfigTest, WhenFillingPipelineSelectPropertiesSupportThenExpectU
     EXPECT_EQ(hwInfoConfig->getPipelineSelectPropertyMediaSamplerDopClockGateSupport(), pipelineSelectPropertiesSupport.mediaSamplerDopClockGate);
     EXPECT_EQ(hwInfoConfig->isSystolicModeConfigurable(pInHwInfo), pipelineSelectPropertiesSupport.systolicMode);
 }
+
+HWTEST_F(HwInfoConfigTest, WhenFillingStateBaseAddressPropertiesSupportThenExpectUseCorrectGetters) {
+    StateBaseAddressPropertiesSupport stateBaseAddressPropertiesSupport = {};
+
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    hwInfoConfig->fillStateBaseAddressPropertiesSupportStructure(stateBaseAddressPropertiesSupport, pInHwInfo);
+    EXPECT_EQ(hwInfoConfig->getStateBaseAddressPropertyGlobalAtomicsSupport(), stateBaseAddressPropertiesSupport.globalAtomics);
+    EXPECT_EQ(hwInfoConfig->getStateBaseAddressPropertyStatelessMocsSupport(), stateBaseAddressPropertiesSupport.statelessMocs);
+    EXPECT_EQ(hwInfoConfig->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport(), stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress);
+}
