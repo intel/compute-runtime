@@ -4247,6 +4247,7 @@ kernels:
         simd_size : 32
         slm_size : 1024
         subgroup_independent_forward_progress : true
+        eu_thread_count : 8
         required_work_group_size:
           - 8
           - 2
@@ -4295,6 +4296,7 @@ kernels:
     EXPECT_EQ(32U, kernelDescriptor.kernelAttributes.simdSize);
     EXPECT_EQ(1024U, kernelDescriptor.kernelAttributes.slmInlineSize);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress);
+    EXPECT_EQ(8U, kernelDescriptor.kernelAttributes.numThreadsRequired);
     EXPECT_EQ(8U, kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
     EXPECT_EQ(2U, kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
     EXPECT_EQ(1U, kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);

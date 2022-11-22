@@ -138,6 +138,7 @@ constexpr ConstStringRef inlineSamplers("inline_samplers");
 namespace ExecutionEnv {
 constexpr ConstStringRef barrierCount("barrier_count");
 constexpr ConstStringRef disableMidThreadPreemption("disable_mid_thread_preemption");
+constexpr ConstStringRef euThreadCount("eu_thread_count");
 constexpr ConstStringRef grfCount("grf_count");
 constexpr ConstStringRef has4gbBuffers("has_4gb_buffers");
 constexpr ConstStringRef hasDpas("has_dpas");
@@ -402,6 +403,7 @@ enum ThreadSchedulingMode : uint8_t {
 
 using ActualKernelStartOffsetT = int32_t;
 using BarrierCountT = int32_t;
+using EuThreadCountT = int32_t;
 using DisableMidThreadPreemptionT = bool;
 using GrfCountT = int32_t;
 using Has4GBBuffersT = bool;
@@ -431,6 +433,7 @@ using IndirectStatelessCountT = int32_t;
 namespace Defaults {
 constexpr BarrierCountT barrierCount = 0;
 constexpr DisableMidThreadPreemptionT disableMidThreadPreemption = false;
+constexpr EuThreadCountT euThreadCount = 0;
 constexpr Has4GBBuffersT has4GBBuffers = false;
 constexpr HasDpasT hasDpas = false;
 constexpr HasFenceForImageAccessT hasFenceForImageAccess = false;
@@ -462,6 +465,7 @@ constexpr ConstStringRef required[] = {
 struct ExecutionEnvBaseT {
     BarrierCountT barrierCount = Defaults::barrierCount;
     DisableMidThreadPreemptionT disableMidThreadPreemption = Defaults::disableMidThreadPreemption;
+    EuThreadCountT euThreadCount = Defaults::euThreadCount;
     GrfCountT grfCount = -1;
     Has4GBBuffersT has4GBBuffers = Defaults::has4GBBuffers;
     HasDpasT hasDpas = Defaults::hasDpas;
