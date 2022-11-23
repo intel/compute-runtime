@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
 
-#include <cwchar>
-#include <dxcore.h>
+#include "dxcore_interface.h"
+
+#include <vector>
 
 namespace NEO {
 constexpr auto error = 1;

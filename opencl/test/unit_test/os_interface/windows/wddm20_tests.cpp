@@ -5,29 +5,13 @@
  *
  */
 
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_library.h"
-#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
-#include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_environment_win.h"
-#include "shared/source/os_interface/windows/sys_calls.h"
-#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
-#include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
-#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
@@ -36,13 +20,9 @@
 
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 
-#include "gtest/gtest.h"
 #include "mock_gmm_memory.h"
 
-#include <cstdint>
-#include <functional>
-#include <limits>
-#include <memory>
+#include <dxgi.h>
 
 namespace NEO {
 namespace SysCalls {

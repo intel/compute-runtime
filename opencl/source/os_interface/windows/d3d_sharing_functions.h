@@ -9,9 +9,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "opencl/source/api/dispatch.h"
-#include "opencl/source/sharings/sharing.h"
-
-#include "DXGI1_2.h"
 
 #include <map>
 #include <vector>

@@ -8,9 +8,10 @@
 #include "shared/source/helpers/array_count.h"
 
 #include "opencl/source/context/context.inl"
-#include "opencl/source/os_interface/windows/d3d_sharing_functions.h"
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
 #include "opencl/source/sharings/sharing_factory.h"
+
+#include "DXGI1_2.h"
 
 using namespace NEO;
 

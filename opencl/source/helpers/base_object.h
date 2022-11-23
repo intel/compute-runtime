@@ -12,11 +12,9 @@
 
 #include "opencl/source/api/dispatch.h"
 
-#include "CL/cl.h"
+#include <CL/cl_platform.h>
 
-#include <atomic>
 #include <condition_variable>
-#include <mutex>
 #include <thread>
 
 namespace NEO {

@@ -14,6 +14,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"

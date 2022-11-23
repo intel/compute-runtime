@@ -9,16 +9,13 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/validators.h"
-#include "shared/source/os_interface/os_library.h"
 
-#include "cif/builtins/memory/buffer/buffer.h"
-#include "cif/common/cif.h"
 #include "cif/import/library_api.h"
 #include "ocl_igc_interface/ocl_translation_output.h"
 
 namespace NEO {
 using CIFBuffer = CIF::Builtins::BufferSimple;
-
+class OsLibrary;
 template <typename TranslationCtx>
 inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
                                                                     CIFBuffer *internalOptions) {

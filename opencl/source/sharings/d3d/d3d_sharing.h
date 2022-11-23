@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "opencl/source/sharings/sharing.h"
+
 #include "d3d_sharing_functions.h"
 
 #include <mutex>

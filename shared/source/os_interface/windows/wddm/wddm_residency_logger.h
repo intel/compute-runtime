@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <chrono>
@@ -22,7 +23,7 @@ constexpr bool wddmResidencyLoggingAvailable = false;
 
 class WddmResidencyLogger {
   public:
-    WddmResidencyLogger(D3DKMT_HANDLE device, VOID *fenceValueCpuVirtualAddress) {
+    WddmResidencyLogger(unsigned int device, void *fenceValueCpuVirtualAddress) {
         std::stringstream id;
         id << std::hex;
         id << "device-0x" << device << "_"

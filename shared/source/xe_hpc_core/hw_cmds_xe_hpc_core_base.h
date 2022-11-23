@@ -11,10 +11,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/xe_hpc_core/hw_info.h"
 
-#include "igfxfmid.h"
-
-#include <type_traits>
-
 template <class T>
 struct CmdParse;
 

@@ -11,8 +11,6 @@
 #include "shared/source/kernel/kernel_arg_metadata.h"
 #include "shared/source/utilities/arrayref.h"
 
-#include <limits>
-
 namespace NEO {
 
 using CrossThreadDataOffset = uint16_t;

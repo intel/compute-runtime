@@ -18,6 +18,7 @@
 #include "aubstream/engine_node.h"
 #include "igfxfmid.h"
 
+#include <mutex>
 #include <vector>
 
 namespace NEO {

@@ -18,11 +18,6 @@
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/utilities/idlist.h"
 
-#include <atomic>
-#include <cstddef>
-#include <cstdint>
-#include <limits>
-
 namespace NEO {
 
 using osHandle = unsigned int;

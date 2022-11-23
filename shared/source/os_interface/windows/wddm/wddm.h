@@ -6,30 +6,21 @@
  */
 
 #pragma once
-
-#include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/topology_map.h"
-#include "shared/source/memory_manager/gfx_partition.h"
-#include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/os_context.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
-#include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 
 #include "sku_info.h"
 
-#include <cstdint>
-#include <limits>
-#include <memory>
+#include <atomic>
 
 struct _SYSTEM_INFO;
 typedef struct _SYSTEM_INFO SYSTEM_INFO;
 
 namespace NEO {
+class WddmResidencyLogger;
+enum PreemptionMode : uint32_t;
+struct OSMemory;
+class GfxPartition;
 class Gdi;
 class Gmm;
 class GmmMemory;

@@ -6,16 +6,11 @@
  */
 
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
-#include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/helpers/ult_hw_config.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"

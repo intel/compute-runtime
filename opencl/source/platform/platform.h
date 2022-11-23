@@ -14,6 +14,7 @@
 
 #include "platform_info.h"
 
+#include <mutex>
 #include <vector>
 
 namespace NEO {

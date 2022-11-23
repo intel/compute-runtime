@@ -12,10 +12,7 @@
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/driver_info.h"
 
-#include <cstdint>
-#include <limits>
 #include <memory>
-#include <vector>
 
 namespace NEO {
 class ExecutionEnvironment;

@@ -5,15 +5,11 @@
  *
  */
 
-#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
-#include "shared/source/device/device_info.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
@@ -21,8 +17,8 @@
 
 #include "driver_version.h"
 
+#include <iterator>
 #include <sstream>
-#include <string>
 
 namespace NEO {
 extern const char *familyName[];
