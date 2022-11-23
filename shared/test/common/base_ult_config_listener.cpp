@@ -10,7 +10,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 
-#include "third_party/aub_stream/headers/aubstream.h"
+#include "aubstream/aubstream.h"
 
 void NEO::BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
     debugVarSnapshot = DebugManager.flags;

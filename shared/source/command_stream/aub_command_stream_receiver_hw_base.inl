@@ -33,7 +33,7 @@
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "third_party/aub_stream/headers/aubstream.h"
+#include "aubstream/aubstream.h"
 
 #include <cstring>
 

@@ -11,7 +11,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 #include <mutex>
 

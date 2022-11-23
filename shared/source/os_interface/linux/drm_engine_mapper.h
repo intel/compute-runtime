@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 

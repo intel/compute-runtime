@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 #include "sku_info.h"
 
 #include <cstdint>

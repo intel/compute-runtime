@@ -5,7 +5,7 @@
  *
  */
 
-#include "product_family.h"
+#include "aubstream/product_family.h"
 
 namespace NEO {
 template <>

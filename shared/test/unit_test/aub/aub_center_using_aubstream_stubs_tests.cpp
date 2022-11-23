@@ -14,8 +14,8 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 
+#include "aubstream/aubstream.h"
 #include "gtest/gtest.h"
-#include "third_party/aub_stream/headers/aubstream.h"
 
 using namespace NEO;
 

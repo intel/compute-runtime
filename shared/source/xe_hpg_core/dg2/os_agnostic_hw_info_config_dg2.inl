@@ -7,7 +7,7 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "product_family.h"
+#include "aubstream/product_family.h"
 
 namespace NEO {
 template <>

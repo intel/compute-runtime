@@ -13,9 +13,9 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/aubstream.h"
-#include "third_party/aub_stream/headers/product_family.h"
+#include "aubstream/aub_manager.h"
+#include "aubstream/aubstream.h"
+#include "aubstream/product_family.h"
 
 namespace NEO {
 extern aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOptions &options);

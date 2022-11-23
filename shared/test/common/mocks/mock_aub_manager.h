@@ -9,10 +9,10 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
-#include "third_party/aub_stream/headers/allocation_params.h"
-#include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/aubstream.h"
-#include "third_party/aub_stream/headers/hardware_context.h"
+#include "aubstream/allocation_params.h"
+#include "aubstream/aub_manager.h"
+#include "aubstream/aubstream.h"
+#include "aubstream/hardware_context.h"
 
 struct MockHardwareContext : public aub_stream::HardwareContext {
     using SurfaceInfo = aub_stream::SurfaceInfo;

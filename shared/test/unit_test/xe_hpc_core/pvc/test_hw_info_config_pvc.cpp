@@ -18,7 +18,7 @@
 #include "shared/test/common/xe_hpc_core/pvc/product_configs_pvc.h"
 #include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
-#include "product_family.h"
+#include "aubstream/product_family.h"
 
 using namespace NEO;
 

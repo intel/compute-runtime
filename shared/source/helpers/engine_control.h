@@ -8,8 +8,6 @@
 #pragma once
 #include "shared/source/os_interface/os_context.h"
 
-#include "engine_node.h"
-
 namespace NEO {
 class CommandStreamReceiver;
 

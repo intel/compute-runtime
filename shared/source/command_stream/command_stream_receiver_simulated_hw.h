@@ -13,7 +13,7 @@
 #include "shared/source/memory_manager/physical_address_allocator.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include "third_party/aub_stream/headers/allocation_params.h"
+#include "aubstream/allocation_params.h"
 
 namespace NEO {
 class GraphicsAllocation;

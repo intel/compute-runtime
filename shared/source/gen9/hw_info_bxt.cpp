@@ -9,7 +9,7 @@
 #include "shared/source/gen9/hw_cmds_bxt.h"
 #include "shared/source/helpers/constants.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 

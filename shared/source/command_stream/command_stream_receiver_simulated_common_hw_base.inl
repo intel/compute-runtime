@@ -17,7 +17,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include "third_party/aub_stream/headers/aub_manager.h"
+#include "aubstream/aub_manager.h"
 
 namespace NEO {
 

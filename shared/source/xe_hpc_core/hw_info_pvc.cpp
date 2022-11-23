@@ -11,7 +11,7 @@
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 

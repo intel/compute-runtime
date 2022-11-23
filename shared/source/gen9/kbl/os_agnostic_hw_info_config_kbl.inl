@@ -7,8 +7,8 @@
 
 #include "shared/source/gen9/kbl/device_ids_configs_kbl.h"
 
+#include "aubstream/product_family.h"
 #include "platforms.h"
-#include "product_family.h"
 
 #include <algorithm>
 

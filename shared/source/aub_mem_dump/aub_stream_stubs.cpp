@@ -5,7 +5,7 @@
  *
  */
 
-#include "third_party/aub_stream/headers/aubstream.h"
+#include "aubstream/aubstream.h"
 
 namespace aub_stream_stubs {
 uint16_t tbxServerPort = 4321;

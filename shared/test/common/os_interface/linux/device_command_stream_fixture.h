@@ -13,7 +13,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 #include <atomic>
 #include <cstdint>

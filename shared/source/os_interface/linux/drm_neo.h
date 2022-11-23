@@ -17,7 +17,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 #include "igfxfmid.h"
 
 #include <array>

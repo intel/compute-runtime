@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
 
-#include "third_party/aub_stream/headers/aub_manager.h"
+#include "aubstream/aub_manager.h"
 
 namespace NEO {
 struct HardwareInfo;

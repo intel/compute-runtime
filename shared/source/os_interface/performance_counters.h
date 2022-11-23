@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/utilities/metrics_library.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 #include <mutex>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include "third_party/aub_stream/headers/aubstream.h"
+#include "aubstream/aubstream.h"
 
 namespace NEO {
 

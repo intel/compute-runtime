@@ -15,7 +15,7 @@
 #include "opencl/source/cl_device/cl_device_info.h"
 #include "opencl/source/helpers/base_object.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 #include "igfxfmid.h"
 
 #include <vector>

@@ -11,7 +11,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 #include <atomic>
 #include <string>

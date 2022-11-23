@@ -16,7 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 using namespace NEO;
 

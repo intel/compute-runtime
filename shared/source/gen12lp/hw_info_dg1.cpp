@@ -10,7 +10,7 @@
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/helpers/constants.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 

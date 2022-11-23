@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/hardware_context.h"
+#include "aubstream/aub_manager.h"
+#include "aubstream/hardware_context.h"
 
 #include <memory>
 #include <vector>

@@ -17,7 +17,7 @@ using Family = NEO::Gen12LpFamily;
 #include "shared/source/helpers/logical_state_helper.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 

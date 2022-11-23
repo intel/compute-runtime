@@ -14,9 +14,9 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/options.h"
 
+#include "aubstream/aubstream.h"
 #include "igfxfmid.h"
 #include "sku_info.h"
-#include "third_party/aub_stream/headers/aubstream.h"
 
 #include <cstdint>
 #include <memory>

@@ -12,7 +12,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
-#include "third_party/aub_stream/headers/allocation_params.h"
+#include "aubstream/allocation_params.h"
 
 #include <algorithm>
 

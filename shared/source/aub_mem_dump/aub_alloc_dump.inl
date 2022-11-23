@@ -9,7 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 
-#include "third_party/aub_stream/headers/aubstream.h"
+#include "aubstream/aubstream.h"
 
 using namespace NEO;
 using namespace aub_stream;

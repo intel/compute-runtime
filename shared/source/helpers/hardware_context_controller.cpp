@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include "third_party/aub_stream/headers/allocation_params.h"
+#include "aubstream/allocation_params.h"
 using namespace NEO;
 
 HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t flags) {

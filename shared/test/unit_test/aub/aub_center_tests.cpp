@@ -19,8 +19,8 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "aubstream/aubstream.h"
 #include "gtest/gtest.h"
-#include "third_party/aub_stream/headers/aubstream.h"
 
 using namespace NEO;
 

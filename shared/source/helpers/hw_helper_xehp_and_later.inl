@@ -14,7 +14,7 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 

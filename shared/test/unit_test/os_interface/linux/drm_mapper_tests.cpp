@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 #include <array>
 

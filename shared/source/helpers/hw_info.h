@@ -10,7 +10,6 @@
 #include "shared/source/direct_submission/direct_submission_properties.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 
-#include "engine_node.h"
 #include "gtsysinfo.h"
 #include "igfxfmid.h"
 #include "sku_info.h"

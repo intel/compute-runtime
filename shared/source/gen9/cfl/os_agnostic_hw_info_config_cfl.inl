@@ -7,8 +7,8 @@
 
 #include "shared/source/gen9/cfl/device_ids_configs_cfl.h"
 
+#include "aubstream/product_family.h"
 #include "platforms.h"
-#include "product_family.h"
 
 #include <algorithm>
 
