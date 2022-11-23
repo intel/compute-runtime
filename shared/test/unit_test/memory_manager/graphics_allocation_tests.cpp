@@ -227,9 +227,7 @@ TEST(GraphicsAllocationTest, givenAlwaysResidentAllocationWhenUpdateTaskCountThe
 
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
-    uint64_t handle = 0;
-    graphicsAllocation.peekInternalHandle(nullptr, handle);
-    EXPECT_EQ(0ull, handle);
+    EXPECT_EQ(0llu, graphicsAllocation.peekInternalHandle(nullptr));
 }
 
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenGettingNumHandlesThenZeroIsReturned) {

@@ -75,9 +75,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevice
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
     EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
-    uint64_t handle = 0;
-    allocation->peekInternalHandle(memoryManager.get(), handle);
-    EXPECT_NE(handle, 0u);
+    EXPECT_NE(allocation->peekInternalHandle(memoryManager.get()), 0u);
 
     EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.LocalOnly);
     EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
@@ -104,9 +102,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
     EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
-    uint64_t handle = 0;
-    allocation->peekInternalHandle(memoryManager.get(), handle);
-    EXPECT_NE(handle, 0u);
+    EXPECT_NE(allocation->peekInternalHandle(memoryManager.get()), 0u);
 
     EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.LocalOnly);
     EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);

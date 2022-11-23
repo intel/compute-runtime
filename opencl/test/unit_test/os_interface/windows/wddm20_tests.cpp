@@ -481,9 +481,7 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     allocation.setDefaultGmm(gmm.get());
     auto status = memoryManager.createGpuAllocationsWithRetry(&allocation);
     EXPECT_TRUE(status);
-    uint64_t handle = 0;
-    allocation.peekInternalHandle(&memoryManager, handle);
-    EXPECT_NE(0u, handle);
+    EXPECT_NE(0u, allocation.peekInternalHandle(&memoryManager));
 }
 
 TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
@@ -491,10 +489,7 @@ TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsShar
     auto sharedHandleToModify = allocation.getSharedHandleToModify();
     EXPECT_NE(nullptr, sharedHandleToModify);
     *sharedHandleToModify = 1234u;
-    uint64_t handle = 0;
-    int ret = allocation.peekInternalHandle(nullptr, handle);
-    EXPECT_EQ(ret, 0);
-    EXPECT_EQ(*sharedHandleToModify, handle);
+    EXPECT_EQ(*sharedHandleToModify, allocation.peekInternalHandle(nullptr));
 }
 
 TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHandleToModify) {

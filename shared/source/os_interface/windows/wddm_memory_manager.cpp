@@ -557,10 +557,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
         delete gfxAllocation->getGmm(handleId);
     }
-    uint64_t handle = 0;
-    int ret = input->peekInternalHandle(nullptr, handle);
-    if (ret == 0) {
-        [[maybe_unused]] auto status = SysCalls::closeHandle(reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(handle)));
+    if (input->peekInternalHandle(nullptr) != 0u) {
+        [[maybe_unused]] auto status = SysCalls::closeHandle(reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(input->peekInternalHandle(nullptr))));
         DEBUG_BREAK_IF(!status);
     }
 

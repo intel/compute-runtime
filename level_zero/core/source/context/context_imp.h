@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -142,9 +141,6 @@ struct ContextImp : Context {
     }
 
     void freePeerAllocations(const void *ptr, bool blocking, Device *device);
-
-    ze_result_t handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type,
-                                           void *pNext, struct DriverHandleImp *driverHandle);
 
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;

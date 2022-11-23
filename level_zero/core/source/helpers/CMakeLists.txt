@@ -7,6 +7,8 @@
 target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/allocation_extensions.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/allocation_extensions.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config_l0.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/error_code_helper_l0.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/error_code_helper_l0.h
