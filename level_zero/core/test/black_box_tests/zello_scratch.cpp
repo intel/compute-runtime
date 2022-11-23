@@ -211,16 +211,6 @@ void createModuleKernel(ze_context_handle_t &context,
     std::cout << "Scratch size = " << kernelProperties.spillMemSize << "\n";
 }
 
-inline bool isImmediateFirst(int argc, char *argv[]) {
-    bool enabled = isParamEnabled(argc, argv, "-i", "--immediate");
-
-    if (verbose && enabled) {
-        std::cerr << "Immediate Command List executed first" << std::endl;
-    }
-
-    return enabled;
-}
-
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Scratch";
     verbose = isVerbose(argc, argv);

@@ -129,6 +129,16 @@ bool isCommandListShared(int argc, char *argv[]) {
     return true;
 }
 
+bool isImmediateFirst(int argc, char *argv[]) {
+    bool enabled = isParamEnabled(argc, argv, "-i", "--immediate");
+
+    if (verbose && enabled) {
+        std::cerr << "Immediate Command List executed first" << std::endl;
+    }
+
+    return enabled;
+}
+
 bool getAllocationFlag(int argc, char *argv[], int defaultValue) {
     int value = getParamValue(argc, argv, "-A", "-allocflag", defaultValue);
     std::cerr << "Allocation flag ";

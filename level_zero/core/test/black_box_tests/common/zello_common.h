@@ -64,6 +64,8 @@ bool isAubMode(int argc, char *argv[]);
 
 bool isCommandListShared(int argc, char *argv[]);
 
+bool isImmediateFirst(int argc, char *argv[]);
+
 bool getAllocationFlag(int argc, char *argv[], int defaultValue);
 
 void selectQueueMode(ze_command_queue_desc_t &desc, bool useSync);

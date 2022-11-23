@@ -48,6 +48,7 @@ set(TEST_TARGETS
     zello_multidev
     zello_printf
     zello_p2p_copy
+    zello_sandbox
     zello_scratch
     zello_timestamp
     zello_world_global_work_offset
