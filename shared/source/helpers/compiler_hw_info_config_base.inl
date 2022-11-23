@@ -16,6 +16,7 @@ template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isForceEmuInt32DivRemSPRequired() const {
     return false;
 }
+
 template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isStatelessToStatefulBufferOffsetSupported() const {
     return true;
@@ -24,6 +25,9 @@ bool CompilerProductHelperHw<gfxProduct>::isStatelessToStatefulBufferOffsetSuppo
 template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerProductHelperHw<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) const {
     return L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(isDebuggerActive);
-};
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void CompilerProductHelperHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {}
 
 } // namespace NEO

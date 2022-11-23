@@ -30,6 +30,7 @@ class CompilerProductHelper {
     virtual bool isForceToStatelessRequired() const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
+    virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -46,6 +47,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isForceToStatelessRequired() const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
+    void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
 
   protected:
     CompilerProductHelperHw() = default;

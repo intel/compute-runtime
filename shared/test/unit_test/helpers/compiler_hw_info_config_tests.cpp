@@ -24,6 +24,16 @@ HWTEST_F(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCal
     EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
 }
 
+HWTEST_F(CompilerProductHelperFixture, WhenAdjustHwInfoForIgcIsCalledThenHwInfoNotChanged) {
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto adjustedHwInfo = hwInfo;
+    auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+
+    compilerProductHelper->adjustHwInfoForIgc(adjustedHwInfo);
+
+    EXPECT_EQ(hwInfo.platform.eProductFamily, adjustedHwInfo.platform.eProductFamily);
+}
+
 using IsBeforeXeHpc = IsBeforeGfxCore<IGFX_XE_HPC_CORE>;
 
 HWTEST2_F(CompilerProductHelperFixture, GivenProductBeforeXeHpcWhenIsForceToStatelessRequiredThenFalseIsReturned, IsBeforeXeHpc) {

@@ -81,8 +81,13 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
 
     const auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
 
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo.platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
+    auto copyHwInfo = hwInfo;
+    if (compilerProductHelper) {
+        compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+    }
+
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), copyHwInfo.platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), copyHwInfo.gtSystemInfo);
 
     populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper);
 
