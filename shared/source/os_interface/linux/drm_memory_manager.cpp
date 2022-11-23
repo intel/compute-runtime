@@ -1668,6 +1668,7 @@ bool DrmMemoryManager::allocationTypeForCompletionFence(AllocationType allocatio
         return true;
     }
     if (allocationType == AllocationType::COMMAND_BUFFER ||
+        allocationType == AllocationType::DEFERRED_TASKS_LIST ||
         allocationType == AllocationType::RING_BUFFER ||
         allocationType == AllocationType::SEMAPHORE_BUFFER ||
         allocationType == AllocationType::TAG_BUFFER) {

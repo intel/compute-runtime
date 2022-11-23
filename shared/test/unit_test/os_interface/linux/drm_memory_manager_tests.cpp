@@ -5315,13 +5315,16 @@ TEST_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCall
 }
 
 TEST_F(DrmMemoryManagerTest, GivenEligbleAllocationTypeWhenCheckingAllocationEligbleForCompletionFenceThenReturnTrue) {
-    AllocationType validAllocations[] = {
+    constexpr size_t arraySize = 5;
+
+    AllocationType validAllocations[arraySize] = {
         AllocationType::COMMAND_BUFFER,
         AllocationType::RING_BUFFER,
+        AllocationType::DEFERRED_TASKS_LIST,
         AllocationType::SEMAPHORE_BUFFER,
         AllocationType::TAG_BUFFER};
 
-    for (size_t i = 0; i < 4; i++) {
+    for (size_t i = 0; i < arraySize; i++) {
         EXPECT_TRUE(memoryManager->allocationTypeForCompletionFence(validAllocations[i]));
     }
 }
