@@ -9,7 +9,8 @@
 
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper_base.inl"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper_skl_and_later.inl"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper_skl_to_tgllp.inl"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_to_dg2.inl"
 #include "level_zero/tools/source/debug/eu_thread.h"
 
 namespace L0 {
@@ -27,10 +28,6 @@ template <>
 bool L0HwHelperHw<Family>::isResumeWARequired() {
     return true;
 }
-
-// clang-format off
-#include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_plus.inl"
-// clang-format on
 
 template class L0HwHelperHw<Family>;
 

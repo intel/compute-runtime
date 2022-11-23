@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper_base.inl"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_to_dg2.inl"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper_xehp_and_later.inl"
 
 namespace L0 {
@@ -26,14 +27,6 @@ template <>
 bool L0HwHelperHw<Family>::isResumeWARequired() {
     return true;
 }
-
-template <>
-void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
-}
-
-// clang-format off
-#include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_plus.inl"
-// clang-format on
 
 template class L0HwHelperHw<Family>;
 

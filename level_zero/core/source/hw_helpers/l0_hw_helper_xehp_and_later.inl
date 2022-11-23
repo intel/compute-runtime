@@ -12,11 +12,6 @@
 namespace L0 {
 
 template <typename Family>
-bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
-    return false;
-}
-
-template <typename Family>
 bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing() const {
     return true;
 }
