@@ -10,7 +10,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxLkf : HwInfoConfigTestLinux {
+struct LkfProductHelperLinux : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
@@ -18,9 +18,9 @@ struct HwInfoConfigTestLinuxLkf : HwInfoConfigTestLinux {
     }
 };
 
-LKFTEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+LKFTEST_F(LkfProductHelperLinux, GivenLkfThenHwInfoIsCorrect) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -29,18 +29,18 @@ LKFTEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
-LKFTEST_F(HwInfoConfigTestLinuxLkf, negative) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+LKFTEST_F(LkfProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNegativeOneReturned) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
@@ -48,7 +48,7 @@ template <typename T>
 class LkfHwInfoTests : public ::testing::Test {};
 using lkfTestTypes = ::testing::Types<LkfHw1x8x8>;
 TYPED_TEST_CASE(LkfHwInfoTests, lkfTestTypes);
-TYPED_TEST(LkfHwInfoTests, gtSetupIsCorrect) {
+TYPED_TEST(LkfHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

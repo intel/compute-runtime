@@ -17,43 +17,41 @@
 
 using namespace NEO;
 
-using IcllpHwInfoConfig = ::testing::Test;
+using IcllpProductHelper = HwInfoConfigTest;
 
-ICLLPTEST_F(IcllpHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+ICLLPTEST_F(IcllpProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
+
+    GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-ICLLPTEST_F(IcllpHwInfoConfig, givenHwInfoConfigWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isAdditionalMediaSamplerProgrammingRequired());
+ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenTrueIsReturned) {
+
+    EXPECT_TRUE(productHelper->isAdditionalMediaSamplerProgrammingRequired());
 }
 
-ICLLPTEST_F(IcllpHwInfoConfig, givenHwInfoConfigWhenAskedIfInitialFlagsProgrammingIsRequiredThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isInitialFlagsProgrammingRequired());
+ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenAskedIfInitialFlagsProgrammingIsRequiredThenTrueIsReturned) {
+
+    EXPECT_TRUE(productHelper->isInitialFlagsProgrammingRequired());
 }
 
-ICLLPTEST_F(IcllpHwInfoConfig, givenHwInfoConfigWhenAskedIfReturnedCmdSizeForMediaSamplerAdjustmentIsRequiredThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
+ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenAskedIfReturnedCmdSizeForMediaSamplerAdjustmentIsRequiredThenTrueIsReturned) {
+
+    EXPECT_TRUE(productHelper->isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
 }
 
-using IcllpHwInfo = HwInfoConfigTest;
-
-ICLLPTEST_F(IcllpHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+ICLLPTEST_F(IcllpProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Icllp, productHelper->getAubStreamProductFamily());
 }
 
-ICLLPTEST_F(IcllpHwInfo, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
+ICLLPTEST_F(IcllpProductHelper, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {
         0x100080008,
         0x100040008,
@@ -61,10 +59,9 @@ ICLLPTEST_F(IcllpHwInfo, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTable
     bool boolValue[]{
         true, false};
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    FeatureTable &featureTable = hwInfo.featureTable;
-    WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
+    GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
+    FeatureTable &featureTable = pInHwInfo.featureTable;
+    WorkaroundTable &workaroundTable = pInHwInfo.workaroundTable;
 
     for (auto config : configs) {
         for (auto setParamBool : boolValue) {
@@ -72,7 +69,7 @@ ICLLPTEST_F(IcllpHwInfo, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTable
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
+            hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
@@ -96,45 +93,41 @@ ICLLPTEST_F(IcllpHwInfo, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTable
     }
 }
 
-ICLLPTEST_F(IcllpHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo), AOT::ICL);
+ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(*defaultHwInfo), AOT::ICL);
 }
 
-ICLLPTEST_F(IcllpHwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
+ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
+
+    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
-ICLLPTEST_F(IcllpHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
 
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyThreadArbitrationPolicySupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyCoherencyRequiredSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyZPassAsyncComputeThreadLimitSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyPixelAsyncComputeThreadLimitSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyLargeGrfModeSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionModeSupport());
+    EXPECT_TRUE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
+    EXPECT_TRUE(productHelper->getScmPropertyCoherencyRequiredSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyZPassAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyPixelAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyLargeGrfModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyStatelessMocsSupport());
-    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
-    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }

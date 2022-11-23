@@ -11,15 +11,15 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxIcllp : HwInfoConfigTestLinux {
+struct IcllpProductHelperLinux : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
     }
 };
 
-ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+ICLLPTEST_F(IcllpProductHelperLinux, GivenIcllpThenHwInfoIsCorrect) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -29,18 +29,16 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
-ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNegativeOneReturned) {
-
-    auto &productHelper = getHelper<ProductHelper>();
+ICLLPTEST_F(IcllpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNegativeOneReturned) {
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
