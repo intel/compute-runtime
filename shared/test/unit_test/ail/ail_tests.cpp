@@ -13,6 +13,7 @@
 namespace NEO {
 using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsDG2 = IsProduct<IGFX_DG2>;
+using IsHostPtrTrackingDisabled = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN11LP_CORE>;
 
 using AILTests = ::testing::Test;
 template <PRODUCT_FAMILY productFamily>
@@ -23,10 +24,9 @@ class AILMock : public AILConfigurationHw<productFamily> {
     using AILConfiguration::sourcesContainKernel;
 };
 
-HWTEST2_F(AILTests, givenUninitializedTemplateWhenGetAILConfigurationThenNullptrIsReturned, IsSKL) {
+HWTEST2_F(AILTests, givenInitializedTemplateWhenGetAILConfigurationThenNullptrIsNotReturned, IsSKL) {
     auto ailConfiguration = AILConfiguration::get(productFamily);
-
-    ASSERT_EQ(nullptr, ailConfiguration);
+    EXPECT_NE(nullptr, ailConfiguration);
 }
 
 HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64SupportIsEnabled, IsAtLeastGen12lp) {
@@ -177,6 +177,42 @@ HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSource
     ail.modifyKernelIfRequired(kernelSources);
 
     EXPECT_STREQ(copyKernel.c_str(), kernelSources.c_str());
+}
+
+HWTEST2_F(AILTests, givenPreGen12AndProcessNameIsResolveWhenApplyWithDavinciResolveThenHostPtrTrackingIsDisabled, IsHostPtrTrackingDisabled) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "resolve";
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    auto ailConfiguration = AILConfiguration::get(productFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
+    NEO::RuntimeCapabilityTable rtTable = {};
+    rtTable.hostPtrTrackingEnabled = true;
+
+    ailConfiguration->apply(rtTable);
+
+    EXPECT_FALSE(rtTable.hostPtrTrackingEnabled);
+}
+
+HWTEST2_F(AILTests, givenPreGen12AndAndProcessNameIsNotResolveWhenApplyWithDavinciResolveThenHostPtrTrackingIsEnabled, IsHostPtrTrackingDisabled) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "usualProcessName";
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    auto ailConfiguration = AILConfiguration::get(productFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
+    NEO::RuntimeCapabilityTable rtTable = {};
+    rtTable.hostPtrTrackingEnabled = true;
+
+    ailConfiguration->apply(rtTable);
+
+    EXPECT_TRUE(rtTable.hostPtrTrackingEnabled);
 }
 
 } // namespace NEO

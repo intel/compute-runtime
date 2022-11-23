@@ -8,7 +8,9 @@
 #include "shared/source/ail/ail_configuration.h"
 
 #include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/hw_info.h"
 
+#include <map>
 #include <string>
 #include <string_view>
 
@@ -21,4 +23,5 @@ bool AILConfiguration::isKernelHashCorrect(const std::string &kernelsSources, ui
 bool AILConfiguration::sourcesContainKernel(const std::string &kernelsSources, std::string_view kernelName) const {
     return (kernelsSources.find(kernelName) != std::string::npos);
 }
+
 } // namespace NEO
