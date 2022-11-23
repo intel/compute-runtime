@@ -79,7 +79,7 @@ bool L0HwHelper::useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo) {
     if (NEO::DebugManager.flags.SignalAllEventPackets.get() != -1) {
         return !!NEO::DebugManager.flags.SignalAllEventPackets.get();
     }
-    return true;
+    return false;
 }
 
 } // namespace L0
