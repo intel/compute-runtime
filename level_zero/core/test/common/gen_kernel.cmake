@@ -23,7 +23,6 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
       set(output_files
           ${outputpath_base}.bin
           ${outputpath_base}.spv
-          ${outputpath_base}.dbg
       )
 
       add_custom_command(
@@ -36,7 +35,7 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
 
       list(APPEND ${target_list} ${output_files})
     else()
-      foreach(extension "bin" "spv" "dbg")
+      foreach(extension "bin" "spv")
         set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${basename}_${suffix}.${extension}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${extension}
@@ -72,7 +71,6 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
       set(output_files
           ${outputpath_base}.bin
           ${outputpath_base}.spv
-          ${outputpath_base}.dbg
       )
 
       set(output_name "-output" "${prefix}_${basename}")
@@ -87,7 +85,7 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
 
       list(APPEND ${target_list} ${output_files})
     else()
-      foreach(extension "bin" "spv" "dbg")
+      foreach(extension "bin" "spv")
         set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${prefix}_${basename}_${suffix}.${extension}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${extension}
