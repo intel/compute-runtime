@@ -13,36 +13,34 @@
 
 using namespace NEO;
 
-using HwInfoConfigTestLinuxGen12lp = HwInfoConfigTestLinux;
+using Gen12lpProductHelperLinux = HwInfoConfigTestLinux;
 
-GEN12LPTEST_F(HwInfoConfigTestLinuxGen12lp, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+GEN12LPTEST_F(Gen12lpProductHelperLinux, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
 
     PLATFORM *testPlatform = &outHwInfo.platform;
     testPlatform->eDisplayCoreFamily = IGFX_GEN11_CORE;
     testPlatform->eRenderCoreFamily = IGFX_GEN11_CORE;
-    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
+    productHelper->adjustPlatformForProductFamily(&outHwInfo);
 
     EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eRenderCoreFamily);
     EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eDisplayCoreFamily);
 }
 
-GEN12LPTEST_F(HwInfoConfigTestLinuxGen12lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+GEN12LPTEST_F(Gen12lpProductHelperLinux, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_FALSE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+    EXPECT_FALSE(productHelper->isPageTableManagerSupported(outHwInfo));
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+    EXPECT_TRUE(productHelper->isPageTableManagerSupported(outHwInfo));
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+    EXPECT_TRUE(productHelper->isPageTableManagerSupported(outHwInfo));
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(hwInfoConfig.isPageTableManagerSupported(outHwInfo));
+    EXPECT_TRUE(productHelper->isPageTableManagerSupported(outHwInfo));
 }

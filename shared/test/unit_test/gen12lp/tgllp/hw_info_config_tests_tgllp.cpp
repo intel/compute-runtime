@@ -8,7 +8,6 @@
 #include "shared/source/gen12lp/hw_cmds_tgllp.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -23,53 +22,9 @@
 
 using namespace NEO;
 
-using TgllpHwInfo = HwInfoConfigTest;
+using TgllpHwInfo = ::testing::Test;
 
-TGLLPTEST_F(TgllpHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
-    EXPECT_EQ(aub_stream::ProductFamily::Tgllp, productHelper->getAubStreamProductFamily());
-}
-
-using HwInfoConfigTestTgllp = Test<DeviceFixture>;
-
-TGLLPTEST_F(HwInfoConfigTestTgllp, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
-}
-
-TGLLPTEST_F(HwInfoConfigTestTgllp, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyThreadArbitrationPolicySupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyCoherencyRequiredSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyZPassAsyncComputeThreadLimitSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyPixelAsyncComputeThreadLimitSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyLargeGrfModeSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionModeSupport());
-
-    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyStatelessMocsSupport());
-    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
-
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());
-
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
-
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
-
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
-    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
-}
-
-TGLLPTEST_F(HwInfoConfigTestTgllp, givenHwInfoErrorneousConfigStringThenThrow) {
+TGLLPTEST_F(TgllpHwInfo, givenHwInfoErrorneousConfigStringThenThrow) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
@@ -82,7 +37,7 @@ TGLLPTEST_F(HwInfoConfigTestTgllp, givenHwInfoErrorneousConfigStringThenThrow) {
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-TGLLPTEST_F(HwInfoConfigTestTgllp, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned) {
+TGLLPTEST_F(TgllpHwInfo, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
@@ -99,29 +54,6 @@ TGLLPTEST_F(HwInfoConfigTestTgllp, whenUsingCorrectConfigValueThenCorrectHwInfoI
     hardwareInfoSetup[productFamily](&hwInfo, false, config);
     EXPECT_EQ(1u, gtSystemInfo.SliceCount);
     EXPECT_EQ(2u, gtSystemInfo.DualSubSliceCount);
-}
-
-TGLLPTEST_F(HwInfoConfigTestTgllp, givenA0SteppingAndTgllpPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto &productHelper = getHelper<ProductHelper>();
-    std::array<std::pair<uint32_t, bool>, 3> revisions = {
-        {{REVISION_A0, true},
-         {REVISION_B, false},
-         {REVISION_C, false}}};
-
-    for (const auto &[revision, paramBool] : revisions) {
-        auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
-        productHelper.configureHardwareCustom(&hwInfo, nullptr);
-
-        EXPECT_EQ(paramBool, productHelper.pipeControlWARequired(hwInfo));
-        EXPECT_EQ(paramBool, productHelper.imagePitchAlignmentWARequired(hwInfo));
-        EXPECT_EQ(paramBool, productHelper.isForceEmuInt32DivRemSPWARequired(hwInfo));
-    }
-}
-
-TGLLPTEST_F(HwInfoConfigTestTgllp, givenHwInfoConfigWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.is3DPipelineSelectWARequired());
 }
 
 TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
@@ -165,16 +97,6 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
     }
 }
 
-TGLLPTEST_F(TgllpHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    uint64_t config = 0x100060010;
-    hardwareInfoSetup[productFamily](&hwInfo, false, config);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
-    EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
-}
-
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFamilyWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAubCenterIsInitializedCorrectly) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.SetCommandStreamReceiver.set(1);
@@ -189,6 +111,16 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
 
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
     EXPECT_FALSE(rootDeviceEnvironment->localMemoryEnabledReceived);
+}
+
+TGLLPTEST_F(TgllpHwInfo, givenProductHelperStringThenAfterSetupResultingVmeIsDisabled) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    uint64_t config = 0x100060010;
+    hardwareInfoSetup[productFamily](&hwInfo, false, config);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
+    EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
 }
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWithOverrideGpuAddressSpaceWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAubManagerIsInitializedWithCorrectGpuAddressSpace) {
@@ -234,15 +166,72 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenPrepareDevice
     }
 }
 
-TGLLPTEST_F(TgllpHwInfo, givenTgllpWhenObtainingBlitterPreferenceThenReturnFalse) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    const auto &hardwareInfo = *defaultHwInfo;
+using TgllpProductHelper = HwInfoConfigTest;
 
-    EXPECT_FALSE(hwInfoConfig.obtainBlitterPreference(hardwareInfo));
+TGLLPTEST_F(TgllpProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Tgllp, productHelper->getAubStreamProductFamily());
 }
 
-TGLLPTEST_F(TgllpHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::TGL);
+TGLLPTEST_F(TgllpProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
+
+    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
+}
+
+TGLLPTEST_F(TgllpProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
+
+    EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
+    EXPECT_TRUE(productHelper->getScmPropertyCoherencyRequiredSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyZPassAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyPixelAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyLargeGrfModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
+
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
+
+    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
+
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
+
+    EXPECT_FALSE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
+}
+
+TGLLPTEST_F(TgllpProductHelper, givenA0SteppingAndTgllpPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
+    std::array<std::pair<uint32_t, bool>, 3> revisions = {
+        {{REVISION_A0, true},
+         {REVISION_B, false},
+         {REVISION_C, false}}};
+
+    for (const auto &[revision, paramBool] : revisions) {
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
+        productHelper->configureHardwareCustom(&hwInfo, nullptr);
+
+        EXPECT_EQ(paramBool, productHelper->pipeControlWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper->imagePitchAlignmentWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper->isForceEmuInt32DivRemSPWARequired(hwInfo));
+    }
+}
+
+TGLLPTEST_F(TgllpProductHelper, givenProductHelperWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->is3DPipelineSelectWARequired());
+}
+
+TGLLPTEST_F(TgllpProductHelper, givenTgllpWhenObtainingBlitterPreferenceThenReturnFalse) {
+    EXPECT_FALSE(productHelper->obtainBlitterPreference(pInHwInfo));
+}
+
+TGLLPTEST_F(TgllpProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::TGL);
 }

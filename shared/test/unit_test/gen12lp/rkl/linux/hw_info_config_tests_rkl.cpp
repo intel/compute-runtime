@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxRkl : HwInfoConfigTestLinux {
+struct RklProductHelperLinux : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
@@ -21,9 +21,9 @@ struct HwInfoConfigTestLinuxRkl : HwInfoConfigTestLinux {
     }
 };
 
-RKLTEST_F(HwInfoConfigTestLinuxRkl, WhenConfiguringHwInfoThenConfigIsCorrect) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+RKLTEST_F(RklProductHelperLinux, WhenConfiguringHwInfoThenConfigIsCorrect) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -32,21 +32,23 @@ RKLTEST_F(HwInfoConfigTestLinuxRkl, WhenConfiguringHwInfoThenConfigIsCorrect) {
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
-RKLTEST_F(HwInfoConfigTestLinuxRkl, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
+RKLTEST_F(RklProductHelperLinux, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
-TEST(RklHwInfoTests, WhenSettingUpHwInfoThenConfigIsCorrect) {
+using RklHwInfoLinux = ::testing::Test;
+
+RKLTEST_F(RklHwInfoLinux, WhenSettingUpHwInfoThenConfigIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

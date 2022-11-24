@@ -9,10 +9,10 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
 
@@ -76,54 +76,47 @@ RKLTEST_F(RklHwInfo, givenRklWhenCheckL0ThenReturnTrue) {
     EXPECT_TRUE(hardwareInfo.capabilityTable.levelZeroSupported);
 }
 
-RKLTEST_F(RklHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::RKL);
+using RklProductHelper = HwInfoConfigTest;
+
+RKLTEST_F(RklProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::RKL);
 }
 
-RKLTEST_F(RklHwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
+RKLTEST_F(RklProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
+    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
-RKLTEST_F(RklHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+RKLTEST_F(RklProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
+    EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
+    EXPECT_TRUE(productHelper->getScmPropertyCoherencyRequiredSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyZPassAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyPixelAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyLargeGrfModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyThreadArbitrationPolicySupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyCoherencyRequiredSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyZPassAsyncComputeThreadLimitSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyPixelAsyncComputeThreadLimitSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyLargeGrfModeSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionModeSupport());
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyStatelessMocsSupport());
-    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
-
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
-    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
-using RklHwInfoConfig = Test<DeviceFixture>;
+RKLTEST_F(RklProductHelper, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
 
-RKLTEST_F(RklHwInfoConfig, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 3> revisions = {
         {{REVISION_A0, true},
          {REVISION_B, true},
@@ -131,17 +124,16 @@ RKLTEST_F(RklHwInfoConfig, givenA0OrBSteppingAndRklPlatformWhenAskingIfWAIsRequi
 
     for (const auto &[revision, paramBool] : revisions) {
         auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
 
-        productHelper.configureHardwareCustom(&hwInfo, nullptr);
+        productHelper->configureHardwareCustom(&hwInfo, nullptr);
 
-        EXPECT_EQ(paramBool, productHelper.isForceEmuInt32DivRemSPWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper->isForceEmuInt32DivRemSPWARequired(hwInfo));
     }
 }
 
-RKLTEST_F(RklHwInfoConfig, givenHwInfoConfigWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.is3DPipelineSelectWARequired());
+RKLTEST_F(RklProductHelper, givenProductHelperWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->is3DPipelineSelectWARequired());
 }
 
 using CompilerHwInfoConfigHelperTestsRkl = ::testing::Test;

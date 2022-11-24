@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxTgllp : HwInfoConfigTestLinux {
+struct TgllpProductHelperLinux : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
@@ -24,20 +24,19 @@ struct HwInfoConfigTestLinuxTgllp : HwInfoConfigTestLinux {
     }
 };
 
-TGLLPTEST_F(HwInfoConfigTestLinuxTgllp, GivenTGLLPWhenConfigureHardwareCustomThenMTPIsNotSet) {
-    auto &productHelper = getHelper<ProductHelper>();
+TGLLPTEST_F(TgllpProductHelperLinux, GivenTGLLPWhenConfigureHardwareCustomThenMTPIsNotSet) {
 
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
     PreemptionHelper::adjustDefaultPreemptionMode(pInHwInfo.capabilityTable, true, true, true);
 
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
 }
 
-TGLLPTEST_F(HwInfoConfigTestLinuxTgllp, configureHwInfo) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+TGLLPTEST_F(TgllpProductHelperLinux, WhenConfiguringHwInfoThenInfoIsSetCorrectly) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
@@ -46,26 +45,26 @@ TGLLPTEST_F(HwInfoConfigTestLinuxTgllp, configureHwInfo) {
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
-TGLLPTEST_F(HwInfoConfigTestLinuxTgllp, negative) {
+TGLLPTEST_F(TgllpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
 
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
 template <typename T>
-class TgllpHwInfoTests : public ::testing::Test {};
+class TgllpHwInfoLinux : public ::testing::Test {};
 typedef ::testing::Types<TgllpHw1x6x16> tgllpTestTypes;
-TYPED_TEST_CASE(TgllpHwInfoTests, tgllpTestTypes);
-TYPED_TEST(TgllpHwInfoTests, gtSetupIsCorrect) {
+TYPED_TEST_CASE(TgllpHwInfoLinux, tgllpTestTypes);
+TYPED_TEST(TgllpHwInfoLinux, gtSetupIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

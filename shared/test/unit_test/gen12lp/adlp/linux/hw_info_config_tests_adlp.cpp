@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxAdlp : HwInfoConfigTestLinux {
+struct AdlpProductHelperLinux : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
@@ -22,9 +22,9 @@ struct HwInfoConfigTestLinuxAdlp : HwInfoConfigTestLinux {
     }
 };
 
-ADLPTEST_F(HwInfoConfigTestLinuxAdlp, WhenConfiguringHwInfoThenInfoIsSetCorrectly) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+ADLPTEST_F(AdlpProductHelperLinux, WhenConfiguringHwInfoThenInfoIsSetCorrectly) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
 
     EXPECT_EQ(0, ret);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
@@ -34,22 +34,21 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, WhenConfiguringHwInfoThenInfoIsSetCorrectl
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
-ADLPTEST_F(HwInfoConfigTestLinuxAdlp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
-    auto &productHelper = getHelper<ProductHelper>();
+ADLPTEST_F(AdlpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
 
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
-ADLPTEST_F(HwInfoConfigTestLinuxAdlp, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
+ADLPTEST_F(AdlpProductHelperLinux, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     ADLP::setupHardwareInfoBase(&hwInfo, false);
@@ -61,10 +60,10 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, givenAdlpConfigWhenSetupHardwareInfoBaseTh
 }
 
 template <typename T>
-using AdlpConfigHwInfoTests = ::testing::Test;
+using AdlpHwInfoLinux = ::testing::Test;
 using adlpConfigTestTypes = ::testing::Types<AdlpHwConfig>;
-TYPED_TEST_CASE(AdlpConfigHwInfoTests, adlpConfigTestTypes);
-TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSystemInfoAndWaAndFtrTablesAreSetCorrect) {
+TYPED_TEST_CASE(AdlpHwInfoLinux, adlpConfigTestTypes);
+TYPED_TEST(AdlpHwInfoLinux, givenAdlpConfigWhenSetupHardwareInfoThenGtSystemInfoAndWaAndFtrTablesAreSetCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
@@ -135,7 +134,7 @@ TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSyst
     }
 }
 
-TYPED_TEST(AdlpConfigHwInfoTests, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {
+TYPED_TEST(AdlpHwInfoLinux, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {
     HardwareInfo hwInfo = {};
     hwInfo.gtSystemInfo = {0};
 

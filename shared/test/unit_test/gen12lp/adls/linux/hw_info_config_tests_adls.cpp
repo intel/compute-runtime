@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxAdls : HwInfoConfigTestLinux {
+struct AdlsProductHelperLinux : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
@@ -21,9 +21,9 @@ struct HwInfoConfigTestLinuxAdls : HwInfoConfigTestLinux {
     }
 };
 
-ADLSTEST_F(HwInfoConfigTestLinuxAdls, WhenConfiguringHwInfoThenConfigIsCorrect) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+ADLSTEST_F(AdlsProductHelperLinux, WhenConfiguringHwInfoThenConfigIsCorrect) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
 
     EXPECT_EQ(0, ret);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
@@ -33,21 +33,22 @@ ADLSTEST_F(HwInfoConfigTestLinuxAdls, WhenConfiguringHwInfoThenConfigIsCorrect) 
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
-ADLSTEST_F(HwInfoConfigTestLinuxAdls, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
-    auto &productHelper = getHelper<ProductHelper>();
+ADLSTEST_F(AdlsProductHelperLinux, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
-TEST(AdlsHwInfoTests, WhenSettingUpHwInfoThenConfigIsCorrect) {
+using AdlsHwInfoLinux = ::testing::Test;
+
+ADLSTEST_F(AdlsHwInfoLinux, WhenSettingUpHwInfoThenConfigIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
