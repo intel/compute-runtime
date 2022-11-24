@@ -37,6 +37,8 @@ class LinearStream {
     uint64_t getGpuBase() const;
     void setGpuBase(uint64_t gpuAddress);
 
+    uint64_t getCurrentGpuAddressPosition() const;
+
     void overrideMaxSize(size_t newMaxSize);
     void replaceBuffer(void *buffer, size_t bufferSize);
     GraphicsAllocation *getGraphicsAllocation() const;
@@ -112,4 +114,9 @@ inline GraphicsAllocation *LinearStream::getGraphicsAllocation() const {
 inline void LinearStream::replaceGraphicsAllocation(GraphicsAllocation *gfxAllocation) {
     graphicsAllocation = gfxAllocation;
 }
+
+inline uint64_t LinearStream::getCurrentGpuAddressPosition() const {
+    return (getGpuBase() + getUsed());
+}
+
 } // namespace NEO

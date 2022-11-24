@@ -1761,8 +1761,15 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsWhenDispa
     batchBuffer.hasStallingCmds = true;
     directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
 
+    auto startAddress = ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset);
+    auto jumpOffset = directSubmission.getSizeSemaphoreSection(false) + sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM) +
+                      EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart();
+    uint64_t expectedJumpAddress = directSubmission.ringCommandStream.getGpuBase() + offset + jumpOffset;
+
+    EXPECT_TRUE(verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, CS_GPR_R1, 0, CompareOperation::Equal, false));
+
     HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset);
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart());
     hwParse.findHardwareCommands<FamilyType>();
 
     bool success = false;
@@ -1856,8 +1863,15 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenStoppingRingThenProgramSched
 
     directSubmission.stopRingBuffer();
 
+    auto startAddress = ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset);
+    auto jumpOffset = directSubmission.getSizeSemaphoreSection(false) + sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM) +
+                      EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart();
+    uint64_t expectedJumpAddress = directSubmission.ringCommandStream.getGpuBase() + offset + jumpOffset;
+
+    EXPECT_TRUE(verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, CS_GPR_R1, 0, CompareOperation::Equal, false));
+
     HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset);
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart());
     hwParse.findHardwareCommands<FamilyType>();
 
     bool success = false;

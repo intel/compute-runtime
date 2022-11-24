@@ -148,8 +148,6 @@ class DirectSubmissionHw {
 
     size_t getSizeEnd();
 
-    uint64_t getCommandBufferPositionGpuAddress(void *position);
-
     void dispatchPartitionRegisterConfiguration();
     size_t getSizePartitionRegisterConfigurationSection();
 

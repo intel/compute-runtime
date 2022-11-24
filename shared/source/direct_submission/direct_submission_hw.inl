@@ -82,7 +82,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingSchedulerSection(uint32_t value) {
-    uint64_t schedulerStartAddress = getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
+    uint64_t schedulerStartAddress = ringCommandStream.getCurrentGpuAddressPosition();
     uint64_t deferredTasksListGpuVa = deferredTasksListAllocation->getGpuAddress();
 
     // 1. Init section
@@ -409,7 +409,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
         switchRingBuffers();
     }
-    uint64_t gpuStartVa = getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
+    uint64_t gpuStartVa = ringCommandStream.getCurrentGpuAddressPosition();
 
     if (!this->partitionConfigSet) {
         dispatchPartitionRegisterConfiguration();
@@ -559,14 +559,6 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::getCommandBufferPositionGpuAddress(void *position) {
-    void *currentBase = ringCommandStream.getCpuBase();
-
-    size_t offset = ptrDiff(position, currentBase);
-    return ringCommandStream.getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(offset);
-}
-
-template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch() {
     size_t size = getSizeSemaphoreSection(false);
     if (workloadMode == 0) {
@@ -624,8 +616,8 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         }
 
         dispatchStartSection(commandStreamAddress);
-        void *returnPosition = ringCommandStream.getSpace(0);
-        uint64_t returnGpuPointer = getCommandBufferPositionGpuAddress(returnPosition);
+
+        uint64_t returnGpuPointer = ringCommandStream.getCurrentGpuAddressPosition();
 
         if (this->relaxedOrderingEnabled) {
             dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer);
@@ -659,13 +651,21 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingQueueStall() {
+    LinearStream bbStartStream(ringCommandStream.getSpace(EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart()),
+                               EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart());
+
     LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5, 1, true);
     dispatchSemaphoreSection(currentQueueWorkCount, false);
+
+    // patch conditional bb_start with current GPU address
+    EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(bbStartStream, ringCommandStream.getCurrentGpuAddressPosition(),
+                                                                                      CS_GPR_R1, 0, CompareOperation::Equal, false);
 }
 
 template <typename GfxFamily, typename Dispatcher>
 size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatchRelaxedOrderingQueueStall() {
-    return getSizeSemaphoreSection(false) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    return getSizeSemaphoreSection(false) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) +
+           EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart();
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -762,8 +762,6 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>() + RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
     }
 
-    getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
-
     if (ringCommandStream.getAvailableSpace() < requiredMinimalSize) {
         switchRingBuffers();
     }
@@ -828,7 +826,7 @@ template <typename GfxFamily, typename Dispatcher>
 inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers() {
     GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations();
     void *flushPtr = ringCommandStream.getSpace(0);
-    uint64_t currentBufferGpuVa = getCommandBufferPositionGpuAddress(flushPtr);
+    uint64_t currentBufferGpuVa = ringCommandStream.getCurrentGpuAddressPosition();
 
     if (ringStart) {
         dispatchSwitchRingBufferSection(nextRingBuffer->getGpuAddress());
