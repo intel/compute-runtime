@@ -32,10 +32,9 @@ constexpr size_t getSizeReturnPtrRegs() {
 }
 
 template <typename GfxFamily>
-struct SchedulerSizeAndOffsetSection {
-    using MI_MATH = typename GfxFamily::MI_MATH;
-    using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
+struct StaticSchedulerSizeAndOffsetSection {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
     static constexpr uint64_t initSectionSize = EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart() + (6 * sizeof(MI_LOAD_REGISTER_IMM)) +
@@ -56,7 +55,24 @@ struct SchedulerSizeAndOffsetSection {
     static constexpr uint64_t drainRequestSectionStart = tasksListLoopCheckSectionStart + tasksListLoopCheckSectionSize;
     static constexpr uint64_t drainRequestSectionSize = sizeof(typename GfxFamily::MI_ARB_CHECK) + EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart();
 
-    static constexpr uint64_t schedulerLoopCheckSectionStart = drainRequestSectionStart + drainRequestSectionSize;
+    static constexpr uint64_t schedulerLoopCheckSectionJumpStart = drainRequestSectionStart + drainRequestSectionSize;
+    static constexpr uint64_t schedulerLoopCheckSectionJumpSize = 2 * sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_BATCH_BUFFER_START);
+
+    static constexpr uint64_t semaphoreSectionJumpStart = schedulerLoopCheckSectionJumpStart + schedulerLoopCheckSectionJumpSize;
+    static constexpr uint64_t semaphoreSectionJumpSize = EncodeMiPredicate<GfxFamily>::getCmdSize() + (2 * sizeof(MI_LOAD_REGISTER_IMM)) + EncodeAluHelper<GfxFamily, 4>::getCmdsSize() +
+                                                         sizeof(MI_BATCH_BUFFER_START);
+
+    static constexpr uint64_t totalSize = semaphoreSectionJumpStart + semaphoreSectionJumpSize;
+};
+
+template <typename GfxFamily>
+struct DynamicSchedulerSizeAndOffsetSection {
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
+
+    static constexpr uint64_t initSectionSize = (2 * sizeof(MI_LOAD_REGISTER_IMM)) + sizeof(MI_BATCH_BUFFER_START);
+
+    static constexpr uint64_t schedulerLoopCheckSectionStart = initSectionSize;
     static constexpr uint64_t schedulerLoopCheckSectionSize = EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataMemBatchBufferStart() + sizeof(MI_BATCH_BUFFER_START);
 
     static constexpr uint64_t semaphoreSectionStart = schedulerLoopCheckSectionStart + schedulerLoopCheckSectionSize;

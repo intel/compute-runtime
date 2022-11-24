@@ -131,7 +131,7 @@ class DirectSubmissionHw {
     size_t getSizeDispatchRelaxedOrderingQueueStall();
 
     void dispatchTaskStoreSection(uint64_t taskStartSectionVa);
-    MOCKABLE_VIRTUAL void preinitializeTaskStoreSection();
+    MOCKABLE_VIRTUAL void preinitializeRelaxedOrderingSections();
 
     void initRelaxedOrderingRegisters();
 
@@ -145,6 +145,8 @@ class DirectSubmissionHw {
 
     void dispatchDisablePrefetcher(bool disable);
     size_t getSizeDisablePrefetcher();
+
+    MOCKABLE_VIRTUAL void dispatchStaticRelaxedOrderingScheduler();
 
     size_t getSizeEnd();
 
@@ -174,6 +176,7 @@ class DirectSubmissionHw {
     };
     std::vector<RingBufferUse> ringBuffers;
     std::unique_ptr<uint8_t[]> preinitializedTaskStoreSection;
+    std::unique_ptr<uint8_t[]> preinitializedRelaxedOrderingScheduler;
     uint32_t currentRingBuffer = 0u;
     uint32_t previousRingBuffer = 0u;
     uint32_t maxRingBufferCount = std::numeric_limits<uint32_t>::max();
@@ -196,6 +199,7 @@ class DirectSubmissionHw {
     GraphicsAllocation *semaphores = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
     GraphicsAllocation *deferredTasksListAllocation = nullptr;
+    GraphicsAllocation *relaxedOrderingSchedulerAllocation = nullptr;
     void *semaphorePtr = nullptr;
     volatile RingSemaphoreData *semaphoreData = nullptr;
     volatile void *workloadModeOneStoreAddress = nullptr;
