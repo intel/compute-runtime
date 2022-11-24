@@ -304,9 +304,6 @@ TEST(DecoderTests, givenDeprecatedDeviceNamesWhenValidateInputThenCorrectWarning
     MockDecoder decoder{suppressMessages};
 
     auto deprecatedAcronyms = decoder.mockArgHelper->productConfigHelper->getDeprecatedAcronyms();
-    if (deprecatedAcronyms.empty()) {
-        GTEST_SKIP();
-    }
 
     for (const auto &acronym : deprecatedAcronyms) {
         const std::vector<std::string> args = {
@@ -326,29 +323,34 @@ TEST(DecoderTests, givenDeprecatedDeviceNamesWhenValidateInputThenCorrectWarning
     }
 }
 
-TEST(DecoderTests, givenDeviceNamesWhenValidateInputThenSuccessIsReturned) {
+TEST(DecoderTests, givenProductNamesThatExistsForIgaWhenValidateInputThenSuccessIsReturned) {
     constexpr auto suppressMessages{false};
     MockDecoder decoder{suppressMessages};
-    decoder.mockArgHelper->hasOutput = true;
-
-    auto supportedAcronyms = decoder.mockArgHelper->productConfigHelper->getAllProductAcronyms();
-    if (supportedAcronyms.empty()) {
+    if (!decoder.getMockIga()->isValidPlatform()) {
         GTEST_SKIP();
     }
 
-    for (const auto &acronym : supportedAcronyms) {
-        const std::vector<std::string> args = {
-            "ocloc",
-            "disasm",
-            "-device",
-            acronym.str()};
+    decoder.mockArgHelper->hasOutput = true;
+    auto aotInfos = decoder.mockArgHelper->productConfigHelper->getDeviceAotInfo();
 
-        ::testing::internal::CaptureStdout();
-        const auto result = decoder.validateInput(args);
-        const auto output{::testing::internal::GetCapturedStdout()};
+    for (const auto &device : aotInfos) {
+        if (productFamily != device.hwInfo->platform.eProductFamily)
+            continue;
 
-        EXPECT_EQ(result, 0);
-        EXPECT_TRUE(output.empty());
+        for (const auto &acronym : device.acronyms) {
+            const std::vector<std::string> args = {
+                "ocloc",
+                "disasm",
+                "-device",
+                acronym.str()};
+
+            ::testing::internal::CaptureStdout();
+            const auto result = decoder.validateInput(args);
+            const auto output{::testing::internal::GetCapturedStdout()};
+
+            EXPECT_EQ(result, 0);
+            EXPECT_TRUE(output.empty());
+        }
     }
 
     decoder.mockArgHelper->hasOutput = false;
@@ -391,9 +393,13 @@ TEST(DecoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnV
 }
 
 TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndWarningAboutCreationOfDefaultDirectoryIsPrinted) {
-    if (gEnvironment->productConfig.empty()) {
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+
+    if (gEnvironment->productConfig.empty() || !decoder.getMockIga()->isValidPlatform()) {
         GTEST_SKIP();
     }
+
     const std::vector<std::string> args = {
         "ocloc",
         "disasm",
@@ -403,9 +409,6 @@ TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenRetur
         gEnvironment->productConfig.c_str(),
         "-patch",
         "test_files/patch"};
-
-    constexpr auto suppressMessages{false};
-    MockDecoder decoder{suppressMessages};
 
     ::testing::internal::CaptureStdout();
     const auto result = decoder.validateInput(args);
@@ -418,7 +421,10 @@ TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenRetur
 }
 
 TEST(DecoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryWarningIsNotEmitted) {
-    if (gEnvironment->productConfig.empty()) {
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+
+    if (gEnvironment->productConfig.empty() || !decoder.getMockIga()->isValidPlatform()) {
         GTEST_SKIP();
     }
     const std::vector<std::string> args = {
@@ -430,8 +436,7 @@ TEST(DecoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValid
         gEnvironment->productConfig.c_str(),
         "-patch",
         "test_files/patch"};
-    constexpr auto suppressMessages{false};
-    MockDecoder decoder{suppressMessages};
+
     decoder.mockArgHelper->hasOutput = true;
 
     ::testing::internal::CaptureStdout();

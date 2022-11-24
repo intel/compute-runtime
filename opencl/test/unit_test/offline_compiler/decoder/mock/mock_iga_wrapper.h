@@ -11,6 +11,8 @@
 #include <map>
 #include <string>
 
+extern PRODUCT_FAMILY productFamily;
+
 struct MockIgaWrapper : public IgaWrapper {
     bool tryDisassembleGenISA(const void *kernelPtr, uint32_t kernelSize, std::string &out) override {
         out = asmToReturn;
@@ -37,6 +39,11 @@ struct MockIgaWrapper : public IgaWrapper {
 
     bool tryLoadIga() override {
         return true;
+    }
+
+    bool isValidPlatform() {
+        setProductFamily(productFamily);
+        return isKnownPlatform();
     }
 
     std::string asmToReturn;

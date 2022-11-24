@@ -94,7 +94,10 @@ TEST(EncoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnV
 }
 
 TEST(EncoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryIsNotUsedAsDumpPath) {
-    if (gEnvironment->productConfig.empty()) {
+    constexpr auto suppressMessages{false};
+    MockEncoder encoder{suppressMessages};
+
+    if (gEnvironment->productConfig.empty() || !encoder.getMockIga()->isValidPlatform()) {
         GTEST_SKIP();
     }
     const std::vector<std::string> args = {
@@ -106,8 +109,6 @@ TEST(EncoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValid
         gEnvironment->productConfig.c_str(),
     };
 
-    constexpr auto suppressMessages{false};
-    MockEncoder encoder{suppressMessages};
     encoder.mockArgHelper->hasOutput = true;
 
     ::testing::internal::CaptureStdout();
