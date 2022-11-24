@@ -23,6 +23,7 @@ extern pIgscSetEccConfig setEccConfig;
 namespace ult {
 
 std::map<std::string, void *> IFRfuncMap;
+constexpr static uint32_t mockMaxTileCount = 2;
 
 int mockDeviceIfrGetStatusExt(struct igsc_device_handle *handle, uint32_t *supportedTests, uint32_t *hwCapabilities, uint32_t *ifrApplied, uint32_t *prevErrors, uint32_t *pendingReset) {
     return 0;
@@ -50,6 +51,15 @@ static inline int mockEccConfigGetFailure(struct igsc_device_handle *handle, uin
 
 static inline int mockEccConfigSetFailure(struct igsc_device_handle *handle, uint8_t newState, uint8_t *currentState, uint8_t *pendingState) {
     return -1;
+}
+
+static inline int mockCountTiles(struct igsc_device_handle *handle, uint32_t *numOfTiles) {
+    *numOfTiles = mockMaxTileCount;
+    return 0;
+}
+
+static inline int mockMemoryErrors(struct igsc_device_handle *handle, struct igsc_gfsp_mem_err *tiles) {
+    return 0;
 }
 
 TEST(FwStatusExtTest, GivenIFRWasSetWhenFirmwareUtilChecksIFRThenIFRStatusIsUpdated) {
@@ -271,6 +281,67 @@ TEST(LinuxFwEccTest, GivenGetProcAddrCallFailsWhenFirmwareUtilChecksEccGetAndSet
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
     ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemErrorCountTest, GivenGetProcAddrCallFailsWhenMemoryErrorCountIsRequestedThenFailureIsReturned) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    L0::ult::MockFwUtilOsLibrary::getNonNullProcAddr = false;
+
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
+    zes_ras_error_type_t errorType = ZES_RAS_ERROR_TYPE_CORRECTABLE;
+    uint32_t subDeviceCount = 1;
+    uint32_t subDeviceId = 0;
+    uint64_t errorCount = 0;
+    auto ret = pFwUtilImp->fwGetMemoryErrorCount(errorType, subDeviceCount, subDeviceId, errorCount);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemErrorCountTest, GivenValidFwUtilMethodWhenMemoryErrorCountIsRequestedThenCorrespondingCallSucceeds) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    struct IgscMemErrMockOsLibrary : public OsLibraryUtil {
+      public:
+        ~IgscMemErrMockOsLibrary() override = default;
+        void *getProcAddress(const std::string &procName) override {
+            memErrFuncMap["igsc_gfsp_count_tiles"] = reinterpret_cast<void *>(&mockCountTiles);
+            memErrFuncMap["igsc_gfsp_memory_errors"] = reinterpret_cast<void *>(&mockMemoryErrors);
+            auto it = memErrFuncMap.find(procName);
+            if (memErrFuncMap.end() == it) {
+                return nullptr;
+            } else {
+                return it->second;
+            }
+            return nullptr;
+        }
+        bool isLoaded() override {
+            return false;
+        }
+        std::map<std::string, void *> memErrFuncMap;
+    };
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new IgscMemErrMockOsLibrary());
+    zes_ras_error_type_t errorType = ZES_RAS_ERROR_TYPE_CORRECTABLE;
+    uint32_t subDeviceCount = 1;
+    uint32_t subDeviceId = 0;
+    uint64_t errorCount = 0;
+    auto ret = pFwUtilImp->fwGetMemoryErrorCount(errorType, subDeviceCount, subDeviceId, errorCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
     delete pFwUtilImp;

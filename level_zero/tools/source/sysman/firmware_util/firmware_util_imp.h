@@ -62,6 +62,9 @@ typedef int (*pIgscIafPscUpdate)(struct igsc_device_handle *handle,
 typedef int (*pIgscGfspMemoryErrors)(struct igsc_device_handle *handle,
                                      struct igsc_gfsp_mem_err *tiles);
 
+typedef int (*pIgscGfspCountTiles)(struct igsc_device_handle *handle,
+                                   uint32_t *numOfTiles);
+
 typedef int (*pIgscIfrRunArrayScanTest)(struct igsc_device_handle *handle,
                                         uint32_t *status,
                                         uint32_t *extendedStatus,
@@ -97,6 +100,7 @@ extern pIgscDeviceClose deviceClose;
 extern pIgscIfrGetStatusExt deviceIfrGetStatusExt;
 extern pIgscIafPscUpdate iafPscUpdate;
 extern pIgscGfspMemoryErrors gfspMemoryErrors;
+extern pIgscGfspCountTiles gfspCountTiles;
 extern pIgscIfrRunArrayScanTest deviceIfrRunArrayScanTest;
 extern pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 extern pIgscGetEccConfig getEccConfig;

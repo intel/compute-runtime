@@ -16,6 +16,7 @@ namespace L0 {
 const std::string fwDeviceIfrGetStatusExt = "igsc_ifr_get_status_ext";
 const std::string fwIafPscUpdate = "igsc_iaf_psc_update";
 const std::string fwGfspMemoryErrors = "igsc_gfsp_memory_errors";
+const std::string fwGfspCountTiles = "igsc_gfsp_count_tiles";
 const std::string fwDeviceIfrRunArrayScanTest = "igsc_ifr_run_array_scan_test";
 const std::string fwDeviceIfrRunMemPPRTest = "igsc_ifr_run_mem_ppr_test";
 const std::string fwEccConfigGet = "igsc_ecc_config_get";
@@ -24,6 +25,7 @@ const std::string fwEccConfigSet = "igsc_ecc_config_set";
 pIgscIfrGetStatusExt deviceIfrGetStatusExt;
 pIgscIafPscUpdate iafPscUpdate;
 pIgscGfspMemoryErrors gfspMemoryErrors;
+pIgscGfspCountTiles gfspCountTiles;
 pIgscIfrRunArrayScanTest deviceIfrRunArrayScanTest;
 pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 pIgscGetEccConfig getEccConfig;
@@ -61,18 +63,39 @@ ze_result_t FirmwareUtilImp::fwCallGetstatusExt(uint32_t &supportedTests, uint32
 
 ze_result_t FirmwareUtilImp::fwGetMemoryErrorCount(zes_ras_error_type_t type, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
+    uint32_t numOfTiles = 0;
+    int ret = -1;
+    gfspCountTiles = reinterpret_cast<pIgscGfspCountTiles>(libraryHandle->getProcAddress(fwGfspCountTiles));
+    if (gfspCountTiles != nullptr) {
+        ret = gfspCountTiles(&fwDeviceHandle, &numOfTiles);
+    }
+
+    if (ret != IGSC_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "Error@ %s(): Could not retrieve tile count from igsc\n", __FUNCTION__);
+        // igsc_gfsp_count_tiles returns max tile info rather than actual count, igsc behaves in such a way that
+        // it expects buffer (igsc_gfsp_mem_err) to be allocated for max tile count and not actual tile count.
+        // This is fallback path when igsc_gfsp_count_tiles fails, where buffer for actual tile count is used to
+        // get memory error count.
+        numOfTiles = (subDeviceCount == 0) ? 1 : subDeviceCount;
+    }
+
     gfspMemoryErrors = reinterpret_cast<pIgscGfspMemoryErrors>(libraryHandle->getProcAddress(fwGfspMemoryErrors));
     if (gfspMemoryErrors != nullptr) {
-        uint32_t numOfTiles = (subDeviceCount == 0) ? 1 : subDeviceCount;
-        auto size = sizeof(igsc_gfsp_mem_err) + subDeviceCount * sizeof(igsc_gfsp_tile_mem_err);
+        auto size = sizeof(igsc_gfsp_mem_err) + numOfTiles * sizeof(igsc_gfsp_tile_mem_err);
         std::vector<uint8_t> buf(size);
         igsc_gfsp_mem_err *tiles = reinterpret_cast<igsc_gfsp_mem_err *>(buf.data());
         tiles->num_of_tiles = numOfTiles; // set the number of tiles in the structure that will be passed as a buffer
-        int ret = gfspMemoryErrors(&fwDeviceHandle, tiles);
+        ret = gfspMemoryErrors(&fwDeviceHandle, tiles);
         if (ret != IGSC_SUCCESS) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Error@ %s(): Could not retrieve memory errors from igsc (error:0x%x) \n", __FUNCTION__, ret);
             return ZE_RESULT_ERROR_UNINITIALIZED;
         }
-        if (tiles->num_of_tiles != subDeviceCount) {
+
+        if (tiles->num_of_tiles < subDeviceCount) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Error@ %s(): Inappropriate tile count \n", __FUNCTION__);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         if (type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
