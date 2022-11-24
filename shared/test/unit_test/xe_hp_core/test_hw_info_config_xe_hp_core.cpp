@@ -8,152 +8,136 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "platforms.h"
 
 using namespace NEO;
 
-using XeHPMaxThreadsTest = Test<DeviceFixture>;
+using XeHpProductHelper = HwInfoConfigTest;
 
-XEHPTEST_F(XeHPMaxThreadsTest, givenXEHPWithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
-    auto isWARequired = hwInfoConfig.isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
+XEHPTEST_F(XeHpProductHelper, givenXEHPWithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, hwInfo);
+    auto isWARequired = productHelper->isMaxThreadsForWorkgroupWARequired(hwInfo);
     EXPECT_TRUE(isWARequired);
 }
 
-XEHPTEST_F(XeHPMaxThreadsTest, givenXEHPWithBSteppingThenMaxThreadsForWorkgroupWAIsNotRequired) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
-    auto isWARequired = hwInfoConfig.isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
+XEHPTEST_F(XeHpProductHelper, givenXEHPWithBSteppingThenMaxThreadsForWorkgroupWAIsNotRequired) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, hwInfo);
+    auto isWARequired = productHelper->isMaxThreadsForWorkgroupWARequired(hwInfo);
     EXPECT_FALSE(isWARequired);
 }
 
-using TestXeHPHwInfoConfig = Test<DeviceFixture>;
-
-XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenRevisionIsAtLeastBThenAllowStatelessCompression) {
+XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenRevisionIsAtLeastBThenAllowStatelessCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.CreateMultipleSubDevices.set(1);
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
     for (auto revision : {REVISION_A0, REVISION_A1, REVISION_B}) {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
         if (revision < REVISION_B) {
-            EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(hwInfo));
+            EXPECT_FALSE(productHelper->allowStatelessCompression(hwInfo));
         } else {
-            EXPECT_TRUE(hwInfoConfig.allowStatelessCompression(hwInfo));
+            EXPECT_TRUE(productHelper->allowStatelessCompression(hwInfo));
         }
     }
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenXeHpCoreHwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+XEHPTEST_F(XeHpProductHelper, givenXeHpCoreHwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        EXPECT_FALSE(productHelper->isDirectSubmissionSupported(hwInfo));
     }
 
     {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hwInfo);
-        EXPECT_FALSE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A1, hwInfo);
+        EXPECT_FALSE(productHelper->isDirectSubmissionSupported(hwInfo));
     }
 
     {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, hwInfo);
+        EXPECT_TRUE(productHelper->isDirectSubmissionSupported(hwInfo));
     }
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenCreateMultipleSubDevicesThenDontAllowStatelessCompression) {
+XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenCreateMultipleSubDevicesThenDontAllowStatelessCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-    EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(hwInfo));
+    hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_FALSE(productHelper->allowStatelessCompression(hwInfo));
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenCreateMultipleSubDevicesAndEnableMultitileCompressionThenAllowStatelessCompression) {
+XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenCreateMultipleSubDevicesAndEnableMultitileCompressionThenAllowStatelessCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.CreateMultipleSubDevices.set(4);
     DebugManager.flags.EnableMultiTileCompression.set(1);
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-    EXPECT_TRUE(hwInfoConfig.allowStatelessCompression(hwInfo));
+    hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_TRUE(productHelper->allowStatelessCompression(hwInfo));
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenCompressedBuffersAreDisabledThenDontAllowStatelessCompression) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = *defaultHwInfo;
-
+XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenCompressedBuffersAreDisabledThenDontAllowStatelessCompression) {
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
-    EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(hwInfo));
+    EXPECT_FALSE(productHelper->allowStatelessCompression(pInHwInfo));
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenSteppingWhenAskingForLocalMemoryAccessModeThenDisallowOnA0) {
+XEHPTEST_F(XeHpProductHelper, givenSteppingWhenAskingForLocalMemoryAccessModeThenDisallowOnA0) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, hwInfoConfig.getLocalMemoryAccessMode(hwInfo));
+    hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, hwInfo);
+    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(hwInfo));
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-    EXPECT_EQ(LocalMemoryAccessMode::Default, hwInfoConfig.getLocalMemoryAccessMode(hwInfo));
+    hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(hwInfo));
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenXEHPWhenHeapInLocalMemIsCalledThenCorrectValueIsReturned) {
+XEHPTEST_F(XeHpProductHelper, givenXEHPWhenHeapInLocalMemIsCalledThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
     auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
 
     {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(hwInfoConfig.heapInLocalMem(hwInfo));
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        EXPECT_FALSE(productHelper->heapInLocalMem(hwInfo));
     }
     {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EXPECT_TRUE(hwInfoConfig.heapInLocalMem(hwInfo));
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, hwInfo);
+        EXPECT_TRUE(productHelper->heapInLocalMem(hwInfo));
     }
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenXeHpCoreWhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {
-    const auto &hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+XEHPTEST_F(XeHpProductHelper, givenXeHpCoreWhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {
 
-    EXPECT_TRUE(hwInfoConfig.isBlitterForImagesSupported());
+    EXPECT_TRUE(productHelper->isBlitterForImagesSupported());
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenIsImplicitScalingSupportedThenExpectTrue) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isImplicitScalingSupported(*defaultHwInfo));
+XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenIsImplicitScalingSupportedThenExpectTrue) {
+
+    EXPECT_TRUE(productHelper->isImplicitScalingSupported(*defaultHwInfo));
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::XEHP_SDV);
+XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+
+    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(*defaultHwInfo)), AOT::XEHP_SDV);
 }
 
-XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isSystolicModeConfigurable(hwInfo));
+XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
+
+    EXPECT_TRUE(productHelper->isSystolicModeConfigurable(*defaultHwInfo)));
 }

@@ -16,48 +16,43 @@
 
 using namespace NEO;
 
-using XeHpSdvHwInfo = HwInfoConfigTest;
+using XeHpSdvProductHelper = HwInfoConfigTest;
 
-XEHPTEST_F(XeHpSdvHwInfo, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+XEHPTEST_F(XeHpSdvProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::XeHpSdv, productHelper->getAubStreamProductFamily());
 }
 
-using HwInfoConfigTestXeHpSdv = ::testing::Test;
+XEHPTEST_F(XeHpSdvProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
 
-XEHPTEST_F(HwInfoConfigTestXeHpSdv, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
+    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
-XEHPTEST_F(HwInfoConfigTestXeHpSdv, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+XEHPTEST_F(XeHpSdvProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
 
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyThreadArbitrationPolicySupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyCoherencyRequiredSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyZPassAsyncComputeThreadLimitSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyPixelAsyncComputeThreadLimitSupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyLargeGrfModeSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
+    EXPECT_TRUE(productHelper->getScmPropertyCoherencyRequiredSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyZPassAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyPixelAsyncComputeThreadLimitSupport());
+    EXPECT_TRUE(productHelper->getScmPropertyLargeGrfModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyStatelessMocsSupport());
-    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
-    EXPECT_FALSE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
+    EXPECT_FALSE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
