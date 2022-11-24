@@ -395,6 +395,24 @@ TEST(FileLogger, whenFullyEnabledThenAllDebugFunctionalityIsAvailableAtCompileTi
     static_assert(true == fileLogger.enabled(), "");
 }
 
+TEST(FileLogger, givenEnabledLogWhenLogDebugStringCalledThenStringIsWrittenToFile) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    fileLogger.logDebugString(true, "test log");
+    EXPECT_EQ(std::string("test log"), fileLogger.getFileString(testFile));
+}
+
+TEST(FileLogger, givenDisabledLogWhenLogDebugStringCalledThenStringIsNotWrittenToFile) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    fileLogger.logDebugString(false, "test log");
+    EXPECT_EQ(0u, fileLogger.getFileString(testFile).size());
+}
+
 TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThenCorrectStringIsReturned) {
     std::string testFile = "testfile";
     DebugVariables flags;

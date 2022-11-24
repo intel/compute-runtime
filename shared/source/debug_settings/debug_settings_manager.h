@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/string.h"
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -29,6 +31,9 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
         NEO::printDebugString(flag, __VA_ARGS__);
 
 namespace NEO {
+template <DebugFunctionalityLevel DebugLevel>
+class FileLogger;
+extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
 
 template <typename StreamT, typename... Args>
 void flushDebugStream(StreamT stream, Args &&...args) {
@@ -42,6 +47,8 @@ void printDebugString(bool showDebugLogs, Args &&...args) {
         flushDebugStream(args...);
     }
 }
+
+void logDebugString(std::string_view debugString);
 
 #if defined(__clang__)
 #define NO_SANITIZE __attribute__((no_sanitize("undefined")))
@@ -76,11 +83,12 @@ struct DebugVarBase {
 
 struct DebugVariables { // NOLINT(clang-analyzer-optin.performance.Padding)
     struct DEBUGGER_LOG_BITMASK {
-        constexpr static int32_t LOG_INFO{1};         // NOLINT(readability-identifier-naming)
-        constexpr static int32_t LOG_ERROR{1 << 1};   // NOLINT(readability-identifier-naming)
-        constexpr static int32_t LOG_THREADS{1 << 2}; // NOLINT(readability-identifier-naming)
-        constexpr static int32_t LOG_MEM{1 << 3};     // NOLINT(readability-identifier-naming)
-        constexpr static int32_t DUMP_ELF{1 << 10};   // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_INFO{1};           // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_ERROR{1 << 1};     // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_THREADS{1 << 2};   // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_MEM{1 << 3};       // NOLINT(readability-identifier-naming)
+        constexpr static int32_t DUMP_ELF{1 << 10};     // NOLINT(readability-identifier-naming)
+        constexpr static int32_t DUMP_TO_FILE{1 << 16}; // NOLINT(readability-identifier-naming)
     };
 
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
@@ -127,6 +135,13 @@ class DebugSettingsManager {
 
     void getStringWithFlags(std::string &allFlags, std::string &changedFlags) const;
 
+    template <typename FT>
+    void logLazyEvaluateArgs(FT &&callable) {
+        if (!disabled()) {
+            callable();
+        }
+    }
+
   protected:
     std::unique_ptr<SettingsReader> readerImpl;
     bool isLoopAtDriverInitEnabled() const {
@@ -142,8 +157,20 @@ class DebugSettingsManager {
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
 
-#define PRINT_DEBUGGER_LOG(OUT, STR, ...) \
-    NEO::printDebugString(true, OUT, STR, __VA_ARGS__);
+#define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
+    NEO::DebugManager.logLazyEvaluateArgs([&] {                    \
+        char temp[4000];                                           \
+        snprintf_s(temp, sizeof(temp), sizeof(temp), __VA_ARGS__); \
+        temp[sizeof(temp) - 1] = '\0';                             \
+        NEO::logDebugString(temp);                                 \
+    });
+
+#define PRINT_DEBUGGER_LOG(OUT, ...)                                                                                  \
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE) { \
+        PRINT_DEBUGGER_LOG_TO_FILE(__VA_ARGS__)                                                                       \
+    } else {                                                                                                          \
+        NEO::printDebugString(true, OUT, __VA_ARGS__);                                                                \
+    }
 
 #define PRINT_DEBUGGER_INFO_LOG(STR, ...)                                                                         \
     if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) { \

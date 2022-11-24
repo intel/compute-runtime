@@ -8,8 +8,11 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/debug_file_reader.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -200,4 +203,57 @@ TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAre
     if (!settingsFileExists) {
         remove(SettingsReader::settingsFileName);
     }
+}
+
+TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringPrintedToFile) {
+    if (NEO::DebugManager.disabled()) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE);
+
+    auto logFile = NEO::fileLoggerInstance().getLogFileName();
+
+    std::remove(logFile);
+
+    ::testing::internal::CaptureStdout();
+    PRINT_DEBUGGER_LOG(stdout, "test %s", "log");
+    auto output = ::testing::internal::GetCapturedStdout();
+    EXPECT_EQ(0u, output.size());
+
+    auto logFileExists = fileExists(logFile);
+    EXPECT_TRUE(logFileExists);
+
+    size_t retSize;
+    auto data = loadDataFromFile(logFile, retSize);
+
+    EXPECT_STREQ("test log", data.get());
+    std::remove(logFile);
+}
+
+TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringIsNotPrintedToFile) {
+    if (!NEO::DebugManager.disabled()) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE);
+
+    auto logFile = NEO::fileLoggerInstance().getLogFileName();
+    std::remove(logFile);
+
+    ::testing::internal::CaptureStdout();
+    PRINT_DEBUGGER_LOG(stdout, "test %s", "log");
+
+    auto output = ::testing::internal::GetCapturedStdout();
+    EXPECT_EQ(0u, output.size());
+
+    auto logFileExists = fileExists(logFile);
+    ASSERT_FALSE(logFileExists);
+}
+
+TEST(DebugLog, WhenLogDebugStringCalledThenNothingIsPrintedToStdout) {
+    ::testing::internal::CaptureStdout();
+    logDebugString("test log");
+    auto output = ::testing::internal::GetCapturedStdout();
+    EXPECT_EQ(0u, output.size());
 }

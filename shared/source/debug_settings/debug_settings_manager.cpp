@@ -12,6 +12,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
+#include "shared/source/utilities/logger.h"
 
 #include <fstream>
 #include <iostream>
@@ -131,6 +132,10 @@ void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
     }
 #include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
+}
+
+void logDebugString(std::string_view debugString) {
+    NEO::fileLoggerInstance().logDebugString(true, debugString);
 }
 
 template class DebugSettingsManager<DebugFunctionalityLevel::None>;

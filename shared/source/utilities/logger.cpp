@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/utilities/io_functions.h"
 
 #include <fstream>
 #include <memory>
@@ -43,6 +44,15 @@ void FileLogger<DebugLevel>::writeToFile(std::string filename, const char *str, 
     if (outFile.is_open()) {
         outFile.write(str, length);
         outFile.close();
+    }
+}
+
+template <DebugFunctionalityLevel DebugLevel>
+void FileLogger<DebugLevel>::logDebugString(bool enableLog, std::string_view debugString) {
+    if (enabled()) {
+        if (enableLog) {
+            writeToFile(logFileName, debugString.data(), debugString.size(), std::ios::app);
+        }
     }
 }
 

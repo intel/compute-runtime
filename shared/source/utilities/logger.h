@@ -127,6 +127,8 @@ class FileLogger {
         }
     }
 
+    void logDebugString(bool enableLog, std::string_view debugString);
+
     const char *getLogFileName() {
         return logFileName.c_str();
     }
