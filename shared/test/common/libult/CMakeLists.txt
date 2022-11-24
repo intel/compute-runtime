@@ -193,7 +193,6 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/device_ult.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_direct_submission_controller_enabled.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
@@ -208,6 +207,12 @@ if(UNIX)
   set(neo_libult_SRCS ${neo_libult_SRCS_LINUX})
 else()
   set(neo_libult_SRCS ${neo_libult_SRCS_WINDOWS})
+endif()
+
+if(WIN32 OR NOT DISABLE_WDDM_LINUX)
+  list(APPEND neo_libult_SRCS
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
+  )
 endif()
 
 add_library(neo_libult OBJECT EXCLUDE_FROM_ALL ${neo_libult_SRCS})

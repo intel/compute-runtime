@@ -25,12 +25,12 @@ namespace NEO {
 extern const char *wslComputeHelperLibNameToLoad;
 }
 
-constexpr char *mockTokToStrAdapterString = "MOCK_ADAPTER_TOK_TO_STR";
+constexpr const char *mockTokToStrAdapterString = "MOCK_ADAPTER_TOK_TO_STR";
 constexpr uint16_t mockTokToStrDriverBuildNumber = 0xabcd;
 constexpr uint32_t mockTokToStrProcessID = 0xabcdefbc;
 constexpr uint64_t mockTokToStrHeapBase = 0xabcdefbc;
 
-constexpr char *mockStrToTokAdapterString = "MOCK_ADAPTER_STR_TO_TOK";
+constexpr const char *mockStrToTokAdapterString = "MOCK_ADAPTER_STR_TO_TOK";
 constexpr uint16_t mockStrToTokDriverBuildNumber = 0xbadc;
 constexpr uint32_t mockStrToTokProcessID = 0xcdbaebfc;
 constexpr uint64_t mockStrToTokHeapBase = 0xabcdefbc;

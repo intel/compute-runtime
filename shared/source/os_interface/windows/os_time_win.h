@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,8 @@
 #pragma once
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/windows/gfx_escape_wrapper.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
-
-#include "gfxEscape.h"
 
 namespace NEO {
 class Wddm;

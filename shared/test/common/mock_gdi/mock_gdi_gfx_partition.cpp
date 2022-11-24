@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 extern ADAPTER_INFO gAdapterInfo;
 extern uint64_t gGpuAddressSpace;
 
-void InitGfxPartition() {
+void initGfxPartition() {
     if (gGpuAddressSpace >= maxNBitValue(48)) {
         // Full-range SVM 48 bit
         gAdapterInfo.GfxPartition.Standard.Base = 0x0000800400000000;

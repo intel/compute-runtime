@@ -51,7 +51,7 @@ void __stdcall MockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSyste
         gAdapterInfo.SystemInfo = *(GT_SYSTEM_INFO *)pGTSystemInfo;
     }
     gGpuAddressSpace = gpuAddressSpace;
-    InitGfxPartition();
+    initGfxPartition();
 }
 
 NTSTATUS __stdcall D3DKMTOpenAdapterFromLuid(IN OUT CONST D3DKMT_OPENADAPTERFROMLUID *openAdapter) {
@@ -72,7 +72,7 @@ NTSTATUS __stdcall D3DKMTCreateDevice(IN OUT D3DKMT_CREATEDEVICE *createDevice) 
         return STATUS_INVALID_PARAMETER;
     }
     createDevice->hDevice = DEVICE_HANDLE;
-    SetMockCreateDeviceParams(*createDevice);
+    setMockCreateDeviceParams(*createDevice);
     return STATUS_SUCCESS;
 }
 
@@ -490,7 +490,7 @@ NTSTATUS __stdcall D3DKMTRegisterTrimNotification(IN D3DKMT_REGISTERTRIMNOTIFICA
 }
 #endif
 
-NTSTATUS MockSetSizes(void *inGmmPtr, UINT inNumAllocsToReturn, UINT inGmmSize, UINT inTotalPrivateSize) {
+NTSTATUS setMockSizes(void *inGmmPtr, UINT inNumAllocsToReturn, UINT inGmmSize, UINT inTotalPrivateSize) {
     gmmSize = inGmmSize;
     gmmPtr = inGmmPtr;
     totalPrivateSize = inTotalPrivateSize;
@@ -498,25 +498,25 @@ NTSTATUS MockSetSizes(void *inGmmPtr, UINT inNumAllocsToReturn, UINT inGmmSize, 
     return STATUS_SUCCESS;
 }
 
-NTSTATUS GetMockSizes(UINT &destroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc) {
+NTSTATUS getMockSizes(UINT &destroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc) {
     destroyAlloactionWithResourceHandleCalled = DestroyAllocationWithResourceHandleCalled;
     ptrDestroyAlloc = &destroyalloc2;
     return NTSTATUS();
 }
 
-D3DKMT_HANDLE GetMockLastDestroyedResHandle() {
+D3DKMT_HANDLE getMockLastDestroyedResHandle() {
     return LastDestroyedResourceHandle;
 }
 
-void SetMockLastDestroyedResHandle(D3DKMT_HANDLE handle) {
+void setMockLastDestroyedResHandle(D3DKMT_HANDLE handle) {
     LastDestroyedResourceHandle = handle;
 }
 
-D3DKMT_CREATEDEVICE GetMockCreateDeviceParams() {
+D3DKMT_CREATEDEVICE getMockCreateDeviceParams() {
     return CreateDeviceParams;
 }
 
-void SetMockCreateDeviceParams(D3DKMT_CREATEDEVICE params) {
+void setMockCreateDeviceParams(D3DKMT_CREATEDEVICE params) {
     CreateDeviceParams = params;
 }
 

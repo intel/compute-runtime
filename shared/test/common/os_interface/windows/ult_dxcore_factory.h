@@ -9,10 +9,10 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/windows/dxgi_wrapper.h"
 
 #include <cwchar>
 #include <dxcore.h>
-#include <dxgi.h>
 
 namespace NEO {
 constexpr auto error = 1;

@@ -435,8 +435,8 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledWhenEUCountWouldBeOddTh
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
-    EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
-    EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
+    EXPECT_EQ(0u, pHeader->UmdRequestedSliceState);
+    EXPECT_EQ(0u, pHeader->UmdRequestedSubsliceCount);
     EXPECT_EQ((wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount) & (~1u), pHeader->UmdRequestedEUCount);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
@@ -454,8 +454,8 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenS
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
-    EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
-    EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
+    EXPECT_EQ(0u, pHeader->UmdRequestedSliceState);
+    EXPECT_EQ(0u, pHeader->UmdRequestedSubsliceCount);
     EXPECT_EQ((wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount) & (~1u), pHeader->UmdRequestedEUCount);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
@@ -472,8 +472,8 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToMediumTh
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
-    EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
-    EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
+    EXPECT_EQ(0u, pHeader->UmdRequestedSliceState);
+    EXPECT_EQ(0u, pHeader->UmdRequestedSubsliceCount);
     EXPECT_EQ((wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount) & (~1u), pHeader->UmdRequestedEUCount);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
@@ -491,7 +491,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToHighThen
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
     const uint32_t maxRequestedSubsliceCount = 7;
-    EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
+    EXPECT_EQ(0u, pHeader->UmdRequestedSliceState);
     EXPECT_EQ((wddm->getGtSysInfo()->SubSliceCount <= maxRequestedSubsliceCount) ? wddm->getGtSysInfo()->SubSliceCount : 0, pHeader->UmdRequestedSubsliceCount);
     EXPECT_EQ((wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount) & (~1u), pHeader->UmdRequestedEUCount);
 

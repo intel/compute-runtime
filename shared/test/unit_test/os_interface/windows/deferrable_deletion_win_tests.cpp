@@ -63,7 +63,7 @@ TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenIsCreatedThenObjectMem
 TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenApplyIsCalledThenDeletionIsApplied) {
     wddm->callBaseDestroyAllocations = false;
     std::unique_ptr<DeferrableDeletion> deletion(DeferrableDeletion::create((Wddm *)wddm.get(), &handle, allocationCount, resourceHandle));
-    EXPECT_EQ(0, wddm->destroyAllocationResult.called);
+    EXPECT_EQ(0u, wddm->destroyAllocationResult.called);
     deletion->apply();
-    EXPECT_EQ(1, wddm->destroyAllocationResult.called);
+    EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
 }

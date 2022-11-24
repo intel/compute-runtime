@@ -55,7 +55,6 @@ class MockGmmMemoryBase : public GmmMemory {
 
     bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override {
         setDeviceInfoCalled++;
-        partition = deviceInfo->pGfxPartition;
         deviceCallbacks = *deviceInfo->pDeviceCb;
         return setDeviceInfoResult;
     }

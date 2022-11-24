@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/adapter_info.h"
 

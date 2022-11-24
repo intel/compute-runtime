@@ -93,15 +93,6 @@ set(NEO_CORE_tests_mocks
 if(WIN32)
   list(APPEND NEO_CORE_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime_win.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_eudebug.h
   )
 else()
   list(APPEND NEO_CORE_tests_mocks
@@ -112,6 +103,19 @@ else()
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_wrappers.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_wrappers.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_os_time_linux.h
+  )
+endif()
+if(WIN32 OR NOT DISABLE_WDDM_LINUX)
+  list(APPEND NEO_CORE_tests_mocks
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_eudebug.h
   )
 endif()
 

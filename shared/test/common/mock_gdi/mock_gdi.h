@@ -9,10 +9,9 @@
 
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/windows/device_time_wddm.h"
-#include "shared/source/os_interface/windows/os_time_win.h"
 
-#include "umKmInc/sharedata.h"
-#include "windows.h"
+#include "shared/source/os_interface/windows/sharedata_wrapper.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #define DECL_FUNCTIONS()                                                                                 \
     FUNCTION(OpenAdapterFromHdc, IN OUT D3DKMT_OPENADAPTERFROMHDC *)                                     \
@@ -59,12 +58,12 @@
 
 #define GPUVA (static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x80123000000))
 
-NTSTATUS MockSetSizes(void *gmmPtr, UINT numAllocsToReturn, UINT gmmSize, UINT totalPrivateSize);
-NTSTATUS GetMockSizes(UINT &destroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc);
-D3DKMT_HANDLE GetMockLastDestroyedResHandle();
-void SetMockLastDestroyedResHandle(D3DKMT_HANDLE handle);
-D3DKMT_CREATEDEVICE GetMockCreateDeviceParams();
-void SetMockCreateDeviceParams(D3DKMT_CREATEDEVICE params);
+NTSTATUS setMockSizes(void *gmmPtr, UINT numAllocsToReturn, UINT gmmSize, UINT totalPrivateSize);
+NTSTATUS getMockSizes(UINT &destroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc);
+D3DKMT_HANDLE getMockLastDestroyedResHandle();
+void setMockLastDestroyedResHandle(D3DKMT_HANDLE handle);
+D3DKMT_CREATEDEVICE getMockCreateDeviceParams();
+void setMockCreateDeviceParams(D3DKMT_CREATEDEVICE params);
 D3DKMT_CREATEALLOCATION *getMockAllocation();
 ADAPTER_INFO *getAdapterInfoAddress();
 D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg();
@@ -75,7 +74,7 @@ D3DKMT_CREATEHWQUEUE *getCreateHwQueueData();
 D3DKMT_DESTROYHWQUEUE *getDestroyHwQueueData();
 D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData();
 D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *getDestroySynchronizationObjectData();
-void InitGfxPartition();
+void initGfxPartition();
 VOID *getMonitorFenceCpuFenceAddress();
 bool *getCreateSynchronizationObject2FailCall();
 bool *getFailOnSetContextSchedulingPriorityCall();

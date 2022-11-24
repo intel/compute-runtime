@@ -402,7 +402,7 @@ TEST_F(WddmFixtureLuid, givenValidOsContextAndLuidDataRequestThenValidDataReturn
 
 uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;
 
-NTSTATUS __stdcall waitForSynchronizationObjectFromCpuNoOp(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {
+NTSTATUS __stdcall waitForSynchronizationObjectFromCpuNoOpMock(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {
     waitForSynchronizationObjectFromCpuCounter++;
     return STATUS_SUCCESS;
 }
@@ -458,7 +458,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     init();
     wddm->skipResourceCleanupVar = true;
     EXPECT_TRUE(wddm->skipResourceCleanup());
-    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOp;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
     MonitoredFence monitoredFence = {};
     EXPECT_TRUE(wddm->waitFromCpu(0, monitoredFence));
     EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
@@ -469,7 +469,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     init();
     wddm->skipResourceCleanupVar = false;
     EXPECT_FALSE(wddm->skipResourceCleanup());
-    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOp;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
     uint64_t fenceValue = 0u;
     D3DKMT_HANDLE fenceHandle = 1u;
     MonitoredFence monitoredFence = {};
@@ -485,7 +485,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     init();
     wddm->skipResourceCleanupVar = false;
     EXPECT_FALSE(wddm->skipResourceCleanup());
-    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOp;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
     uint64_t fenceValue = 1u;
     MonitoredFence monitoredFence = {};
     monitoredFence.lastSubmittedFence = 0u;
