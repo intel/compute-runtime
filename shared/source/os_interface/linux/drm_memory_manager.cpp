@@ -1347,7 +1347,7 @@ uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner 
     default:
         AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(sizeAllocated);
         if (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !resource48Bit) {
-            auto alignSize = true;
+            auto alignSize = sizeAllocated >= 8 * MemoryConstants::gigaByte && Math::isPow2(sizeAllocated);
             if (DebugManager.flags.UseHighAlignmentForHeapExtended.get() != -1) {
                 alignSize = !!DebugManager.flags.UseHighAlignmentForHeapExtended.get();
             }
