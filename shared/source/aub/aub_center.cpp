@@ -7,9 +7,9 @@
 
 #include "shared/source/aub/aub_center.h"
 
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -23,7 +23,7 @@ extern aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOpti
 
 AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
-	auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto devicesCount = HwHelper::getSubDevicesCount(hwInfo);
         auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
         CommandStreamReceiverType type = csrType;
@@ -34,13 +34,13 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
         auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
-        const auto &productHelper =  rootDeviceEnvironment.getHelper<ProductHelper>();
+        const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
         auto aubStreamProductFamily = productHelper.getAubStreamProductFamily();
 
         stepping = productHelper.getAubStreamSteppingFromHwRevId(*hwInfo);
 
-	auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+        auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
         aub_stream::MMIOList extraMmioList = coreHelper.getExtraMmioList(*hwInfo, *gmmHelper);
         aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
 

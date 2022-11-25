@@ -9,7 +9,6 @@
 
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/windows/device_time_wddm.h"
-
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
