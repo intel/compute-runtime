@@ -94,6 +94,7 @@ XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenCreateMultipleSubDevicesAndE
 }
 
 XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenCompressedBuffersAreDisabledThenDontAllowStatelessCompression) {
+    auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     EXPECT_FALSE(productHelper->allowStatelessCompression(pInHwInfo));
 }
@@ -134,10 +135,10 @@ XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenIsImplicitScalingSupportedTh
 
 XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(*defaultHwInfo)), AOT::XEHP_SDV);
+    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(*defaultHwInfo), AOT::XEHP_SDV);
 }
 
 XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
 
-    EXPECT_TRUE(productHelper->isSystolicModeConfigurable(*defaultHwInfo)));
+    EXPECT_TRUE(productHelper->isSystolicModeConfigurable(*defaultHwInfo));
 }
