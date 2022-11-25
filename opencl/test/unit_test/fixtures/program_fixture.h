@@ -9,12 +9,31 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/test_files.h"
 
-#include "opencl/source/program/program.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
-
 #include "gtest/gtest.h"
 
+#include <memory>
+#include <string>
+
 namespace NEO {
+class Context;
+class ClDeviceVector;
+class MockContext;
+class MockProgram;
+class ClDevice;
+class MockNeoProgram;
+using cl_int = int;
+
+class NEOProgramFixture {
+  public:
+    NEOProgramFixture();
+    ~NEOProgramFixture();
+
+  protected:
+    void setUp();
+    void tearDown();
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<MockNeoProgram> program;
+};
 
 class ProgramFixture {
   public:
@@ -40,12 +59,7 @@ class ProgramFixture {
         cleanup();
     }
 
-    void cleanup() {
-        if (pProgram != nullptr) {
-            pProgram->release();
-        }
-        knownSource.reset();
-    }
+    void cleanup();
 
     MockProgram *pProgram = nullptr;
     std::unique_ptr<char[]> knownSource;

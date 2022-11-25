@@ -38,6 +38,10 @@ const KernelInfo *Program::getKernelInfo(
         return nullptr;
     }
 
+    if (kernelName == NEO::Elf::SectionsNamesZebin::externalFunctions) {
+        return nullptr;
+    }
+
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
 
     auto it = std::find_if(kernelInfoArray.begin(), kernelInfoArray.end(),
@@ -47,11 +51,19 @@ const KernelInfo *Program::getKernelInfo(
 }
 
 size_t Program::getNumKernels() const {
-    return buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray.size();
+    auto numKernels = buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray.size();
+    auto usesExportedFunctions = (exportedFunctionsKernelId != std::numeric_limits<size_t>::max());
+    if (usesExportedFunctions) {
+        numKernels--;
+    }
+    return numKernels;
 }
 
 const KernelInfo *Program::getKernelInfo(size_t ordinal, uint32_t rootDeviceIndex) const {
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
+    if (exportedFunctionsKernelId == ordinal) {
+        ordinal++;
+    }
     DEBUG_BREAK_IF(ordinal >= kernelInfoArray.size());
     return kernelInfoArray[ordinal];
 }
@@ -85,6 +97,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
         strings.segmentSize = stringsInfo.size;
     }
     if (linkerInput->getExportedFunctionsSegmentId() >= 0) {
+        exportedFunctionsKernelId = static_cast<size_t>(linkerInput->getExportedFunctionsSegmentId());
         // Exported functions reside in instruction heap of one of kernels
         auto exportedFunctionHeapId = linkerInput->getExportedFunctionsSegmentId();
         buildInfos[rootDeviceIndex].exportedFunctionsSurface = kernelInfoArray[exportedFunctionHeapId]->getGraphicsAllocation();

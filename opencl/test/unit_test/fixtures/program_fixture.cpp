@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 
 #include "opencl/source/program/create.inl"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 namespace NEO {
@@ -38,6 +39,13 @@ void ProgramFixture::createProgramWithSource(Context *pContext,
 
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+void ProgramFixture::cleanup() {
+    if (pProgram != nullptr) {
+        pProgram->release();
+    }
+    knownSource.reset();
 }
 
 void ProgramFixture::createProgramFromBinary(Context *pContext,
@@ -82,5 +90,15 @@ void ProgramFixture::createProgramFromBinary(Context *pContext,
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
+
+NEOProgramFixture::NEOProgramFixture() = default;
+NEOProgramFixture::~NEOProgramFixture() = default;
+
+void NEOProgramFixture::setUp() {
+    context = std::make_unique<MockContext>();
+    program = std::make_unique<MockNeoProgram>(context.get(), false, context->getDevices());
+}
+
+void NEOProgramFixture::tearDown() {}
 
 } // namespace NEO
