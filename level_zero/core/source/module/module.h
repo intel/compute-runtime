@@ -9,6 +9,7 @@
 
 #include <level_zero/ze_api.h>
 
+#include <memory>
 #include <set>
 #include <vector>
 

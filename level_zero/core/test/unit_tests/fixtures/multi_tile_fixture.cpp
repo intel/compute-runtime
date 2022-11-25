@@ -7,10 +7,14 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 
+#include "shared/source/command_container/implicit_scaling.h"
+
 #include "level_zero/core/source/context/context_imp.h"
 
 namespace L0 {
 namespace ult {
+MultiTileCommandListAppendLaunchKernelFixture::MultiTileCommandListAppendLaunchKernelFixture() : backup({&NEO::ImplicitScaling::apiSupport, true}) {}
+MultiTileImmediateCommandListAppendLaunchKernelFixture::MultiTileImmediateCommandListAppendLaunchKernelFixture() : backupApiSupport({&NEO::ImplicitScaling::apiSupport, true}), backupLocalMemory({&NEO::OSInterface::osEnableLocalMemory, true}) {}
 
 void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     DebugManager.flags.EnableImplicitScaling.set(1);

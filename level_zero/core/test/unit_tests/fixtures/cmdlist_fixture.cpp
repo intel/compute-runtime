@@ -9,6 +9,10 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+
+#include "gtest/gtest.h"
+
 namespace L0 {
 namespace ult {
 
