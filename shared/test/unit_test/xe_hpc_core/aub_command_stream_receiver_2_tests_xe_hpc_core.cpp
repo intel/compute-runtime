@@ -36,8 +36,7 @@ XE_HPC_CORETEST_F(AubCommandStreamReceiverXeHpcCoreTests, givenLinkBcsEngineWhen
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
 
     MockAubManager *mockManager = new MockAubManager();
-    auto gmmHelper = device->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
-    MockAubCenter *mockAubCenter = new MockAubCenter(defaultHwInfo.get(), *gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(device->getRootDeviceEnvironment(), false, "", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     device->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 

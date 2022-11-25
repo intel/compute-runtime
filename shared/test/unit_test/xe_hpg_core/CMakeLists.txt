@@ -21,10 +21,5 @@ if(TESTS_XE_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xe_hpg_core.cpp
   )
-
-  if(DEFINED AUB_STREAM_PROJECT_NAME)
-    target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/aub_center_using_aubstream_lib_tests_xe_hpg_core.cpp)
-  endif()
-
   add_subdirectories()
 endif()

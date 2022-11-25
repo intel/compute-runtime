@@ -40,7 +40,7 @@ RootDeviceEnvironment::~RootDeviceEnvironment() = default;
 void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!aubCenter) {
         UNRECOVERABLE_IF(!getGmmHelper());
-        aubCenter.reset(new AubCenter(getHardwareInfo(), *gmmHelper, localMemoryEnabled, aubFileName, csrType));
+        aubCenter.reset(new AubCenter(*this, localMemoryEnabled, aubFileName, csrType));
     }
 }
 

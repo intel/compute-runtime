@@ -341,7 +341,7 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageWhenOsHandlesAreCleanedAndAubMan
     MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get());
     MockMemoryManager mockMemoryManager(mockExecutionEnvironment);
     GmmHelper gmmHelper(nullptr, defaultHwInfo.get());
-    auto mockAubCenter = new MockAubCenter(defaultHwInfo.get(), gmmHelper, false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    auto mockAubCenter = new MockAubCenter(*mockExecutionEnvironment.rootDeviceEnvironments[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager.reset(nullptr);
     mockExecutionEnvironment.rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
 
@@ -362,12 +362,12 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandle
     MockMemoryManager mockMemoryManager(mockExecutionEnvironment);
     GmmHelper gmmHelper(nullptr, defaultHwInfo.get());
     auto mockManager0 = new MockAubManager();
-    auto mockAubCenter0 = new MockAubCenter(defaultHwInfo.get(), gmmHelper, false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    auto mockAubCenter0 = new MockAubCenter(*mockExecutionEnvironment.rootDeviceEnvironments[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter0->aubManager.reset(mockManager0);
     mockExecutionEnvironment.rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter0);
 
     auto mockManager1 = new MockAubManager();
-    auto mockAubCenter1 = new MockAubCenter(defaultHwInfo.get(), gmmHelper, false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    auto mockAubCenter1 = new MockAubCenter(*mockExecutionEnvironment.rootDeviceEnvironments[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter1->aubManager.reset(mockManager1);
     mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter1);
 
@@ -1600,7 +1600,7 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryEnabledWh
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     GmmHelper gmmHelper(nullptr, defaultHwInfo.get());
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(defaultHwInfo.get(), gmmHelper, false, "file_name.aub", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(*executionEnvironment.rootDeviceEnvironments[0], false, "file_name.aub", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     executionEnvironment.rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
 
@@ -1617,7 +1617,7 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryDisabledW
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     GmmHelper gmmHelper(nullptr, defaultHwInfo.get());
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(defaultHwInfo.get(), gmmHelper, false, "file_name.aub", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(*executionEnvironment.rootDeviceEnvironments[0], false, "file_name.aub", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     executionEnvironment.rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
 

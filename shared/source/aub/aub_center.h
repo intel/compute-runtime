@@ -15,12 +15,11 @@
 #include "aubstream/aub_manager.h"
 
 namespace NEO {
-struct HardwareInfo;
-class GmmHelper;
+struct RootDeviceEnvironment;
 
 class AubCenter {
   public:
-    AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
+    AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
 
     AubCenter();
     virtual ~AubCenter() = default;

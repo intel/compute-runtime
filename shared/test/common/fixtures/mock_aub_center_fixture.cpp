@@ -23,7 +23,7 @@ void MockAubCenterFixture::setMockAubCenter(RootDeviceEnvironment &rootDeviceEnv
 void MockAubCenterFixture::setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment, CommandStreamReceiverType commandStreamReceiverType) {
     if (testMode != TestMode::AubTests && testMode != TestMode::AubTestsWithTbx) {
         rootDeviceEnvironment.initGmm();
-        auto mockAubCenter = std::make_unique<MockAubCenter>(rootDeviceEnvironment.getHardwareInfo(), *rootDeviceEnvironment.getGmmHelper(), false, "", commandStreamReceiverType);
+        auto mockAubCenter = std::make_unique<MockAubCenter>(rootDeviceEnvironment, false, "", commandStreamReceiverType);
         if (!mockAubCenter->aubManager) {
             mockAubCenter->aubManager = std::make_unique<MockAubManager>();
         }

@@ -7,6 +7,7 @@
 
 #include "shared/source/aub/aub_center.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -20,10 +21,11 @@
 namespace NEO {
 extern aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOptions &options);
 
-AubCenter::AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
+AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
-        auto devicesCount = HwHelper::getSubDevicesCount(pHwInfo);
-        auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(pHwInfo);
+	auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto devicesCount = HwHelper::getSubDevicesCount(hwInfo);
+        auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
         CommandStreamReceiverType type = csrType;
         if (DebugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
             type = static_cast<CommandStreamReceiverType>(DebugManager.flags.SetCommandStreamReceiver.get());
@@ -31,14 +33,15 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bo
 
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
-        auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
-        const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
+        auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
+        const auto &productHelper =  rootDeviceEnvironment.getHelper<ProductHelper>();
 
-        auto aubStreamProductFamily = hwInfoConfig.getAubStreamProductFamily();
+        auto aubStreamProductFamily = productHelper.getAubStreamProductFamily();
 
-        stepping = hwInfoConfig.getAubStreamSteppingFromHwRevId(*pHwInfo);
+        stepping = productHelper.getAubStreamSteppingFromHwRevId(*hwInfo);
 
-        aub_stream::MMIOList extraMmioList = hwHelper.getExtraMmioList(*pHwInfo, gmmHelper);
+	auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+        aub_stream::MMIOList extraMmioList = coreHelper.getExtraMmioList(*hwInfo, *gmmHelper);
         aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
 
         extraMmioList.insert(extraMmioList.end(), debugMmioList.begin(), debugMmioList.end());
@@ -55,7 +58,7 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bo
         options.stepping = stepping;
         options.localMemorySupported = localMemoryEnabled;
         options.mode = aubStreamMode;
-        options.gpuAddressSpace = pHwInfo->capabilityTable.gpuAddressSpace;
+        options.gpuAddressSpace = hwInfo->capabilityTable.gpuAddressSpace;
 
         aubManager.reset(createAubManager(options));
     }

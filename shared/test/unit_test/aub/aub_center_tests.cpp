@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -26,13 +25,14 @@ using namespace NEO;
 
 struct AubCenterTests : public ::testing::Test {
     DebugManagerStateRestore restorer;
-    GmmHelper gmmHelper{nullptr, defaultHwInfo.get()};
+    MockExecutionEnvironment executionEnvironment{};
+    RootDeviceEnvironment &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 };
 
 TEST_F(AubCenterTests, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAubCenterDoesNotCreateAubManager) {
     DebugManager.flags.UseAubStream.set(false);
 
-    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(nullptr, aubCenter.aubManager.get());
 }
 
@@ -78,7 +78,7 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
 
     DebugManager.flags.UseAubStream.set(true);
 
-    auto hwInfo = *defaultHwInfo;
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     for (auto steppingPair : steppingPairsToTest) {
         auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(steppingPair.stepping, hwInfo);
@@ -87,7 +87,7 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
         }
 
         hwInfo.platform.usRevId = hwRevId;
-        MockAubCenter aubCenter(&hwInfo, gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
+        MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_AUB);
         EXPECT_EQ(steppingPair.expectedAubStreamStepping, aubCenter.stepping);
     }
 }
@@ -97,17 +97,13 @@ HWTEST_F(AubCenterTests, whenCreatingAubManagerThenCorrectProductFamilyIsPassed)
 
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX);
 
-    MockExecutionEnvironment executionEnviroonment{};
-
-    const auto &rootDeviceEnvironment = *executionEnviroonment.rootDeviceEnvironments[0];
-
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
     auto aubStreamProductFamily = productHelper.getAubStreamProductFamily();
 
     ASSERT_TRUE(aubStreamProductFamily.has_value());
 
-    MockAubCenter aubCenter(rootDeviceEnvironment.getHardwareInfo(), *rootDeviceEnvironment.getGmmHelper(), true, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::CSR_AUB);
 
     auto aubManager = static_cast<MockAubManager *>(aubCenter.aubManager.get());
     ASSERT_NE(nullptr, aubManager);
@@ -139,14 +135,14 @@ TEST_F(AubCenterTests, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubMan
                                                        CommandStreamReceiverType::CSR_AUB};
 
     for (auto type : aubTypes) {
-        MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, true, "test", type);
+        MockAubCenter aubCenter(rootDeviceEnvironment, true, "test", type);
         EXPECT_EQ(aub_stream::mode::aubFile, aubCenter.aubStreamMode);
     }
 
-    MockAubCenter aubCenter2(defaultHwInfo.get(), gmmHelper, true, "", CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter aubCenter2(rootDeviceEnvironment, true, "", CommandStreamReceiverType::CSR_TBX);
     EXPECT_EQ(aub_stream::mode::tbx, aubCenter2.aubStreamMode);
 
-    MockAubCenter aubCenter3(defaultHwInfo.get(), gmmHelper, true, "", CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+    MockAubCenter aubCenter3(rootDeviceEnvironment, true, "", CommandStreamReceiverType::CSR_TBX_WITH_AUB);
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, aubCenter3.aubStreamMode);
 }
 
@@ -155,19 +151,19 @@ TEST_F(AubCenterTests, GivenSetCommandStreamReceiverFlagSetWhenAubManagerIsCreat
 
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX);
 
-    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, true, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(aub_stream::mode::tbx, aubCenter.aubStreamMode);
 
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
-    MockAubCenter aubCenter2(defaultHwInfo.get(), gmmHelper, true, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter2(rootDeviceEnvironment, true, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, aubCenter2.aubStreamMode);
 }
 
 TEST_F(AubCenterTests, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithoutDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDefaults) {
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
 
-    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_AUB);
     auto subCaptureCommon = aubCenter.getSubCaptureCommon();
     EXPECT_NE(nullptr, subCaptureCommon);
 
@@ -182,7 +178,7 @@ TEST_F(AubCenterTests, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithDebugFil
     DebugManager.flags.AUBDumpFilterKernelEndIdx.set(100);
     DebugManager.flags.AUBDumpFilterKernelName.set("kernel_name");
 
-    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_AUB);
     auto subCaptureCommon = aubCenter.getSubCaptureCommon();
     EXPECT_NE(nullptr, subCaptureCommon);
 
