@@ -201,21 +201,20 @@ NTSTATUS __stdcall getDeviceStateMock(D3DKMT_GETDEVICESTATE *arg) {
 
 struct WddmLinuxTest : public ::testing::Test {
     void SetUp() override {
-        mockRootDeviceEnvironment = std::make_unique<NEO::MockRootDeviceEnvironment>(mockExecEnv);
         osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
         osEnvironment->gdi->closeAdapter = closeAdapterMock;
         auto hwDeviceIdIn = std::make_unique<WddmLinuxMockHwDeviceIdWddm>(NULL_HANDLE, LUID{}, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>());
         this->hwDeviceId = hwDeviceIdIn.get();
-
-        auto wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), *mockRootDeviceEnvironment.get());
+        auto &rootDeviceEnvironment = *mockExecEnv.rootDeviceEnvironments[0];
+        auto wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), rootDeviceEnvironment);
         this->wddm = wddm.get();
-        mockGmmClientContext = NEO::GmmClientContext::create<NEO::MockGmmClientContext>(nullptr, NEO::defaultHwInfo.get());
-        wddm->gmmMemory = std::make_unique<MockGmmMemoryWddmLinux>(mockGmmClientContext.get());
+        auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+
+        wddm->gmmMemory = std::make_unique<MockGmmMemoryWddmLinux>(gmmHelper->getClientContext());
         *wddm->gfxPlatform = NEO::defaultHwInfo->platform;
 
-        mockExecEnv.rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-        mockExecEnv.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(wddm));
-        mockExecEnv.rootDeviceEnvironments[0]->gmmHelper.reset(new NEO::GmmHelper(mockExecEnv.rootDeviceEnvironments[0]->osInterface.get(), mockExecEnv.rootDeviceEnvironments[0]->getHardwareInfo()));
+        rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
+        rootDeviceEnvironment.osInterface->setDriverModel(std::move(wddm));
     }
 
     size_t getMaxSvmSize() const {
@@ -231,10 +230,8 @@ struct WddmLinuxTest : public ::testing::Test {
 
     std::unique_ptr<NEO::OsEnvironmentWin> osEnvironment;
     NEO::MockExecutionEnvironment mockExecEnv;
-    std::unique_ptr<NEO::MockRootDeviceEnvironment> mockRootDeviceEnvironment;
     MockWddmLinux *wddm = nullptr;
     WddmLinuxMockHwDeviceIdWddm *hwDeviceId = nullptr;
-    std::unique_ptr<NEO::GmmClientContext> mockGmmClientContext;
 };
 
 using GmmTestsDG2 = WddmLinuxTest;

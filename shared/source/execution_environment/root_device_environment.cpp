@@ -110,7 +110,7 @@ bool RootDeviceEnvironment::initAilConfiguration() {
 
 void RootDeviceEnvironment::initGmm() {
     if (!gmmHelper) {
-        gmmHelper.reset(new GmmHelper(osInterface.get(), getHardwareInfo()));
+        gmmHelper.reset(new GmmHelper(*this));
     }
 }
 

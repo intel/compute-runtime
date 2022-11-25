@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -42,11 +43,11 @@ void GmmHelper::applyMocsEncryptionBit(uint32_t &index) {
     }
 }
 
-GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
+GmmHelper::GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironment) : hwInfo(rootDeviceEnvironment.getHardwareInfo()) {
     auto hwInfoAddressWidth = Math::log2(hwInfo->capabilityTable.gpuAddressSpace + 1);
     addressWidth = std::max(hwInfoAddressWidth, 48u);
 
-    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(osInterface, const_cast<HardwareInfo *>(pHwInfo));
+    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(rootDeviceEnvironment);
     UNRECOVERABLE_IF(!gmmClientContext);
 }
 

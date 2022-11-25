@@ -8,8 +8,6 @@
 #include "mock_gmm_client_context.h"
 
 namespace NEO {
-MockGmmClientContext::MockGmmClientContext(OSInterface *osInterface, HardwareInfo *hwInfo) : MockGmmClientContextBase(osInterface, hwInfo) {
-}
 
 MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
     MEMORY_OBJECT_CONTROL_STATE retVal = {};

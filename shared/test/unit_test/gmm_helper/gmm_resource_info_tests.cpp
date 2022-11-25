@@ -10,11 +10,12 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-extern PRODUCT_FAMILY productFamily;
+using namespace NEO;
 
 struct MockGmmHandleAllocator : NEO::GmmHandleAllocator {
     void *createHandle(const GMM_RESOURCE_INFO *gmmResourceInfo) override {
@@ -40,9 +41,9 @@ struct MockGmmHandleAllocator : NEO::GmmHandleAllocator {
 };
 
 TEST(GmmResourceInfo, WhenGmmHandleAllocatorIsPresentThenItsBeingUsedForCreatingGmmResourceInfoHandles) {
-    NEO::HardwareInfo hwInfo;
-    hwInfo.platform.eProductFamily = productFamily;
-    NEO::MockGmmClientContext gmmClientCtx{nullptr, &hwInfo};
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment{&hwInfo};
+    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
     gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
     auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
 
@@ -73,9 +74,9 @@ TEST(GmmResourceInfo, WhenGmmHandleAllocatorIsPresentThenItsBeingUsedForCreating
 }
 
 TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenDecodingResourceInfoThenExistingHandleIsOpened) {
-    NEO::HardwareInfo hwInfo;
-    hwInfo.platform.eProductFamily = productFamily;
-    NEO::MockGmmClientContext gmmClientCtx{nullptr, &hwInfo};
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment{&hwInfo};
+    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
     gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
     auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
 
@@ -131,9 +132,9 @@ TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenD
 }
 
 TEST(GmmResourceInfo, GivenResourceInfoWhenRefreshIsCalledTiwceThenOpenHandleIsCalledTwice) {
-    NEO::HardwareInfo hwInfo;
-    hwInfo.platform.eProductFamily = productFamily;
-    NEO::MockGmmClientContext gmmClientCtx{nullptr, &hwInfo};
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment{&hwInfo};
+    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
     gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
     auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
 
@@ -206,23 +207,28 @@ TEST(GmmResourceInfo, GivenEmptyHandleWhenUsingBaseHandleAllocatorThenOpenHandle
 }
 
 TEST(GmmHelperTests, WhenInitializingGmmHelperThenCorrectAddressWidthIsSet) {
-    auto hwInfo = *NEO::defaultHwInfo;
+    auto hwInfo = *defaultHwInfo;
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
-    auto gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(48u, addressWidth);
+    }
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    auto addressWidth = gmmHelper->getAddressWidth();
-    EXPECT_EQ(48u, addressWidth);
-
-    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36);
-    gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
-
-    addressWidth = gmmHelper->getAddressWidth();
-    EXPECT_EQ(48u, addressWidth);
-
-    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
-    gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
-
-    addressWidth = gmmHelper->getAddressWidth();
-    EXPECT_EQ(57u, addressWidth);
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(48u, addressWidth);
+    }
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(57u, addressWidth);
+    }
 }

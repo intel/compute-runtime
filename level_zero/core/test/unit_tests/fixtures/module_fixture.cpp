@@ -8,7 +8,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
@@ -18,33 +17,7 @@ namespace ult {
 
 ModuleImmutableDataFixture::MockImmutableMemoryManager::MockImmutableMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 
-ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize) {
-    mockKernelDescriptor = new NEO::KernelDescriptor;
-    mockKernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize = perHwThreadPrivateMemorySize;
-    kernelDescriptor = mockKernelDescriptor;
-
-    mockKernelInfo = new NEO::KernelInfo;
-    mockKernelInfo->heapInfo.pKernelHeap = kernelHeap;
-    mockKernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
-    kernelInfo = mockKernelInfo;
-
-    if (getIsaGraphicsAllocation() != nullptr) {
-        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*isaGraphicsAllocation);
-        isaGraphicsAllocation.release();
-    }
-    auto ptr = reinterpret_cast<void *>(0x1234);
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
-    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-    isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
-                                                                NEO::AllocationType::KERNEL_ISA,
-                                                                ptr,
-                                                                0x1000,
-                                                                0u,
-                                                                MemoryPool::System4KBPages,
-                                                                MemoryManager::maxOsContextCount,
-                                                                canonizedGpuAddress));
-    kernelInfo->kernelAllocation = isaGraphicsAllocation.get();
-}
+ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize) : MockImmutableData(perHwThreadPrivateMemorySize, 0, 0) {}
 ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSize, uint32_t perThreaddPrivateScratchSize) {
     mockKernelDescriptor = new NEO::KernelDescriptor;
     mockKernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize = perHwThreadPrivateMemorySize;
@@ -57,13 +30,7 @@ ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwT
     mockKernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
     kernelInfo = mockKernelInfo;
 
-    if (getIsaGraphicsAllocation() != nullptr) {
-        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*isaGraphicsAllocation);
-        isaGraphicsAllocation.release();
-    }
     auto ptr = reinterpret_cast<void *>(0x1234);
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
-    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                                 NEO::AllocationType::KERNEL_ISA,
                                                                 ptr,
@@ -71,7 +38,7 @@ ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwT
                                                                 0u,
                                                                 MemoryPool::System4KBPages,
                                                                 MemoryManager::maxOsContextCount,
-                                                                canonizedGpuAddress));
+                                                                castToUint64(ptr)));
     kernelInfo->kernelAllocation = isaGraphicsAllocation.get();
 }
 
@@ -247,8 +214,6 @@ ModuleWithZebinFixture::MockImmutableData::MockImmutableData(L0::Device *device)
     kernelDescriptor = mockKernelDescriptor;
     this->device = device;
     auto ptr = reinterpret_cast<void *>(0x1234);
-    auto gmmHelper = device->getNEODevice()->getGmmHelper();
-    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                                 NEO::AllocationType::KERNEL_ISA,
                                                                 ptr,
@@ -256,7 +221,7 @@ ModuleWithZebinFixture::MockImmutableData::MockImmutableData(L0::Device *device)
                                                                 0u,
                                                                 MemoryPool::System4KBPages,
                                                                 MemoryManager::maxOsContextCount,
-                                                                canonizedGpuAddress));
+                                                                castToUint64(ptr)));
 }
 
 ModuleWithZebinFixture::MockImmutableData::~MockImmutableData() {
@@ -269,8 +234,7 @@ ModuleWithZebinFixture::MockModuleWithZebin::MockModuleWithZebin(L0::Device *dev
 void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
     kernelImmDatas.push_back(std::make_unique<MockImmutableData>(device));
     auto ptr = reinterpret_cast<void *>(0x1234);
-    auto gmmHelper = device->getNEODevice()->getGmmHelper();
-    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
+    auto canonizedGpuAddress = castToUint64(ptr);
     translationUnit->globalVarBuffer = new NEO::MockGraphicsAllocation(0,
                                                                        NEO::AllocationType::GLOBAL_SURFACE,
                                                                        ptr,

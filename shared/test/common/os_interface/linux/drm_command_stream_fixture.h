@@ -46,6 +46,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+        gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
         mock->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(hwInfo));
         osContext = std::make_unique<OsContextLinux>(*mock, 0, 0u,
@@ -95,6 +96,7 @@ class DrmCommandStreamTest : public ::testing::Test {
     DebugManagerStateRestore dbgState;
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<OsContextLinux> osContext;
+    GmmHelper *gmmHelper = nullptr;
 };
 
 template <typename DrmType>

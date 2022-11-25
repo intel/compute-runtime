@@ -11,6 +11,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
@@ -66,7 +67,8 @@ TEST_F(HeapDirtyStateTests, givenNonDirtyObjectWhenAddressChangedThenReturnDirty
 
     auto newBuffer = ptrOffset(buffer, MemoryConstants::pageSize + 1);
     auto graphicsAllocation = stream->getGraphicsAllocation();
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    MockExecutionEnvironment executionEnvironment{};
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(newBuffer));
 
     graphicsAllocation->setCpuPtrAndGpuAddress(newBuffer, canonizedGpuAddress);
@@ -106,7 +108,8 @@ TEST_F(HeapDirtyStateTests, givenNonDirtyObjectWhenSizeAndBufferChangedThenRetur
     auto newBuffer = ptrOffset(buffer, 1);
     auto newBufferSize = bufferSize + MemoryConstants::pageSize;
     auto graphicsAllocation = stream->getGraphicsAllocation();
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    MockExecutionEnvironment executionEnvironment{};
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(newBuffer));
 
     graphicsAllocation->setSize(newBufferSize);

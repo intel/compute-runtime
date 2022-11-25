@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/linear_stream_fixture.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
@@ -42,7 +43,8 @@ TEST(LinearStreamSimpleTest, givenLinearStreamWithoutGraphicsAllocationWhenGetti
 
 TEST(LinearStreamSimpleTest, givenLinearStreamWithGraphicsAllocationWhenGettingGpuBaseThenGpuAddressFromGraphicsAllocationIsReturned) {
     MockGraphicsAllocation gfxAllocation;
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    auto executionEnvironment = MockExecutionEnvironment{};
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(0x5555000);
 
     gfxAllocation.setCpuPtrAndGpuAddress(nullptr, canonizedGpuAddress);

@@ -42,6 +42,7 @@ using namespace ::testing;
 namespace NEO {
 
 extern GMM_INIT_IN_ARGS passedInputArgs;
+extern GT_SYSTEM_INFO passedGtSystemInfo;
 extern SKU_FEATURE_TABLE passedFtrTable;
 extern WA_TABLE passedWaTable;
 extern bool copyInputArgs;
@@ -51,9 +52,11 @@ struct GmmTests : public MockExecutionEnvironmentGmmFixtureTest {
         MockExecutionEnvironmentGmmFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         localPlatformDevice = rootDeviceEnvironment->getMutableHardwareInfo();
+        gmmHelper = rootDeviceEnvironment->getGmmHelper();
     }
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     HardwareInfo *localPlatformDevice = nullptr;
+    GmmHelper *gmmHelper = nullptr;
 };
 
 TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
@@ -350,11 +353,13 @@ TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValu
 using GmmCanonizeTests = GmmTests;
 
 TEST_F(GmmCanonizeTests, WhenCanonizingThenCorrectAddressIsReturned) {
-    auto hwInfo = *defaultHwInfo;
+    auto &hwInfo = *rootDeviceEnvironment->getMutableHardwareInfo();
 
     // 48 bit - canonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48); // 0x0000FFFFFFFFFFFF;
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+    rootDeviceEnvironment->gmmHelper.reset();
+    rootDeviceEnvironment->initGmm();
+    gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     uint64_t testAddr1 = 0x7777777777777777;
     uint64_t goodAddr1 = 0x0000777777777777;
@@ -366,18 +371,22 @@ TEST_F(GmmCanonizeTests, WhenCanonizingThenCorrectAddressIsReturned) {
 
     // 36 bit - also canonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36); // 0x0000000FFFFFFFFF;
-    gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+    rootDeviceEnvironment->gmmHelper.reset();
+    rootDeviceEnvironment->initGmm();
+    gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     EXPECT_EQ(gmmHelper->canonize(testAddr1), goodAddr1);
     EXPECT_EQ(gmmHelper->canonize(testAddr2), goodAddr2);
 }
 
 TEST_F(GmmCanonizeTests, WhenDecanonizingThenCorrectAddressIsReturned) {
-    auto hwInfo = *defaultHwInfo;
+    auto &hwInfo = *rootDeviceEnvironment->getMutableHardwareInfo();
 
     // 48 bit - decanonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48); // 0x0000FFFFFFFFFFFF;
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+    rootDeviceEnvironment->gmmHelper.reset();
+    rootDeviceEnvironment->initGmm();
+    gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     uint64_t testAddr1 = 0x7777777777777777;
     uint64_t goodAddr1 = 0x0000777777777777;
@@ -389,18 +398,22 @@ TEST_F(GmmCanonizeTests, WhenDecanonizingThenCorrectAddressIsReturned) {
 
     // 36 bit - also decanonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36); // 0x0000000FFFFFFFFF;
-    gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+    rootDeviceEnvironment->gmmHelper.reset();
+    rootDeviceEnvironment->initGmm();
+    gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     EXPECT_EQ(gmmHelper->decanonize(testAddr1), goodAddr1);
     EXPECT_EQ(gmmHelper->decanonize(testAddr2), goodAddr2);
 }
 
 TEST_F(GmmCanonizeTests, WhenCheckingIsValidCanonicalGpuAddressThenOnlyValidAddressesReturnTrue) {
-    auto hwInfo = *defaultHwInfo;
+    auto &hwInfo = *rootDeviceEnvironment->getMutableHardwareInfo();
 
     // 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48); // 0x0000FFFFFFFFFFFF;
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+    rootDeviceEnvironment->gmmHelper.reset();
+    rootDeviceEnvironment->initGmm();
+    gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     uint64_t testAddr1 = 0x0000400000000000;
     EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr1));
@@ -416,7 +429,9 @@ TEST_F(GmmCanonizeTests, WhenCheckingIsValidCanonicalGpuAddressThenOnlyValidAddr
 
     // 36 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36); // 0x0000000FFFFFFFFF;
-    gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+    rootDeviceEnvironment->gmmHelper.reset();
+    rootDeviceEnvironment->initGmm();
+    gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     uint64_t testAddr5 = 0x0000000400000000;
     EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr5));
@@ -432,7 +447,9 @@ TEST_F(GmmCanonizeTests, WhenCheckingIsValidCanonicalGpuAddressThenOnlyValidAddr
 
     // 57 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57); // 0x01FFFFFFFFFFFFFFF;
-    gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
+    rootDeviceEnvironment->gmmHelper.reset();
+    rootDeviceEnvironment->initGmm();
+    gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     uint64_t testAddr9 = 0x0080000000000000;
     EXPECT_TRUE(gmmHelper->isValidCanonicalGpuAddress(testAddr9));
@@ -1027,31 +1044,31 @@ struct GmmHelperTests : MockExecutionEnvironmentGmmFixtureTest {
 };
 
 TEST_F(GmmHelperTests, givenValidGmmFunctionsWhenCreateGmmHelperWithInitializedOsInterfaceThenProperParametersArePassed) {
-    std::unique_ptr<GmmHelper> gmmHelper;
     DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
+    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
-    auto hwInfo = defaultHwInfo.get();
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     SKU_FEATURE_TABLE expectedFtrTable = {};
     WA_TABLE expectedWaTable = {};
     SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
     SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
 
-    gmmHelper.reset(new GmmHelper(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), hwInfo));
+    auto gmmHelper = std::make_unique<GmmHelper>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
-    EXPECT_EQ(&hwInfo->gtSystemInfo, passedInputArgs.pGtSysInfo);
+    EXPECT_EQ(0, memcmp(&hwInfo->gtSystemInfo, &passedGtSystemInfo, sizeof(GT_SYSTEM_INFO)));
     EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));
     EXPECT_EQ(0, memcmp(&expectedWaTable, &passedWaTable, sizeof(WA_TABLE)));
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }
 
 TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceThenInitializationDoesntCrashAndProperParametersArePassed) {
-    std::unique_ptr<GmmHelper> gmmHelper;
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
+    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
@@ -1061,9 +1078,10 @@ TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceT
     SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
     SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
 
-    gmmHelper.reset(new GmmHelper(nullptr, hwInfo));
+    MockExecutionEnvironment executionEnvironment{hwInfo};
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->osInterface.get());
     EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
-    EXPECT_EQ(&hwInfo->gtSystemInfo, passedInputArgs.pGtSysInfo);
+    EXPECT_EQ(0, memcmp(&hwInfo->gtSystemInfo, &passedGtSystemInfo, sizeof(GT_SYSTEM_INFO)));
     EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));
     EXPECT_EQ(0, memcmp(&expectedWaTable, &passedWaTable, sizeof(WA_TABLE)));
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
@@ -1073,9 +1091,8 @@ TEST(GmmHelperTest, givenGmmHelperAndL3CacheDisabledForDebugThenCorrectMOCSIsRet
     decltype(GmmHelper::createGmmContextWrapperFunc) createGmmContextSave = GmmHelper::createGmmContextWrapperFunc;
     GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
-    std::unique_ptr<GmmHelper> gmmHelper;
-    auto hwInfo = defaultHwInfo.get();
-    gmmHelper.reset(new GmmHelper(nullptr, hwInfo));
+    MockExecutionEnvironment executionEnvironment{};
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     EXPECT_EQ(2u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
@@ -1101,9 +1118,8 @@ TEST(GmmHelperTest, givenGmmHelperAndForceAllResourcesUncachedDebugVariableSetTh
     decltype(GmmHelper::createGmmContextWrapperFunc) createGmmContextSave = GmmHelper::createGmmContextWrapperFunc;
     GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
-    std::unique_ptr<GmmHelper> gmmHelper;
-    auto hwInfo = defaultHwInfo.get();
-    gmmHelper.reset(new GmmHelper(nullptr, hwInfo));
+    MockExecutionEnvironment executionEnvironment{};
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     EXPECT_EQ(2u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));

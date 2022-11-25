@@ -28,7 +28,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
     allocation.setCpuPtrAndGpuAddress(&allocation, canonizedGpuAddress);
@@ -79,7 +79,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
-    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
     allocation.setCpuPtrAndGpuAddress(&allocation, canonizedGpuAddress);

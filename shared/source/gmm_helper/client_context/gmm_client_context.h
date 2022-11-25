@@ -6,19 +6,19 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 
 #include <memory>
 
 namespace NEO {
 class GmmClientContext;
-class OSInterface;
+struct RootDeviceEnvironment;
 struct HardwareInfo;
+class GmmHandleAllocator;
 
 class GmmClientContext {
   public:
-    GmmClientContext(OSInterface *osInterface, HardwareInfo *hwInfo);
+    GmmClientContext(const RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL ~GmmClientContext();
 
     MOCKABLE_VIRTUAL MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage);
@@ -29,8 +29,8 @@ class GmmClientContext {
     MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
     GMM_CLIENT_CONTEXT *getHandle() const;
     template <typename T>
-    static std::unique_ptr<GmmClientContext> create(OSInterface *osInterface, HardwareInfo *hwInfo) {
-        return std::make_unique<T>(osInterface, hwInfo);
+    static std::unique_ptr<GmmClientContext> create(const RootDeviceEnvironment &rootDeviceEnvironment) {
+        return std::make_unique<T>(rootDeviceEnvironment);
     }
 
     const HardwareInfo *getHardwareInfo() {
@@ -40,9 +40,7 @@ class GmmClientContext {
     MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
     MOCKABLE_VIRTUAL uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
 
-    void setHandleAllocator(std::unique_ptr<GmmHandleAllocator> allocator) {
-        this->handleAllocator = std::move(allocator);
-    }
+    void setHandleAllocator(std::unique_ptr<GmmHandleAllocator> allocator);
 
     MOCKABLE_VIRTUAL void setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo);
 
@@ -51,7 +49,7 @@ class GmmClientContext {
     }
 
   protected:
-    HardwareInfo *hardwareInfo = nullptr;
+    const HardwareInfo *hardwareInfo = nullptr;
     GMM_CLIENT_CONTEXT *clientContext;
     std::unique_ptr<GmmHandleAllocator> handleAllocator;
 };
