@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxPvc : HwInfoConfigTestLinux {
+struct PvcProductHelperLinux : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
@@ -28,34 +28,33 @@ struct HwInfoConfigTestLinuxPvc : HwInfoConfigTestLinux {
     }
 };
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, WhenConfiguringHwInfoThenZeroIsReturned) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+PVCTEST_F(PvcProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 }
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, given57bAddressSpaceWhenConfiguringHwInfoThenSetFtrFlag) {
-    auto &productHelper = getHelper<ProductHelper>();
+PVCTEST_F(PvcProductHelperLinux, given57bAddressSpaceWhenConfiguringHwInfoThenSetFtrFlag) {
+
     outHwInfo.featureTable.flags.ftr57bGPUAddressing = false;
     outHwInfo.platform.eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
 
     outHwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
-    int ret = productHelper.configureHardwareCustom(&outHwInfo, osInterface);
+    int ret = productHelper->configureHardwareCustom(&outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftr57bGPUAddressing);
 
     outHwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
-    ret = productHelper.configureHardwareCustom(&outHwInfo, osInterface);
+    ret = productHelper->configureHardwareCustom(&outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     auto value = outHwInfo.featureTable.flags.ftr57bGPUAddressing;
     EXPECT_EQ(1u, value);
 }
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, GivenPvcWhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
-    auto &productHelper = getHelper<ProductHelper>();
+PVCTEST_F(PvcProductHelperLinux, GivenPvcWhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
 
     OSInterface osIface;
-    productHelper.configureHardwareCustom(&pInHwInfo, &osIface);
+    productHelper->configureHardwareCustom(&pInHwInfo, &osIface);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
@@ -64,50 +63,48 @@ PVCTEST_F(HwInfoConfigTestLinuxPvc, GivenPvcWhenConfigureHardwareCustomThenKmdNo
 
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSupportedThenReturnFalse, IGFX_PVC);
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSupportedThenReturnTrue) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isVmBindPatIndexProgrammingSupported());
+PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnTrue) {
+
+    EXPECT_TRUE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
 
-PVCTEST_F(ProductConfigTests, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
+PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
     for (const auto &config : AOT_PVC::productConfigs) {
         AheadOfTimeConfig aotConfig = {0};
         aotConfig.ProductConfig = config;
-        CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
-        EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
+        CompilerHwInfoConfig::get(pInHwInfo.platform.eProductFamily)->setProductConfigForHwInfo(pInHwInfo, aotConfig);
+        EXPECT_EQ(pInHwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
     }
 }
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, givenOsInterfaceIsNullWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    EXPECT_EQ(0u, hwInfoConfig->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
+PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
 }
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, givenHwInfoConfigWhenAskedIsBlitSplitEnqueueWARequiredThenReturnTrue) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    EXPECT_TRUE(hwInfoConfig->isBlitSplitEnqueueWARequired(pInHwInfo));
+PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsBlitSplitEnqueueWARequiredThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isBlitSplitEnqueueWARequired(pInHwInfo));
 }
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
+
     auto testHwInfo = *defaultHwInfo;
     testHwInfo.platform.usRevId = 0x8;
-    EXPECT_EQ(0u, hwInfoConfig->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, nullptr, 0));
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, nullptr, 0));
 }
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, WhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnSuccess) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+PVCTEST_F(PvcProductHelperLinux, WhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnSuccess) {
+
     drm->setPciPath("device");
     drm->storedGetDeviceMemoryPhysicalSizeInBytesStatus = true;
     drm->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
-    EXPECT_EQ(1024u, hwInfoConfig->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
+    EXPECT_EQ(1024u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
 }
 
-PVCTEST_F(HwInfoConfigTestLinuxPvc, WhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnSuccess) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+PVCTEST_F(PvcProductHelperLinux, WhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnSuccess) {
+
     auto testHwInfo = *defaultHwInfo;
     testHwInfo.platform.usRevId = 0x8;
     drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
     drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
-    EXPECT_EQ(51200000000u, hwInfoConfig->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
+    EXPECT_EQ(51200000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
 }
