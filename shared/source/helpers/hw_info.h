@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/direct_submission/direct_submission_properties.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 
@@ -14,10 +13,8 @@
 #include "igfxfmid.h"
 #include "sku_info.h"
 
-#include <cstddef>
-#include <string>
-
 namespace NEO {
+enum PreemptionMode : uint32_t;
 
 struct RuntimeCapabilityTable {
     DirectSubmissionProperyEngines directSubmissionEngines;

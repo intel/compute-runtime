@@ -6,15 +6,15 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/completion_stamp.h"
 
 #include <atomic>
-#include <chrono>
 #include <cstdint>
 
 namespace NEO {
+enum QueueThrottle : uint32_t;
+using FlushStamp = uint64_t;
+
 struct KmdNotifyProperties {
     int64_t delayKmdNotifyMicroseconds;
     int64_t delayQuickKmdSleepMicroseconds;

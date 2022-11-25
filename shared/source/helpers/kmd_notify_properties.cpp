@@ -7,8 +7,10 @@
 
 #include "shared/source/helpers/kmd_notify_properties.h"
 
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include <chrono>
 #include <cstdint>
 
 using namespace NEO;
