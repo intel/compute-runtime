@@ -7,18 +7,16 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "hw_cmds_xe_hpg_core_base.h"
 
 using namespace NEO;
 
-using TestXeHpgHwInfoConfig = Test<DeviceFixture>;
+using XeHpgProductHelper = HwInfoConfigTest;
 
-XE_HPG_CORETEST_F(TestXeHpgHwInfoConfig, givenHwInfoConfigWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isSystolicModeConfigurable(hwInfo));
+XE_HPG_CORETEST_F(XeHpgProductHelper, givenProductHelperWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isSystolicModeConfigurable(pInHwInfo));
 }

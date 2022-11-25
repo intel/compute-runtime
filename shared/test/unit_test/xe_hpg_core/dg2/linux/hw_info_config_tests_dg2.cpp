@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxDg2 : HwInfoConfigTestLinux {
+struct Dg2ProductHelperLinux : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
@@ -22,17 +22,16 @@ struct HwInfoConfigTestLinuxDg2 : HwInfoConfigTestLinux {
     }
 };
 
-DG2TEST_F(HwInfoConfigTestLinuxDg2, WhenConfiguringHwInfoThenZeroIsReturned) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+DG2TEST_F(Dg2ProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
 }
 
-DG2TEST_F(HwInfoConfigTestLinuxDg2, GivenDg2WhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
-    auto &productHelper = getHelper<ProductHelper>();
+DG2TEST_F(Dg2ProductHelperLinux, GivenDg2WhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
 
     OSInterface osIface;
-    productHelper.configureHardwareCustom(&pInHwInfo, &osIface);
+    productHelper->configureHardwareCustom(&pInHwInfo, &osIface);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);

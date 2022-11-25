@@ -8,97 +8,79 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 using namespace NEO;
 
-using TestDg2HwInfoConfig = Test<DeviceFixture>;
+using Dg2ProductHelper = HwInfoConfigTest;
 
-HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned, IGFX_DG2);
-HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned, IGFX_DG2);
-
-DG2TEST_F(TestDg2HwInfoConfig, givenDG2WithCSteppingThenAdditionalStateBaseAddressWAIsNotRequired) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_C, *hwInfo);
-    auto isWARequired = hwInfoConfig.isAdditionalStateBaseAddressWARequired(pDevice->getHardwareInfo());
+DG2TEST_F(Dg2ProductHelper, givenDG2WithCSteppingThenAdditionalStateBaseAddressWAIsNotRequired) {
+    pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_C, pInHwInfo);
+    auto isWARequired = productHelper->isAdditionalStateBaseAddressWARequired(pInHwInfo);
     EXPECT_FALSE(isWARequired);
 }
 
-DG2TEST_F(TestDg2HwInfoConfig, givenDG2WithBSteppingThenAdditionalStateBaseAddressWAIsRequired) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
-    auto isWARequired = hwInfoConfig.isAdditionalStateBaseAddressWARequired(pDevice->getHardwareInfo());
+DG2TEST_F(Dg2ProductHelper, givenDG2WithBSteppingThenAdditionalStateBaseAddressWAIsRequired) {
+    pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, pInHwInfo);
+    auto isWARequired = productHelper->isAdditionalStateBaseAddressWARequired(pInHwInfo);
     EXPECT_TRUE(isWARequired);
 }
 
-DG2TEST_F(TestDg2HwInfoConfig, givenDG2WithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+DG2TEST_F(Dg2ProductHelper, givenDG2WithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
+    pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, pInHwInfo);
     for (const auto &devId : dg2G10DeviceIds) {
-        hwInfo->platform.usDeviceID = devId;
-        auto isWARequired = hwInfoConfig.isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
+        pInHwInfo.platform.usDeviceID = devId;
+        auto isWARequired = productHelper->isMaxThreadsForWorkgroupWARequired(pInHwInfo);
         EXPECT_TRUE(isWARequired);
     }
 }
 
-DG2TEST_F(TestDg2HwInfoConfig, givenDG2WithBSteppingThenMaxThreadsForWorkgroupWAIsNotRequired) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, *hwInfo);
-    auto isWARequired = hwInfoConfig.isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
+DG2TEST_F(Dg2ProductHelper, givenDG2WithBSteppingThenMaxThreadsForWorkgroupWAIsNotRequired) {
+    pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A1, pInHwInfo);
+    auto isWARequired = productHelper->isMaxThreadsForWorkgroupWARequired(pInHwInfo);
     EXPECT_FALSE(isWARequired);
 }
 
-DG2TEST_F(TestDg2HwInfoConfig, givenSteppingWhenAskingForLocalMemoryAccessModeThenDisallowOnA0) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+DG2TEST_F(Dg2ProductHelper, givenSteppingWhenAskingForLocalMemoryAccessModeThenDisallowOnA0) {
+    pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, pInHwInfo);
+    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, hwInfoConfig.getLocalMemoryAccessMode(hwInfo));
-
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-    EXPECT_EQ(LocalMemoryAccessMode::Default, hwInfoConfig.getLocalMemoryAccessMode(hwInfo));
+    pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, pInHwInfo);
+    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
-DG2TEST_F(TestDg2HwInfoConfig, givenDG2HwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
+DG2TEST_F(Dg2ProductHelper, givenDG2HwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(pInHwInfo));
 }
 
-DG2TEST_F(TestDg2HwInfoConfig, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
 
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyThreadArbitrationPolicySupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyCoherencyRequiredSupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyZPassAsyncComputeThreadLimitSupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyPixelAsyncComputeThreadLimitSupport());
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyLargeGrfModeSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
+    EXPECT_TRUE(productHelper->getScmPropertyCoherencyRequiredSupport());
+    EXPECT_TRUE(productHelper->getScmPropertyZPassAsyncComputeThreadLimitSupport());
+    EXPECT_TRUE(productHelper->getScmPropertyPixelAsyncComputeThreadLimitSupport());
+    EXPECT_TRUE(productHelper->getScmPropertyLargeGrfModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getStateBaseAddressPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyStatelessMocsSupport());
-    EXPECT_TRUE(hwInfoConfig.getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
-    EXPECT_FALSE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
+    EXPECT_FALSE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
 
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
-    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
-    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_FALSE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
