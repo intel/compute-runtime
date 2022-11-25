@@ -1430,7 +1430,7 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.initialize(argv.size(), argv);
 
-    const char buildWarning[] = "Warning: This is a build log!";
+    const char buildWarning[] = "warning: This is a build log!";
     mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
     mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
 
@@ -1452,6 +1452,39 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
 
     const std::string expectedOutput{buildWarning + "\nBuild succeeded for : "s + deviceConfig + ".\n"s};
     EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsNotPrinted) {
+    ::testing::internal::CaptureStdout();
+
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
+
+    const char buildWarning[] = "Warning: this is a build log!";
+    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
+    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+
+    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    Ar::ArEncoder ar;
+    const std::string pointerSize{"32"};
+
+    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_TRUE(output.empty()) << output;
 }
 
 TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {

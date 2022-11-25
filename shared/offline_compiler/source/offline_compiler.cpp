@@ -406,13 +406,17 @@ int OfflineCompiler::build() {
 }
 
 void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t errorStringSize) {
-    std::string errorString = (errorStringSize && pErrorString) ? std::string(pErrorString, pErrorString + errorStringSize) : "";
-    if (errorString[0] != '\0') {
-        if (buildLog.empty()) {
-            buildLog.assign(errorString.c_str());
-        } else {
-            buildLog.append("\n");
-            buildLog.append(errorString.c_str());
+    if (pErrorString != nullptr) {
+        std::string log(pErrorString, pErrorString + errorStringSize);
+        ConstStringRef errorString(log);
+        const bool warningFound = errorString.containsCaseInsensitive("warning");
+        if (!isQuiet() || !warningFound) {
+            if (buildLog.empty()) {
+                buildLog.assign(errorString.data());
+            } else {
+                buildLog.append("\n");
+                buildLog.append(errorString.data());
+            }
         }
     }
 }
