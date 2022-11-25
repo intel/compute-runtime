@@ -1536,7 +1536,7 @@ HWTEST_EXCLUDE_PRODUCT(TimestampEventCreate, givenEventTimestampsWhenQueryKernel
 
 TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyReturned) {
     struct MockEventQuery : public EventImp<uint32_t> {
-        MockEventQuery(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device) {}
+        MockEventQuery(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device, false) {}
 
         ze_result_t queryStatus() override {
             return ZE_RESULT_NOT_READY;
@@ -2112,8 +2112,9 @@ HWTEST_F(EventTests,
     VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
-
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
     auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
     ASSERT_NE(event, nullptr);
     ASSERT_NE(nullptr, event->csr);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csr);
@@ -2153,11 +2154,30 @@ HWTEST_F(EventTests,
     event->destroy();
 }
 
+HWTEST_F(EventTests, WhenDownloadAllocationNotRequiredThenDontDownloadAllocation) {
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    event->queryStatus();
+    EXPECT_FALSE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr)->downloadAllocationsCalled);
+    event->destroy();
+}
+
+HWTEST_F(EventTests, WhenDownloadAllocationRequiredThenDownloadAllocation) {
+    CommandStreamReceiverType csrTypes[] = {CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB};
+    for (auto csrType : csrTypes) {
+        neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = csrType;
+        auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+        event->queryStatus();
+        EXPECT_TRUE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr)->downloadAllocationsCalled);
+        event->destroy();
+    }
+}
+
 struct MockEventCompletion : public EventImp<uint32_t> {
     using EventImp<uint32_t>::gpuStartTimestamp;
     using EventImp<uint32_t>::gpuEndTimestamp;
 
-    MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device) {
+    MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device, false) {
         auto neoDevice = device->getNEODevice();
         auto &hwInfo = neoDevice->getHardwareInfo();
         auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);

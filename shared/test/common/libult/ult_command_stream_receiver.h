@@ -354,6 +354,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         BaseClass::ensureCommandBufferAllocation(commandStream, minimumRequiredSize, additionalAllocationSize);
     }
 
+    CommandStreamReceiverType getType() override {
+        return commandStreamReceiverType;
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -398,6 +402,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool callBaseFlushBcsTask{true};
     uint32_t flushBcsTaskReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
+    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
 };
 
 } // namespace NEO

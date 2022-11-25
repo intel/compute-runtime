@@ -122,7 +122,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
 
     CommandStreamReceiverType getType() override {
-        return CommandStreamReceiverType::CSR_HW;
+        return commandStreamReceiverType;
     }
 
     void downloadAllocations() override {
@@ -193,6 +193,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     std::optional<bool> isGpuHangDetectedReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
     WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::Ready};
+    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {

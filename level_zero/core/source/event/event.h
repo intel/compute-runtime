@@ -199,8 +199,8 @@ class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT> {
 template <typename TagSizeT>
 struct EventImp : public Event {
 
-    EventImp(EventPool *eventPool, int index, Device *device)
-        : device(device), index(index), eventPool(eventPool) {
+    EventImp(EventPool *eventPool, int index, Device *device, bool downloadAllocationRequired)
+        : device(device), index(index), eventPool(eventPool), downloadAllocationRequired(downloadAllocationRequired) {
         contextStartOffset = NEO::TimestampPackets<TagSizeT>::getContextStartOffset();
         contextEndOffset = NEO::TimestampPackets<TagSizeT>::getContextEndOffset();
         globalStartOffset = NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset();
@@ -242,6 +242,7 @@ struct EventImp : public Event {
     Device *device;
     int index;
     EventPool *eventPool;
+    const bool downloadAllocationRequired = false;
 
   protected:
     ze_result_t calculateProfilingData();

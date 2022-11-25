@@ -15,13 +15,17 @@
 namespace L0 {
 template <typename TagSizeT>
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
-    auto event = new EventImp<TagSizeT>(eventPool, desc->index, device);
+    auto neoDevice = device->getNEODevice();
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    bool downloadAllocationRequired = (csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX ||
+                                       csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+
+    auto event = new EventImp<TagSizeT>(eventPool, desc->index, device, downloadAllocationRequired);
     UNRECOVERABLE_IF(event == nullptr);
 
     if (eventPool->isEventPoolTimestampFlagSet()) {
         event->setEventTimestampFlag(true);
     }
-    auto neoDevice = device->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
 
@@ -41,9 +45,10 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->hostAddress = reinterpret_cast<void *>(baseHostAddr + event->eventPoolOffset);
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
-    event->csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    event->csr = csr;
     event->maxKernelCount = maxKernels;
     event->maxPacketCount = eventPool->getEventMaxPackets();
+
     bool useContextEndOffset = l0CoreHelper.multiTileCapablePlatform();
     int32_t overrideUseContextEndOffset = NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.get();
     if (overrideUseContextEndOffset != -1) {
@@ -182,8 +187,11 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
     if (metricStreamer != nullptr) {
         hostEventSetValue(metricStreamer->getNotificationState());
     }
-    this->csr->downloadAllocations();
-    this->csr->downloadAllocation(*eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));
+    if (this->downloadAllocationRequired) {
+        this->csr->downloadAllocations();
+        this->csr->downloadAllocation(*eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));
+    }
+
     if (isAlreadyCompleted()) {
         return ZE_RESULT_SUCCESS;
     } else {
