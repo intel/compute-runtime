@@ -874,5 +874,25 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnl
     EXPECT_EQ(false, commandList->isFlushTaskSubmissionEnabled);
 }
 
+HWTEST2_F(CommandListCreate, givenAllValuesTbxAndSyncModeFlagsWhenCheckingWaitlistEventSyncRequiredThenExpectTrueOnlyForTbxTrueAndAsyncMode, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+
+    cmdList.isSyncModeQueue = true;
+    cmdList.isTbxMode = false;
+    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
+
+    cmdList.isSyncModeQueue = true;
+    cmdList.isTbxMode = true;
+    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
+
+    cmdList.isSyncModeQueue = false;
+    cmdList.isTbxMode = false;
+    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
+
+    cmdList.isSyncModeQueue = false;
+    cmdList.isTbxMode = true;
+    EXPECT_TRUE(cmdList.eventWaitlistSyncRequired());
+}
+
 } // namespace ult
 } // namespace L0

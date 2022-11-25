@@ -13,7 +13,8 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
-#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
+#include "level_zero/core/source/image/image_hw.h"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -569,6 +570,202 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitO
     EXPECT_FALSE(cmdList.dependenciesPresent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle));
     EXPECT_FALSE(cmdList.dependenciesPresent);
+}
+
+using TbxImmediateCommandListTest = Test<TbxImmediateCommandListFixture>;
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendLaunchKernelThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto eventHandle = event->toHandle();
+    ze_group_count_t group = {1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandListImmediate->appendLaunchKernel(kernel->toHandle(), &group, nullptr, 1, &eventHandle, launchParams);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendLaunchKernelIndirectThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto eventHandle = event->toHandle();
+    ze_group_count_t group = {1, 1, 1};
+    commandListImmediate->appendLaunchKernelIndirect(kernel->toHandle(), &group, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendBarrierThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto eventHandle = event->toHandle();
+    commandListImmediate->appendBarrier(nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendMemoryCopyThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto eventHandle = event->toHandle();
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    commandListImmediate->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendMemoryCopyRegionThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto eventHandle = event->toHandle();
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {};
+    ze_copy_region_t srcRegion = {};
+    commandListImmediate->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendMemoryFillThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto eventHandle = event->toHandle();
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, 4096, 4096u, &dstBuffer);
+
+    int one = 1;
+    commandListImmediate->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096,
+                                           nullptr, 1u, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendWaitOnEventsThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto eventHandle = event->toHandle();
+    commandListImmediate->appendWaitOnEvents(1u, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendWriteGlobalTimestampThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto eventHandle = event->toHandle();
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(0x12345678555500);
+    commandListImmediate->appendWriteGlobalTimestamp(dstptr, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendImageCopyRegionThenExpectDownloadAllocations) {
+    if (!neoDevice->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    L0::Image *imagePtr;
+
+    auto result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::unique_ptr<L0::Image> imageDst(imagePtr);
+
+    result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::unique_ptr<L0::Image> imageSrc(imagePtr);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+
+    auto eventHandle = event->toHandle();
+    commandListImmediate->appendImageCopyRegion(imageDst->toHandle(), imageSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendImageCopyFromMemoryThenExpectDownloadAllocations) {
+    if (!neoDevice->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3dBytes);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    L0::Image *imagePtr;
+    auto result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::unique_ptr<L0::Image> image(imagePtr);
+
+    auto eventHandle = event->toHandle();
+    commandListImmediate->appendImageCopyFromMemory(imagePtr->toHandle(), ptr, nullptr, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendImageCopyToMemoryThenExpectDownloadAllocations) {
+    if (!neoDevice->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBufferBytes);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    L0::Image *imagePtr;
+    auto result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::unique_ptr<L0::Image> image(imagePtr);
+
+    auto eventHandle = event->toHandle();
+    commandListImmediate->appendImageCopyToMemory(ptr, imagePtr->toHandle(), nullptr, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendMemoryRangesBarrierThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    uint32_t numRanges = 1;
+    const size_t rangeSizes = 1;
+    const char *ranges[rangeSizes];
+    const void **rangesMemory = reinterpret_cast<const void **>(&ranges[0]);
+
+    auto eventHandle = event->toHandle();
+    commandListImmediate->appendMemoryRangesBarrier(numRanges, &rangeSizes, rangesMemory, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediateAsyncCommandListWhenAppendLaunchCooperativeKernelThenExpectDownloadAllocations) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    auto eventHandle = event->toHandle();
+    commandListImmediate->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 1, &eventHandle);
+
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
 
 } // namespace ult

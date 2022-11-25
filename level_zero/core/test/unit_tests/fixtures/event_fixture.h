@@ -55,8 +55,8 @@ struct EventFixture : public DeviceFixture {
     std::unique_ptr<L0::EventPool> eventPool = nullptr;
     std::unique_ptr<L0::EventImp<uint32_t>> event;
 
-    ze_event_pool_desc_t eventPoolDesc;
-    ze_event_desc_t eventDesc = {};
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
 };
 
 template <int32_t eventPoolHostFlag, int32_t eventPoolTimestampFlag>

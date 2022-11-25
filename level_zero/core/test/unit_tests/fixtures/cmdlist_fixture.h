@@ -72,6 +72,7 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     }
     void setUp(uint32_t revision);
     void tearDown();
+    void setUpImpl(uint32_t revision);
 
     std::unique_ptr<MockImmutableData> mockKernelImmData;
     std::unique_ptr<L0::ult::CommandList> commandList;
@@ -197,6 +198,30 @@ struct CommandListEventUsedPacketSignalFixture : public CommandListFixture {
     void setUp();
 
     DebugManagerStateRestore restorer;
+};
+
+struct TbxImmediateCommandListFixture : public ModuleMutableCommandListFixture {
+    using EventFieldType = uint32_t;
+
+    template <typename FamilyType>
+    void setUpT();
+
+    template <typename FamilyType>
+    void tearDownT() {
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
+
+        ModuleMutableCommandListFixture::tearDown();
+    }
+
+    void setEvent();
+
+    void setUp() {}
+    void tearDown() {}
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<EventPool> eventPool;
+    std::unique_ptr<Event> event;
 };
 
 } // namespace ult

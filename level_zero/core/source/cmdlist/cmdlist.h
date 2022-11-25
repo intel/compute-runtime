@@ -291,6 +291,10 @@ struct CommandList : _ze_command_list_handle_t {
         return prefetchContext;
     }
 
+    bool eventWaitlistSyncRequired() const {
+        return this->isTbxMode && !this->isSyncModeQueue;
+    }
+
     ze_context_handle_t hContext = nullptr;
     std::vector<Kernel *> printfKernelContainer;
     CommandQueue *cmdQImmediate = nullptr;
@@ -318,6 +322,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool getDcFlushRequired(bool externalCondition) const {
         return externalCondition ? dcFlushSupport : false;
     }
+    void synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;

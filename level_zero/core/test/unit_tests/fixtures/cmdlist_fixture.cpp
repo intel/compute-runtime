@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 #include "gtest/gtest.h"
 
@@ -21,17 +22,17 @@ void CommandListFixture::setUp() {
     ze_result_t returnValue;
     commandList.reset(whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
-    ze_event_pool_desc_t eventPoolDesc = {};
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 2;
 
-    ze_event_desc_t eventDesc = {};
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     eventDesc.index = 0;
     eventDesc.wait = 0;
     eventDesc.signal = 0;
 
-    eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-    event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    event = std::unique_ptr<L0::Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 }
 
 void CommandListFixture::tearDown() {
@@ -62,22 +63,20 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     }
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    ze_event_pool_desc_t eventPoolDesc = {};
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 2;
 
-    ze_event_desc_t eventDesc = {};
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     eventDesc.index = 0;
     eventDesc.wait = 0;
     eventDesc.signal = 0;
 
-    eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-    event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    event = std::unique_ptr<L0::Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 }
 
-void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
-    ModuleImmutableDataFixture::setUp();
-
+void ModuleMutableCommandListFixture::setUpImpl(uint32_t revision) {
     if (revision != 0) {
         auto revId = NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily)->getHwRevIdFromStepping(revision, device->getHwInfo());
         neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = revId;
@@ -85,7 +84,7 @@ void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
 
     ze_result_t returnValue;
 
-    ze_command_queue_desc_t queueDesc{};
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.ordinal = 0u;
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
@@ -109,6 +108,12 @@ void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
 
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
     createKernel(kernel.get());
+}
+
+void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
+    ModuleImmutableDataFixture::setUp();
+
+    ModuleMutableCommandListFixture::setUpImpl(revision);
 }
 
 void ModuleMutableCommandListFixture::tearDown() {
@@ -176,6 +181,22 @@ void CommandListEventUsedPacketSignalFixture::setUp() {
     NEO::DebugManager.flags.SignalAllEventPackets.set(0);
 
     CommandListFixture::setUp();
+}
+
+void TbxImmediateCommandListFixture::setEvent() {
+    auto mockEvent = static_cast<Event *>(event.get());
+
+    size_t offset = 0;
+    if (event->isUsingContextEndOffset()) {
+        offset = event->getContextEndOffset();
+    }
+    void *completionAddress = ptrOffset(mockEvent->hostAddress, offset);
+    size_t packets = event->getPacketsInUse();
+    EventFieldType signaledValue = Event::STATE_SIGNALED;
+    for (size_t i = 0; i < packets; i++) {
+        memcpy(completionAddress, &signaledValue, sizeof(EventFieldType));
+        completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
+    }
 }
 
 } // namespace ult

@@ -121,7 +121,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
 
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         return commandStreamReceiverType;
     }
 

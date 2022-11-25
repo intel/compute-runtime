@@ -86,7 +86,7 @@ class MockCsrAub : public MockCsrBase<GfxFamily> {
                uint32_t rootDeviceIndex,
                const DeviceBitfield deviceBitfield)
         : MockCsrBase<GfxFamily>(execStamp, executionEnvironment, rootDeviceIndex, deviceBitfield) {}
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         return CommandStreamReceiverType::CSR_AUB;
     }
 };

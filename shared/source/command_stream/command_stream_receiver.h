@@ -186,7 +186,7 @@ class CommandStreamReceiver {
     void allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap);
     void releaseIndirectHeap(IndirectHeap::Type heapType);
 
-    virtual enum CommandStreamReceiverType getType() = 0;
+    virtual enum CommandStreamReceiverType getType() const = 0;
     void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
 
     bool initializeTagAllocation();
@@ -383,6 +383,10 @@ class CommandStreamReceiver {
 
     bool getDcFlushRequired(bool externalCondition) const {
         return externalCondition ? dcFlushSupport : false;
+    }
+
+    bool isTbxMode() const {
+        return (getType() == NEO::CommandStreamReceiverType::CSR_TBX || getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
     }
 
   protected:

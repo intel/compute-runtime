@@ -2436,3 +2436,22 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag)
 
     EXPECT_TRUE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, givenVariousCsrModeWhenGettingTbxModeThenExpectOnlyWhenModeIsTbxOrTbxWithAub) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    EXPECT_FALSE(ultCsr.isTbxMode());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_HW_WITH_AUB;
+    EXPECT_FALSE(ultCsr.isTbxMode());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_AUB;
+    EXPECT_FALSE(ultCsr.isTbxMode());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    EXPECT_TRUE(ultCsr.isTbxMode());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX_WITH_AUB;
+    EXPECT_TRUE(ultCsr.isTbxMode());
+}

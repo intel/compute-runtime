@@ -17,8 +17,7 @@ template <typename TagSizeT>
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
     auto neoDevice = device->getNEODevice();
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-    bool downloadAllocationRequired = (csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX ||
-                                       csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+    bool downloadAllocationRequired = csr->isTbxMode();
 
     auto event = new EventImp<TagSizeT>(eventPool, desc->index, device, downloadAllocationRequired);
     UNRECOVERABLE_IF(event == nullptr);

@@ -92,7 +92,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void resetKmdNotifyHelper(KmdNotifyHelper *newHelper);
 
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         return CommandStreamReceiverType::CSR_HW;
     }
 

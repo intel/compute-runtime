@@ -560,7 +560,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     bool flushBatchedSubmissions() override { return true; }
 
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         return CommandStreamReceiverType::CSR_HW;
     }
 

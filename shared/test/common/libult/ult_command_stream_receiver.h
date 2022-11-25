@@ -354,7 +354,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         BaseClass::ensureCommandBufferAllocation(commandStream, minimumRequiredSize, additionalAllocationSize);
     }
 
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         return commandStreamReceiverType;
     }
 

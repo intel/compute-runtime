@@ -99,7 +99,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void addGUCStartMessage(uint64_t batchBufferAddress);
     uint32_t getGUCWorkQueueItemHeader();
 
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         return CommandStreamReceiverType::CSR_AUB;
     }
 

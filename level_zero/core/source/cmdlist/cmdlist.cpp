@@ -188,4 +188,11 @@ bool CommandList::setupTimestampEventForMultiTile(Event *signalEvent) {
     return false;
 }
 
+void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList) {
+    for (uint32_t i = 0; i < numWaitEvents; i++) {
+        Event *event = Event::fromHandle(waitEventList[i]);
+        event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    }
+}
+
 } // namespace L0

@@ -33,7 +33,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override;
     void setupContext(OsContext &osContext) override;
 
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         if (BaseCSR::getType() == CommandStreamReceiverType::CSR_TBX) {
             return CommandStreamReceiverType::CSR_TBX_WITH_AUB;
         }

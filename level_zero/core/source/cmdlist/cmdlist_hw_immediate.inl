@@ -250,13 +250,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
     }
-    if (waitForEventsFromHost()) {
-        for (uint32_t i = 0; i < numWaitEvents; i++) {
-            auto event = Event::fromHandle(phWaitEvents[i]);
-            event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    bool hostWait = waitForEventsFromHost();
+    if (hostWait || this->eventWaitlistSyncRequired()) {
+        this->synchronizeEventList(numWaitEvents, phWaitEvents);
+        if (hostWait) {
+            numWaitEvents = 0u;
+            phWaitEvents = nullptr;
         }
-        numWaitEvents = 0u;
-        phWaitEvents = nullptr;
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernelHandle, threadGroupDimensions,
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
@@ -271,6 +271,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(kernelHandle, pDispatchArgumentsBuffer,
                                                                                 hSignalEvent, numWaitEvents, phWaitEvents);
@@ -286,6 +287,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
     ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
 
@@ -304,6 +306,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
 
     ze_result_t ret;
@@ -343,6 +346,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
 
     ze_result_t ret;
@@ -379,6 +383,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents);
 
@@ -446,6 +451,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
     }
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numEvents, phWaitEvents);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents);
     this->dependenciesPresent = true;
@@ -459,6 +465,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteGlobalTime
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
 
@@ -495,6 +502,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyRegion
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent,
                                                                            numWaitEvents, phWaitEvents);
@@ -512,6 +520,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hSignalEvent,
                                                                                numWaitEvents, phWaitEvents);
@@ -530,6 +539,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hSignalEvent,
                                                                              numWaitEvents, phWaitEvents);
@@ -546,6 +556,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBar
                                                                                      ze_event_handle_t *phWaitEvents) {
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, phWaitEvents);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents);
     return flushImmediate(ret, true, true, (numWaitEvents > 0), hSignalEvent);
@@ -559,6 +570,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperati
                                                                                          ze_event_handle_t *waitEventHandles) {
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
+        checkWaitEventsState(numWaitEvents, waitEventHandles);
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, waitEventHandles);
     return flushImmediate(ret, true, false, (numWaitEvents > 0), hSignalEvent);
@@ -668,6 +680,13 @@ void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(v
     auto gpuAddress = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->getGpuAddress();
     auto offset = ptrDiff(ptr, gpuAddress);
     return ptrOffset(alloc->getLockedPtr(), offset);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkWaitEventsState(uint32_t numWaitEvents, ze_event_handle_t *waitEventList) {
+    if (this->eventWaitlistSyncRequired()) {
+        this->synchronizeEventList(numWaitEvents, waitEventList);
+    }
 }
 
 } // namespace L0

@@ -1103,5 +1103,30 @@ void CmdListLargeGrfFixture::testBody() {
     }
 }
 
+template <typename FamilyType>
+void TbxImmediateCommandListFixture::setUpT() {
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
+    ModuleImmutableDataFixture::setUp();
+
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    ModuleMutableCommandListFixture::setUpImpl(0u);
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 2;
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.index = 0;
+    eventDesc.wait = 0;
+    eventDesc.signal = 0;
+
+    ze_result_t returnValue;
+    eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    event = std::unique_ptr<L0::Event>(Event::create<EventFieldType>(eventPool.get(), &eventDesc, device));
+
+    setEvent();
+}
+
 } // namespace ult
 } // namespace L0

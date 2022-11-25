@@ -139,6 +139,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t performCpuMemcpy(void *dstptr, const void *srcptr, size_t size, bool isDstDeviceMemory, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(void *ptr, size_t size);
     bool waitForEventsFromHost();
+    void checkWaitEventsState(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
 
   protected:
     std::atomic<bool> dependenciesPresent{false};

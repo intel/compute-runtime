@@ -95,7 +95,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     std::set<GraphicsAllocation *> allocationsForDownload = {};
 
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         return CommandStreamReceiverType::CSR_TBX;
     }
 
