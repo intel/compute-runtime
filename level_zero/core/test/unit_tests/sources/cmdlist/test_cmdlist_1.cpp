@@ -1068,6 +1068,118 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     driverHandle->releaseImportedPointer(dstPtr);
 }
 
+HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsAtLeastXeHpcCore) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    uint8_t srcPtr[64] = {};
+    uint8_t dstPtr[64] = {};
+    const ze_copy_region_t region = {0U, 0U, 0U, 1, 1, 0U};
+
+    driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    auto verifyFlags = [&ultCsr](ze_result_t result, bool dispatchFlag, bool bbFlag) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies, dispatchFlag);
+        EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies, bbFlag);
+    };
+
+    for (bool hasEventDependencies : {true, false}) {
+        ze_event_handle_t *waitlist = hasEventDependencies ? &event : nullptr;
+        uint32_t numWaitlistEvents = hasEventDependencies ? 1 : 0;
+
+        verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, numWaitlistEvents, waitlist, launchParams),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendBarrier(nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendEventReset(event), false, false);
+
+        verifyFlags(commandList->appendSignalEvent(event), false, false);
+
+        verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false),
+                    false, false);
+
+        verifyFlags(commandList->appendWaitOnEvents(1, &event), true, true);
+
+        verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        if constexpr (FamilyType::supportsSampler) {
+            auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+            auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+            mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+            auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+            ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
+            ze_image_desc_t zeDesc = {};
+            zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+            image->initialize(device, &zeDesc);
+
+            verifyFlags(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, nullptr, numWaitlistEvents, waitlist),
+                        hasEventDependencies, hasEventDependencies);
+
+            verifyFlags(commandList->appendImageCopyFromMemory(image->toHandle(), dstPtr, &imgRegion, nullptr, numWaitlistEvents, waitlist),
+                        hasEventDependencies, hasEventDependencies);
+
+            verifyFlags(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, nullptr, numWaitlistEvents, waitlist),
+                        hasEventDependencies, hasEventDependencies);
+        }
+
+        size_t rangeSizes = 1;
+        const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
+        verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+    }
+
+    for (bool hasEventDependencies : {true, false}) {
+        ze_event_handle_t *waitlist = hasEventDependencies ? &event : nullptr;
+        uint32_t numWaitlistEvents = hasEventDependencies ? 1 : 0;
+        verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+    }
+
+    driverHandle->releaseImportedPointer(dstPtr);
+}
+
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableFlushTaskSubmission.set(1);

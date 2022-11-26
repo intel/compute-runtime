@@ -32,6 +32,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::dispatchDisablePrefetcher;
     using BaseClass::dispatchPartitionRegisterConfiguration;
     using BaseClass::dispatchPrefetchMitigation;
+    using BaseClass::dispatchRelaxedOrderingReturnPtrRegs;
     using BaseClass::dispatchSemaphoreSection;
     using BaseClass::dispatchStartSection;
     using BaseClass::dispatchSwitchRingBufferSection;
@@ -39,6 +40,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getDiagnosticModeSection;
     using BaseClass::getSizeDisablePrefetcher;
     using BaseClass::getSizeDispatch;
+    using BaseClass::getSizeDispatchRelaxedOrderingQueueStall;
     using BaseClass::getSizeEnd;
     using BaseClass::getSizePartitionRegisterConfigurationSection;
     using BaseClass::getSizePrefetchMitigation;
@@ -47,6 +49,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::getSizeSystemMemoryFenceAddress;
     using BaseClass::hwInfo;
+    using BaseClass::isDisablePrefetcherRequired;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContext;
     using BaseClass::partitionConfigSet;
@@ -57,6 +60,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::preinitializedTaskStoreSection;
     using BaseClass::relaxedOrderingInitialized;
     using BaseClass::relaxedOrderingSchedulerAllocation;
+    using BaseClass::relaxedOrderingSchedulerRequired;
     using BaseClass::reserved;
     using BaseClass::ringBuffers;
     using BaseClass::ringCommandStream;
@@ -96,6 +100,21 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     void dispatchStaticRelaxedOrderingScheduler() override {
         dispatchStaticRelaxedOrderingSchedulerCalled++;
         BaseClass::dispatchStaticRelaxedOrderingScheduler();
+    }
+
+    void dispatchRelaxedOrderingSchedulerSection(uint32_t value) override {
+        dispatchRelaxedOrderingSchedulerSectionCalled++;
+        BaseClass::dispatchRelaxedOrderingSchedulerSection(value);
+    }
+
+    void dispatchRelaxedOrderingQueueStall() override {
+        dispatchRelaxedOrderingQueueStallCalled++;
+        BaseClass::dispatchRelaxedOrderingQueueStall();
+    }
+
+    void dispatchTaskStoreSection(uint64_t taskStartSectionVa) override {
+        dispatchTaskStoreSectionCalled++;
+        BaseClass::dispatchTaskStoreSection(taskStartSectionVa);
     }
 
     bool makeResourcesResident(DirectSubmissionAllocations &allocations) override {
@@ -155,6 +174,9 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     uint32_t disabledDiagnosticCalled = 0u;
     uint32_t preinitializeRelaxedOrderingSectionsCalled = 0;
     uint32_t dispatchStaticRelaxedOrderingSchedulerCalled = 0;
+    uint32_t dispatchRelaxedOrderingSchedulerSectionCalled = 0;
+    uint32_t dispatchRelaxedOrderingQueueStallCalled = 0;
+    uint32_t dispatchTaskStoreSectionCalled = 0;
     uint32_t makeResourcesResidentVectorSize = 0u;
     bool allocateOsResourcesReturn = true;
     bool submitReturn = true;

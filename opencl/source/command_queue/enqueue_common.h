@@ -804,7 +804,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->areMultipleSubDevicesInContext(),                                                               // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                                      // memoryMigrationRequired
         isTextureCacheFlushNeeded(commandType),                                                                 // textureCacheFlush
-        false);                                                                                                 // hasStallingCmds
+        false,                                                                                                  // hasStallingCmds
+        false);                                                                                                 // hasRelaxedOrderingDependencies
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
@@ -1050,7 +1051,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             context->containsMultipleSubDevices(rootDeviceIndex),                // areMultipleSubDevicesInContext
             false,                                                               // memoryMigrationRequired
             false,                                                               // textureCacheFlush
-            false);                                                              // hasStallingCmds
+            false,                                                               // hasStallingCmds
+            false);                                                              // hasRelaxedOrderingDependencies
 
         const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 

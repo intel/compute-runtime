@@ -43,7 +43,8 @@ struct DispatchFlagsHelper {
             false,                                   // areMultipleSubDevicesInContext
             false,                                   // memoryMigrationRequired
             false,                                   // textureCacheFlush
-            false                                    // hasStallingCmds
+            false,                                   // hasStallingCmds
+            false                                    // hasRelaxedOrderingDependencies
         );
     }
 };

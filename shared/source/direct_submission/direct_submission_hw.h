@@ -114,12 +114,12 @@ class DirectSubmissionHw {
 
     void cpuCachelineFlush(void *ptr, size_t size);
 
-    void dispatchSemaphoreSection(uint32_t value, bool firstSubmission);
-    size_t getSizeSemaphoreSection(bool firstSubmission);
+    void dispatchSemaphoreSection(uint32_t value);
+    size_t getSizeSemaphoreSection(bool relaxedOrderingSchedulerRequired);
 
-    void dispatchRelaxedOrderingSchedulerSection(uint32_t value);
+    MOCKABLE_VIRTUAL void dispatchRelaxedOrderingSchedulerSection(uint32_t value);
 
-    void dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr);
+    void dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr, bool hasRelaxedOrderingDependencies);
 
     void dispatchStartSection(uint64_t gpuStartAddress);
     size_t getSizeStartSection();
@@ -127,10 +127,10 @@ class DirectSubmissionHw {
     void dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress);
     size_t getSizeSwitchRingBufferSection();
 
-    void dispatchRelaxedOrderingQueueStall();
+    MOCKABLE_VIRTUAL void dispatchRelaxedOrderingQueueStall();
     size_t getSizeDispatchRelaxedOrderingQueueStall();
 
-    void dispatchTaskStoreSection(uint64_t taskStartSectionVa);
+    MOCKABLE_VIRTUAL void dispatchTaskStoreSection(uint64_t taskStartSectionVa);
     MOCKABLE_VIRTUAL void preinitializeRelaxedOrderingSections();
 
     void initRelaxedOrderingRegisters();
@@ -138,7 +138,7 @@ class DirectSubmissionHw {
     void setReturnAddress(void *returnCmd, uint64_t returnAddress);
 
     void *dispatchWorkloadSection(BatchBuffer &batchBuffer);
-    size_t getSizeDispatch();
+    size_t getSizeDispatch(bool relaxedOrderingSchedulerRequired);
 
     void dispatchPrefetchMitigation();
     size_t getSizePrefetchMitigation();
@@ -148,7 +148,7 @@ class DirectSubmissionHw {
 
     MOCKABLE_VIRTUAL void dispatchStaticRelaxedOrderingScheduler();
 
-    size_t getSizeEnd();
+    size_t getSizeEnd(bool relaxedOrderingSchedulerRequired);
 
     void dispatchPartitionRegisterConfiguration();
     size_t getSizePartitionRegisterConfigurationSection();
@@ -226,6 +226,6 @@ class DirectSubmissionHw {
     bool dcFlushRequired = false;
     bool relaxedOrderingEnabled = false;
     bool relaxedOrderingInitialized = false;
-    bool firstSubmissionAfterRingStart = true;
+    bool relaxedOrderingSchedulerRequired = false;
 };
 } // namespace NEO

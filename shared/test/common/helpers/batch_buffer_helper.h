@@ -26,7 +26,8 @@ struct BatchBufferHelper {
             stream,                             // stream
             nullptr,                            // endCmdPtr
             false,                              // useSingleSubdevice
-            false                               // hasStallingCmds
+            false,                              // hasStallingCmds
+            false                               // hasRelaxedOrderingDependencies
         );
     }
 

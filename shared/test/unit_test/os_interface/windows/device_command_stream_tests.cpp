@@ -288,7 +288,8 @@ TEST_F(WddmCommandStreamTest, GivenOffsetWhenFlushingThenFlushIsSubmittedCorrect
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), offset, 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+    batchBuffer.startOffset = offset;
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_TRUE(wddm->submitResult.success);
@@ -1165,7 +1166,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection(false) +
                           Dispatcher::getSizePreemption() +
-                          directSubmission->getSizeDispatch();
+                          directSubmission->getSizeDispatch(false);
 
     if (directSubmission->miMemFenceRequired) {
         expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();
@@ -1206,7 +1207,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection(false) +
                           Dispatcher::getSizePreemption() +
-                          directSubmission->getSizeDispatch();
+                          directSubmission->getSizeDispatch(false);
 
     if (directSubmission->miMemFenceRequired) {
         expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();

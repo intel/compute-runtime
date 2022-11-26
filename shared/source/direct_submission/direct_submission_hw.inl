@@ -403,7 +403,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit, bo
     initDiagnostic(submitOnInit);
     if (ret && submitOnInit) {
         size_t startBufferSize = Dispatcher::getSizePreemption() +
-                                 getSizeSemaphoreSection(true);
+                                 getSizeSemaphoreSection(false);
 
         Dispatcher::dispatchPreemption(ringCommandStream);
         if (this->partitionedMode) {
@@ -431,7 +431,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit, bo
             dispatchDiagnosticModeSection();
             startBufferSize += getDiagnosticModeSection();
         }
-        dispatchSemaphoreSection(currentQueueWorkCount, true);
+        dispatchSemaphoreSection(currentQueueWorkCount);
 
         ringStart = submit(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), startBufferSize);
         performDiagnosticMode();
@@ -446,7 +446,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
         return true;
     }
 
-    size_t startSize = getSizeSemaphoreSection(true);
+    size_t startSize = getSizeSemaphoreSection(false);
     if (!this->partitionConfigSet) {
         startSize += getSizePartitionRegisterConfigurationSection();
     }
@@ -457,7 +457,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
         startSize += RelaxedOrderingHelper::getSizeRegistersInit<GfxFamily>();
     }
 
-    size_t requiredSize = startSize + getSizeDispatch() + getSizeEnd();
+    size_t requiredSize = startSize + getSizeDispatch(false) + getSizeEnd(false);
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
         switchRingBuffers();
     }
@@ -482,11 +482,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
     }
 
     currentQueueWorkCount++;
-    dispatchSemaphoreSection(currentQueueWorkCount, true);
+    dispatchSemaphoreSection(currentQueueWorkCount);
 
     ringStart = submit(gpuStartVa, startSize);
-
-    firstSubmissionAfterRingStart = true;
 
     return ringStart;
 }
@@ -497,7 +495,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
         return true;
     }
 
-    if (this->relaxedOrderingEnabled && !firstSubmissionAfterRingStart) {
+    bool relaxedOrderingSchedulerWasRequired = this->relaxedOrderingSchedulerRequired;
+    if (this->relaxedOrderingEnabled && this->relaxedOrderingSchedulerRequired) {
         dispatchRelaxedOrderingQueueStall();
     }
 
@@ -515,7 +514,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     EncodeNoop<GfxFamily>::emitNoop(ringCommandStream, bytesToPad);
     EncodeNoop<GfxFamily>::alignToCacheLine(ringCommandStream);
 
-    cpuCachelineFlush(flushPtr, getSizeEnd());
+    cpuCachelineFlush(flushPtr, getSizeEnd(relaxedOrderingSchedulerWasRequired));
     this->unblockGpu();
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
 
@@ -526,13 +525,13 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(uint32_t value, bool firstSubmission) {
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(uint32_t value) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     dispatchDisablePrefetcher(true);
 
-    if (this->relaxedOrderingEnabled && !firstSubmission) {
+    if (this->relaxedOrderingEnabled && this->relaxedOrderingSchedulerRequired) {
         dispatchRelaxedOrderingSchedulerSection(value);
     } else {
         EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
@@ -550,9 +549,9 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection(bool firstSubmission) {
-    size_t semaphoreSize = (this->relaxedOrderingEnabled && !firstSubmission) ? RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize
-                                                                              : EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection(bool relaxedOrderingSchedulerRequired) {
+    size_t semaphoreSize = (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) ? RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize
+                                                                                              : EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     semaphoreSize += getSizePrefetchMitigation();
 
     if (isDisablePrefetcherRequired) {
@@ -597,7 +596,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSwitchRingBuffer
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd() {
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd(bool relaxedOrderingSchedulerRequired) {
     size_t size = Dispatcher::getSizeStopCommandBuffer() +
                   Dispatcher::getSizeCacheFlush(*hwInfo) +
                   (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
@@ -605,15 +604,15 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd() {
     if (disableMonitorFence) {
         size += Dispatcher::getSizeMonitorFence(*hwInfo);
     }
-    if (this->relaxedOrderingEnabled) {
+    if (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) {
         size += getSizeDispatchRelaxedOrderingQueueStall();
     }
     return size;
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch() {
-    size_t size = getSizeSemaphoreSection(false);
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool relaxedOrderingSchedulerRequired) {
+    size_t size = getSizeSemaphoreSection(relaxedOrderingSchedulerRequired);
     if (workloadMode == 0) {
         size += getSizeStartSection();
         if (this->relaxedOrderingEnabled) {
@@ -673,7 +672,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         uint64_t returnGpuPointer = ringCommandStream.getCurrentGpuAddressPosition();
 
         if (this->relaxedOrderingEnabled) {
-            dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer);
+            dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer, batchBuffer.hasRelaxedOrderingDependencies);
         } else {
             setReturnAddress(returnCmd, returnGpuPointer);
         }
@@ -683,7 +682,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     }
     // mode 2 does not dispatch any commands
 
-    if (this->relaxedOrderingEnabled) {
+    if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {
         dispatchTaskStoreSection(batchBuffer.taskStartAddress);
     }
 
@@ -698,7 +697,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
                                          this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
     }
 
-    dispatchSemaphoreSection(currentQueueWorkCount + 1, false);
+    dispatchSemaphoreSection(currentQueueWorkCount + 1);
     return currentPosition;
 }
 
@@ -708,25 +707,31 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingQueueStal
                                EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart());
 
     LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5, 1, true);
-    dispatchSemaphoreSection(currentQueueWorkCount, false);
+    dispatchSemaphoreSection(currentQueueWorkCount);
 
     // patch conditional bb_start with current GPU address
     EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(bbStartStream, ringCommandStream.getCurrentGpuAddressPosition(),
                                                                                       CS_GPR_R1, 0, CompareOperation::Equal, false);
+
+    relaxedOrderingSchedulerRequired = false;
 }
 
 template <typename GfxFamily, typename Dispatcher>
 size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatchRelaxedOrderingQueueStall() {
-    return getSizeSemaphoreSection(false) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) +
+    return getSizeSemaphoreSection(true) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) +
            EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart();
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr) {
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr, bool hasRelaxedOrderingDependencies) {
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL), true);
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32), true);
 
-    uint64_t returnPtrAfterTaskStoreSection = returnPtr + RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
+    uint64_t returnPtrAfterTaskStoreSection = returnPtr;
+
+    if (hasRelaxedOrderingDependencies) {
+        returnPtrAfterTaskStoreSection += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
+    }
 
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3, static_cast<uint32_t>(returnPtrAfterTaskStoreSection & 0xFFFF'FFFFULL), true);
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtrAfterTaskStoreSection >> 32), true);
@@ -846,23 +851,31 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     this->startRingBuffer();
 
-    size_t dispatchSize = getSizeDispatch();
+    bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
+
+    size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded);
     size_t cycleSize = getSizeSwitchRingBufferSection();
-    size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd();
+    size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd(relaxedOrderingSchedulerWillBeNeeded);
     if (this->relaxedOrderingEnabled) {
-        if (batchBuffer.hasStallingCmds && !firstSubmissionAfterRingStart) {
+        requiredMinimalSize += +RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
+
+        if (batchBuffer.hasStallingCmds && this->relaxedOrderingSchedulerRequired) {
             requiredMinimalSize += getSizeDispatchRelaxedOrderingQueueStall();
         }
-        requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>() + RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
+        if (batchBuffer.hasRelaxedOrderingDependencies) {
+            requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
+        }
     }
 
     if (ringCommandStream.getAvailableSpace() < requiredMinimalSize) {
         switchRingBuffers();
     }
 
-    if (this->relaxedOrderingEnabled && batchBuffer.hasStallingCmds && !firstSubmissionAfterRingStart) {
+    if (this->relaxedOrderingEnabled && batchBuffer.hasStallingCmds && this->relaxedOrderingSchedulerRequired) {
         dispatchRelaxedOrderingQueueStall();
     }
+
+    this->relaxedOrderingSchedulerRequired |= batchBuffer.hasRelaxedOrderingDependencies;
 
     handleNewResourcesSubmission();
 
@@ -889,8 +902,6 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     uint64_t flushValue = updateTagValue();
     flushStamp.setStamp(flushValue);
-
-    firstSubmissionAfterRingStart = false;
 
     return ringStart;
 }

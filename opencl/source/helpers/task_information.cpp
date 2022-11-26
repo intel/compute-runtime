@@ -80,7 +80,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         false,                                                                       // areMultipleSubDevicesInContext
         false,                                                                       // memoryMigrationRequired
         false,                                                                       // textureCacheFlush
-        false);                                                                      // hasStallingCmds
+        false,                                                                       // hasStallingCmds
+        false);                                                                      // hasRelaxedOrderingDependencies
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
@@ -210,7 +211,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->areMultipleSubDevicesInContext(),                                         // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                // memoryMigrationRequired
         commandQueue.isTextureCacheFlushNeeded(this->commandType),                        // textureCacheFlush
-        false);                                                                           // hasStallingCmds
+        false,                                                                            // hasStallingCmds
+        false);                                                                           // hasRelaxedOrderingDependencies
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
@@ -385,7 +387,8 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.getContext().containsMultipleSubDevices(rootDeviceIndex), // areMultipleSubDevicesInContext
         false,                                                                 // memoryMigrationRequired
         false,                                                                 // textureCacheFlush
-        false);                                                                // hasStallingCmds
+        false,                                                                 // hasStallingCmds
+        false);                                                                // hasRelaxedOrderingDependencies
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);

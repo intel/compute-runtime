@@ -73,7 +73,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.requiredStreamState.stateComputeMode.isCoherencyRequired.value = 1;
     commandListImmediate.requiredStreamState.stateComputeMode.largeGrfMode.value = 1;
     commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::RoundRobin;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
 
     NEO::StateComputeModePropertiesSupport scmPropertiesSupport = {};
     hwInfoConfig.fillScmPropertiesSupportStructure(scmPropertiesSupport);
@@ -102,7 +102,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.requiredStreamState.stateComputeMode.isCoherencyRequired.value = 0;
     commandListImmediate.requiredStreamState.stateComputeMode.largeGrfMode.value = 0;
     commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::AgeBased;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
 
     expectedLargeGrfMode = scmPropertiesSupport.largeGrfMode ? 0 : -1;
     expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? 0 : -1;
@@ -128,7 +128,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
     commandListImmediate.containsAnyKernel = true;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
@@ -139,7 +139,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false));
 }
 
 HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, IsAtLeastSkl) {
@@ -151,7 +151,7 @@ HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecu
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false));
 }
 
 HWTEST2_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, IsAtLeastSkl) {
@@ -163,7 +163,7 @@ HWTEST2_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExe
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false));
 }
 
 using CommandListTest = Test<DeviceFixture>;
@@ -351,7 +351,7 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverri
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     cmdList.csr = event->csr;
     event->csr = &mockCommandStreamReceiver;
-    cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, false, event->toHandle());
+    cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, false, false, event->toHandle());
     EXPECT_EQ(event->csr, cmdList.csr);
 }
 
@@ -772,7 +772,7 @@ HWTEST2_F(CommandListTest, givenCmdListWithIndirectAccessWhenExecutingCommandLis
     auto oldCommandQueue = commandList->cmdQImmediate;
     commandList->cmdQImmediate = &mockCommandQueue;
     commandListImmediate.indirectAllocationsAllowed = true;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
     EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 1u);
     commandList->cmdQImmediate = oldCommandQueue;
 }
@@ -791,7 +791,7 @@ HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandL
     auto oldCommandQueue = commandList->cmdQImmediate;
     commandList->cmdQImmediate = &mockCommandQueue;
     commandListImmediate.indirectAllocationsAllowed = false;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false);
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
     EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 0u);
     commandList->cmdQImmediate = oldCommandQueue;
 }
