@@ -437,54 +437,6 @@ HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferT
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueCreate, givenCsrWithRelaxedOrderingWhenSubmittingThenProgramIndirectBbStart, IsAtLeastXeHpcCore) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
-
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-
-    const ze_command_queue_desc_t desc = {};
-    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
-    commandQueue->initialize(false, false);
-
-    ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-    ASSERT_NE(nullptr, commandList);
-    auto &commandStream = commandQueue->commandStream;
-
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
-
-    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    ultCsr->directSubmission.reset(directSubmission);
-
-    auto estimatedSize = 4096u;
-    NEO::LinearStream linearStream(commandStream.getSpace(estimatedSize), estimatedSize);
-    memset(commandStream.getCpuBase(), 0, estimatedSize);
-    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
-    ctx.isDirectSubmissionEnabled = true;
-
-    commandQueue->prepareAndSubmitBatchBuffer(ctx, linearStream);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, linearStream.getCpuBase(), linearStream.getUsed()));
-
-    auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itor);
-
-    auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
-    lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
-
-    auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
-    EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
-
-    commandQueue->destroy();
-}
-
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFamily> {
 

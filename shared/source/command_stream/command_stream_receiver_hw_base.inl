@@ -101,7 +101,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferEnd(LinearStream &
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &commandStream, void **patchLocation, bool directSubmissionEnabled, bool sipWaAllowed) {
+inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &commandStream, void **patchLocation, bool directSubmissionEnabled,
+                                                                 bool hasRelaxedOrderingDependencies, bool sipWaAllowed) {
     if (directSubmissionEnabled) {
         uint64_t startAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
         if (DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
@@ -109,7 +110,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
         }
 
         bool indirect = false;
-        if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1) {
+        if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1 && hasRelaxedOrderingDependencies) {
             NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, CS_GPR_R0, CS_GPR_R3);
             NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, CS_GPR_R0 + 4, CS_GPR_R3 + 4);
 
@@ -571,7 +572,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     GraphicsAllocation *chainedBatchBuffer = nullptr;
     bool directSubmissionEnabled = isDirectSubmissionEnabled();
     if (submitTask) {
-        programEndingCmd(commandStreamTask, &bbEndLocation, directSubmissionEnabled, true);
+        programEndingCmd(commandStreamTask, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies, true);
         EncodeNoop<GfxFamily>::emitNoop(commandStreamTask, bbEndPaddingSize);
         EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
 
@@ -602,7 +603,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         this->programEpilogue(commandStreamCSR, device, &bbEndLocation, dispatchFlags);
 
     } else if (submitCSR) {
-        programEndingCmd(commandStreamCSR, &bbEndLocation, directSubmissionEnabled, true);
+        programEndingCmd(commandStreamCSR, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies, true);
         EncodeNoop<GfxFamily>::emitNoop(commandStreamCSR, bbEndPaddingSize);
         EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
         DEBUG_BREAK_IF(commandStreamCSR.getUsed() > commandStreamCSR.getMaxAvailableSpace());
@@ -1167,7 +1168,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     }
 
     void *endingCmdPtr = nullptr;
-    programEndingCmd(commandStream, &endingCmdPtr, blitterDirectSubmission, false);
+    programEndingCmd(commandStream, &endingCmdPtr, blitterDirectSubmission, false, false);
 
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStream);
 
@@ -1276,7 +1277,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
     void *endingCmdPtr = nullptr;
-    programEndingCmd(commandStreamTask, &endingCmdPtr, isAnyDirectSubmissionEnabled(), false);
+    programEndingCmd(commandStreamTask, &endingCmdPtr, isAnyDirectSubmissionEnabled(), false, false);
 
     auto bytesToPad = EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize() -
                       EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize();
@@ -1357,7 +1358,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEpilogue(LinearStream &cs
 
         addBatchBufferStart(reinterpret_cast<typename GfxFamily::MI_BATCH_BUFFER_START *>(*batchBufferEndLocation), gpuAddress, false);
         this->programEpliogueCommands(csr, dispatchFlags);
-        programEndingCmd(csr, batchBufferEndLocation, isDirectSubmissionEnabled(), !EngineHelpers::isBcs(osContext->getEngineType()));
+        programEndingCmd(csr, batchBufferEndLocation, isDirectSubmissionEnabled(), false, !EngineHelpers::isBcs(osContext->getEngineType()));
         EncodeNoop<GfxFamily>::alignToCacheLine(csr);
     }
 }

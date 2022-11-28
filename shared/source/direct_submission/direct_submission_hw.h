@@ -119,7 +119,7 @@ class DirectSubmissionHw {
 
     MOCKABLE_VIRTUAL void dispatchRelaxedOrderingSchedulerSection(uint32_t value);
 
-    void dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr, bool hasRelaxedOrderingDependencies);
+    void dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr);
 
     void dispatchStartSection(uint64_t gpuStartAddress);
     size_t getSizeStartSection();

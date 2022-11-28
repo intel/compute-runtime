@@ -661,7 +661,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         void *returnCmd = batchBuffer.endCmdPtr;
 
         LinearStream relaxedOrderingReturnPtrCmdStream;
-        if (this->relaxedOrderingEnabled) {
+        if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {
             // preallocate and patch after start section
             auto relaxedOrderingReturnPtrCmds = ringCommandStream.getSpace(RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
             relaxedOrderingReturnPtrCmdStream.replaceBuffer(relaxedOrderingReturnPtrCmds, RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
@@ -671,8 +671,8 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
 
         uint64_t returnGpuPointer = ringCommandStream.getCurrentGpuAddressPosition();
 
-        if (this->relaxedOrderingEnabled) {
-            dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer, batchBuffer.hasRelaxedOrderingDependencies);
+        if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {
+            dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer);
         } else {
             setReturnAddress(returnCmd, returnGpuPointer);
         }
@@ -723,15 +723,13 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatchRelaxedOrdering
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr, bool hasRelaxedOrderingDependencies) {
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr) {
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL), true);
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32), true);
 
     uint64_t returnPtrAfterTaskStoreSection = returnPtr;
 
-    if (hasRelaxedOrderingDependencies) {
-        returnPtrAfterTaskStoreSection += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
-    }
+    returnPtrAfterTaskStoreSection += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
 
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3, static_cast<uint32_t>(returnPtrAfterTaskStoreSection & 0xFFFF'FFFFULL), true);
     LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtrAfterTaskStoreSection >> 32), true);
