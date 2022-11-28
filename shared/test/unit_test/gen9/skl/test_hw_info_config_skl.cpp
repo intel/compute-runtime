@@ -18,7 +18,7 @@
 using namespace NEO;
 using SklProductHelper = HwInfoConfigTest;
 
-HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_SKYLAKE)
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_SKYLAKE)
 SKLTEST_F(SklProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
     EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
 }

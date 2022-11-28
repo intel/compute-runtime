@@ -1329,6 +1329,36 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenPassingComputeEngineTypeThenItsNotCopyOn
     EXPECT_FALSE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::Compute));
 }
 
+HWTEST2_F(HwHelperTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeHpgOrXeHpcCore) {
+    HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+}
+
+HWTEST2_F(HwHelperTest, givenHwHelperWhenCallGetAmountOfAllocationsToFillThenReturnFalse, IsNotXeHpcCore) {
+    HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 0u);
+}
+
+HWTEST_F(HwHelperTest, givenHwHelperWhenFlagSetAndCallCopyThroughLockedPtrEnabledThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    DebugManager.flags.ExperimentalCopyThroughLock.set(0);
+    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+
+    DebugManager.flags.ExperimentalCopyThroughLock.set(1);
+    EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+}
+
+HWTEST_F(HwHelperTest, givenHwHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 0u);
+
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 1u);
+}
+
 using LogicalStateHelperTest = ::testing::Test;
 
 HWTEST_F(LogicalStateHelperTest, whenCreatingLogicalStateHelperThenReturnNullptr) {

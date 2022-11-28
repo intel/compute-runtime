@@ -20,7 +20,7 @@ using namespace NEO;
 
 using CflProductHelper = HwInfoConfigTest;
 
-HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_COFFEELAKE)
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_COFFEELAKE)
 CFLTEST_F(CflProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
     EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
 }
