@@ -190,6 +190,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     void downloadAllocations() override {
         downloadAllocationCalled = true;
         downloadAllocationsCalled = true;
+        downloadAllocationsCalledCount++;
     }
 
     void downloadAllocationUlt(GraphicsAllocation &gfxAllocation) {
@@ -368,8 +369,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     LinearStream *lastFlushedCommandStream = nullptr;
 
-    uint32_t makeSurfacePackNonResidentCalled = false;
+    TaskCountType flushBcsTaskReturnValue{};
     TaskCountType latestSentTaskCountValueDuringFlush = 0;
+    uint32_t makeSurfacePackNonResidentCalled = false;
     uint32_t blitBufferCalled = 0;
     uint32_t createPerDssBackedBufferCalled = 0;
     uint32_t initDirectSubmissionCalled = 0;
@@ -378,8 +380,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     DispatchFlags recordedDispatchFlags;
     BlitPropertiesContainer receivedBlitProperties = {};
     uint32_t createAllocationForHostSurfaceCalled = 0;
-    bool cpuCopyForHostPtrSurfaceAllowed = false;
+    WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
+    std::optional<SubmissionStatus> flushReturnValue{};
+    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    uint32_t downloadAllocationsCalledCount = 0;
 
+    bool cpuCopyForHostPtrSurfaceAllowed = false;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
     bool checkAndActivateAubSubCaptureCalled = false;
@@ -397,12 +404,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool shouldFailFlushBatchedSubmissions = false;
     bool shouldFlushBatchedSubmissionsReturnSuccess = false;
     bool callBaseFillReusableAllocationsList = false;
-    WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
-    std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     bool callBaseFlushBcsTask{true};
-    TaskCountType flushBcsTaskReturnValue{};
-    std::optional<SubmissionStatus> flushReturnValue{};
-    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
 };
 
 } // namespace NEO

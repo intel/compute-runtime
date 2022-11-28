@@ -2150,26 +2150,72 @@ HWTEST_F(EventTests,
     auto eventAllocation = &event->getAllocation(device);
     uint32_t downloadedAllocations = downloadAllocationTrack[eventAllocation];
     EXPECT_EQ(iterations + 1, downloadedAllocations);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 
     event->destroy();
 }
 
-HWTEST_F(EventTests, WhenDownloadAllocationNotRequiredThenDontDownloadAllocation) {
+HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocationNotRequiredThenDontDownloadAllocations) {
     neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+
     auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    event->queryStatus();
+
+    size_t offset = 0;
+    if (event->isUsingContextEndOffset()) {
+        offset = event->getContextEndOffset();
+    }
+    void *completionAddress = ptrOffset(event->hostAddress, offset);
+    size_t packets = event->getPacketsInUse();
+    uint32_t signaledValue = Event::STATE_SIGNALED;
+    for (size_t i = 0; i < packets; i++) {
+        memcpy(completionAddress, &signaledValue, sizeof(uint32_t));
+        completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
+    }
+
+    auto status = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
     EXPECT_FALSE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr)->downloadAllocationsCalled);
     event->destroy();
 }
 
-HWTEST_F(EventTests, WhenDownloadAllocationRequiredThenDownloadAllocation) {
-    CommandStreamReceiverType csrTypes[] = {CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB};
-    for (auto csrType : csrTypes) {
-        neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = csrType;
+HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequiredThenDownloadAllocationsOnce) {
+    CommandStreamReceiverType tbxCsrTypes[] = {CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB};
+
+    auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(neoDevice->getUltCommandStreamReceiver<FamilyType>());
+    for (auto csrType : tbxCsrTypes) {
+        ultCsr.commandStreamReceiverType = csrType;
         auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-        event->queryStatus();
-        EXPECT_TRUE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr)->downloadAllocationsCalled);
+
+        auto status = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_NOT_READY, status);
+        EXPECT_FALSE(ultCsr.downloadAllocationsCalled);
+        EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
+
+        size_t offset = 0;
+        if (event->isUsingContextEndOffset()) {
+            offset = event->getContextEndOffset();
+        }
+        void *completionAddress = ptrOffset(event->hostAddress, offset);
+        size_t packets = event->getPacketsInUse();
+        uint32_t signaledValue = Event::STATE_SIGNALED;
+        for (size_t i = 0; i < packets; i++) {
+            memcpy(completionAddress, &signaledValue, sizeof(uint32_t));
+            completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
+        }
+
+        status = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+        EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+        EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
+
+        status = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+        EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+        EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
+
         event->destroy();
+        ultCsr.downloadAllocationsCalledCount = 0;
+        ultCsr.downloadAllocationsCalled = false;
     }
 }
 
