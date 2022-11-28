@@ -36,7 +36,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    "lp",                                          // platformType
+    "bxt",                                         // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType

@@ -35,4 +35,9 @@ std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStrea
     return aub_stream::ProductFamily::Cfl;
 };
 
+template <>
+uint32_t HwInfoConfigHw<gfxProduct>::getDefaultRevisionId() const {
+    return 9u;
+}
+
 } // namespace NEO

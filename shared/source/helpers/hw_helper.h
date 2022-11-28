@@ -113,7 +113,6 @@ class HwHelper {
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
-    virtual uint32_t getDefaultRevisionId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumCacheRegions() const = 0;
     virtual bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
@@ -317,8 +316,6 @@ class HwHelperHw : public HwHelper {
     bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const override;
 
     aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const override;
-
-    uint32_t getDefaultRevisionId(const HardwareInfo &hwInfo) const override;
 
     uint32_t getNumCacheRegions() const override;
 

@@ -20,6 +20,11 @@ using namespace NEO;
 
 using CflProductHelper = HwInfoConfigTest;
 
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_COFFEELAKE)
+CFLTEST_F(CflProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
+    EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
+}
+
 CFLTEST_F(CflProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;

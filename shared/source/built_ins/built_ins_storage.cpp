@@ -80,6 +80,7 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
 StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     const auto platformName = getFamilyNameWithType(hwInfo);
     const auto revisionId = std::to_string(hwInfo.platform.usRevId);
@@ -114,7 +115,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
 
     const bool requiresSpecificResource = (BuiltinCode::ECodeType::Binary == type && hwHelper.isRevisionSpecificBinaryBuiltinRequired());
     if (false == requiresSpecificResource) {
-        const auto defaultRevisionId = std::to_string(hwHelper.getDefaultRevisionId(hwInfo));
+        const auto defaultRevisionId = std::to_string(productHelper.getDefaultRevisionId());
         resourcesToLookup.push_back(createBuiltinResourceName(platformName, defaultRevisionId, addressingMode, builtinName, extension));
         resourcesToLookup.push_back(createBuiltinResourceName("", "", addressingMode, builtinName, extension));
     }

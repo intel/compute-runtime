@@ -679,4 +679,9 @@ void HwInfoConfigHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(Pi
     propertiesSupport.systolicMode = isSystolicModeConfigurable(hwInfo);
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t HwInfoConfigHw<gfxProduct>::getDefaultRevisionId() const {
+    return 0u;
+}
+
 } // namespace NEO

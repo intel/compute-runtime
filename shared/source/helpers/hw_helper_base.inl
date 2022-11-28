@@ -620,11 +620,6 @@ bool HwHelperHw<GfxFamily>::isAdditionalFeatureFlagRequired(const FeatureTable *
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getDefaultRevisionId(const HardwareInfo &hwInfo) const {
-    return 0u;
-}
-
-template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::getNumCacheRegions() const {
     return 0;
 }

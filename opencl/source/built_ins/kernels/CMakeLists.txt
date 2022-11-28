@@ -25,7 +25,7 @@ set(BUILTIN_CPP "")
 
 function(get_bits_for_stateless core_type platform_type)
   # Force 32bits compiling on gen9lp for stateless builtins
-  if((${CORE_TYPE} STREQUAL "GEN9") AND (${PLATFORM_TYPE} STREQUAL "LP"))
+  if((${CORE_TYPE} STREQUAL "GEN9") AND ((${PLATFORM_TYPE} STREQUAL "BXT") OR (${PLATFORM_TYPE} STREQUAL "GLK")))
     set(BITS "32" PARENT_SCOPE)
   else()
     set(BITS ${NEO_BITS} PARENT_SCOPE)

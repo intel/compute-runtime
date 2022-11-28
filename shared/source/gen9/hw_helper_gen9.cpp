@@ -37,14 +37,6 @@ int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getDefaultRevisionId(const HardwareInfo &hwInfo) const {
-    if (std::strcmp(hwInfo.capabilityTable.platformType, "core") == 0) {
-        return 9u;
-    }
-    return 0u;
-}
-
-template <>
 bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) { return true; }
 
 template <>

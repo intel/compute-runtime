@@ -18,6 +18,11 @@
 using namespace NEO;
 using SklProductHelper = HwInfoConfigTest;
 
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_SKYLAKE)
+SKLTEST_F(SklProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
+    EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
+}
+
 SKLTEST_F(SklProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;

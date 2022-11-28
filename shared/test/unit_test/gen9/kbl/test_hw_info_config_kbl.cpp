@@ -18,6 +18,11 @@ using namespace NEO;
 
 using KblProductHelper = HwInfoConfigTest;
 
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_KABYLAKE)
+KBLTEST_F(KblProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
+    EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
+}
+
 KBLTEST_F(KblProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;

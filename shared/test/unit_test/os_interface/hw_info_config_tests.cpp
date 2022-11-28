@@ -46,6 +46,10 @@ HWTEST_F(HwInfoConfigTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenR
     EXPECT_NE(0u, hwInfoConfig->getHostMemCapabilities(&pInHwInfo));
 }
 
+HWTEST_F(HwInfoConfigTest, whenGettingDefaultRevisionIdThenZeroIsReturned) {
+    EXPECT_EQ(0u, productHelper->getDefaultRevisionId());
+}
+
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingSharedSystemMemCapabilitiesThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
 

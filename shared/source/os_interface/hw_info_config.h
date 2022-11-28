@@ -180,6 +180,7 @@ class HwInfoConfig {
     virtual void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
     virtual void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
     virtual void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
+    virtual uint32_t getDefaultRevisionId() const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -320,6 +321,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
     void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
     void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
+    uint32_t getDefaultRevisionId() const override;
 
   protected:
     HwInfoConfigHw() = default;

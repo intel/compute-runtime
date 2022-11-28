@@ -23,9 +23,10 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinDisabledWhenBinExtensionPass
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(0);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
     const std::string platformName = getFamilyNameWithType(hwInfo);
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getDefaultRevisionId(hwInfo));
+    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
 
@@ -42,9 +43,10 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPasse
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
     const std::string platformName = getFamilyNameWithType(hwInfo);
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getDefaultRevisionId(hwInfo));
+    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
 
@@ -85,9 +87,10 @@ HWTEST2_F(BuiltInSharedTest, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceFor
 
 HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAddressingIsStateless, HasStatefulSupport) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
     const std::string platformName = getFamilyNameWithType(hwInfo);
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getDefaultRevisionId(hwInfo));
+    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
 
@@ -122,9 +125,10 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(0);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
     const std::string platformName = getFamilyNameWithType(hwInfo);
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getDefaultRevisionId(hwInfo));
+    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
 
@@ -147,9 +151,10 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCod
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
     const std::string platformName = getFamilyNameWithType(hwInfo);
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
-    const std::string defaultRevId = std::to_string(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getDefaultRevisionId(hwInfo));
+    const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
     auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Binary, builtinCode.type);

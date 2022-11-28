@@ -1149,17 +1149,6 @@ TEST_F(HwHelperTest, whenFtrGpGpuMidThreadLevelPreemptFeatureDisabledThenFalseIs
     EXPECT_FALSE(result);
 }
 
-HWTEST_F(HwHelperTest, whenGettingDefaultRevisionIdThenCorrectValueIsReturned) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
-    auto revisionId = hwHelper.getDefaultRevisionId(*defaultHwInfo);
-    if ((defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN9_CORE) &&
-        (strcmp(defaultHwInfo->capabilityTable.platformType, "core") == 0)) {
-        EXPECT_EQ(9u, revisionId);
-    } else {
-        EXPECT_EQ(0u, revisionId);
-    }
-}
-
 HWTEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(0u, hwHelper.getNumCacheRegions());

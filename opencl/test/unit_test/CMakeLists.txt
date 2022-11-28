@@ -376,7 +376,7 @@ macro(macro_for_each_core_type)
         endif()
 
         # Gen9lp needs extra -m32 flag
-        if(("${CORE_TYPE_LOWER}" STREQUAL "gen9") AND ("${PLATFORM_TYPE_LOWER}" STREQUAL "lp"))
+        if(("${CORE_TYPE_LOWER}" STREQUAL "gen9") AND (("${PLATFORM_TYPE_LOWER}" STREQUAL "bxt") OR ("${PLATFORM_TYPE_LOWER}" STREQUAL "glk")))
           foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
             neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${TEST_KERNEL_PRINTF} "" ${TEST_KERNEL_PRINTF_internal_options_gen9lp})
             neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options_gen9lp})
