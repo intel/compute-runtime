@@ -118,7 +118,7 @@ void FrequencyImp::init() {
 FrequencyImp::FrequencyImp(OsSysman *pOsSysman, ze_device_handle_t handle, zes_freq_domain_t frequencyDomainNumber) : deviceHandle(handle) {
     uint32_t subdeviceId = 0;
     ze_bool_t onSubdevice = false;
-    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, true);
     pOsFrequency = OsFrequency::create(pOsSysman, onSubdevice, subdeviceId, frequencyDomainNumber);
     UNRECOVERABLE_IF(nullptr == pOsFrequency);
     init();

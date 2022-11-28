@@ -508,10 +508,11 @@ ze_result_t OsScheduler::getNumEngineTypeAndInstances(
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     auto pDrm = &pLinuxSysmanImp->getDrm();
     auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    ze_device_properties_t deviceProperties = {};
-    Device::fromHandle(subdeviceHandle)->getProperties(&deviceProperties);
-    if (deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-        return getNumEngineTypeAndInstancesForSubDevices(mapOfEngines, pDrm, deviceProperties.subdeviceId);
+    uint32_t subdeviceId = std::numeric_limits<uint32_t>::max();
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(subdeviceHandle, subdeviceId, onSubdevice, true);
+    if (onSubdevice) {
+        return getNumEngineTypeAndInstancesForSubDevices(mapOfEngines, pDrm, subdeviceId);
     }
 
     return getNumEngineTypeAndInstancesForDevice(mapOfEngines, pSysfsAccess);

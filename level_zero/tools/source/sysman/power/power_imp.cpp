@@ -9,6 +9,8 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/tools/source/sysman/sysman_imp.h"
+
 namespace L0 {
 
 ze_result_t PowerImp::powerGetProperties(zes_power_properties_t *pProperties) {
@@ -58,10 +60,13 @@ ze_result_t PowerImp::powerSetEnergyThreshold(double threshold) {
 }
 
 PowerImp::PowerImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsPower = OsPower::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+
+    uint32_t subdeviceId = std::numeric_limits<uint32_t>::max();
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, false);
+    pOsPower = OsPower::create(pOsSysman, onSubdevice, subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsPower);
+
     init();
 }
 

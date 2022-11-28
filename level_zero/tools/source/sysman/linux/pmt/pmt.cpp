@@ -191,7 +191,7 @@ void PlatformMonitoringTech::create(const std::vector<ze_device_handle_t> &devic
         for (const auto &deviceHandle : deviceHandles) {
             uint32_t subdeviceId = 0;
             ze_bool_t onSubdevice = false;
-            SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+            SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, true);
             auto productFamily = SysmanDeviceImp::getProductFamily(Device::fromHandle(deviceHandle));
             auto pPmt = new PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId);
             UNRECOVERABLE_IF(nullptr == pPmt);

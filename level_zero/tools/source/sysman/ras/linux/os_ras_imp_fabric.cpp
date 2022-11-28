@@ -76,7 +76,7 @@ ze_result_t LinuxRasSourceFabric::getSupportedRasErrorTypes(std::set<zes_ras_err
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     ze_bool_t onSubDevice = false;
     uint32_t subDeviceIndex = 0;
-    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceIndex, onSubDevice);
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceIndex, onSubDevice, true);
     std::vector<std::string> nodes;
     getNodes(nodes, subDeviceIndex, pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
     if (nodes.size()) {

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/tools/source/sysman/sysman_const.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 
@@ -51,10 +52,10 @@ void SchedulerImp::init() {
 }
 
 SchedulerImp::SchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines, ze_device_handle_t deviceHandle) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsScheduler = OsScheduler::create(pOsSysman, engineType, listOfEngines,
-                                       deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+    uint32_t subdeviceId = std::numeric_limits<uint32_t>::max();
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, true);
+    pOsScheduler = OsScheduler::create(pOsSysman, engineType, listOfEngines, onSubdevice, subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsScheduler);
     init();
 };

@@ -34,7 +34,7 @@ void StandbyImp::init() {
 StandbyImp::StandbyImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceHandle(handle) {
     uint32_t subdeviceId = 0;
     ze_bool_t onSubdevice = false;
-    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, true);
     pOsStandby = OsStandby::create(pOsSysman, onSubdevice, subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsStandby);
     init();

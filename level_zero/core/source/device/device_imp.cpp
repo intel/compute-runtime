@@ -801,7 +801,10 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     }
 
     if (isSubdevice) {
-        pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
+        const auto &isReturnSubDevicesAsApiDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
+        if (isReturnSubDevicesAsApiDevices != 1) {
+            pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
+        }
     }
 
     if (this->neoDevice->getDeviceInfo().errorCorrectionSupport) {

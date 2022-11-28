@@ -132,7 +132,7 @@ static uint64_t convertHexToUint64(std::string strVal) {
 static bool getErrorType(std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEvents, std::vector<std::string> &eventList, ze_device_handle_t deviceHandle) {
     ze_bool_t onSubDevice = false;
     uint32_t subDeviceId = 0;
-    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceId, onSubDevice);
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceId, onSubDevice, true);
     // Naming convention of files containing config values for errors
     // error--<Name of error> Ex:- error--engine-reset  (config file with no subdevice)
     // error-gt<N>--<Name of error> Ex:- error-gt0--engine-reset (config file with subdevices)

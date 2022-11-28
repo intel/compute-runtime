@@ -4248,5 +4248,102 @@ TEST_F(P2pBandwidthPropertiesTest, GivenFabricVerticesAreNotAvailableForDevicesW
     static_cast<DeviceImp *>(device1)->fabricVertex = backupFabricVertex;
 }
 
+TEST(DeviceReturnSubDevicesAsApiDevicesTest, GivenReturnSubDevicesAsApiDevicesIsSetThenFlagsOfDevicePropertiesIsCorrect) {
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+    NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
+    MultiDeviceFixture multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 5u);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+        ze_device_properties_t deviceProperties{};
+        deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getProperties(&deviceProperties), ZE_RESULT_SUCCESS);
+        EXPECT_NE(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, 0u);
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(DeviceReturnSubDevicesAsApiDevicesTest, GivenReturnSubDevicesAsApiDevicesIsNotSetThenFlagsOfDevicePropertiesIsCorrect) {
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(0);
+    MultiDeviceFixture multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, multiDeviceFixture.numSubDevices);
+        std::vector<ze_device_handle_t> hSubDevices(multiDeviceFixture.numSubDevices);
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, hSubDevices.data()), ZE_RESULT_SUCCESS);
+
+        for (auto &hSubDevice : hSubDevices) {
+            ze_device_properties_t deviceProperties{};
+            deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+            EXPECT_EQ(Device::fromHandle(hSubDevice)->getProperties(&deviceProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+        }
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(DeviceReturnSubDevicesAsApiDevicesTest, GivenReturnSubDevicesAsApiDevicesIsDefaultSetThenFlagsOfDevicePropertiesIsCorrect) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(-1);
+    MultiDeviceFixture multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, multiDeviceFixture.numSubDevices);
+        std::vector<ze_device_handle_t> hSubDevices(multiDeviceFixture.numSubDevices);
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, hSubDevices.data()), ZE_RESULT_SUCCESS);
+
+        for (auto &hSubDevice : hSubDevices) {
+            ze_device_properties_t deviceProperties{};
+            deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+            EXPECT_EQ(Device::fromHandle(hSubDevice)->getProperties(&deviceProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+        }
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
 } // namespace ult
 } // namespace L0

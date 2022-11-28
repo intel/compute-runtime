@@ -39,7 +39,7 @@ void EngineHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
         for (const auto &deviceHandle : deviceHandles) {
             uint32_t subDeviceId = 0;
             ze_bool_t onSubdevice = false;
-            SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceId, onSubdevice);
+            SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceId, onSubdevice, true);
             if (subDeviceId == itr->second.second) {
                 createHandle(itr->first, itr->second.first, subDeviceId, onSubdevice);
             }

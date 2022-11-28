@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "performance_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 
@@ -32,10 +34,12 @@ void PerformanceImp::init() {
 }
 
 PerformanceImp::PerformanceImp(OsSysman *pOsSysman, ze_device_handle_t handle, zes_engine_type_flag_t domain) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(handle)->getProperties(&deviceProperties);
-    pOsPerformance = OsPerformance::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                           deviceProperties.subdeviceId, domain);
+    uint32_t subdeviceId = std::numeric_limits<uint32_t>::max();
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(handle, subdeviceId, onSubdevice, false);
+    pOsPerformance = OsPerformance::create(pOsSysman, onSubdevice,
+                                           subdeviceId, domain);
+
     UNRECOVERABLE_IF(nullptr == pOsPerformance);
     init();
 }

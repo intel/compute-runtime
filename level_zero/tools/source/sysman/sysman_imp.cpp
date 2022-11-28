@@ -79,17 +79,19 @@ void SysmanDeviceImp::updateSubDeviceHandlesLocally() {
     }
 }
 
-void SysmanDeviceImp::getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice) {
+void SysmanDeviceImp::getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice, ze_bool_t useMultiArchEnabled) {
     NEO::Device *neoDevice = Device::fromHandle(hDevice)->getNEODevice();
-    onSubdevice = static_cast<ze_bool_t>(false);
-    if (NEO::GfxCoreHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) {
-        onSubdevice = static_cast<ze_bool_t>(true);
-    }
-    if (!neoDevice->isSubDevice()) {                                  // To get physical device or subdeviceIndex Index in case when the device does not support tile architecture is single tile device
-        UNRECOVERABLE_IF(neoDevice->getDeviceBitfield().count() != 1) // or the device is single tile device or AFFINITY_MASK only exposes single tile
+    onSubdevice = false;
+
+    // Check for root device with 1 sub-device case
+    if (!neoDevice->isSubDevice() && neoDevice->getDeviceBitfield().count() == 1) {
         subdeviceId = Math::log2(static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong()));
-    } else {
+        if ((NEO::GfxCoreHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) && useMultiArchEnabled) {
+            onSubdevice = true;
+        }
+    } else if (neoDevice->isSubDevice()) {
         subdeviceId = static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex();
+        onSubdevice = true;
     }
 }
 

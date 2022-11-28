@@ -39,7 +39,7 @@ void TemperatureImp::init() {
 TemperatureImp::TemperatureImp(const ze_device_handle_t &deviceHandle, OsSysman *pOsSysman, zes_temp_sensors_t type) {
     uint32_t subdeviceId = 0;
     ze_bool_t onSubdevice = false;
-    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, true);
     pOsTemperature = OsTemperature::create(pOsSysman, onSubdevice,
                                            subdeviceId, type);
     init();
