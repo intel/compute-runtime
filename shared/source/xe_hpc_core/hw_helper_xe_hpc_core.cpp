@@ -428,7 +428,7 @@ uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy ca
 }
 
 template <>
-bool HwHelperHw<Family>::copyThroughLockedPtrEnabled() const {
+bool HwHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }

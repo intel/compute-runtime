@@ -82,7 +82,7 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngine
 
 XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
     auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled());
+    EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
 }
 
 XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenCallGetAmountOfAllocationsToFillThenReturnTrue) {

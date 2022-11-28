@@ -602,7 +602,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(N
     if (NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
         d2HThreshold = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
     }
-    if (NEO::HwHelper::get(this->device->getHwInfo().platform.eRenderCoreFamily).copyThroughLockedPtrEnabled()) {
+    if (NEO::HwHelper::get(this->device->getHwInfo().platform.eRenderCoreFamily).copyThroughLockedPtrEnabled(this->device->getHwInfo())) {
         return (!srcFound && isSuitableUSMDeviceAlloc(dstAlloc, dstFound) && size <= h2DThreshold) ||
                (!dstFound && isSuitableUSMDeviceAlloc(srcAlloc, srcFound) && size <= d2HThreshold);
     }

@@ -286,3 +286,12 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
 }
+
+XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
+    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    if (hwHelper.isLocalMemoryEnabled(*defaultHwInfo)) {
+        EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    } else {
+        EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    }
+}

@@ -704,7 +704,7 @@ uint64_t HwHelperHw<GfxFamily>::getPatIndex(CacheRegion cacheRegion, CachePolicy
 }
 
 template <typename gfxProduct>
-bool HwHelperHw<gfxProduct>::copyThroughLockedPtrEnabled() const {
+bool HwHelperHw<gfxProduct>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }

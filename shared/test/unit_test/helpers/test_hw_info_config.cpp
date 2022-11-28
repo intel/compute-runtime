@@ -198,19 +198,19 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsPlatformQueryNotSupportedThen
     EXPECT_FALSE(hwInfoConfig.isPlatformQuerySupported());
 }
 
-HWTEST2_F(HwInfoConfigTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeHpcCore) {
+HWTEST2_F(HwInfoConfigTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeHpgOrXeHpcCore) {
     HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled());
+    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
 }
 
 HWTEST_F(HwInfoConfigTest, givenHwHelperWhenFlagSetAndCallCopyThroughLockedPtrEnabledThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
     HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     DebugManager.flags.ExperimentalCopyThroughLock.set(0);
-    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled());
+    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
 
     DebugManager.flags.ExperimentalCopyThroughLock.set(1);
-    EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled());
+    EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
 }
 
 HWTEST2_F(HwInfoConfigTest, givenHwHelperWhenCallGetAmountOfAllocationsToFillThenReturnFalse, IsNotXeHpcCore) {

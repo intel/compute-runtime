@@ -142,6 +142,14 @@ bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo) cons
     return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
+template <>
+bool HwHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
+        return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
+    }
+    return this->isLocalMemoryEnabled(hwInfo);
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

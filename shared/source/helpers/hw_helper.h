@@ -151,7 +151,7 @@ class HwHelper {
     virtual const void *getBatchBufferEndReference() const = 0;
     virtual bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMinimalScratchSpaceSize() const = 0;
-    virtual bool copyThroughLockedPtrEnabled() const = 0;
+    virtual bool copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getAmountOfAllocationsToFill() const = 0;
     virtual bool isChipsetUniqueUUIDSupported() const = 0;
     virtual bool isTimestampShiftRequired() const = 0;
@@ -367,7 +367,7 @@ class HwHelperHw : public HwHelper {
     const void *getBatchBufferEndReference() const override;
     bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getMinimalScratchSpaceSize() const override;
-    bool copyThroughLockedPtrEnabled() const override;
+    bool copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const override;
     uint32_t getAmountOfAllocationsToFill() const override;
     bool isChipsetUniqueUUIDSupported() const override;
     bool isTimestampShiftRequired() const override;
