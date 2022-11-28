@@ -5624,6 +5624,24 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSize
     }
 }
 
+TEST(PopulateArgDescriptor, GivenValidArgOfTypeRTGlobalBufferThenRtGlobalBufferIsPopulatedCorrectly) {
+    NEO::KernelDescriptor kernelDescriptor;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT rtGlobalBufferArg;
+    rtGlobalBufferArg.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeRtGlobalBuffer;
+    rtGlobalBufferArg.size = 8;
+    rtGlobalBufferArg.offset = 32;
+
+    uint32_t crossThreadDataSize = 0U;
+    std::string errors, warnings;
+    auto err = NEO::populateArgDescriptor(rtGlobalBufferArg, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty());
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_EQ(40U, crossThreadDataSize);
+    EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize);
+    EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.stateless);
+}
+
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
     NEO::ConstStringRef zeinfo = R"===(
         kernels:

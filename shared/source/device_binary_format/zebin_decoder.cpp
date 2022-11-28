@@ -1096,6 +1096,11 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeVmeSearchPathType:
         getVmeDescriptor()->searchPathType = src.offset;
         break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeRtGlobalBuffer:
+        dst.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = src.size;
+        dst.payloadMappings.implicitArgs.rtDispatchGlobals.stateless = src.offset;
+        break;
     }
 
     return DecodeError::Success;

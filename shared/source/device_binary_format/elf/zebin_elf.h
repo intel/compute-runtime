@@ -216,6 +216,7 @@ constexpr ConstStringRef printfBuffer("printf_buffer");
 constexpr ConstStringRef workDimensions("work_dimensions");
 constexpr ConstStringRef implicitArgBuffer("implicit_arg_buffer");
 constexpr ConstStringRef syncBuffer("sync_buffer");
+constexpr ConstStringRef rtGlobalBuffer("rt_global_buffer");
 
 namespace Image {
 constexpr ConstStringRef width("image_width");
@@ -573,6 +574,7 @@ enum ArgType : uint8_t {
     ArgTypeVmeSadAdjustMode,
     ArgTypeVmeSearchPathType,
     ArgTypeSyncBuffer,
+    ArgTypeRtGlobalBuffer,
     ArgTypeMax
 };
 
