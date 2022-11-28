@@ -2176,6 +2176,7 @@ kernels:
           offset : 24
           size : 4
           arg_index	: 2
+          is_ptr : true
 ...
 )===";
 
@@ -2208,6 +2209,7 @@ kernels:
     EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgByvalue, args[1].argType);
     EXPECT_EQ(24, args[1].offset);
     EXPECT_EQ(4, args[1].size);
+    EXPECT_TRUE(args[1].isPtr);
 }
 
 TEST(ReadZeInfoPayloadArguments, GivenUnknownEntryThenEmmitsWarning) {
@@ -5509,6 +5511,25 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIs
         EXPECT_STREQ(expectedError.c_str(), errors.c_str());
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
+}
+
+TEST(PopulateArgDescriptor, GivenValueArgWithPointerMemberThenItIsProperlyPopulated) {
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT valueArg;
+    valueArg.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgByvalue;
+    valueArg.argIndex = 0;
+    valueArg.offset = 8;
+    valueArg.size = 8;
+    valueArg.isPtr = true;
+
+    std::string errors, warnings;
+    uint32_t crossThreadDataSize = 0U;
+    auto retVal = NEO::populateArgDescriptor(valueArg, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, retVal);
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_TRUE(errors.empty());
+    EXPECT_TRUE(kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescValue>().elements[0].isPtr);
 }
 
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSizeIsValidThenPopulatesKernelDescriptor) {

@@ -84,6 +84,7 @@ struct ArgDescValue final {
         CrossThreadDataOffset offset = undefined<CrossThreadDataOffset>;
         uint16_t size = 0U;
         uint16_t sourceOffset = 0U;
+        bool isPtr = false;
     };
     StackVec<Element, 1> elements;
 };
