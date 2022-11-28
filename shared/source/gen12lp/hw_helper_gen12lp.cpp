@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/gen12lp/aub_mapper.h"
-#include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 
 using Family = NEO::Gen12LpFamily;
 
@@ -14,10 +14,8 @@ using Family = NEO::Gen12LpFamily;
 #include "shared/source/helpers/hw_helper_base.inl"
 #include "shared/source/helpers/hw_helper_bdw_and_later.inl"
 #include "shared/source/helpers/hw_helper_tgllp_and_later.inl"
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/logical_state_helper.inl"
-#include "shared/source/os_interface/hw_info_config.h"
-
-#include "aubstream/engine_node.h"
 
 namespace NEO {
 

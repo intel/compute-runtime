@@ -5,35 +5,15 @@
  *
  */
 
-#include "opencl/source/mem_obj/buffer.h"
-
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/utilities/debug_settings_reader_creator.h"
 
-#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
-#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
-#include "opencl/source/os_interface/ocl_reg_path.h"
 
 namespace NEO {
 

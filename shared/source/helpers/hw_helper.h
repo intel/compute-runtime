@@ -23,6 +23,9 @@
 #include <string>
 
 namespace NEO {
+enum class PostSyncMode : uint32_t;
+enum class CachePolicy : uint32_t;
+enum class CacheRegion : uint16_t;
 class GmmHelper;
 class GraphicsAllocation;
 class TagAllocatorBase;

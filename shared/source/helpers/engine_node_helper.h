@@ -7,17 +7,16 @@
 
 #pragma once
 
-#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "aubstream/engine_node.h"
 
 #include <atomic>
-#include <string>
-#include <utility>
+#include <bitset>
 
 namespace NEO {
+enum PreemptionMode : uint32_t;
 struct HardwareInfo;
 struct SelectorCopyEngine;
 

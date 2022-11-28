@@ -10,13 +10,10 @@
 #include "shared/source/helpers/affinity_mask.h"
 #include "shared/source/helpers/options.h"
 
-#include <cstdint>
 #include <memory>
 #include <mutex>
-#include <string>
 
 namespace NEO {
-
 class AubCenter;
 class BindlessHeapsHelper;
 class BuiltIns;

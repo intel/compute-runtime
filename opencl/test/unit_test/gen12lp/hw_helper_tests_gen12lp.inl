@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"

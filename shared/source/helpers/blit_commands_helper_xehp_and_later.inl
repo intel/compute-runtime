@@ -5,14 +5,9 @@
  *
  */
 
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
-#include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper_base.inl"
-
-#include <cinttypes>
+#include "shared/source/helpers/local_memory_access_modes.h"
 
 namespace NEO {
 

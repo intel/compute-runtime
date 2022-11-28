@@ -13,6 +13,7 @@
 #include "igfxfmid.h"
 
 #include <cstddef>
+#include <cstring>
 
 //forward declaration for parsing logic
 template <class T>

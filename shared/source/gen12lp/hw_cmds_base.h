@@ -10,6 +10,8 @@
 #include "shared/source/gen12lp/hw_info.h"
 #include "shared/source/helpers/debug_helpers.h"
 
+#include <cstring>
+
 template <class T>
 struct CmdParse;
 

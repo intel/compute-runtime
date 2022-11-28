@@ -7,11 +7,7 @@
 
 #pragma once
 
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/local_memory_access_modes.h"
-
-#include "igfxfmid.h"
 
 #include <optional>
 
@@ -24,7 +20,8 @@ enum class ProductFamily : uint32_t;
 }
 
 namespace NEO {
-
+class Device;
+enum class LocalMemoryAccessMode;
 struct FrontEndPropertiesSupport;
 struct HardwareInfo;
 struct PipelineSelectArgs;

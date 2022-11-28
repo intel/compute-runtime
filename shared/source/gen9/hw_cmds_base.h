@@ -13,6 +13,7 @@
 #include "igfxfmid.h"
 
 #include <cstddef>
+#include <cstring>
 
 template <class T>
 struct CmdParse;

@@ -24,6 +24,7 @@
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include <cstdint>
+#include <cstring>
 #include <map>
 #include <mutex>
 #include <vector>

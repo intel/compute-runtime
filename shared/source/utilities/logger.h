@@ -8,14 +8,9 @@
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include <cinttypes>
-#include <cstddef>
-#include <iostream>
 #include <mutex>
 #include <sstream>
-#include <string>
 #include <thread>
-#include <utility>
 
 namespace NEO {
 class Kernel;
