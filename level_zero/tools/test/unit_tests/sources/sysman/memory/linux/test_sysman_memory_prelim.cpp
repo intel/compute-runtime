@@ -496,12 +496,10 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
         zesMemoryGetProperties(handle, &properties);
 
         zes_mem_bandwidth_t bandwidth;
-        uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
-        uint64_t expectedTimestamp = 0, expectedBandwidth = 0;
+        uint64_t expectedReadCounters = 0, expectedWriteCounters = 0, expectedBandwidth = 0;
         uint64_t mockMaxBwDg2 = 1343616u;
         pSysfsAccess->mockReadUInt64Value.push_back(mockMaxBwDg2);
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
         expectedReadCounters = numberMcChannels * (mockIdiReadVal + mockDisplayVc1ReadVal) * transactionSize;
         EXPECT_EQ(expectedReadCounters, bandwidth.readCounter);
@@ -509,8 +507,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
         EXPECT_EQ(expectedWriteCounters, bandwidth.writeCounter);
         expectedBandwidth = mockMaxBwDg2 * MbpsToBytesPerSecond;
         EXPECT_EQ(expectedBandwidth, bandwidth.maxBandwidth);
-        expectedTimestamp = mcTimeStamp * 1e-8;
-        EXPECT_EQ(expectedTimestamp, bandwidth.timestamp);
+        EXPECT_GT(bandwidth.timestamp, 0u);
     }
 }
 
@@ -599,25 +596,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
 
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
         pPmt->mockDisplayVc1ReadFailureReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
-        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthForDg2PlatformIfTimeStampReadFailsTheFailureIsReturned) {
-    setLocalSupportedAndReinit(true);
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.platform.eProductFamily = IGFX_DG2;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_properties_t properties = {};
-        zesMemoryGetProperties(handle, &properties);
-
-        zes_mem_bandwidth_t bandwidth;
-
-        auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-        pPmt->mockReadTimeStampFailureReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
     }
 }

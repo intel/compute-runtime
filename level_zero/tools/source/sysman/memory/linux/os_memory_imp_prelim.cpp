@@ -24,6 +24,11 @@ namespace L0 {
 
 const std::string LinuxMemoryImp::deviceMemoryHealth("device_memory_health");
 
+void memoryGetTimeStamp(uint64_t &timestamp) {
+    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
+    timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+}
+
 void LinuxMemoryImp::init() {
     if (isSubdevice) {
         const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
@@ -185,18 +190,13 @@ ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) 
         return result;
     }
     pBandwidth->maxBandwidth = 0u;
-    std::string timeStamp = "MC_CAPTURE_TIMESTAMP";
     uint64_t timeStampVal = 0;
-    result = pPmt->readValue(timeStamp, timeStampVal);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for timeStamp returning error:0x%x \n", __FUNCTION__, result);
-        return result;
-    }
-    pBandwidth->timestamp = timeStampVal * 1e-8; // Convert timeStamp into seconds
     const std::string maxBwFile = "prelim_lmem_max_bw_Mbps";
     uint64_t maxBw = 0;
     pSysfsAccess->read(maxBwFile, maxBw);
     pBandwidth->maxBandwidth = maxBw * MbpsToBytesPerSecond;
+    memoryGetTimeStamp(timeStampVal);
+    pBandwidth->timestamp = timeStampVal;
     return result;
 }
 

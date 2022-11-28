@@ -81,7 +81,6 @@ constexpr uint64_t mockIdiWriteVal = 9u;
 constexpr uint64_t mockDisplayVc1ReadVal = 10u;
 constexpr uint64_t numberMcChannels = 16;
 constexpr uint64_t transactionSize = 32;
-constexpr uint64_t mcTimeStamp = 62000000000u;
 
 namespace L0 {
 namespace ult {
@@ -395,8 +394,6 @@ struct MockMemoryPmt : public PlatformMonitoringTech {
             val = mockIdiWriteVal;
         } else if (key.compare("DISPLAY_VC1_READS[0]") == 0 || key.compare("DISPLAY_VC1_READS[1]") == 0 || key.compare("DISPLAY_VC1_READS[2]") == 0 || key.compare("DISPLAY_VC1_READS[3]") == 0 || key.compare("DISPLAY_VC1_READS[4]") == 0 || key.compare("DISPLAY_VC1_READS[5]") == 0 || key.compare("DISPLAY_VC1_READS[6]") == 0 || key.compare("DISPLAY_VC1_READS[7]") == 0 || key.compare("DISPLAY_VC1_READS[8]") == 0 || key.compare("DISPLAY_VC1_READS[9]") == 0 || key.compare("DISPLAY_VC1_READS[10]") == 0 || key.compare("DISPLAY_VC1_READS[11]") == 0 || key.compare("DISPLAY_VC1_READS[12]") == 0 || key.compare("DISPLAY_VC1_READS[13]") == 0 || key.compare("DISPLAY_VC1_READS[14]") == 0 || key.compare("DISPLAY_VC1_READS[15]") == 0) {
             val = mockDisplayVc1ReadVal;
-        } else if (key.compare("MC_CAPTURE_TIMESTAMP") == 0) {
-            val = mcTimeStamp;
         } else {
             result = ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -434,8 +431,6 @@ struct MockMemoryPmt : public PlatformMonitoringTech {
             val = mockIdiWriteVal;
         } else if (key.compare("DISPLAY_VC1_READS[0]") == 0 || key.compare("DISPLAY_VC1_READS[1]") == 0 || key.compare("DISPLAY_VC1_READS[2]") == 0 || key.compare("DISPLAY_VC1_READS[3]") == 0 || key.compare("DISPLAY_VC1_READS[4]") == 0 || key.compare("DISPLAY_VC1_READS[5]") == 0 || key.compare("DISPLAY_VC1_READS[6]") == 0 || key.compare("DISPLAY_VC1_READS[7]") == 0 || key.compare("DISPLAY_VC1_READS[8]") == 0 || key.compare("DISPLAY_VC1_READS[9]") == 0 || key.compare("DISPLAY_VC1_READS[10]") == 0 || key.compare("DISPLAY_VC1_READS[11]") == 0 || key.compare("DISPLAY_VC1_READS[12]") == 0 || key.compare("DISPLAY_VC1_READS[13]") == 0 || key.compare("DISPLAY_VC1_READS[14]") == 0 || key.compare("DISPLAY_VC1_READS[15]") == 0) {
             val = mockDisplayVc1ReadVal;
-        } else if (key.compare("MC_CAPTURE_TIMESTAMP") == 0) {
-            return ZE_RESULT_ERROR_UNKNOWN;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
