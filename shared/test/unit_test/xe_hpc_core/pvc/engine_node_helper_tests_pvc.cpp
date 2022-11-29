@@ -7,17 +7,14 @@
 
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-
 using namespace NEO;
-using EngineNodeHelperPvcTests = ::Test<ClDeviceFixture>;
+using EngineNodeHelperPvcTests = ::Test<DeviceFixture>;
 
 PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledWithoutSelectorEnabledForPVCThenCorrectBcsEngineIsReturned) {
     using namespace aub_stream;
@@ -152,42 +149,30 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledWhenGetGpgpuEnginesCalledTh
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispatchSupportedThenTrueIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
     auto hwInfo = *defaultHwInfo;
-    uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
-    hardwareInfoSetup[productFamily](&hwInfo, true, hwInfoConfig);
-    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
-    ASSERT_NE(nullptr, device);
-    auto clDevice = new MockClDevice{device};
-    ASSERT_NE(nullptr, clDevice); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-    auto context = new NEO::MockContext(clDevice);
-    auto commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, clDevice, 0));
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
-    auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
-                                                     commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    auto retVal = helper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
-    ASSERT_TRUE(retVal);
-    commandQueue->release();
-    context->decRefInternal();
-    delete clDevice;
+    auto engineGroupType = hwHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
+                                                       pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
+    auto retVal = hwHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
+    EXPECT_TRUE(retVal);
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCCSEngineAndRevisionBWhenCallingIsCooperativeDispatchSupportedThenFalseIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    auto context = new NEO::MockContext(pClDevice);
-    auto commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
+    const auto &productHelper = getHelper<ProductHelper>();
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
 
-    auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
-                                                     commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    auto retVal = helper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo);
+    auto engineGroupType = hwHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
+                                                       pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
+    auto retVal = hwHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
     EXPECT_TRUE(retVal);
 
-    auto &hwConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.platform.usRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
-    retVal = helper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    retVal = hwHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
     EXPECT_FALSE(retVal);
-    commandQueue->release();
-    context->decRefInternal();
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenBcsDisabledWhenGetEnginesCalledThenDontCreateAnyBcs) {

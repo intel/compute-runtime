@@ -9,7 +9,6 @@ if(TESTS_PVC)
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_pvc.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_pvc.cpp
   )
