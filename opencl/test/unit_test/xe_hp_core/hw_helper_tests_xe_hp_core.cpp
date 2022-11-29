@@ -290,10 +290,6 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenGettingThreadsPerEUCo
     EXPECT_EQ(8U, configs[1]);
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, whenGettingDefaultRevisionThenB0IsReturned) {
-    EXPECT_EQ(HwInfoConfigHw<IGFX_XE_HP_SDV>::get()->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo), HwHelperHw<FamilyType>::get().getDefaultRevisionId(*defaultHwInfo));
-}
-
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
                   givenDebugFlagAndLocalMemoryIsNotAvailableWhenProgrammingPostSyncPipeControlThenExpectNotAddingWaPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

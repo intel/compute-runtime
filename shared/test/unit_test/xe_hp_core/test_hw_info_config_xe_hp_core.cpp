@@ -142,3 +142,7 @@ XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenIsSystolicModeConfigurabledT
 
     EXPECT_TRUE(productHelper->isSystolicModeConfigurable(*defaultHwInfo));
 }
+
+XEHPTEST_F(XeHpProductHelper, whenGettingDefaultRevisionThenB0IsReturned) {
+    EXPECT_EQ(productHelper->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo), productHelper->getDefaultRevisionId(*defaultHwInfo));
+}

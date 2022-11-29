@@ -148,11 +148,6 @@ bool HwHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getDefaultRevisionId(const HardwareInfo &hwInfo) const {
-    return HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo);
-}
-
-template <>
 bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &) const {
     return true;
 }
