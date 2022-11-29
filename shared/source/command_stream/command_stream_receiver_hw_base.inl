@@ -576,12 +576,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     // Add a Pipe Control if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
-        auto programPipeControl = !timestampPacketWriteEnabled;
-
-        if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1) {
-            programPipeControl = true;
-        }
-
+        const auto programPipeControl = !timestampPacketWriteEnabled;
         if (programPipeControl) {
             PipeControlArgs args;
             MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);

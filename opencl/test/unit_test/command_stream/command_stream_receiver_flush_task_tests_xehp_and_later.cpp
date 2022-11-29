@@ -385,28 +385,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Gi
     EXPECT_EQ(sizeUsed, 0u);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenHigherTaskLevelWhenFlushTaskCalledThenPipeControlEmittedWhenDebugFlagSet) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    // Configure the CSR to not need to submit any state or commands.
-    configureCSRtoNonDirtyState<FamilyType>(true);
-
-    commandStreamReceiver.timestampPacketWriteEnabled = true;
-
-    this->taskLevel++;
-
-    flushTask(commandStreamReceiver);
-
-    EXPECT_EQ(taskLevel, commandStreamReceiver.taskLevel);
-
-    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-
-    auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itorPC);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenDeviceWithThreadGroupPreemptionSupportThenDontSendMediaVfeStateIfNotDirty) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));

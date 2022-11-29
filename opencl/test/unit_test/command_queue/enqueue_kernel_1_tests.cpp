@@ -504,6 +504,12 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenTaskLevelIsIncremented) {
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
+HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenLatestSentEnqueueTypeIsUpdated) {
+    EXPECT_NE(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::GpuKernel);
+    callOneWorkItemNDRKernel();
+    EXPECT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::GpuKernel);
+}
+
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenCsrTaskLevelIsIncremented) {
     // this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

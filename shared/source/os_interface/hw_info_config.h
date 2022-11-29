@@ -147,6 +147,7 @@ class HwInfoConfig {
     virtual bool isStatefulAddressingModeSupported() const = 0;
     virtual bool isPlatformQuerySupported() const = 0;
     virtual bool isNonBlockingGpuSubmissionSupported() const = 0;
+    virtual bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const = 0;
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
@@ -289,6 +290,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isStatefulAddressingModeSupported() const override;
     bool isPlatformQuerySupported() const override;
     bool isNonBlockingGpuSubmissionSupported() const override;
+    bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const override;
 
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;

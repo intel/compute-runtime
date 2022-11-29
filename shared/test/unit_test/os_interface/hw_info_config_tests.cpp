@@ -661,3 +661,20 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsStatefulAddressingModeSuppo
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedThenReturnFalse, IsAtMostDg2) {
     EXPECT_FALSE(productHelper->isPlatformQuerySupported());
 }
+
+HWTEST_F(HwInfoConfigTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    // ResolveDependenciesViaPipeControls = -1 (default)
+    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
+    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
+
+    DebugManager.flags.ResolveDependenciesViaPipeControls.set(0);
+    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
+    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
+
+    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    EXPECT_TRUE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
+    EXPECT_TRUE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
+}

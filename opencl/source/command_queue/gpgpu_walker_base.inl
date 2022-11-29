@@ -188,6 +188,9 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
+        if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isResolveDependenciesByPipeControlsSupported(hwInfo, commandQueue.isOOQEnabled())) {
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        }
         if (isMarkerWithProfiling) {
             if (!eventsInWaitlist) {
                 expectedSizeCS += commandQueue.getGpgpuCommandStreamReceiver().getCmdsSizeForComputeBarrierCommand();

@@ -209,6 +209,15 @@ bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
 }
 
 template <>
+bool HwInfoConfigHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const {
+    const bool enabled = false;
+    if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    }
+    return enabled;
+}
+
+template <>
 std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Dg2;
 };

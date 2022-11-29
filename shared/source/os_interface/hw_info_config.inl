@@ -524,6 +524,15 @@ bool HwInfoConfigHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const {
+    constexpr bool enabled = false;
+    if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    }
+    return enabled;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) {
     propertiesSupport.coherencyRequired = getScmPropertyCoherencyRequiredSupport();
     propertiesSupport.threadArbitrationPolicy = isThreadArbitrationPolicyReportedWithScm();

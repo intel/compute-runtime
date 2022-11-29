@@ -164,7 +164,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     bool clearDependenciesForSubCapture = false;
     aubCaptureHook(blocking, clearDependenciesForSubCapture, multiDispatchInfo);
 
-    bool clearAllDependencies = (queueDependenciesClearRequired() || clearDependenciesForSubCapture);
+    const bool clearAllDependencies = (queueDependenciesClearRequired() || clearDependenciesForSubCapture);
 
     if (DebugManager.flags.MakeEachEnqueueBlocking.get()) {
         blocking = true;
@@ -179,10 +179,16 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, computeCommandStreamReceiver);
     }
 
-    bool enqueueWithBlitAuxTranslation = isBlitAuxTranslationRequired(multiDispatchInfo);
+    const bool enqueueWithBlitAuxTranslation = isBlitAuxTranslationRequired(multiDispatchInfo);
+    const auto &hwInfo = this->getDevice().getHardwareInfo();
+    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    bool canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = false;
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        if (!clearDependenciesForSubCapture) {
+        canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::GpuKernel &&
+                                                                   hwInfoConfig->isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled());
+        if (false == clearDependenciesForSubCapture &&
+            false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
             eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::OnCsr);
         }
 
@@ -202,13 +208,21 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
         if (nodesCount > 0) {
             obtainNewTimestampPacketNodes(nodesCount, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, computeCommandStreamReceiver);
-            csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
+            if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
+                csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
+            }
         }
     }
 
     auto &commandStream = *obtainCommandStream<commandType>(csrDeps, false, blockQueue, multiDispatchInfo, eventsRequest,
                                                             blockedCommandsData, surfacesForResidency, numSurfaceForResidency, isMarkerWithProfiling);
     auto commandStreamStart = commandStream.getUsed();
+
+    if (canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
+        PipeControlArgs args;
+        args.csStallOnly = true;
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);
+    }
 
     if (this->context->getRootDeviceIndices().size() > 1) {
         TimestampPacketHelper::programCsrDependenciesForForTaskCountContainer<GfxFamily>(commandStream, csrDeps);

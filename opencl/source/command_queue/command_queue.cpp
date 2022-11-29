@@ -909,7 +909,7 @@ size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &
     size_t nodesCount = dispatchInfo.size();
     auto mainKernel = dispatchInfo.peekMainKernel();
     if (obtainTimestampPacketForCacheFlush(mainKernel->requiresCacheFlushCommand(*this))) {
-        nodesCount++;
+        ++nodesCount;
     }
     return nodesCount;
 }
