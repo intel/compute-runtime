@@ -924,7 +924,7 @@ void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait
     auto postSyncAddress = getTagAddress();
     if (start) {
         PRINT_DEBUG_STRING(true, stdout,
-                           "\nWaiting for task count %u at location %p with timeout %llx. Current value:",
+                           "\nWaiting for task count %llu at location %p with timeout %llx. Current value:",
                            taskCountToWait, postSyncAddress, waitTimeout);
     } else {
         PRINT_DEBUG_STRING(true, stdout,
