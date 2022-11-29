@@ -370,8 +370,6 @@ class Program : public BaseObject<_cl_program> {
     std::mutex lockMutex;
     uint32_t exposedKernels = 0;
 
-    size_t exportedFunctionsKernelId = std::numeric_limits<size_t>::max();
-
     std::once_flag extractAndDecodeMetadataOnce;
 };
 
