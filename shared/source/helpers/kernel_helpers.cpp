@@ -55,13 +55,31 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
         return KernelHelper::ErrorCode::INVALID_KERNEL;
     }
     auto globalMemorySize = device->getDeviceInfo().globalMemSize;
-    uint32_t sizes[] = {attributes.perHwThreadPrivateMemorySize,
-                        attributes.perThreadScratchSize[0],
-                        attributes.perThreadScratchSize[1]};
-    for (auto &size : sizes) {
-        if (size != 0 && static_cast<uint64_t>(device->getDeviceInfo().computeUnitsUsedForScratch) * static_cast<uint64_t>(size) > globalMemorySize) {
-            return KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY;
-        }
+    auto computeUnitsForScratch = device->getDeviceInfo().computeUnitsUsedForScratch;
+    auto totalPrivateMemorySize = KernelHelper::getPrivateSurfaceSize(attributes.perHwThreadPrivateMemorySize, computeUnitsForScratch);
+    auto totalScratchSize = KernelHelper::getScratchSize(attributes.perThreadScratchSize[0], computeUnitsForScratch);
+    auto totalPrivateScratchSize = KernelHelper::getPrivateScratchSize(attributes.perThreadScratchSize[1], computeUnitsForScratch);
+
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+                       "computeUnits for each thread: %u\n", computeUnitsForScratch);
+
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+                       "perHwThreadPrivateMemorySize: %u\t totalPrivateMemorySize: %lu\n",
+                       attributes.perHwThreadPrivateMemorySize, totalPrivateMemorySize);
+
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+                       "perHwThreadScratchSize: %u\t totalScratchSize: %lu\n",
+                       attributes.perThreadScratchSize[0], totalScratchSize);
+
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+                       "perHwThreadPrivateScratchSize: %u\t totalPrivateScratchSize: %lu\n",
+                       attributes.perThreadScratchSize[1], totalPrivateScratchSize);
+
+    if (totalPrivateMemorySize > globalMemorySize ||
+        totalScratchSize > globalMemorySize ||
+        totalPrivateScratchSize > globalMemorySize) {
+
+        return KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY;
     }
     return KernelHelper::ErrorCode::SUCCESS;
 }

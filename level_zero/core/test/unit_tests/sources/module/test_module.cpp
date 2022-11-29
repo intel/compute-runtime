@@ -3105,8 +3105,55 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
 
     std::string output = testing::internal::GetCapturedStderr();
-    std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSizeCopy) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
-    EXPECT_EQ(expectedOutput, output);
+    const std::string expectedPart = "Size of SLM (" + std::to_string(slmInlineSizeCopy) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
+    EXPECT_TRUE(output.find(expectedPart));
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+}
+
+TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivateAndScratchUsageIsPrinted) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    auto pModule = std::make_unique<WhiteBox<Module>>(device, nullptr, ModuleType::Builtin);
+    pModule->maxGroupSize = 32;
+
+    char data[64]{};
+    std::unique_ptr<KernelInfo> kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.pKernelHeap = data;
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, true);
+
+    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
+    pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    auto status = pModule->linkBinary();
+    EXPECT_TRUE(status);
+
+    ::testing::internal::CaptureStderr();
+
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = pModule->translationUnit->programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.kernelName.c_str();
+
+    ze_result_t res = pModule->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    std::string output = testing::internal::GetCapturedStderr();
+    std::ostringstream expectedOutput;
+    expectedOutput << "computeUnits for each thread: " << std::to_string(this->device->getDeviceInfo().computeUnitsUsedForScratch) << "\n"
+                   << "perHwThreadPrivateMemorySize: 0\t totalPrivateMemorySize: 0\n"
+                   << "perHwThreadScratchSize: 0\t totalScratchSize: 0\n"
+                   << "perHwThreadPrivateScratchSize: 0\t totalPrivateScratchSize: 0\n";
+    EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
 
     Kernel::fromHandle(kernelHandle)->destroy();
 }
