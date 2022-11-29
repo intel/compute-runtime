@@ -2080,11 +2080,109 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, WhenStoppingRingWithoutSubmissio
     EXPECT_FALSE(success);
 }
 
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcsDispatcherThenEnableRelaxedOrdering, IsAtLeastXeHpcCore) {
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->setupContext(*osContext);
+
+    {
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(0);
+        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+
+        MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
+
+        EXPECT_FALSE(directSubmission.isRelaxedOrderingEnabled());
+    }
+
+    {
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(0);
+
+        MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
+
+        EXPECT_FALSE(directSubmission.isRelaxedOrderingEnabled());
+    }
+
+    {
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+
+        MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
+
+        EXPECT_TRUE(directSubmission.isRelaxedOrderingEnabled());
+    }
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWhenProgrammingEndingCommandsThenSetReturnPtrs, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->setupContext(*osContext);
+    ultCsr->blitterDirectSubmissionAvailable = true;
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->blitterDirectSubmission.reset(directSubmission);
+
+    auto &commandStream = ultCsr->getCS(0x100);
+
+    auto endingPtr = commandStream.getSpace(0);
+
+    ultCsr->programEndingCmd(commandStream, &endingPtr, true, true, false);
+
+    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(commandStream.getCpuBase());
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+
+    lrrCmd++;
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+
+    auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
+    EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingDisabledWhenProgrammingEndingCommandsThenDontSetReturnPtrs, IsAtLeastXeHpcCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(0);
+
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->setupContext(*osContext);
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->blitterDirectSubmission.reset(directSubmission);
+
+    auto &commandStream = ultCsr->getCS(0x100);
+
+    auto endingPtr = commandStream.getSpace(0);
+
+    ultCsr->programEndingCmd(commandStream, &endingPtr, true, false, false);
+
+    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(commandStream.getCpuBase());
+    ASSERT_NE(nullptr, bbStartCmd);
+    EXPECT_EQ(0u, bbStartCmd->getIndirectAddressEnable());
+}
+
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSetReturnRegisters, IsAtLeastXeHpcCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->directSubmissionAvailable = true;
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     directSubmission->initialize(true, false);

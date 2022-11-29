@@ -665,8 +665,14 @@ HWTEST_F(DirectSubmissionTest, givenBaseCsrWhenCheckingDirectSubmissionAvailable
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAvailableWhenProgrammingEndingCommandThenUseBatchBufferStart) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     int32_t executionStamp = 0;
+
     std::unique_ptr<MockCsr<FamilyType>> mockCsr =
         std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    mockCsr->setupContext(*osContext);
+
+    mockCsr->directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*mockCsr);
+
     mockCsr->directSubmissionAvailable = true;
     bool ret = mockCsr->isDirectSubmissionEnabled();
     EXPECT_TRUE(ret);
@@ -701,6 +707,9 @@ HWTEST_F(DirectSubmissionTest, givenDebugFlagSetWhenProgrammingEndingCommandThen
                                                                                          pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     mockCsr->setupContext(*osContext);
+
+    mockCsr->directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*mockCsr);
+
     mockCsr->directSubmissionAvailable = true;
     bool ret = mockCsr->isDirectSubmissionEnabled();
     EXPECT_TRUE(ret);
@@ -883,7 +892,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_TRUE(directSubmission.ringStart);
     EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
-    //1 - preamble, 1 - init time, 5 - exec logs
+    // 1 - preamble, 1 - init time, 5 - exec logs
     EXPECT_EQ(7u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
     EXPECT_EQ(expectedSize, directSubmission.ringCommandStream.getUsed());
@@ -981,7 +990,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_TRUE(directSubmission.ringStart);
     EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
-    //1 - preamble, 1 - init time, 0 exec logs in mode 2
+    // 1 - preamble, 1 - init time, 0 exec logs in mode 2
     EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
     EXPECT_EQ(expectedSize, directSubmission.ringCommandStream.getUsed());
@@ -1021,7 +1030,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_NE(nullptr, directSubmission.diagnostic.get());
 
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
-    //ctor: preamble 1 call
+    // ctor: preamble 1 call
     EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 
@@ -1034,7 +1043,7 @@ HWTEST_F(DirectSubmissionTest,
         DebugManager.flags.DirectSubmissionDisableCacheFlush.get(),
         DebugManager.flags.DirectSubmissionDisableMonitorFence.get());
     EXPECT_EQ(2u, NEO::IoFunctions::mockFopenCalled);
-    //dtor: 1 call general delta, 2 calls storing execution, ctor: preamble 1 call
+    // dtor: 1 call general delta, 2 calls storing execution, ctor: preamble 1 call
     EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
 
@@ -1055,7 +1064,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_NE(0ll, mockDiagnostic->executionList[1].submitWaitTimeDiff);
     EXPECT_EQ(0ll, mockDiagnostic->executionList[1].dispatchSubmitTimeDiff);
 
-    //1 call general delta, 2 calls storing execution
+    // 1 call general delta, 2 calls storing execution
     uint32_t expectedVfprintfCall = NEO::IoFunctions::mockVfptrinfCalled + 1u + 2u;
     directSubmission.diagnostic.reset(nullptr);
     EXPECT_EQ(2u, NEO::IoFunctions::mockFopenCalled);

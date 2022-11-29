@@ -333,6 +333,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertSfenceInstructionPriorToSu
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionMaxRingBuffers, -1, "-1: default, >0: max ring buffer count, During switch ring buffer, if there is no available ring, wait for completion instead of allocating new one if DirectSubmissionMaxRingBuffers is reached")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisablePrefetcher, -1, "-1: default, 0 - disable, 1 - enable. If enabled, disable prefetcher is being dispatched")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrdering, -1, "-1: default, 0 - disable, 1 - enable. If enabled, tasks sent to direct submission ring may be dispatched out of order")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingForBcs, -1, "-1: default, 0 - disable, 1 - enable. If set, enable RelaxedOrdering feature for BCS engine")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 
 /*FEATURE FLAGS*/

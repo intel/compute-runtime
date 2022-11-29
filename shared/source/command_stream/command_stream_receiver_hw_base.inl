@@ -109,8 +109,15 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
             startAddress = 0;
         }
 
+        bool relaxedOrderingEnabled = false;
+        if (isBlitterDirectSubmissionEnabled() && EngineHelpers::isBcs(this->osContext->getEngineType())) {
+            relaxedOrderingEnabled = this->blitterDirectSubmission->isRelaxedOrderingEnabled();
+        } else if (isDirectSubmissionEnabled()) {
+            relaxedOrderingEnabled = this->directSubmission->isRelaxedOrderingEnabled();
+        }
+
         bool indirect = false;
-        if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1 && hasRelaxedOrderingDependencies) {
+        if (relaxedOrderingEnabled && hasRelaxedOrderingDependencies) {
             NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, CS_GPR_R0, CS_GPR_R3);
             NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, CS_GPR_R0 + 4, CS_GPR_R3 + 4);
 

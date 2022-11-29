@@ -13,6 +13,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_debugger.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -1066,6 +1067,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
         commandStreamReceiver.createPreemptionAllocation();
     }
 
+    commandStreamReceiver.directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(commandStreamReceiver);
     commandStreamReceiver.directSubmissionAvailable = true;
 
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);

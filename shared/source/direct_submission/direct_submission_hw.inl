@@ -78,6 +78,10 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, *hwInfo);
     relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
+
+    if (EngineHelpers::isBcs(this->osContext.getEngineType()) && relaxedOrderingEnabled) {
+        relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() == 1);
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>

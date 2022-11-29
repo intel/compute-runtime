@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
@@ -1207,6 +1208,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
 
     struct MockCsrHwDirectSubmission : public MockCsrHw2<FamilyType> {
         using MockCsrHw2<FamilyType>::MockCsrHw2;
+        using MockCsrHw2<FamilyType>::directSubmission;
         bool isDirectSubmissionEnabled() const override {
             return true;
         }
@@ -1222,6 +1224,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskCount.store(10);
     mockCsr->latestFlushedTaskCount.store(5);
+    mockCsr->directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*mockCsr);
 
     const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr);
     EXPECT_EQ(WaitStatus::Ready, waitStatus);
