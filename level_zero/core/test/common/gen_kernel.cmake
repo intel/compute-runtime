@@ -26,9 +26,9 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
       )
 
       add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} --format patchtokens -options "${options}"
+                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} --format patchtokens -options "${options}"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )

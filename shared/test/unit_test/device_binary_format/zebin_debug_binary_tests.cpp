@@ -297,3 +297,17 @@ TEST(DebugZebinTest, givenSymTabShndxUndefinedThenDoNotApplyRelocations) {
     dzc.applyRelocations();
     EXPECT_EQ(0U, *reinterpret_cast<uint64_t *>(zebin.data() + zebinElf.sectionHeaders[1].header->offset + relocation.offset));
 }
+
+TEST(PatchWithValueTest, GivenMisalignedAddressWhenPatchingWithValueThenMemoryIsPatchedCorrectly) {
+    auto mem = std::make_unique<uint8_t[]>(9);
+    NEO::Debug::patchWithValue<uint64_t>(reinterpret_cast<uintptr_t>(mem.get() + 1), std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(0x00U, mem[0]);
+    EXPECT_EQ(0xFFU, mem[1]);
+    EXPECT_EQ(0xFFU, mem[2]);
+    EXPECT_EQ(0xFFU, mem[3]);
+    EXPECT_EQ(0xFFU, mem[4]);
+    EXPECT_EQ(0xFFU, mem[5]);
+    EXPECT_EQ(0xFFU, mem[6]);
+    EXPECT_EQ(0xFFU, mem[7]);
+    EXPECT_EQ(0xFFU, mem[8]);
+}

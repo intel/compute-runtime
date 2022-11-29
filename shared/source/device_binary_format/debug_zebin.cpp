@@ -9,6 +9,7 @@
 
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
@@ -80,18 +81,33 @@ void DebugZebinCreator::createDebugZebin() {
     debugZebin = elfEncoder.encode();
 }
 
-void DebugZebinCreator::applyRelocation(uint64_t addr, uint64_t value, RELOC_TYPE_ZEBIN type) {
+#pragma pack(push, 1)
+template <typename T>
+struct SafeType {
+    T value;
+};
+#pragma pack(pop)
+
+template void patchWithValue<uint32_t>(uintptr_t addr, uint32_t value);
+template void patchWithValue<uint64_t>(uintptr_t addr, uint64_t value);
+template <typename T>
+void patchWithValue(uintptr_t addr, T value) {
+    if (isAligned<sizeof(T)>(addr)) {
+        *reinterpret_cast<T *>(addr) = value;
+    } else {
+        reinterpret_cast<SafeType<T> *>(addr)->value = value;
+    }
+}
+
+void DebugZebinCreator::applyRelocation(uintptr_t addr, uint64_t value, RELOC_TYPE_ZEBIN type) {
     switch (type) {
     default:
         UNRECOVERABLE_IF(type != R_ZE_SYM_ADDR)
-        *reinterpret_cast<uint64_t *>(addr) = value;
-        break;
+        return patchWithValue<uint64_t>(addr, value);
     case R_ZE_SYM_ADDR_32:
-        *reinterpret_cast<uint32_t *>(addr) = static_cast<uint32_t>(value & uint32_t(-1));
-        break;
+        return patchWithValue<uint32_t>(addr, static_cast<uint32_t>(value & uint32_t(-1)));
     case R_ZE_SYM_ADDR_32_HI:
-        *reinterpret_cast<uint32_t *>(addr) = static_cast<uint32_t>((value >> 32) & uint32_t(-1));
-        break;
+        return patchWithValue<uint32_t>(addr, static_cast<uint32_t>((value >> 32) & uint32_t(-1)));
     }
 }
 
@@ -127,7 +143,7 @@ void DebugZebinCreator::applyRelocations() {
                 continue;
             }
 
-            auto relocAddr = reinterpret_cast<uint64_t>(debugZebin.data() + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset);
+            auto relocAddr = reinterpret_cast<uintptr_t>(debugZebin.data() + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset);
             uint64_t relocVal = symbols[reloc.symbolTableIndex].value + reloc.addend;
             applyRelocation(relocAddr, relocVal, relocType);
         }
