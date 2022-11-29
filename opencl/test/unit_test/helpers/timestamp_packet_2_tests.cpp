@@ -545,10 +545,12 @@ HWTEST_F(TimestampPacketTests, givenBlockedEnqueueWithoutKernelWhenSubmittingThe
             expectedQueueSemaphoresCount += 1;
         }
         EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+        ASSERT_GT(queueSemaphores.size(), 0u);
         verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node0.getNode(0), 0);
 
         auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
         EXPECT_EQ(1u, csrSemaphores.size());
+        ASSERT_GT(csrSemaphores.size(), 0u);
         verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node1.getNode(0), 0);
 
         EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
@@ -591,6 +593,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWi
 
     auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
     EXPECT_EQ(1u, csrSemaphores.size());
+    ASSERT_GT(csrSemaphores.size(), 0u);
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node2.getNode(0), 0);
 
     auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
@@ -599,6 +602,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWi
         expectedQueueSemaphoresCount += 1;
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+    ASSERT_GT(queueSemaphores.size(), 0u);
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node1.getNode(0), 0);
 }
 
@@ -634,6 +638,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierW
 
     auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
     EXPECT_EQ(1u, csrSemaphores.size());
+    ASSERT_GT(csrSemaphores.size(), 0u);
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node2.getNode(0), 0);
 
     auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
@@ -642,5 +647,6 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierW
         expectedQueueSemaphoresCount += 1;
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+    ASSERT_GT(queueSemaphores.size(), 0u);
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node1.getNode(0), 0);
 }

@@ -687,6 +687,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenBlock
             expectedQueueSemaphoresCount += 1;
         }
         EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+        ASSERT_GT(queueSemaphores.size(), 0u);
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0]));
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
@@ -697,6 +698,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenBlock
     {
         auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
         EXPECT_EQ(1u, csrSemaphores.size());
+        ASSERT_GT(csrSemaphores.size(), 0u);
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0]));
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());

@@ -47,7 +47,7 @@ struct TimestampPacketTests : public ::testing::Test {
 
     template <typename MI_SEMAPHORE_WAIT>
     void verifySemaphore(MI_SEMAPHORE_WAIT *semaphoreCmd, TagNodeBase *timestampPacketNode, uint32_t packetId) {
-        EXPECT_NE(nullptr, semaphoreCmd);
+        ASSERT_NE(nullptr, semaphoreCmd);
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
 

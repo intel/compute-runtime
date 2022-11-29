@@ -323,12 +323,14 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 
     // obtain first node for cmdQ and event1
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event1);
+    ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
     auto node1 = cmdQ->timestampPacketContainer->peekNodes().at(0);
     EXPECT_NE(nullptr, node1);
     EXPECT_EQ(node1, cmdQ->timestampPacketContainer->peekNodes().at(0));
 
     // obtain new node for cmdQ and event2
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event2);
+    ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
     auto node2 = cmdQ->timestampPacketContainer->peekNodes().at(0);
     EXPECT_NE(nullptr, node2);
     EXPECT_EQ(node2, cmdQ->timestampPacketContainer->peekNodes().at(0));
@@ -554,7 +556,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 
     {
         cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-
+        ASSERT_GT(timestampPacketContainer->peekNodes().size(), 0u);
         latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
         EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
     }
@@ -563,6 +565,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
         cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
         EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+        ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
         EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().at(0u)->getGpuAddress());
         latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
     }
@@ -571,6 +574,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
         cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
         EXPECT_EQ(2u, deferredTimestampPackets->peekNodes().size());
+        ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 1u);
         EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().at(1u)->getGpuAddress());
         latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
     }
@@ -598,11 +602,14 @@ HWTEST_F(TimestampPacketTests, givenWaitlistWithTimestampPacketWhenEnqueueingThe
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
 
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
-
+    ASSERT_GT(timestamp.peekNodes().size(), 0u);
+    ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
     EXPECT_EQ(timestamp.peekNodes()[0]->getGpuAddress(), deferredTimestampPackets->peekNodes()[0]->getGpuAddress());
 
     cmdQ->flush();
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+    ASSERT_GT(timestamp.peekNodes().size(), 0u);
+    ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
     EXPECT_EQ(timestamp.peekNodes()[0]->getGpuAddress(), deferredTimestampPackets->peekNodes()[0]->getGpuAddress());
 
     cmdQ->finish();
@@ -644,6 +651,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
     csr.downloadAllocationCalled = false;
 
     typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
+    ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
     for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
         deferredTimestampPackets->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
     }
@@ -653,6 +661,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
     EXPECT_TRUE(csr.downloadAllocationCalled);
     csr.downloadAllocationCalled = false;
 
+    ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
     for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
         timestampPacketContainer->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
     }
@@ -725,6 +734,7 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenWa
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
     typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
+    ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
     for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
         timestampPacketContainer->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
     }
@@ -754,7 +764,8 @@ HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitForQueuesWhenFinish
 
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
-
+    ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
+    ASSERT_GT(timestampPacketContainer->peekNodes().size(), 0u);
     typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
     for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
         deferredTimestampPackets->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
@@ -800,6 +811,8 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenCa
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
 
+    ASSERT_GT(deferredTimestampPackets->peekNodes().size(), 0u);
+    ASSERT_GT(timestampPacketContainer->peekNodes().size(), 0u);
     deferredTimestampPackets->peekNodes()[0]->setPacketsUsed(1u);
     timestampPacketContainer->peekNodes()[0]->setPacketsUsed(1u);
 
@@ -1319,12 +1332,14 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedT
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;
     cmdQ->obtainNewTimestampPacketNodes(1, previousNodes, false, cmdQ->getGpgpuCommandStreamReceiver());
+    ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
     auto firstNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     csr.storeMakeResidentAllocations = true;
     csr.timestampPacketWriteEnabled = true;
 
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
     auto secondNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     EXPECT_NE(firstNode->getBaseGraphicsAllocation(), secondNode->getBaseGraphicsAllocation());
@@ -1341,6 +1356,8 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThen
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
     TimestampPacketContainer previousNodes;
     cmdQ->obtainNewTimestampPacketNodes(1, previousNodes, false, cmdQ->getGpgpuCommandStreamReceiver());
+
+    ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
     auto firstNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     csr.storeMakeResidentAllocations = true;
@@ -1349,6 +1366,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThen
     UserEvent userEvent;
     cl_event clEvent = &userEvent;
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 1, &clEvent, nullptr);
+    ASSERT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
     auto secondNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     EXPECT_NE(firstNode->getBaseGraphicsAllocation(), secondNode->getBaseGraphicsAllocation());
@@ -1367,6 +1385,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDep
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;
     cmdQ.obtainNewTimestampPacketNodes(2, previousNodes, false, cmdQ.getGpgpuCommandStreamReceiver());
+    ASSERT_GT(cmdQ.timestampPacketContainer->peekNodes().size(), 1u);
     firstNode.add(cmdQ.timestampPacketContainer->peekNodes().at(0));
     firstNode.add(cmdQ.timestampPacketContainer->peekNodes().at(1));
     auto firstTag0 = firstNode.getNode(0);
