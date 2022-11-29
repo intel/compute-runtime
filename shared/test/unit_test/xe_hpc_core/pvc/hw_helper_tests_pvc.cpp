@@ -5,36 +5,19 @@
  *
  */
 
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/xe_hpc_core/xe_hpc_core_test_ocl_fixtures.h"
-
 namespace NEO {
 
-using HwHelperTestsPvcXt = Test<HwHelperTestsXeHpcCore>;
+using HwHelperTestsPvc = HwHelperTest;
 
-PVCTEST_F(HwHelperTestsPvcXt, givenSingleTileCsrOnPvcXtWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInProperMemoryPool) {
-    auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo); // not BD A0
-    checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(&hwInfo);
-}
-
-PVCTEST_F(HwHelperTestsPvcXt, givenMultiTileCsrOnPvcWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInLocalMemoryPool) {
-    auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo); // not BD A0
-    checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(&hwInfo);
-}
-
-using HwHelperTestsPvc = Test<HwHelperTestsXeHpcCore>;
 PVCTEST_F(HwHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
     uint32_t steppings[] = {
         REVISION_A0,
@@ -114,7 +97,7 @@ PVCTEST_F(HwHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThen
     }
 }
 
-PVCTEST_F(HwHelperTestsPvcXt, givenMemorySynchronizationCommandsWhenAddingSynchronizationThenCorrectMethodIsUsed) {
+PVCTEST_F(HwHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSynchronizationThenCorrectMethodIsUsed) {
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 

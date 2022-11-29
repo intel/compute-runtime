@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
