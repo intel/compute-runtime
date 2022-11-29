@@ -32,6 +32,6 @@ DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckFtrSupportsInteger64BitAtomicsThenRetu
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
 
-DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckGpuAdressSpaceThenReturn47bits) {
+DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckGpuAddressSpaceThenReturn47bits) {
     EXPECT_EQ(MemoryConstants::max64BitAppAddress, pDevice->getHardwareInfo().capabilityTable.gpuAddressSpace);
 }

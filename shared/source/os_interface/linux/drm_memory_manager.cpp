@@ -314,17 +314,17 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     uint64_t gpuReservationAddress = 0;
     uint64_t alignedGpuAddress = 0;
     size_t alignedStorageSize = cSize;
-    size_t alignedVirtualAdressRangeSize = cSize;
+    size_t alignedVirtualAddressRangeSize = cSize;
     auto svmCpuAllocation = allocationData.type == AllocationType::SVM_CPU;
     if (svmCpuAllocation) {
         // add padding in case reserved addr is not aligned
         alignedStorageSize = alignUp(cSize, cAlignment);
-        alignedVirtualAdressRangeSize = alignedStorageSize + cAlignment;
+        alignedVirtualAddressRangeSize = alignedStorageSize + cAlignment;
     }
 
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     if ((isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) && !allocationData.flags.isUSMHostAllocation) {
-        gpuReservationAddress = acquireGpuRange(alignedVirtualAdressRangeSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        gpuReservationAddress = acquireGpuRange(alignedVirtualAddressRangeSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
         if (!gpuReservationAddress) {
             return nullptr;
         }
@@ -337,7 +337,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
 
     auto drmAllocation = createAllocWithAlignment(allocationData, cSize, cAlignment, alignedStorageSize, alignedGpuAddress);
     if (drmAllocation != nullptr) {
-        drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAdressRangeSize);
+        drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAddressRangeSize);
     }
 
     return drmAllocation;

@@ -44,7 +44,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, whenPrepareDeviceEnvironmentsIsCalledTh
 HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializingThenReturnFalse) {
     REQUIRE_64BIT_OR_SKIP();
 
-    NEO::ExecutionEnvironment executionEnviornment;
+    NEO::ExecutionEnvironment executionEnvironment;
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
@@ -55,13 +55,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializ
         expectedValue = true;
     }
 
-    EXPECT_EQ(expectedValue, NEO::prepareDeviceEnvironments(executionEnviornment));
+    EXPECT_EQ(expectedValue, NEO::prepareDeviceEnvironments(executionEnvironment));
 }
 
 HWTEST_F(PrepareDeviceEnvironmentsTests, Given32bitApplicationWhenDebugKeyIsSetThenSupportIsReported) {
-    NEO::ExecutionEnvironment executionEnviornment;
+    NEO::ExecutionEnvironment executionEnvironment;
     DebugManagerStateRestore restorer;
     DebugManager.flags.Force32BitDriverSupport.set(true);
-    EXPECT_TRUE(NEO::prepareDeviceEnvironments(executionEnviornment));
+    EXPECT_TRUE(NEO::prepareDeviceEnvironments(executionEnvironment));
 }
 } // namespace NEO

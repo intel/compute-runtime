@@ -521,11 +521,11 @@ DecodeError readZeInfoPerThreadPayloadArguments(const NEO::Yaml::YamlParser &par
                                                 ConstStringRef context,
                                                 std::string &outErrReason, std::string &outWarning) {
     bool validPerThreadPayload = true;
-    for (const auto &perThredPayloadArgumentNd : parser.createChildrenRange(node)) {
+    for (const auto &perThreadPayloadArgumentNd : parser.createChildrenRange(node)) {
         outPerThreadPayloadArguments.resize(outPerThreadPayloadArguments.size() + 1);
         auto &perThreadPayloadArgMetadata = *outPerThreadPayloadArguments.rbegin();
         ConstStringRef argTypeStr;
-        for (const auto &perThreadPayloadArgumentMemberNd : parser.createChildrenRange(perThredPayloadArgumentNd)) {
+        for (const auto &perThreadPayloadArgumentMemberNd : parser.createChildrenRange(perThreadPayloadArgumentNd)) {
             auto key = parser.readKey(perThreadPayloadArgumentMemberNd);
             if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadPayloadArgument::argType == key) {
                 argTypeStr = parser.readValue(perThreadPayloadArgumentMemberNd);

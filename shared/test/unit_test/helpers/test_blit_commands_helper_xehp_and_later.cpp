@@ -1021,7 +1021,7 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
     }
 }
 
-HWTEST2_F(BlitTests, givenLinearResorcesWhenAppendSliceOffsetsThenAdressAreOffsetted, IsXeHpCore) {
+HWTEST2_F(BlitTests, givenLinearResorcesWhenAppendSliceOffsetsThenAddressAreOffsetted, IsXeHpCore) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};

@@ -1539,7 +1539,7 @@ TEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
 TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedThenGraphicsAddressIsPopulatedFromProperFragment) {
     memoryManager->setForce32bitAllocations(true);
     OsHandleStorage handleStorage = {};
-    D3DGPU_VIRTUAL_ADDRESS gpuAdress = MemoryConstants::pageSize * 1;
+    D3DGPU_VIRTUAL_ADDRESS gpuAddress = MemoryConstants::pageSize * 1;
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize * 2;
     auto maxOsContextCount = 1u;
@@ -1560,7 +1560,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     fragment.fragmentCpuPointer = ptr;
     fragment.fragmentSize = size;
     fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
-    osHandle->gpuPtr = gpuAdress;
+    osHandle->gpuPtr = gpuAddress;
     memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
 
     AllocationData allocationData;
@@ -1569,7 +1569,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     auto allocation = memoryManager->createGraphicsAllocation(handleStorage, allocationData);
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
-    EXPECT_EQ(gpuAdress, allocation->getGpuAddress());
+    EXPECT_EQ(gpuAddress, allocation->getGpuAddress());
     EXPECT_EQ(0ULL, allocation->getAllocationOffset());
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1577,7 +1577,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
 TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedNotAllignedToPageThenGraphicsAddressIsPopulatedFromProperFragmentAndOffsetisAssigned) {
     memoryManager->setForce32bitAllocations(true);
     OsHandleStorage handleStorage = {};
-    D3DGPU_VIRTUAL_ADDRESS gpuAdress = MemoryConstants::pageSize * 1;
+    D3DGPU_VIRTUAL_ADDRESS gpuAddress = MemoryConstants::pageSize * 1;
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize * 2;
     auto maxOsContextCount = 1u;
@@ -1598,7 +1598,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     fragment.fragmentCpuPointer = ptr;
     fragment.fragmentSize = size;
     fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
-    osHandle->gpuPtr = gpuAdress;
+    osHandle->gpuPtr = gpuAddress;
     memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
 
     auto offset = 80u;
@@ -1610,7 +1610,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
 
     EXPECT_EQ(allocationPtr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
-    EXPECT_EQ(gpuAdress + offset, allocation->getGpuAddress()); // getGpuAddress returns gpuAddress + allocationOffset
+    EXPECT_EQ(gpuAddress + offset, allocation->getGpuAddress()); // getGpuAddress returns gpuAddress + allocationOffset
     EXPECT_EQ(offset, allocation->getAllocationOffset());
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1772,7 +1772,7 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmMemoryManagerWhenIsNTHandleisCalledTh
     EXPECT_EQ(0, wddm->counterVerifySharedHandle);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemoryForBufferWithoutHostPtrThen64kbAdressIsAllocated) {
+TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemoryForBufferWithoutHostPtrThen64kbAddressIsAllocated) {
     DebugManagerStateRestore dbgRestore;
     wddm->init();
     DebugManager.flags.Enable64kbpages.set(true);

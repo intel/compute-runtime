@@ -4830,8 +4830,8 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressin
                              R"===(
         )===";
         uint32_t expectedArgsCount = 1U;
-        bool statefulOrBindlessAdressing = (AddressingMode::MemoryAddressingModeStateful == addressingMode.second) || (AddressingMode::MemoryAddressingModeBindless == addressingMode.second);
-        if (statefulOrBindlessAdressing) {
+        bool statefulOrBindlessAddressing = (AddressingMode::MemoryAddressingModeStateful == addressingMode.second) || (AddressingMode::MemoryAddressingModeBindless == addressingMode.second);
+        if (statefulOrBindlessAddressing) {
             zeinfo += R"===(
                 -arg_type : arg_bypointer
                     offset : 24
@@ -4891,7 +4891,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressin
             break;
         }
 
-        if (statefulOrBindlessAdressing) {
+        if (statefulOrBindlessAddressing) {
             auto &argAsImage = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>();
             auto &argAsSampler = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[2].as<NEO::ArgDescSampler>();
             switch (addressingMode.second) {

@@ -47,19 +47,19 @@ TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorF
     EXPECT_EQ(memManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW), memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW));
 }
 
-TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshEnabledThenMinimalAdressIsNotAtBeginingOfExternalHeap) {
+TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshEnabledThenMinimalAddressIsNotAtBeginingOfExternalHeap) {
     EXPECT_GT(memManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_EXTERNAL), memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL));
 }
 
-TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshEnabledThenMinimalAdressIsAtBeginingOfExternalFrontWindowHeap) {
+TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshEnabledThenMinimalAddressIsAtBeginingOfExternalFrontWindowHeap) {
     EXPECT_EQ(memManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW), memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW));
 }
 
-TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshEnabledThenMinimalAdressIsAtBeginingOfExternalDeviceFrontWindowHeap) {
+TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshEnabledThenMinimalAddressIsAtBeginingOfExternalDeviceFrontWindowHeap) {
     EXPECT_EQ(memManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW), memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW));
 }
 
-TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshDisabledThenMinimalAdressEqualBeginingOfExternalHeap) {
+TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshDisabledThenMinimalAddressEqualBeginingOfExternalHeap) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
     memManager.reset(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));

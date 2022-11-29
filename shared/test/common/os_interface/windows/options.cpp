@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,9 +28,9 @@ NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *g
     mockGdiDll = NEO::OsLibrary::load("gdi32_mock.dll");
 
     typedef void(__stdcall * pfSetAdapterInfo)(const void *, const void *, uint64_t);
-    pfSetAdapterInfo setAdpaterInfo = reinterpret_cast<pfSetAdapterInfo>(mockGdiDll->getProcAddress("MockSetAdapterInfo"));
+    pfSetAdapterInfo setAdapterInfo = reinterpret_cast<pfSetAdapterInfo>(mockGdiDll->getProcAddress("MockSetAdapterInfo"));
 
-    setAdpaterInfo(platform, gtSystemInfo, gpuAddressSpace);
+    setAdapterInfo(platform, gtSystemInfo, gpuAddressSpace);
 
     return mockGdiDll;
 }

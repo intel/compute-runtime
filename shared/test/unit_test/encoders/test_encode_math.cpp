@@ -225,10 +225,10 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupSizeIndirectThenCommandsAreCorr
     cmdContainer.initialize(pDevice, nullptr, true);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
-    uint32_t crossThreadAdress[3] = {};
+    uint32_t crossThreadAddress[3] = {};
     uint32_t lws[3] = {2, 1, 1};
 
-    EncodeIndirectParams<FamilyType>::setGlobalWorkSizeIndirect(cmdContainer, offsets, reinterpret_cast<uint64_t>(crossThreadAdress), lws);
+    EncodeIndirectParams<FamilyType>::setGlobalWorkSizeIndirect(cmdContainer, offsets, reinterpret_cast<uint64_t>(crossThreadAddress), lws);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
@@ -251,9 +251,9 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupCountIndirectThenCommandsAreCor
     cmdContainer.initialize(pDevice, nullptr, true);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
-    uint32_t crossThreadAdress[3] = {};
+    uint32_t crossThreadAddress[3] = {};
 
-    EncodeIndirectParams<FamilyType>::setGroupCountIndirect(cmdContainer, offsets, reinterpret_cast<uint64_t>(crossThreadAdress));
+    EncodeIndirectParams<FamilyType>::setGroupCountIndirect(cmdContainer, offsets, reinterpret_cast<uint64_t>(crossThreadAddress));
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
