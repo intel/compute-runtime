@@ -12,8 +12,8 @@
 
 void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_handle_t &device,
                                       uint32_t flags, bool useImmediate, bool asyncMode, bool &outputValidationSuccessful) {
-    ze_command_queue_handle_t cmdQueue;
-    ze_command_list_handle_t cmdList;
+    ze_command_queue_handle_t cmdQueue = nullptr;
+    ze_command_list_handle_t cmdList = nullptr;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
