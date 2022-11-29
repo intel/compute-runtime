@@ -45,7 +45,10 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeDeviceGetProperties(devices[i], &deviceProperties));
         printDeviceProperties(deviceProperties);
 
-        ze_device_p2p_properties_t deviceP2PProperties;
+        ze_device_p2p_properties_t deviceP2PProperties{};
+        ze_device_p2p_bandwidth_exp_properties_t expP2Pproperties{};
+        expP2Pproperties.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
+        deviceP2PProperties.pNext = &expP2Pproperties;
         for (uint32_t j = 0; j < deviceCount; j++) {
             if (j == i)
                 continue;

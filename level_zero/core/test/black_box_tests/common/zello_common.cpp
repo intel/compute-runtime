@@ -407,6 +407,20 @@ void printP2PProperties(const ze_device_p2p_properties_t &props, bool canAccessP
         std::cout << "\t* accessSupported: " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS)) << "\n";
         std::cout << "\t* atomicsSupported: " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS)) << "\n";
         std::cout << "\t* canAccessPeer: " << std::boolalpha << static_cast<bool>(canAccessPeer) << "\n";
+        if (props.pNext != nullptr) {
+            ze_base_desc_t *desc = reinterpret_cast<ze_base_desc_t *>(props.pNext);
+            if (desc->stype == ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES) {
+                ze_device_p2p_bandwidth_exp_properties_t *expBwProperties =
+                    reinterpret_cast<ze_device_p2p_bandwidth_exp_properties_t *>(desc);
+                std::cout << " * P2P Exp Properties: Logical BW: " << std::dec << expBwProperties->logicalBandwidth << "\n";
+                std::cout << " * P2P Exp Properties: Physical BW: " << std::dec << expBwProperties->physicalBandwidth << "\n";
+                std::cout << " * P2P Exp Properties: BW unit: " << std::dec << expBwProperties->bandwidthUnit << "\n";
+
+                std::cout << " * P2P Exp Properties: Logical Latency: " << std::dec << expBwProperties->logicalLatency << "\n";
+                std::cout << " * P2P Exp Properties: Physical Latency: " << std::dec << expBwProperties->physicalLatency << "\n";
+                std::cout << " * P2P Exp Properties: Latency unit: " << std::dec << expBwProperties->latencyUnit << "\n";
+            }
+        }
     }
 }
 

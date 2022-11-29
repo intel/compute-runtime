@@ -148,6 +148,8 @@ struct DeviceImp : public Device {
   protected:
     void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;
+    void getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
+                                                ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
     NEO::GraphicsAllocation *debugSurface = nullptr;

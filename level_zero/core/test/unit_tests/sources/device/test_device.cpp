@@ -34,6 +34,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -4040,6 +4041,150 @@ TEST_F(DeviceSimpleTests, WhenCreatingCommandQueueThenSuccessIsReturned) {
 TEST_F(DeviceSimpleTests, givenValidDeviceThenValidCoreDeviceIsRetrievedWithGetSpecializedDevice) {
     auto specializedDevice = neoDevice->getSpecializedDevice<Device>();
     EXPECT_EQ(device, specializedDevice);
+}
+
+using P2pBandwidthPropertiesTest = MultipleDevicesTest;
+TEST_F(P2pBandwidthPropertiesTest, GivenDirectFabricConnectionBetweenDevicesWhenQueryingBandwidthPropertiesThenCorrectPropertiesAreSet) {
+
+    const uint32_t testLatency = 1;
+    const uint32_t testBandwidth = 20;
+
+    driverHandle->initializeVertexes();
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    FabricEdge testEdge{};
+    testEdge.vertexA = static_cast<DeviceImp *>(device0)->fabricVertex;
+    testEdge.vertexB = static_cast<DeviceImp *>(device1)->fabricVertex;
+    const char *linkModel = "XeLink";
+    memcpy_s(testEdge.properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, linkModel, strlen(linkModel));
+    testEdge.properties.bandwidth = testBandwidth;
+    testEdge.properties.latency = testLatency;
+    testEdge.properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+    testEdge.properties.latencyUnit = ZE_LATENCY_UNIT_HOP;
+    driverHandle->fabricEdges.push_back(&testEdge);
+
+    ze_device_p2p_properties_t p2pProperties = {};
+    ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProps = {};
+
+    p2pProperties.pNext = &p2pBandwidthProps;
+    p2pBandwidthProps.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
+    p2pBandwidthProps.pNext = nullptr;
+
+    device0->getP2PProperties(device1, &p2pProperties);
+
+    EXPECT_EQ(testBandwidth, p2pBandwidthProps.logicalBandwidth);
+    EXPECT_EQ(testBandwidth, p2pBandwidthProps.physicalBandwidth);
+    EXPECT_EQ(ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC, p2pBandwidthProps.bandwidthUnit);
+
+    EXPECT_EQ(testLatency, p2pBandwidthProps.logicalLatency);
+    EXPECT_EQ(testLatency, p2pBandwidthProps.physicalLatency);
+    EXPECT_EQ(ZE_LATENCY_UNIT_HOP, p2pBandwidthProps.latencyUnit);
+
+    driverHandle->fabricEdges.pop_back();
+}
+
+TEST_F(P2pBandwidthPropertiesTest, GivenNoXeLinkFabricConnectionBetweenDevicesWhenQueryingBandwidthPropertiesThenBandwidthIsZero) {
+
+    const uint32_t testLatency = 1;
+    const uint32_t testBandwidth = 20;
+
+    driverHandle->initializeVertexes();
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    FabricEdge testEdge{};
+    testEdge.vertexA = static_cast<DeviceImp *>(device0)->fabricVertex;
+    testEdge.vertexB = static_cast<DeviceImp *>(device1)->fabricVertex;
+    const char *linkModel = "Dummy";
+    memcpy_s(testEdge.properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, linkModel, strlen(linkModel));
+    testEdge.properties.bandwidth = testBandwidth;
+    testEdge.properties.latency = testLatency;
+    testEdge.properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+    testEdge.properties.latencyUnit = ZE_LATENCY_UNIT_HOP;
+    driverHandle->fabricEdges.push_back(&testEdge);
+
+    ze_device_p2p_properties_t p2pProperties = {};
+    ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProps = {};
+
+    p2pProperties.pNext = &p2pBandwidthProps;
+    p2pBandwidthProps.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
+    p2pBandwidthProps.pNext = nullptr;
+
+    // Calling with "Dummy" link
+    device0->getP2PProperties(device1, &p2pProperties);
+    EXPECT_EQ(0u, p2pBandwidthProps.logicalBandwidth);
+    driverHandle->fabricEdges.pop_back();
+}
+
+TEST_F(P2pBandwidthPropertiesTest, GivenNoDirectFabricConnectionBetweenDevicesWhenQueryingBandwidthPropertiesThenBandwidthIsZero) {
+
+    driverHandle->initializeVertexes();
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_device_p2p_properties_t p2pProperties = {};
+    ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProps = {};
+
+    p2pProperties.pNext = &p2pBandwidthProps;
+    p2pBandwidthProps.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
+    p2pBandwidthProps.pNext = nullptr;
+
+    // By default Xelink connections are not available.
+    // So getting the p2p properties without it.
+    device0->getP2PProperties(device1, &p2pProperties);
+    EXPECT_EQ(0u, p2pBandwidthProps.logicalBandwidth);
+}
+
+TEST_F(P2pBandwidthPropertiesTest, GivenFabricVerticesAreNotInitializedWhenQueryingBandwidthPropertiesThenFabricVerticesAreInitialized) {
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_device_p2p_properties_t p2pProperties = {};
+    ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProps = {};
+
+    p2pProperties.pNext = &p2pBandwidthProps;
+    p2pBandwidthProps.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
+    p2pBandwidthProps.pNext = nullptr;
+
+    // Calling without initialization
+    device0->getP2PProperties(device1, &p2pProperties);
+    EXPECT_NE(driverHandle->fabricVertices.size(), 0u);
+}
+
+TEST_F(P2pBandwidthPropertiesTest, GivenFabricVerticesAreNotAvailableForDevicesWhenQueryingBandwidthPropertiesThenBandwidthIsZero) {
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    driverHandle->initializeVertexes();
+
+    // Check for device 0
+    auto backupFabricVertex = static_cast<DeviceImp *>(device0)->fabricVertex;
+    static_cast<DeviceImp *>(device0)->fabricVertex = nullptr;
+
+    ze_device_p2p_properties_t p2pProperties = {};
+    ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProps = {};
+
+    p2pProperties.pNext = &p2pBandwidthProps;
+    p2pBandwidthProps.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
+    p2pBandwidthProps.pNext = nullptr;
+
+    device0->getP2PProperties(device1, &p2pProperties);
+    EXPECT_EQ(p2pBandwidthProps.logicalBandwidth, 0u);
+    static_cast<DeviceImp *>(device0)->fabricVertex = backupFabricVertex;
+
+    // Check for device 1
+    backupFabricVertex = static_cast<DeviceImp *>(device1)->fabricVertex;
+    static_cast<DeviceImp *>(device1)->fabricVertex = nullptr;
+
+    device0->getP2PProperties(device1, &p2pProperties);
+    EXPECT_EQ(p2pBandwidthProps.logicalBandwidth, 0u);
+    static_cast<DeviceImp *>(device1)->fabricVertex = backupFabricVertex;
 }
 
 } // namespace ult

@@ -438,6 +438,48 @@ ze_result_t DeviceImp::getComputeProperties(ze_device_compute_properties_t *pCom
     return ZE_RESULT_SUCCESS;
 }
 
+void DeviceImp::getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
+                                                       ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc) {
+
+    auto driverHandleImp = static_cast<DriverHandleImp *>(getDriverHandle());
+    if (driverHandleImp->fabricVertices.empty()) {
+        driverHandleImp->initializeVertexes();
+    }
+
+    if (this->fabricVertex != nullptr && peerDeviceImp->fabricVertex != nullptr) {
+        uint32_t directEdgeCount = 0;
+
+        driverHandleImp->fabricEdgeGetExp(this->fabricVertex,
+                                          peerDeviceImp->fabricVertex,
+                                          &directEdgeCount,
+                                          nullptr);
+        if (directEdgeCount > 0) {
+            std::vector<ze_fabric_edge_handle_t> edges(directEdgeCount);
+            driverHandleImp->fabricEdgeGetExp(this->fabricVertex,
+                                              peerDeviceImp->fabricVertex,
+                                              &directEdgeCount,
+                                              edges.data());
+
+            for (const auto &edge : edges) {
+                auto fabricEdge = FabricEdge::fromHandle(edge);
+                ze_fabric_edge_exp_properties_t edgeProperties{};
+                fabricEdge->getProperties(&edgeProperties);
+
+                if (strcmp(edgeProperties.model, "XeLink") == 0) {
+                    bandwidthPropertiesDesc->logicalBandwidth = edgeProperties.bandwidth;
+                    bandwidthPropertiesDesc->physicalBandwidth = edgeProperties.bandwidth;
+                    bandwidthPropertiesDesc->bandwidthUnit = edgeProperties.bandwidthUnit;
+
+                    bandwidthPropertiesDesc->logicalLatency = edgeProperties.latency;
+                    bandwidthPropertiesDesc->physicalLatency = edgeProperties.latency;
+                    bandwidthPropertiesDesc->latencyUnit = edgeProperties.latencyUnit;
+                    break;
+                }
+            }
+        }
+    }
+}
+
 ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
                                         ze_device_p2p_properties_t *pP2PProperties) {
 
@@ -464,6 +506,8 @@ ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
             bandwidthPropertiesDesc->logicalLatency = 0;
             bandwidthPropertiesDesc->physicalLatency = 0;
             bandwidthPropertiesDesc->latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+
+            getP2PPropertiesDirectFabricConnection(peerDevice, bandwidthPropertiesDesc);
         }
     }
 
