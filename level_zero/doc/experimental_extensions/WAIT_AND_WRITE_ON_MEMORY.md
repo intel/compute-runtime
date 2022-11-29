@@ -36,6 +36,7 @@ typedef struct _zex_wait_on_mem_desc_t {
 typedef struct _zex_write_to_mem_desc_t {
     zex_mem_action_scope_flags_t writeScope;
 } zex_write_to_mem_desc_t;
+```
 
 ## Interfaces
 
@@ -52,9 +53,11 @@ zexCommandListAppendWriteToMemory(
     zex_write_to_mem_desc_t *desc,
     void *ptr,
     uint64_t data);
+```
 
 ## Enums
 
+```cpp
 typedef uint32_t zex_mem_action_scope_flags_t;
 typedef enum _zex_mem_action_scope_flag_t {
     ZEX_MEM_ACTION_SCOPE_FLAG_SUBDEVICE = ZEX_BIT(0),
@@ -73,6 +76,7 @@ typedef enum _zex_wait_on_mem_action_flag_t {
     ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL = ZEX_BIT(5),
     ZEX_WAIT_ON_MEMORY_FLAG_FORCE_UINT32 = 0x7fffffff
 } zex_wait_on_mem_action_flag_t;
+```
 
 ## Programming example
 
@@ -96,8 +100,9 @@ zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendWriteToMe
 zex_write_to_mem_desc_t writeDesc = {};
 uint32_t signalData = 0x2;
 pfnWriteMemFn(cmdList, &writeDesc, zeBuffer, signalData);
+```
 
 # Known Issues and Limitations
 
-* Hangs may be seen when using BCS for appending memory copy with IPC buffers and if waitOnMemory is performed on any queue (CCS or BCS).
-** WA is to use a barrier after WaitOnMemory and before any subsequent action.
+- Hangs may be seen when using BCS for appending memory copy with IPC buffers and if waitOnMemory is performed on any queue (CCS or BCS).
+    - Workaround is to use a barrier after WaitOnMemory and before any subsequent action.
