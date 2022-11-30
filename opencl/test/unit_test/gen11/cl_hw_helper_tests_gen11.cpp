@@ -13,14 +13,14 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
-using ClHwHelperTestGen11 = Test<ClDeviceFixture>;
+using ClGfxCoreHelperTestGen11 = Test<ClDeviceFixture>;
 
-GEN11TEST_F(ClHwHelperTestGen11, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(11, 0, 0), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+GEN11TEST_F(ClGfxCoreHelperTestGen11, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(11, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
 
-GEN11TEST_F(ClHwHelperTestGen11, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(0u, clCoreHelper.getSupportedDeviceFeatureCapabilities(*defaultHwInfo));
+GEN11TEST_F(ClGfxCoreHelperTestGen11, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(0u, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(*defaultHwInfo));
 }

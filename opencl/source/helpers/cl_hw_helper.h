@@ -24,14 +24,11 @@ struct ArgDescPointer;
 struct HardwareInfo;
 struct KernelInfo;
 struct MultiDispatchInfo;
-class ClHwHelper;
 struct RootDeviceEnvironment;
 
-using ClCoreHelper = ClHwHelper;
-
-class ClHwHelper {
+class ClGfxCoreHelper {
   public:
-    static ClHwHelper &get(GFXCORE_FAMILY gfxCore);
+    static ClGfxCoreHelper &get(GFXCORE_FAMILY gfxCore);
 
     virtual bool requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -53,15 +50,15 @@ class ClHwHelper {
     static uint8_t makeDeviceRevision(const HardwareInfo &hwInfo);
     static cl_version makeDeviceIpVersion(uint16_t major, uint8_t minor, uint8_t revision);
 
-    ClHwHelper() = default;
+    ClGfxCoreHelper() = default;
 };
 
 template <typename GfxFamily>
-class ClHwHelperHw : public ClHwHelper {
+class ClGfxCoreHelperHw : public ClGfxCoreHelper {
   public:
-    static ClHwHelper &get() {
-        static ClHwHelperHw<GfxFamily> clHwHelper;
-        return clHwHelper;
+    static ClGfxCoreHelper &get() {
+        static ClGfxCoreHelperHw<GfxFamily> clGfxCoreHelper;
+        return clGfxCoreHelper;
     }
 
     bool requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
@@ -80,9 +77,9 @@ class ClHwHelperHw : public ClHwHelper {
 
   protected:
     bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const override;
-    ClHwHelperHw() = default;
+    ClGfxCoreHelperHw() = default;
 };
 
-extern ClHwHelper *clHwHelperFactory[IGFX_MAX_CORE];
+extern ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE];
 
 } // namespace NEO

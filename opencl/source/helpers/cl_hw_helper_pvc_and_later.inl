@@ -8,12 +8,12 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 
 template <>
-std::vector<uint32_t> ClHwHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
+std::vector<uint32_t> ClGfxCoreHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
     return std::vector<uint32_t>{CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_AFTER_DEPENDENCY_ROUND_ROBIN_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_STALL_BASED_ROUND_ROBIN_INTEL};
 }
 
 template <>
-inline bool ClHwHelperHw<Family>::getQueueFamilyName(std::string &name, EngineGroupType type) const {
+inline bool ClGfxCoreHelperHw<Family>::getQueueFamilyName(std::string &name, EngineGroupType type) const {
     switch (type) {
     case EngineGroupType::RenderCompute:
         name = "cccs";
@@ -27,6 +27,6 @@ inline bool ClHwHelperHw<Family>::getQueueFamilyName(std::string &name, EngineGr
 }
 
 template <>
-bool ClHwHelperHw<Family>::allowImageCompression(cl_image_format format) const {
+bool ClGfxCoreHelperHw<Family>::allowImageCompression(cl_image_format format) const {
     return true;
 }

@@ -248,9 +248,9 @@ cl_int Kernel::initialize() {
         threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
     }
 
-    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
-    auxTranslationRequired = !program->getIsBuiltIn() && HwHelper::compressedBuffersSupported(hwInfo) && clCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
+    auxTranslationRequired = !program->getIsBuiltIn() && HwHelper::compressedBuffersSupported(hwInfo) && clGfxCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
 
     if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
         auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
@@ -554,7 +554,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     size_t maxWorkgroupSize;
     const auto &hwInfo = clDevice.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto &clCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     switch (paramName) {
@@ -597,7 +597,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         pSrc = &scratchSize;
         break;
     case CL_KERNEL_PRIVATE_MEM_SIZE:
-        privateMemSize = clCoreHelper.getKernelPrivateMemSize(kernelInfo);
+        privateMemSize = clGfxCoreHelper.getKernelPrivateMemSize(kernelInfo);
         srcSize = sizeof(privateMemSize);
         pSrc = &privateMemSize;
         break;
@@ -924,7 +924,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     bool forceNonAuxMode = false;
     bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
     auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
-    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
     if (isAuxTranslationKernel) {
         if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
@@ -932,7 +932,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             forceNonAuxMode = true;
         }
         disableL3 = (argIndex == 0);
-    } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clCoreHelper.requiresNonAuxMode(argAsPtr, rootDeviceEnvironment)) {
+    } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clGfxCoreHelper.requiresNonAuxMode(argAsPtr, rootDeviceEnvironment)) {
         forceNonAuxMode = true;
     }
 
@@ -1481,7 +1481,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
         auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
         auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
-        auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+        auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
         if (isAuxTranslationKernel) {
             if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
@@ -1489,7 +1489,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                 forceNonAuxMode = true;
             }
             disableL3 = (argIndex == 0);
-        } else if (graphicsAllocation->isCompressionEnabled() && clCoreHelper.requiresNonAuxMode(argAsPtr, rootDeviceEnvironment)) {
+        } else if (graphicsAllocation->isCompressionEnabled() && clGfxCoreHelper.requiresNonAuxMode(argAsPtr, rootDeviceEnvironment)) {
             forceNonAuxMode = true;
         }
 
@@ -2281,9 +2281,9 @@ void Kernel::updateAuxTranslationRequired() {
 }
 
 int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
-    auto &clCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     auto &threadArbitrationPolicy = const_cast<ThreadArbitrationPolicy &>(getDescriptor().kernelAttributes.threadArbitrationPolicy);
-    if (!clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
         return CL_INVALID_DEVICE;
     } else if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {

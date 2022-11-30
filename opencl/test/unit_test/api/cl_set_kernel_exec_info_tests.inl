@@ -68,8 +68,8 @@ TEST_F(clSetKernelExecInfoTests, GivenNullKernelWhenSettingAdditionalKernelInfoT
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenDeviceNotSupportingSvmWhenSettingKernelExecInfoThenErrorIsReturnedOnSvmRelatedParams) {
-    auto &clCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    if (!clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
@@ -304,8 +304,8 @@ TEST_F(clSetKernelExecInfoTests, givenNonExistingParamNameWithValuesWhenSettingA
 }
 
 HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
-    auto &clCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    if (!clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     uint32_t newThreadArbitrationPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
@@ -321,8 +321,8 @@ HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhe
 }
 
 HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenNotSupportedAndSettingAdditionalKernelInfoThenClInvalidDeviceIsReturned) {
-    auto &clCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    if (clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     uint32_t newThreadArbitrationPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
@@ -337,8 +337,8 @@ HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhe
 }
 
 HWTEST_F(clSetKernelExecInfoTests, givenInvalidThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenClInvalidValueIsReturned) {
-    auto &clCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    if (!clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     uint32_t invalidThreadArbitrationPolicy = 0;

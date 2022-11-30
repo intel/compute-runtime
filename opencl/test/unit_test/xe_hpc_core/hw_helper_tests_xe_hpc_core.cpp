@@ -24,19 +24,19 @@
 
 #include "hw_cmds_xe_hpc_core_base.h"
 
-using ClHwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
+using ClGfxCoreHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 ;
 
-XE_HPC_CORETEST_F(ClHwHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+XE_HPC_CORETEST_F(ClGfxCoreHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     KernelInfo kernelInfo{};
 
-    EXPECT_FALSE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
 
-XE_HPC_CORETEST_F(ClHwHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnFalse) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_FALSE(clCoreHelper.preferBlitterForLocalToLocalTransfers());
+XE_HPC_CORETEST_F(ClGfxCoreHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnFalse) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_FALSE(clGfxCoreHelper.preferBlitterForLocalToLocalTransfers());
 }
 
 using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
@@ -828,7 +828,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExt
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 8, 1), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 8, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }

@@ -245,8 +245,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.supportedThreadArbitrationPolicies.size() * sizeof(cl_uint);
         break;
     case CL_DEVICE_IP_VERSION_INTEL: {
-        auto &clCoreHelper = this->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-        param.uint = clCoreHelper.getDeviceIpVersion(getHardwareInfo());
+        auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+        param.uint = clGfxCoreHelper.getDeviceIpVersion(getHardwareInfo());
         src = &param.uint;
         retSize = srcSize = sizeof(cl_version);
         break;
@@ -282,8 +282,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     }
     case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
         auto &hwInfo = getHardwareInfo();
-        auto &clCoreHelper = this->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-        param.bitfield = clCoreHelper.getSupportedDeviceFeatureCapabilities(hwInfo);
+        auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+        param.bitfield = clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hwInfo);
         src = &param.bitfield;
         retSize = srcSize = sizeof(cl_device_feature_capabilities_intel);
         break;

@@ -12,23 +12,23 @@
 
 namespace NEO {
 
-ClHwHelper *clHwHelperFactory[IGFX_MAX_CORE] = {};
+ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
-ClHwHelper &ClHwHelper::get(GFXCORE_FAMILY gfxCore) {
-    return *clHwHelperFactory[gfxCore];
+ClGfxCoreHelper &ClGfxCoreHelper::get(GFXCORE_FAMILY gfxCore) {
+    return *clGfxCoreHelperFactory[gfxCore];
 }
 
-uint8_t ClHwHelper::makeDeviceRevision(const HardwareInfo &hwInfo) {
+uint8_t ClGfxCoreHelper::makeDeviceRevision(const HardwareInfo &hwInfo) {
     return static_cast<uint8_t>(!hwInfo.capabilityTable.isIntegratedDevice);
 }
 
-cl_version ClHwHelper::makeDeviceIpVersion(uint16_t major, uint8_t minor, uint8_t revision) {
+cl_version ClGfxCoreHelper::makeDeviceIpVersion(uint16_t major, uint8_t minor, uint8_t revision) {
     return (major << 16) | (minor << 8) | revision;
 }
 
 template <>
-ClCoreHelper &RootDeviceEnvironment::getHelper<ClCoreHelper>() const {
-    auto &apiHelper = ClHwHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
+ClGfxCoreHelper &RootDeviceEnvironment::getHelper<ClGfxCoreHelper>() const {
+    auto &apiHelper = ClGfxCoreHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
     return apiHelper;
 }
 

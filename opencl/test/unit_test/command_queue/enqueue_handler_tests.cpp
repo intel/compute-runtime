@@ -586,8 +586,8 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySetKernelThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
     REQUIRE_SVM_OR_SKIP(pClDevice);
-    auto &clCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    if (!clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore stateRestore;
@@ -623,8 +623,8 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySe
 }
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenNotSupportedPolicyChangeThenRequiredThreadArbitrationPolicyNotChangedAndIsSetAsDefault) {
-    auto &clCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    if (clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore stateRestore;

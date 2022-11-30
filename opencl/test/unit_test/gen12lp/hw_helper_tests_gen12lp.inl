@@ -20,10 +20,10 @@
 
 #include "aubstream/engine_node.h"
 
-using ClHwHelperTestsGen12Lp = Test<ClDeviceFixture>;
+using ClGfxCoreHelperTestsGen12Lp = Test<ClDeviceFixture>;
 
-GEN12LPTEST_F(ClHwHelperTestsGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto accessedUsingStatelessAddressingMode : {true, false}) {
         KernelInfo kernelInfo{};
@@ -32,38 +32,38 @@ GEN12LPTEST_F(ClHwHelperTestsGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
         arg.as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = accessedUsingStatelessAddressingMode;
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(std::move(arg));
 
-        EXPECT_EQ(accessedUsingStatelessAddressingMode, clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+        EXPECT_EQ(accessedUsingStatelessAddressingMode, clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
     }
 }
 
-HWTEST2_F(ClHwHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsTGLLP) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 0, 0), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsTGLLP) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
 
-HWTEST2_F(ClHwHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsRKL) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 0, 0), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsRKL) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
 
-HWTEST2_F(ClHwHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsADLS) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 0, 0), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsADLS) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
 
-HWTEST2_F(ClHwHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsADLP) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 0, 0), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsADLP) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
 
-HWTEST2_F(ClHwHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsDG1) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 0, 1), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsDG1) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
 
-GEN12LPTEST_F(ClHwHelperTestsGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
+GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
-    EXPECT_EQ(expectedCapabilities, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities(hardwareInfo));
+    EXPECT_EQ(expectedCapabilities, ClGfxCoreHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities(hardwareInfo));
 }
 
 using HwHelperTestGen12Lp = HwHelperTest;

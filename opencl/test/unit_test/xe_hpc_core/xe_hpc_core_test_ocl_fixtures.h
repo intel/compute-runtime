@@ -13,7 +13,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 namespace NEO {
-struct ClHwHelperXeHpcCoreFixture : public ClDeviceFixture {
+struct ClGfxCoreHelperXeHpcCoreFixture : public ClDeviceFixture {
     void checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(HardwareInfo *hwInfo);
     void checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(HardwareInfo *hwInfo);
     void setupDeviceIdAndRevision(HardwareInfo *hwInfo, ClDevice &clDevice);

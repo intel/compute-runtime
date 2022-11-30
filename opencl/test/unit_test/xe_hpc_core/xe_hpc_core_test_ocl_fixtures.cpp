@@ -15,12 +15,12 @@
 
 namespace NEO {
 
-void ClHwHelperXeHpcCoreFixture::setupDeviceIdAndRevision(HardwareInfo *hwInfo, ClDevice &clDevice) {
+void ClGfxCoreHelperXeHpcCoreFixture::setupDeviceIdAndRevision(HardwareInfo *hwInfo, ClDevice &clDevice) {
     auto deviceHwInfo = clDevice.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     deviceHwInfo->platform.usDeviceID = hwInfo->platform.usDeviceID;
     deviceHwInfo->platform.usRevId = hwInfo->platform.usRevId;
 }
-void ClHwHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(HardwareInfo *hwInfo) {
+void ClGfxCoreHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(HardwareInfo *hwInfo) {
     const uint32_t numDevices = 4u;
     const uint32_t tileIndex = 2u;
     const DeviceBitfield singleTileMask{static_cast<uint32_t>(1u << tileIndex)};
@@ -48,7 +48,7 @@ void ClHwHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpecificAl
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
 
-void ClHwHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(HardwareInfo *hwInfo) {
+void ClGfxCoreHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(HardwareInfo *hwInfo) {
     const uint32_t numDevices = 4u;
     const DeviceBitfield tile0Mask{0x1};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;

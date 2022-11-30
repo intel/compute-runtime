@@ -21,7 +21,7 @@ using Family = Gen12LpFamily;
 struct EnableOCLGen12LP {
     EnableOCLGen12LP() {
         populateFactoryTable<BufferHw<Family>>();
-        populateFactoryTable<ClHwHelperHw<Family>>();
+        populateFactoryTable<ClGfxCoreHelperHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();

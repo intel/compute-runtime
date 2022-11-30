@@ -22,56 +22,56 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
-using ClHwHelperTestsXeHpCore = Test<ClDeviceFixture>;
+using ClGfxCoreHelperTestsXeHpCore = Test<ClDeviceFixture>;
 
-XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_FALSE(clCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
+        EXPECT_FALSE(clGfxCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenXE_HP_COREThenAuxTranslationIsRequired) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, givenXE_HP_COREThenAuxTranslationIsRequired) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         KernelInfo kernelInfo{};
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_EQ(!isPureStateful, clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+        EXPECT_EQ(!isPureStateful, clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, givenXE_HP_COREWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, givenXE_HP_COREWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     KernelInfo kernelInfo{};
 
-    EXPECT_FALSE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
 
-XE_HP_CORE_TEST_F(ClHwHelperTestsXeHpCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 5, 1), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 5, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
 
 using HwHelperTestXE_HP_CORE = HwHelperTest;

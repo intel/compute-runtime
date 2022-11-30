@@ -107,33 +107,33 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenIsLinearStoragePreferredThenReturnValidV
     }
 }
 
-using ClHwHelperTest = Test<ClDeviceFixture>;
-HWTEST_F(ClHwHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+using ClGfxCoreHelperTest = Test<ClDeviceFixture>;
+HWTEST_F(ClGfxCoreHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     KernelInfo kernelInfo{};
 
     ArgDescriptor argDescriptorValue(ArgDescriptor::ArgType::ArgTValue);
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorValue);
-    EXPECT_FALSE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 
     ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
     argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
-    EXPECT_TRUE(clCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+    EXPECT_TRUE(clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
 
-TEST_F(ClHwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+TEST_F(ClGfxCoreHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ClHwHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ClGfxCoreHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
     static const cl_image_format redescribeFormats[] = {
         {CL_R, CL_UNSIGNED_INT8},
         {CL_R, CL_UNSIGNED_INT16},
@@ -142,7 +142,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ClHwHelperTest, givenCLImageFormatsWhenCallingIsForm
         {CL_RGBA, CL_UNSIGNED_INT32},
     };
 
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     auto formats = SurfaceFormats::readWrite();
     for (const auto &format : formats) {
         const cl_image_format oclFormat = format.OCLImageFormat;
@@ -150,6 +150,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ClHwHelperTest, givenCLImageFormatsWhenCallingIsForm
         for (const auto &nonRedescribableFormat : redescribeFormats) {
             expectedResult &= (memcmp(&oclFormat, &nonRedescribableFormat, sizeof(cl_image_format)) != 0);
         }
-        EXPECT_EQ(expectedResult, clCoreHelper.isFormatRedescribable(oclFormat));
+        EXPECT_EQ(expectedResult, clGfxCoreHelper.isFormatRedescribable(oclFormat));
     }
 }

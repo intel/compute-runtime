@@ -21,7 +21,7 @@ using Family = Gen8Family;
 struct EnableOCLGen8 {
     EnableOCLGen8() {
         populateFactoryTable<BufferHw<Family>>();
-        populateFactoryTable<ClHwHelperHw<Family>>();
+        populateFactoryTable<ClGfxCoreHelperHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();

@@ -21,13 +21,13 @@ using Family = XeHpFamily;
 static auto gfxCore = IGFX_XE_HP_CORE;
 
 template <>
-void populateFactoryTable<ClHwHelperHw<Family>>() {
-    extern ClHwHelper *clHwHelperFactory[IGFX_MAX_CORE];
-    clHwHelperFactory[gfxCore] = &ClHwHelperHw<Family>::get();
+void populateFactoryTable<ClGfxCoreHelperHw<Family>>() {
+    extern ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE];
+    clGfxCoreHelperFactory[gfxCore] = &ClGfxCoreHelperHw<Family>::get();
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
@@ -39,7 +39,7 @@ bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, co
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
@@ -51,7 +51,7 @@ bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, con
 }
 
 template <>
-inline bool ClHwHelperHw<Family>::allowCompressionForContext(const ClDevice &clDevice, const Context &context) const {
+inline bool ClGfxCoreHelperHw<Family>::allowCompressionForContext(const ClDevice &clDevice, const Context &context) const {
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     auto &hwInfo = clDevice.getHardwareInfo();
     auto &coreHelper = clDevice.getRootDeviceEnvironment().getHelper<CoreHelper>();
@@ -62,18 +62,18 @@ inline bool ClHwHelperHw<Family>::allowCompressionForContext(const ClDevice &clD
 }
 
 template <>
-bool ClHwHelperHw<Family>::isSupportedKernelThreadArbitrationPolicy() const { return false; }
+bool ClGfxCoreHelperHw<Family>::isSupportedKernelThreadArbitrationPolicy() const { return false; }
 
 template <>
-std::vector<uint32_t> ClHwHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
+std::vector<uint32_t> ClGfxCoreHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
     return {};
 }
 
 template <>
-cl_version ClHwHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
+cl_version ClGfxCoreHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
     return makeDeviceIpVersion(12, 5, makeDeviceRevision(hwInfo));
 }
 
-template class ClHwHelperHw<Family>;
+template class ClGfxCoreHelperHw<Family>;
 
 } // namespace NEO

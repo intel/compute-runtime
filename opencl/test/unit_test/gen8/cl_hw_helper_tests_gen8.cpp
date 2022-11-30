@@ -16,14 +16,14 @@
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
 using namespace NEO;
-using ClHwHelperTestGen8 = Test<ClDeviceFixture>;
+using ClGfxCoreHelperTestGen8 = Test<ClDeviceFixture>;
 
-GEN8TEST_F(ClHwHelperTestGen8, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(8, 0, 0), clCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+GEN8TEST_F(ClGfxCoreHelperTestGen8, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(8, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
 }
 
-GEN8TEST_F(ClHwHelperTestGen8, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
-    auto &clCoreHelper = getHelper<ClCoreHelper>();
-    EXPECT_EQ(0u, clCoreHelper.getSupportedDeviceFeatureCapabilities(*defaultHwInfo));
+GEN8TEST_F(ClGfxCoreHelperTestGen8, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(0u, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(*defaultHwInfo));
 }

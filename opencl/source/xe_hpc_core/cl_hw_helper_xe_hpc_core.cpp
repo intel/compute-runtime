@@ -19,21 +19,21 @@ static auto gfxCore = IGFX_XE_HPC_CORE;
 #include "opencl/source/helpers/cl_hw_helper_pvc_and_later.inl"
 
 template <>
-void populateFactoryTable<ClHwHelperHw<Family>>() {
-    extern ClHwHelper *clHwHelperFactory[IGFX_MAX_CORE];
-    clHwHelperFactory[gfxCore] = &ClHwHelperHw<Family>::get();
+void populateFactoryTable<ClGfxCoreHelperHw<Family>>() {
+    extern ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE];
+    clGfxCoreHelperFactory[gfxCore] = &ClGfxCoreHelperHw<Family>::get();
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return false;
 }
 
 template <>
-cl_version ClHwHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
+cl_version ClGfxCoreHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
     return makeDeviceIpVersion(12, 8, makeDeviceRevision(hwInfo));
 }
 
-template class ClHwHelperHw<Family>;
+template class ClGfxCoreHelperHw<Family>;
 
 } // namespace NEO

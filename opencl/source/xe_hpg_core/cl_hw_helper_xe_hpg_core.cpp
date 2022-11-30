@@ -20,13 +20,13 @@ using Family = XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
 template <>
-void populateFactoryTable<ClHwHelperHw<Family>>() {
-    extern ClHwHelper *clHwHelperFactory[IGFX_MAX_CORE];
-    clHwHelperFactory[gfxCore] = &ClHwHelperHw<Family>::get();
+void populateFactoryTable<ClGfxCoreHelperHw<Family>>() {
+    extern ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE];
+    clGfxCoreHelperFactory[gfxCore] = &ClGfxCoreHelperHw<Family>::get();
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
@@ -38,7 +38,7 @@ bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, co
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
@@ -50,15 +50,15 @@ bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, con
 }
 
 template <>
-std::vector<uint32_t> ClHwHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
+std::vector<uint32_t> ClGfxCoreHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
     return {};
 }
 
 template <>
-bool ClHwHelperHw<Family>::isSupportedKernelThreadArbitrationPolicy() const { return false; }
+bool ClGfxCoreHelperHw<Family>::isSupportedKernelThreadArbitrationPolicy() const { return false; }
 
 template <>
-cl_version ClHwHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
+cl_version ClGfxCoreHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
     return makeDeviceIpVersion(12, 7, makeDeviceRevision(hwInfo));
 }
 
@@ -76,7 +76,7 @@ static const std::vector<cl_image_format> incompressibleFormats = {
     {CL_A, CL_FLOAT}};
 
 template <>
-bool ClHwHelperHw<Family>::allowImageCompression(cl_image_format format) const {
+bool ClGfxCoreHelperHw<Family>::allowImageCompression(cl_image_format format) const {
     for (auto &referenceFormat : incompressibleFormats) {
         if (format.image_channel_data_type == referenceFormat.image_channel_data_type &&
             format.image_channel_order == referenceFormat.image_channel_order) {
@@ -87,6 +87,6 @@ bool ClHwHelperHw<Family>::allowImageCompression(cl_image_format format) const {
     return true;
 }
 
-template class ClHwHelperHw<Family>;
+template class ClGfxCoreHelperHw<Family>;
 
 } // namespace NEO

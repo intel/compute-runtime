@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,9 @@
 
 namespace NEO {
 
-struct ClHwHelperMock : public ClHwHelper {
-    using ClHwHelper::makeDeviceIpVersion;
-    using ClHwHelper::makeDeviceRevision;
+struct ClGfxCoreHelperMock : public ClGfxCoreHelper {
+    using ClGfxCoreHelper::makeDeviceIpVersion;
+    using ClGfxCoreHelper::makeDeviceRevision;
 };
 
 } // namespace NEO

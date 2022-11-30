@@ -110,8 +110,8 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
     }
     for (auto &pClDevice : context.getDevices()) {
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
-        auto &clCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-        if (!clCoreHelper.allowCompressionForContext(*pClDevice, context)) {
+        auto &clGfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+        if (!clGfxCoreHelper.allowCompressionForContext(*pClDevice, context)) {
             return false;
         }
 

@@ -14,9 +14,9 @@
 
 namespace NEO {
 
-using ClHwHelperTestsPvcXt = Test<ClHwHelperXeHpcCoreFixture>;
+using ClGfxCoreHelperTestsPvcXt = Test<ClGfxCoreHelperXeHpcCoreFixture>;
 
-PVCTEST_F(ClHwHelperTestsPvcXt, givenSingleTileCsrOnPvcXtWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInProperMemoryPool) {
+PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenSingleTileCsrOnPvcXtWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInProperMemoryPool) {
     auto hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();
@@ -24,7 +24,7 @@ PVCTEST_F(ClHwHelperTestsPvcXt, givenSingleTileCsrOnPvcXtWhenAllocatingCsrSpecif
     checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(&hwInfo);
 }
 
-PVCTEST_F(ClHwHelperTestsPvcXt, givenMultiTileCsrOnPvcWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInLocalMemoryPool) {
+PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenMultiTileCsrOnPvcWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInLocalMemoryPool) {
     auto hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();

@@ -158,11 +158,11 @@ Image *Image::create(Context *context,
         return nullptr;
     }
 
-    auto &clCoreHelper = context->getDevice(0)->getRootDeviceEnvironment().getHelper<ClHwHelper>();
+    auto &clGfxCoreHelper = context->getDevice(0)->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
                                                                     *context, true);
-    preferCompression &= clCoreHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
-    preferCompression &= !clCoreHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
+    preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
+    preferCompression &= !clGfxCoreHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
 
     MemoryManager *memoryManager = context->getMemoryManager();
     size_t hostPtrMinSize = getHostPtrMinSize(imageDesc->image_type, surfaceFormat->OCLImageFormat,

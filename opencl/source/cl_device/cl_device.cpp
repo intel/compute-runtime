@@ -216,7 +216,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
 }
 
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineGroupType type) {
-    auto &clCoreHelper = this->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
 
     cl_command_queue_capabilities_intel disabledProperties = 0u;
     if (EngineHelper::isCopyOnlyEngineType(type)) {
@@ -227,7 +227,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
         disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL); // clEnqueueCopyBufferToImage
         disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL); // clEnqueueCopyImageToBuffer
     }
-    disabledProperties |= clCoreHelper.getAdditionalDisabledQueueFamilyCapabilities(type);
+    disabledProperties |= clGfxCoreHelper.getAdditionalDisabledQueueFamilyCapabilities(type);
 
     if (disabledProperties != 0) {
         return getQueueFamilyCapabilitiesAll() & ~disabledProperties;
@@ -238,8 +238,8 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
 void ClDevice::getQueueFamilyName(char *outputName, EngineGroupType type) {
     std::string name{};
 
-    const auto &clCoreHelper = this->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    const bool hasHwSpecificName = clCoreHelper.getQueueFamilyName(name, type);
+    const auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    const bool hasHwSpecificName = clGfxCoreHelper.getQueueFamilyName(name, type);
 
     if (!hasHwSpecificName) {
         switch (type) {

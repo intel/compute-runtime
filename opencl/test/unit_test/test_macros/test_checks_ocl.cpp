@@ -36,6 +36,6 @@ bool TestChecks::supportsAuxResolves(const RootDeviceEnvironment &rootDeviceEnvi
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
 
-    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
-    return clCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
+    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
+    return clGfxCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
 }

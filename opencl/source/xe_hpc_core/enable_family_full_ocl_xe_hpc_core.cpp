@@ -21,7 +21,7 @@ using Family = XeHpcCoreFamily;
 struct EnableOCLXeHpcCore {
     EnableOCLXeHpcCore() {
         populateFactoryTable<BufferHw<Family>>();
-        populateFactoryTable<ClHwHelperHw<Family>>();
+        populateFactoryTable<ClGfxCoreHelperHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();

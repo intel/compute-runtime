@@ -1475,7 +1475,7 @@ HWTEST_F(QueueFamilyNameTest, givenInvalidEngineGroupWhenGettingQueueFamilyNameT
 }
 
 HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNameThenExceptionIsThrown) {
-    struct MockClHwHelper : NEO::ClHwHelperHw<FamilyType> {
+    struct MockClGfxCoreHelper : NEO::ClGfxCoreHelperHw<FamilyType> {
         bool getQueueFamilyName(std::string &name, EngineGroupType type) const override {
             name = familyNameOverride;
             return true;
@@ -1483,18 +1483,18 @@ HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNa
         std::string familyNameOverride = "";
     };
 
-    MockClHwHelper clHwHelper{};
-    VariableBackup<ClHwHelper *> clHwHelperFactoryBackup{
-        &NEO::clHwHelperFactory[static_cast<size_t>(defaultHwInfo->platform.eRenderCoreFamily)]};
-    clHwHelperFactoryBackup = &clHwHelper;
+    MockClGfxCoreHelper clGfxCoreHelper{};
+    VariableBackup<ClGfxCoreHelper *> clGfxCoreHelperFactoryBackup{
+        &NEO::clGfxCoreHelperFactory[static_cast<size_t>(defaultHwInfo->platform.eRenderCoreFamily)]};
+    clGfxCoreHelperFactoryBackup = &clGfxCoreHelper;
 
     char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL] = "";
 
-    clHwHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL - 1, 'a');
+    clGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL - 1, 'a');
     device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups);
-    EXPECT_EQ(0, std::strcmp(name, clHwHelper.familyNameOverride.c_str()));
+    EXPECT_EQ(0, std::strcmp(name, clGfxCoreHelper.familyNameOverride.c_str()));
 
-    clHwHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, 'a');
+    clGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, 'a');
     EXPECT_ANY_THROW(device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups));
 }
 

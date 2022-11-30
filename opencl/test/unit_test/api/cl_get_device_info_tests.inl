@@ -337,8 +337,8 @@ HWTEST2_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyInt
 }
 
 HWTEST_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyIntelWhenThreadArbitrationPolicyChangeNotSupportedAndCallClGetDeviceInfoThenParamRetSizeIsZero) {
-    auto &clCoreHelper = this->pDevice->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    if (clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = this->pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     cl_device_info paramName = 0;

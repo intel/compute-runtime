@@ -2540,12 +2540,12 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     kernel.mockKernel->initialize();
 
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
-    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
-    EXPECT_EQ(clCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment), kernel.mockKernel->isAuxTranslationRequired());
+    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(-1);
     kernel.mockKernel->initialize();
-    EXPECT_EQ(clCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment), kernel.mockKernel->isAuxTranslationRequired());
+    EXPECT_EQ(clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(0);
     kernel.mockKernel->initialize();
@@ -2569,9 +2569,9 @@ TEST(KernelTest, WhenAuxTranslationIsRequiredThenKernelSetsRequiredResolvesInCon
     kernel.mockKernel->initialize();
 
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
-    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
-    if (clCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment)) {
+    if (clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment)) {
         EXPECT_TRUE(context->getResolvesRequiredInKernels());
     } else {
         EXPECT_FALSE(context->getResolvesRequiredInKernels());
@@ -2615,9 +2615,9 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
     kernel.mockKernel->initialize();
 
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
-    auto &clCoreHelper = rootDeviceEnvironment.getHelper<ClCoreHelper>();
+    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
-    if (clCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment)) {
+    if (clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment)) {
         EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
     } else {
         EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
@@ -2857,8 +2857,8 @@ TEST(KernelTest, givenDefaultKernelWhenItIsCreatedThenItReportsStatelessWrites) 
 TEST(KernelTest, givenPolicyWhensetKernelThreadArbitrationPolicyThenExpectedClValueIsReturned) {
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto &clCoreHelper = device->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    if (!clCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = device->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
 

@@ -1325,8 +1325,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenDebugFlagSetToOneWhenEnqueueingCopyLocal
     srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
     dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
 
-    auto &clCoreHelper = this->device->getRootDeviceEnvironment().getHelper<ClCoreHelper>();
-    const bool preferBlitterHw = clCoreHelper.preferBlitterForLocalToLocalTransfers();
+    auto &clGfxCoreHelper = this->device->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    const bool preferBlitterHw = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
     uint32_t expectedBlitBufferCalled = 0;
 
     DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
