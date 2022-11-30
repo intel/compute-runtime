@@ -80,7 +80,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             }
             if (lookupTable.sharedHandleType.isDMABUFHandle) {
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::AllocationType::SHARED_IMAGE, device->getNEODevice()->getDeviceBitfield());
-                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(lookupTable.sharedHandleType.fd, properties, false, false);
+                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(lookupTable.sharedHandleType.fd, properties, false, false, true);
                 device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
             } else if (lookupTable.sharedHandleType.isNTHandle) {
                 auto verifyResult = device->getNEODevice()->getMemoryManager()->verifyHandle(NEO::toOsHandle(lookupTable.sharedHandleType.ntHnadle), device->getNEODevice()->getRootDeviceIndex(), true);

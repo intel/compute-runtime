@@ -88,7 +88,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(toOsHandle(surfaceInfo->shared_handle), allocProperties,
-                                                                                      false, false);
+                                                                                      false, false, true);
         updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imagePlane, 0u);
     } else {
         lockable = !(surfaceDesc.Usage & D3DResourceFlags::USAGE_RENDERTARGET) || imagePlane != ImagePlane::NO_PLANE;

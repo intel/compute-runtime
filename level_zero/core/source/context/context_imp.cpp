@@ -596,7 +596,8 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     NEO::GraphicsAllocation *alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle,
                                                                                              unifiedMemoryProperties,
                                                                                              false,
-                                                                                             true);
+                                                                                             true,
+                                                                                             false);
 
     if (alloc == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
