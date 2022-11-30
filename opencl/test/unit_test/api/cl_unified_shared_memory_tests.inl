@@ -918,7 +918,7 @@ TEST(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForK
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
-    EXPECT_EQ(0u, mockMemoryManager->memPrefetchSubDeviceId);
+    EXPECT_EQ(0u, mockMemoryManager->memPrefetchSubDeviceIds[0]);
 
     clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
 }
@@ -947,7 +947,7 @@ TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueue
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(subDevice->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
-    EXPECT_EQ(1u, mockMemoryManager->memPrefetchSubDeviceId);
+    EXPECT_EQ(1u, mockMemoryManager->memPrefetchSubDeviceIds[0]);
 
     clMemFreeINTEL(&multiTileContext, unifiedMemorySharedAllocation);
 }
@@ -976,7 +976,9 @@ TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueue
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
-    EXPECT_EQ(0u, mockMemoryManager->memPrefetchSubDeviceId);
+    for (auto index = 0u; index < mockMemoryManager->memPrefetchSubDeviceIds.size(); index++) {
+        EXPECT_EQ(index, mockMemoryManager->memPrefetchSubDeviceIds[index]);
+    }
 
     clMemFreeINTEL(&multiTileContext, unifiedMemorySharedAllocation);
 }

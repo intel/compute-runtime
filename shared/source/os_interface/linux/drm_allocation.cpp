@@ -183,18 +183,18 @@ int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vecto
     return 0;
 }
 
-bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t subDeviceId) {
+bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t subDeviceId) {
     auto drm = bo->peekDrm();
     auto ioctlHelper = drm->getIoctlHelper();
     auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
     auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
-    auto vmId = drm->getVirtualMemoryAddressSpace(subDeviceId);
+    auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
 
     auto result = ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region, vmId);
 
     PRINT_DEBUG_STRING(DebugManager.flags.PrintBOPrefetchingResult.get(), stdout,
-                       "prefetch BO=%d to VM %u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
-                       bo->peekHandle(), vmId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
+                       "prefetch BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
+                       bo->peekHandle(), vmId, vmHandleId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
     return result;
 }
 
@@ -335,20 +335,24 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     return success;
 }
 
-bool DrmAllocation::setMemPrefetch(Drm *drm, uint32_t subDeviceId) {
+bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
+    UNRECOVERABLE_IF(subDeviceIds.size() == 0);
+
     bool success = true;
     auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(storageInfo.getNumBanks());
 
     if (numHandles > 1) {
-        for (uint8_t subDeviceId = 0u; subDeviceId < EngineLimits::maxHandleCount; subDeviceId++) {
-            if (storageInfo.memoryBanks.test(subDeviceId)) {
-                auto bo = this->getBOs()[subDeviceId];
-                success &= prefetchBO(bo, subDeviceId);
+        for (uint8_t handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
+            if (storageInfo.memoryBanks.test(handleId)) {
+                auto bo = this->getBOs()[handleId];
+                auto vmHandleId = subDeviceIds[handleId % subDeviceIds.size()];
+                auto subDeviceId = DebugManager.flags.CreateContextWithAccessCounters.get() > 0 ? vmHandleId : handleId;
+                success &= prefetchBO(bo, vmHandleId, subDeviceId);
             }
         }
     } else {
         auto bo = this->getBO();
-        success = prefetchBO(bo, subDeviceId);
+        success = prefetchBO(bo, subDeviceIds[0], subDeviceIds[0]);
     }
 
     return success;

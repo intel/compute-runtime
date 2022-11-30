@@ -14,8 +14,8 @@ using namespace NEO;
 
 class MockPrefetchManager : public PrefetchManager {
   public:
-    void migrateAllocationsToGpu(PrefetchContext &prefetchContext, SVMAllocsManager &unifiedMemoryManager, Device &device) override {
-        PrefetchManager::migrateAllocationsToGpu(prefetchContext, unifiedMemoryManager, device);
+    void migrateAllocationsToGpu(PrefetchContext &prefetchContext, SVMAllocsManager &unifiedMemoryManager, Device &device, CommandStreamReceiver &csr) override {
+        PrefetchManager::migrateAllocationsToGpu(prefetchContext, unifiedMemoryManager, device, csr);
         migrateAllocationsToGpuCalled = true;
     }
 

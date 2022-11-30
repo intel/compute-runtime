@@ -23,10 +23,10 @@ void PrefetchManager::insertAllocation(PrefetchContext &context, SvmAllocationDa
     }
 }
 
-void PrefetchManager::migrateAllocationsToGpu(PrefetchContext &context, SVMAllocsManager &unifiedMemoryManager, Device &device) {
+void PrefetchManager::migrateAllocationsToGpu(PrefetchContext &context, SVMAllocsManager &unifiedMemoryManager, Device &device, CommandStreamReceiver &csr) {
     std::unique_lock<SpinLock> lock{context.lock};
     for (auto allocData : context.allocations) {
-        unifiedMemoryManager.prefetchMemory(device, allocData);
+        unifiedMemoryManager.prefetchMemory(device, csr, allocData);
     }
 }
 

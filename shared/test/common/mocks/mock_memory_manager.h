@@ -157,10 +157,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemAdvise(gfxAllocation, flags, rootDeviceIndex);
     }
 
-    bool setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t subDeviceId, uint32_t rootDeviceIndex) override {
-        memPrefetchSubDeviceId = subDeviceId;
+    bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
+        memPrefetchSubDeviceIds = subDeviceIds;
         setMemPrefetchCalled = true;
-        return MemoryManager::setMemPrefetch(gfxAllocation, subDeviceId, rootDeviceIndex);
+        return MemoryManager::setMemPrefetch(gfxAllocation, subDeviceIds, rootDeviceIndex);
     }
 
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override {
@@ -258,7 +258,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;
-    uint32_t memPrefetchSubDeviceId = 0;
+    SubDeviceIdsVec memPrefetchSubDeviceIds;
     MemAdviseFlags memAdviseFlags{};
     MemoryManager::AllocationStatus populateOsHandlesResult = MemoryManager::AllocationStatus::Success;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtrResult = nullptr;

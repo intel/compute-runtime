@@ -204,7 +204,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
     if (this->performMemoryPrefetch) {
         auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
-        prefetchManager->migrateAllocationsToGpu(this->getPrefetchContext(), *this->device->getDriverHandle()->getSvmAllocsManager(), *this->device->getNEODevice());
+        prefetchManager->migrateAllocationsToGpu(this->getPrefetchContext(),
+                                                 *this->device->getDriverHandle()->getSvmAllocsManager(),
+                                                 *this->device->getNEODevice(),
+                                                 *this->csr);
     }
 
     NEO::CompletionStamp completionStamp;

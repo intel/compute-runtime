@@ -671,7 +671,7 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
     return allocationType;
 }
 
-void SVMAllocsManager::prefetchMemory(Device &device, SvmAllocationData &svmData) {
+void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData) {
     auto getSubDeviceId = [](Device &device) {
         if (!device.isSubDevice()) {
             uint32_t deviceBitField = static_cast<uint32_t>(device.getDeviceBitfield().to_ulong());
@@ -683,13 +683,24 @@ void SVMAllocsManager::prefetchMemory(Device &device, SvmAllocationData &svmData
         return static_cast<NEO::SubDevice *>(&device)->getSubDeviceIndex();
     };
 
+    auto getSubDeviceIds = [](CommandStreamReceiver &csr) {
+        SubDeviceIdsVec subDeviceIds;
+        for (auto subDeviceId = 0u; subDeviceId < csr.getOsContext().getDeviceBitfield().size(); subDeviceId++) {
+            if (csr.getOsContext().getDeviceBitfield().test(subDeviceId)) {
+                subDeviceIds.push_back(subDeviceId);
+            }
+        }
+        return subDeviceIds;
+    };
+
     if (memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
         (svmData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) {
         auto gfxAllocation = svmData.gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
-        auto subDeviceId = getSubDeviceId(device);
-        memoryManager->setMemPrefetch(gfxAllocation, subDeviceId, device.getRootDeviceIndex());
+        auto subDeviceIds = commandStreamReceiver.getActivePartitions() > 1 ? getSubDeviceIds(commandStreamReceiver) : SubDeviceIdsVec{getSubDeviceId(device)};
+        memoryManager->setMemPrefetch(gfxAllocation, subDeviceIds, device.getRootDeviceIndex());
     }
 }
+
 std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {
     return std::unique_lock<std::mutex>(mtxForIndirectAccess);
 }

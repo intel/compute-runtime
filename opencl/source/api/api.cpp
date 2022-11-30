@@ -4199,7 +4199,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
 
             auto allocData = pSvmAllocMgr->getSVMAlloc(ptr);
             if (allocData) {
-                pSvmAllocMgr->prefetchMemory(pCommandQueue->getDevice(), *allocData);
+                pSvmAllocMgr->prefetchMemory(pCommandQueue->getDevice(), pCommandQueue->getGpgpuCommandStreamReceiver(), *allocData);
             }
         }
     }

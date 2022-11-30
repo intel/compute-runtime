@@ -16,6 +16,7 @@
 
 namespace NEO {
 
+class CommandStreamReceiver;
 class Device;
 class SVMAllocsManager;
 
@@ -32,7 +33,7 @@ class PrefetchManager : public NonCopyableOrMovableClass {
 
     void insertAllocation(PrefetchContext &context, SvmAllocationData &svmData);
 
-    MOCKABLE_VIRTUAL void migrateAllocationsToGpu(PrefetchContext &context, SVMAllocsManager &unifiedMemoryManager, Device &device);
+    MOCKABLE_VIRTUAL void migrateAllocationsToGpu(PrefetchContext &context, SVMAllocsManager &unifiedMemoryManager, Device &device, CommandStreamReceiver &csr);
 
     MOCKABLE_VIRTUAL void removeAllocations(PrefetchContext &context);
 };

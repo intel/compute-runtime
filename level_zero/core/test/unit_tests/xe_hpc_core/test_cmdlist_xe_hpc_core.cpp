@@ -311,7 +311,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
-    EXPECT_EQ(1u, memoryManager->memPrefetchSubDeviceId);
+    EXPECT_EQ(1u, memoryManager->memPrefetchSubDeviceIds[0]);
 
     context->freeMem(ptr);
     commandList->destroy();
@@ -375,7 +375,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
-    EXPECT_EQ(3u, memoryManager->memPrefetchSubDeviceId);
+    EXPECT_EQ(3u, memoryManager->memPrefetchSubDeviceIds[0]);
 
     EXPECT_TRUE(prefetchManager->migrateAllocationsToGpuCalled);
     EXPECT_EQ(1u, commandList->getPrefetchContext().allocations.size());
@@ -454,7 +454,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
-    EXPECT_EQ(0u, memoryManager->memPrefetchSubDeviceId);
+    EXPECT_EQ(0u, memoryManager->memPrefetchSubDeviceIds[0]);
 
     EXPECT_TRUE(prefetchManager->migrateAllocationsToGpuCalled);
     EXPECT_EQ(2u, commandList->getPrefetchContext().allocations.size());

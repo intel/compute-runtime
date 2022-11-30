@@ -237,18 +237,20 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
     return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
 }
 
-bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t subDeviceId, uint32_t rootDeviceIndex) {
+bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
     auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
     auto osContextLinux = static_cast<OsContextLinux *>(registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext);
-    auto vmHandleId = subDeviceId;
 
-    auto retVal = drmAllocation->bindBOs(osContextLinux, vmHandleId, nullptr, true);
-    if (retVal != 0) {
-        DEBUG_BREAK_IF(true);
-        return false;
+    for (auto subDeviceId : subDeviceIds) {
+        auto vmHandleId = subDeviceId;
+        auto retVal = drmAllocation->bindBOs(osContextLinux, vmHandleId, nullptr, true);
+        if (retVal != 0) {
+            DEBUG_BREAK_IF(true);
+            return false;
+        }
     }
 
-    return drmAllocation->setMemPrefetch(&this->getDrm(rootDeviceIndex), subDeviceId);
+    return drmAllocation->setMemPrefetch(&this->getDrm(rootDeviceIndex), subDeviceIds);
 }
 
 NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint32_t rootDeviceIndex) {

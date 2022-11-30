@@ -66,10 +66,11 @@ class MockDrmAllocation : public DrmAllocation {
         return bindBOsRetValue;
     }
 
-    bool prefetchBO(BufferObject *bo, uint32_t subDeviceId) override {
+    bool prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t subDeviceId) override {
         prefetchBOCalled = true;
+        vmHandleIdsReceived.push_back(vmHandleId);
         subDeviceIdsReceived.push_back(subDeviceId);
-        return DrmAllocation::prefetchBO(bo, subDeviceId);
+        return DrmAllocation::prefetchBO(bo, vmHandleId, subDeviceId);
     }
 
     ADDMETHOD_NOBASE(makeBOsResident, int, 0, (OsContext * osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind));
@@ -79,6 +80,7 @@ class MockDrmAllocation : public DrmAllocation {
     bool bindBOsCalled = false;
     int bindBOsRetValue = 0;
     bool prefetchBOCalled = false;
+    std::vector<uint32_t> vmHandleIdsReceived;
     std::vector<uint32_t> subDeviceIdsReceived;
 };
 

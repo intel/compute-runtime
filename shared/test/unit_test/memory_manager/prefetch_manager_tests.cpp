@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/test/common/memory_manager/mock_prefetch_manager.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -20,6 +21,7 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     auto device = deviceFactory->rootDevices[0];
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
     auto prefetchManager = std::make_unique<MockPrefetchManager>();
     PrefetchContext prefetchContext;
@@ -36,7 +38,7 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
     prefetchManager->insertAllocation(prefetchContext, *svmData);
     EXPECT_EQ(1u, prefetchContext.allocations.size());
 
-    prefetchManager->migrateAllocationsToGpu(prefetchContext, *svmManager.get(), *device);
+    prefetchManager->migrateAllocationsToGpu(prefetchContext, *svmManager.get(), *device, *csr.get());
     EXPECT_EQ(1u, prefetchContext.allocations.size());
 
     prefetchManager->removeAllocations(prefetchContext);

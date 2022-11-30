@@ -4298,8 +4298,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUp
     }
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchIsCalledThenPrefetchBOsToMultipleSubDevices) {
+TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithSubDevicesThenPrefetchBOsToTheseSubDevices) {
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    SubDeviceIdsVec subDeviceIds{0, 1};
     BufferObject bo0(mock, 3, 1, 1024, 0);
     BufferObject bo1(mock, 3, 2, 1024, 0);
     BufferObjects bos{&bo0, &bo1};
@@ -4312,22 +4313,120 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchIsCalledThen
         engine.osContext->incRefInternal();
     }
 
-    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, 0, rootDeviceIndex));
+    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, subDeviceIds, rootDeviceIndex));
 
     EXPECT_TRUE(drmAllocation.bindBOsCalled);
     EXPECT_TRUE(drmAllocation.prefetchBOCalled);
 
+    ASSERT_EQ(2u, drmAllocation.vmHandleIdsReceived.size());
     ASSERT_EQ(2u, drmAllocation.subDeviceIdsReceived.size());
-    for (uint32_t subDeviceId = 0; subDeviceId < drmAllocation.subDeviceIdsReceived.size(); subDeviceId++) {
-        EXPECT_EQ(subDeviceId, drmAllocation.subDeviceIdsReceived[subDeviceId]);
-    }
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[0]);
+    EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[0]);
+
+    EXPECT_EQ(1u, drmAllocation.vmHandleIdsReceived[1]);
+    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[1]);
 }
 
-TEST_F(DrmMemoryManagerTest, givenCreateKmdMigratedSharedAllocationWithMultipleBOsSetToFalseWhenSetMemPrefetchIsCalledThenPrefetchBOToSubdevice) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(false);
+TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithASubDeviceThenPrefetchBOsToTheSubDevices) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    SubDeviceIdsVec subDeviceIds{0};
+    BufferObject bo0(mock, 3, 1, 1024, 0);
+    BufferObject bo1(mock, 3, 2, 1024, 0);
+    BufferObjects bos{&bo0, &bo1};
+
+    MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory, bos);
+    drmAllocation.storageInfo.memoryBanks = 0x3;
+
+    memoryManager.registeredEngines = EngineControlContainer{this->device->allEngines};
+    for (auto engine : memoryManager.registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+
+    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, subDeviceIds, rootDeviceIndex));
+
+    EXPECT_TRUE(drmAllocation.bindBOsCalled);
+    EXPECT_TRUE(drmAllocation.prefetchBOCalled);
+
+    ASSERT_EQ(2u, drmAllocation.vmHandleIdsReceived.size());
+    ASSERT_EQ(2u, drmAllocation.subDeviceIdsReceived.size());
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[0]);
+    EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[0]);
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[1]);
+    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[1]);
+}
+
+TEST_F(DrmMemoryManagerTest, givenContextWithAccessCountersAndKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithASubDeviceThenPrefetchBOsToThisSubDevice) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.CreateContextWithAccessCounters.set(1);
 
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    SubDeviceIdsVec subDeviceIds{0};
+    BufferObject bo0(mock, 3, 1, 1024, 0);
+    BufferObject bo1(mock, 3, 2, 1024, 0);
+    BufferObjects bos{&bo0, &bo1};
+
+    MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory, bos);
+    drmAllocation.storageInfo.memoryBanks = 0x3;
+
+    memoryManager.registeredEngines = EngineControlContainer{this->device->allEngines};
+    for (auto engine : memoryManager.registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+
+    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, subDeviceIds, rootDeviceIndex));
+
+    EXPECT_TRUE(drmAllocation.bindBOsCalled);
+    EXPECT_TRUE(drmAllocation.prefetchBOCalled);
+
+    ASSERT_EQ(2u, drmAllocation.vmHandleIdsReceived.size());
+    ASSERT_EQ(2u, drmAllocation.subDeviceIdsReceived.size());
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[0]);
+    EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[0]);
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[1]);
+    EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[1]);
+}
+
+TEST_F(DrmMemoryManagerTest, givenContextWithAccessCountersAndKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithSubDevicesThenPrefetchBOsToTheseSubDevices) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    SubDeviceIdsVec subDeviceIds{0, 1};
+    BufferObject bo0(mock, 3, 1, 1024, 0);
+    BufferObject bo1(mock, 3, 2, 1024, 0);
+    BufferObjects bos{&bo0, &bo1};
+
+    MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory, bos);
+    drmAllocation.storageInfo.memoryBanks = 0x3;
+
+    memoryManager.registeredEngines = EngineControlContainer{this->device->allEngines};
+    for (auto engine : memoryManager.registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+
+    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, subDeviceIds, rootDeviceIndex));
+
+    EXPECT_TRUE(drmAllocation.bindBOsCalled);
+    EXPECT_TRUE(drmAllocation.prefetchBOCalled);
+
+    ASSERT_EQ(2u, drmAllocation.vmHandleIdsReceived.size());
+    ASSERT_EQ(2u, drmAllocation.subDeviceIdsReceived.size());
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[0]);
+    EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[0]);
+
+    EXPECT_EQ(1u, drmAllocation.vmHandleIdsReceived[1]);
+    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[1]);
+}
+
+TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithSingleBOWhenSetMemPrefetchIsCalledWithASubDeviceThenPrefetchBOToThisSubdevice) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    SubDeviceIdsVec subDeviceIds{0};
     BufferObject bo(mock, 3, 1, 1024, 0);
 
     MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
@@ -4338,17 +4437,21 @@ TEST_F(DrmMemoryManagerTest, givenCreateKmdMigratedSharedAllocationWithMultipleB
         engine.osContext->incRefInternal();
     }
 
-    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, 0, rootDeviceIndex));
+    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, subDeviceIds, rootDeviceIndex));
 
     EXPECT_TRUE(drmAllocation.bindBOsCalled);
     EXPECT_TRUE(drmAllocation.prefetchBOCalled);
 
+    ASSERT_EQ(1u, drmAllocation.vmHandleIdsReceived.size());
     ASSERT_EQ(1u, drmAllocation.subDeviceIdsReceived.size());
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[0]);
     EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[0]);
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchFailsToBindBufferObjectThenReturnFalse) {
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    SubDeviceIdsVec subDeviceIds{0};
     BufferObject bo(mock, 3, 1, 1024, 0);
 
     MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
@@ -4361,7 +4464,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchFailsToBindB
 
     drmAllocation.bindBOsRetValue = -1;
 
-    EXPECT_FALSE(memoryManager.setMemPrefetch(&drmAllocation, 0, rootDeviceIndex));
+    EXPECT_FALSE(memoryManager.setMemPrefetch(&drmAllocation, subDeviceIds, rootDeviceIndex));
 
     EXPECT_TRUE(drmAllocation.bindBOsCalled);
     EXPECT_FALSE(drmAllocation.prefetchBOCalled);

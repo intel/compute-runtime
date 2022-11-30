@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/stackvec.h"
+
 #include <bitset>
 #include <cstdint>
 #include <memory>
@@ -17,6 +19,7 @@ using EngineControlContainer = std::vector<EngineControl>;
 using DeviceBitfield = std::bitset<4>;
 class Device;
 using DeviceVector = std::vector<std::unique_ptr<Device>>;
+using SubDeviceIdsVec = StackVec<uint32_t, 4>;
 
 enum class DebugPauseState : uint32_t {
     disabled,

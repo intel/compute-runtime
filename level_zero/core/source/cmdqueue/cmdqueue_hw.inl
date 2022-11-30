@@ -963,7 +963,8 @@ void CommandQueueHw<gfxCoreFamily>::prefetchMemoryToDeviceAssociatedWithCmdList(
         auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
         prefetchManager->migrateAllocationsToGpu(commandList->getPrefetchContext(),
                                                  *this->device->getDriverHandle()->getSvmAllocsManager(),
-                                                 *commandList->device->getNEODevice());
+                                                 *commandList->device->getNEODevice(),
+                                                 *commandList->csr);
     }
 }
 
