@@ -778,7 +778,11 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     return drmAllocation;
 }
 
-GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle,
+                                                                               const AllocationProperties &properties,
+                                                                               bool requireSpecificBitness,
+                                                                               bool isHostIpcAllocation,
+                                                                               bool reuseSharedAllocation) {
     if (isHostIpcAllocation) {
         return createUSMHostAllocationFromSharedHandle(handle, properties, false);
     }
@@ -801,7 +805,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     }
 
     auto boHandle = openFd.handle;
-    auto bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+    BufferObject *bo = nullptr;
+    if (reuseSharedAllocation) {
+        bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+    }
 
     if (bo == nullptr) {
         size_t size = lseekFunction(handle, 0, SEEK_END);

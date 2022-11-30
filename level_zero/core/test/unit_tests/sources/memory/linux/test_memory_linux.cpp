@@ -54,7 +54,7 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
   public:
     MemoryManagerIpcImplicitScalingObtainFdMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {}
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override { return nullptr; };
@@ -486,7 +486,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
   public:
     MemoryManagerIpcObtainFdMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {}
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override { return nullptr; };
