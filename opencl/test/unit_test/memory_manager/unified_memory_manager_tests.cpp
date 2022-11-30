@@ -326,8 +326,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     EXPECT_EQ(allocationSize, allocation->size);
     EXPECT_EQ(mockContext.getDevice(0u), allocation->device->getSpecializedDevice<ClDevice>());
 
-    EXPECT_EQ(alignUp(allocationSize, 64 * KB), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize2Mb), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
@@ -355,8 +355,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    EXPECT_EQ(alignUp(allocationSize, 64 * KB), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize2Mb), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());

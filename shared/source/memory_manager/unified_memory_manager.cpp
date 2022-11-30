@@ -482,13 +482,12 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
     auto externalPtr = reinterpret_cast<void *>(unifiedMemoryProperties.allocationFlags.hostptr);
     bool useExternalHostPtrForCpu = externalPtr != nullptr;
-    size_t alignedSizeCpu = alignUp<size_t>(size, MemoryConstants::pageSize2Mb);
-    size_t pageSizeForAlignment = MemoryConstants::pageSize64k;
-    size_t alignedSizeGpu = alignUp<size_t>(size, pageSizeForAlignment);
+    constexpr auto pageSizeForAlignment = MemoryConstants::pageSize64k;
+    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        !useExternalHostPtrForCpu, // allocateMemory
-                                       alignedSizeCpu, AllocationType::SVM_CPU,
+                                       alignedSize, AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
     cpuProperties.alignment = MemoryConstants::pageSize2Mb;
@@ -516,7 +515,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
 
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        false,
-                                       alignedSizeGpu,
+                                       alignedSize,
                                        AllocationType::SVM_GPU,
                                        false,
                                        multiStorageAllocation,
