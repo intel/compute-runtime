@@ -1332,6 +1332,11 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenPassingComputeEngineTypeThenItsNotCopyOn
     EXPECT_FALSE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::Compute));
 }
 
+HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForRelaxedOrderingSupportThenReturnFalse) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.isRelaxedOrderingSupported());
+}
+
 HWTEST2_F(HwHelperTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeHpgOrXeHpcCore) {
     HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));

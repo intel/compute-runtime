@@ -443,6 +443,11 @@ uint32_t HwHelperHw<Family>::getAmountOfAllocationsToFill() const {
     return 1u;
 }
 
+template <>
+bool HwHelperHw<Family>::isRelaxedOrderingSupported() const {
+    return true;
+}
+
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"

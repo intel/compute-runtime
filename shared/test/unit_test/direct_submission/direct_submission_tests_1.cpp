@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -131,8 +132,13 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAlloca
     EXPECT_TRUE(ret);
     EXPECT_EQ(nullptr, directSubmission.completionFenceAllocation);
 
+    size_t expectedAllocationsCnt = 3;
+    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
+
     EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
-    ASSERT_EQ(3u, mockMemoryOperations->gfxAllocationsForMakeResident.size());
+    ASSERT_EQ(expectedAllocationsCnt, mockMemoryOperations->gfxAllocationsForMakeResident.size());
     EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
     EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
     EXPECT_EQ(directSubmission.semaphores, mockMemoryOperations->gfxAllocationsForMakeResident[2]);
@@ -157,8 +163,13 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithCompletionFenceAllocatio
     EXPECT_TRUE(ret);
     EXPECT_EQ(&completionFenceAllocation, directSubmission.completionFenceAllocation);
 
+    size_t expectedAllocationsCnt = 4;
+    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
+
     EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
-    ASSERT_EQ(4u, mockMemoryOperations->gfxAllocationsForMakeResident.size());
+    ASSERT_EQ(expectedAllocationsCnt, mockMemoryOperations->gfxAllocationsForMakeResident.size());
     EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
     EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
     EXPECT_EQ(directSubmission.semaphores, mockMemoryOperations->gfxAllocationsForMakeResident[2]);
@@ -356,6 +367,9 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedAnd
     if (directSubmission.miMemFenceRequired) {
         requiredSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        requiredSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
+    }
 
     directSubmission.ringCommandStream.getSpace(directSubmission.ringCommandStream.getAvailableSpace() - requiredSize);
 
@@ -510,7 +524,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpec
                           Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
                           Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection(false);
-    size_t actualSize = directSubmission.getSizeDispatch(false);
+
+    size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
 }
 
@@ -526,7 +541,7 @@ HWTEST_F(DirectSubmissionTest,
                           Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
                           Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection(false);
-    size_t actualSize = directSubmission.getSizeDispatch(false);
+    size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
 }
 
@@ -541,7 +556,7 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
                           Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection(false);
-    size_t actualSize = directSubmission.getSizeDispatch(false);
+    size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
 }
 
@@ -554,7 +569,8 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection(false);
-    size_t actualSize = directSubmission.getSizeDispatch(false);
+
+    size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
 }
 
@@ -568,7 +584,8 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection(false);
-    size_t actualSize = directSubmission.getSizeDispatch(false);
+
+    size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
 }
 
@@ -810,6 +827,9 @@ HWTEST_F(DirectSubmissionTest,
     if (directSubmission.miMemFenceRequired) {
         expectedSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        expectedSize += RelaxedOrderingHelper::getSizeReturnPtrRegs<FamilyType>();
+    }
     EXPECT_EQ(expectedSize, directSubmission.ringCommandStream.getUsed());
 }
 
@@ -881,10 +901,13 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = Dispatcher::getSizePreemption() +
                           directSubmission.getSizeSemaphoreSection(false) +
                           directSubmission.getDiagnosticModeSection();
-    expectedSize += expectedExecCount * directSubmission.getSizeDispatch(false);
+    expectedSize += expectedExecCount * directSubmission.getSizeDispatch(false, false);
 
     if (directSubmission.miMemFenceRequired) {
         expectedSize += directSubmission.getSizeSystemMemoryFenceAddress();
+    }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        expectedSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
     }
 
     bool ret = directSubmission.initialize(false, false);
@@ -922,12 +945,15 @@ HWTEST_F(DirectSubmissionTest,
         EXPECT_EQ(expectedStoreAddress, storeCmd->getAddress());
     }
 
-    size_t sysMemFenceOffset = 0;
+    size_t cmdOffset = 0;
     if (directSubmission.miMemFenceRequired) {
-        sysMemFenceOffset = directSubmission.getSizeSystemMemoryFenceAddress();
+        cmdOffset = directSubmission.getSizeSystemMemoryFenceAddress();
+    }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        cmdOffset += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
     }
 
-    uint8_t *cmdBufferPosition = static_cast<uint8_t *>(directSubmission.ringCommandStream.getCpuBase()) + Dispatcher::getSizePreemption() + sysMemFenceOffset;
+    uint8_t *cmdBufferPosition = static_cast<uint8_t *>(directSubmission.ringCommandStream.getCpuBase()) + Dispatcher::getSizePreemption() + cmdOffset;
     MI_STORE_DATA_IMM *storeDataCmdAtPosition = genCmdCast<MI_STORE_DATA_IMM *>(cmdBufferPosition);
     ASSERT_NE(nullptr, storeDataCmdAtPosition);
     EXPECT_EQ(1u, storeDataCmdAtPosition->getDataDword0());
@@ -978,11 +1004,14 @@ HWTEST_F(DirectSubmissionTest,
     size_t expectedSize = Dispatcher::getSizePreemption() +
                           directSubmission.getSizeSemaphoreSection(false);
     size_t expectedDispatch = directSubmission.getSizeSemaphoreSection(false);
-    EXPECT_EQ(expectedDispatch, directSubmission.getSizeDispatch(false));
+    EXPECT_EQ(expectedDispatch, directSubmission.getSizeDispatch(false, false));
     expectedSize += expectedExecCount * expectedDispatch;
 
     if (directSubmission.miMemFenceRequired) {
         expectedSize += directSubmission.getSizeSystemMemoryFenceAddress();
+    }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        expectedSize += RelaxedOrderingHelper::getSizeReturnPtrRegs<FamilyType>();
     }
 
     bool ret = directSubmission.initialize(false, false);

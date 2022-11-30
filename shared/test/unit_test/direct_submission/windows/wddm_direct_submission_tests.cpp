@@ -59,8 +59,13 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
+    size_t expectedAllocationsCnt = 3;
+    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
+
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
+    EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
 
@@ -90,8 +95,13 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
+    size_t expectedAllocationsCnt = 3;
+    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
+
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
+    EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
 
@@ -128,9 +138,14 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
+    size_t expectedAllocationsCnt = 3;
+    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
+
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
+    EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreationFailsThenExpectRingMonitorFenceNotCreatedAndAllocationsNotResident) {
@@ -167,10 +182,15 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_FALSE(ret);
 
+    size_t expectedAllocationsCnt = 3;
+    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
+
     EXPECT_EQ(0u, wddmMockInterface->createMonitoredFenceCalled);
     //expect 2 makeResident calls, due to fail on 1st and then retry (which also fails)
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
+    EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenGettingTagDataThenExpectContextMonitorFence) {

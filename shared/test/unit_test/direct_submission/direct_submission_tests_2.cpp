@@ -207,6 +207,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     if (directSubmission.miMemFenceRequired) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        submitSize += RelaxedOrderingHelper::getSizeReturnPtrRegs<FamilyType>();
+    }
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(oldRingAllocation->getGpuAddress(), directSubmission.submitGpuAddress);
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
@@ -224,7 +227,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    EXPECT_EQ(directSubmission.getSizeDispatch(false), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(directSubmission.getSizeDispatch(false, false), directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
 
     HardwareParse hwParse;
@@ -257,7 +260,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false);
+    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false, false);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.disableMonitorFence = true;
@@ -267,7 +270,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     size_t tagUpdateSize = Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo);
 
-    size_t disabledSizeDispatch = directSubmission.getSizeDispatch(false);
+    size_t disabledSizeDispatch = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - tagUpdateSize));
 
     directSubmission.tagValueSetValue = 0x4343123ull;
@@ -306,7 +309,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false);
+    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false, false);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
@@ -316,7 +319,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     size_t flushSize = Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo);
 
-    size_t disabledSizeDispatch = directSubmission.getSizeDispatch(false);
+    size_t disabledSizeDispatch = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - flushSize));
 
     directSubmission.dispatchWorkloadSection(batchBuffer);
@@ -354,7 +357,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false);
+    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false, false);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
@@ -365,7 +368,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     size_t startSize = directSubmission.getSizeStartSection();
     size_t storeDataSize = Dispatcher::getSizeStoreDwordCommand();
 
-    size_t debugSizeDispatch = directSubmission.getSizeDispatch(false);
+    size_t debugSizeDispatch = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize + storeDataSize));
 
     directSubmission.workloadModeOneExpectedValue = 0x40u;
@@ -398,7 +401,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false);
+    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false, false);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
@@ -408,7 +411,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     size_t startSize = directSubmission.getSizeStartSection();
 
-    size_t debugSizeDispatch = directSubmission.getSizeDispatch(false);
+    size_t debugSizeDispatch = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize));
 
     directSubmission.currentQueueWorkCount = 0x40u;
@@ -450,6 +453,9 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     if (directSubmission.miMemFenceRequired) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        submitSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
+    }
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(oldRingAllocation->getGpuAddress(), directSubmission.submitGpuAddress);
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
@@ -463,7 +469,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    EXPECT_EQ(sizeUsed + directSubmission.getSizeDispatch(false), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(sizeUsed + directSubmission.getSizeDispatch(false, false), directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
 
     HardwareParse hwParse;
@@ -498,11 +504,14 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     if (directSubmission.miMemFenceRequired) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        submitSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
+    }
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(oldRingAllocation->getGpuAddress(), directSubmission.submitGpuAddress);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    size_t dispatchSize = submitSize + directSubmission.getSizeDispatch(false);
+    size_t dispatchSize = submitSize + directSubmission.getSizeDispatch(false, false);
 
     EXPECT_EQ(dispatchSize, directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
@@ -527,6 +536,9 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     if (directSubmission.miMemFenceRequired) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        submitSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
+    }
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(oldRingAllocation->getGpuAddress(), directSubmission.submitGpuAddress);
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
@@ -542,7 +554,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.submitCount);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    EXPECT_EQ(directSubmission.getSizeDispatch(false), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(directSubmission.getSizeDispatch(false, false), directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
 }
 
@@ -573,10 +585,13 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     if (directSubmission.miMemFenceRequired) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        submitSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
+    }
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(2u, directSubmission.handleResidencyCount);
 
-    size_t dispatchSize = submitSize + directSubmission.getSizeDispatch(false);
+    size_t dispatchSize = submitSize + directSubmission.getSizeDispatch(false, false);
 
     EXPECT_EQ(dispatchSize, directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
@@ -639,9 +654,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     if (directSubmission.miMemFenceRequired) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
+
+    size_t expectedAllocationsCount = 4;
+
+    if (directSubmission.isRelaxedOrderingEnabled()) {
+        expectedAllocationsCount += 2;
+
+        submitSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
+    }
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
-    EXPECT_EQ(4u, directSubmission.makeResourcesResidentVectorSize);
+    EXPECT_EQ(expectedAllocationsCount, directSubmission.makeResourcesResidentVectorSize);
 
     uint32_t expectedOffset = NEO::ImplicitScalingDispatch<FamilyType>::getPostSyncOffset();
     EXPECT_EQ(expectedOffset, directSubmission.postSyncOffset);
@@ -1865,7 +1888,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenNotEnoughSpaceForTaskStoreSe
     directSubmission.ringCommandStream.getUsed();
 
     auto sizeToConsume = directSubmission.ringCommandStream.getAvailableSpace() -
-                         (directSubmission.getSizeDispatch(false) + directSubmission.getSizeEnd(false) + directSubmission.getSizeSwitchRingBufferSection());
+                         (directSubmission.getSizeDispatch(false, false) + directSubmission.getSizeEnd(false) + directSubmission.getSizeSwitchRingBufferSection());
 
     directSubmission.ringCommandStream.getSpace(sizeToConsume);
 
@@ -2103,6 +2126,35 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, WhenStoppingRingWithoutSubmissio
     }
 
     EXPECT_FALSE(success);
+}
+
+HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenAskingForRelaxedOrderingSupportThenEnable) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+
+    auto &hwHelper = HwHelperHw<FamilyType>::get();
+
+    {
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(-1);
+
+        MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
+        EXPECT_EQ(hwHelper.isRelaxedOrderingSupported(), directSubmission.isRelaxedOrderingEnabled());
+    }
+
+    {
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(0);
+
+        MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
+
+        EXPECT_FALSE(directSubmission.isRelaxedOrderingEnabled());
+    }
+
+    {
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+        MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
+
+        EXPECT_TRUE(directSubmission.isRelaxedOrderingEnabled());
+    }
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcsDispatcherThenEnableRelaxedOrdering, IsAtLeastXeHpcCore) {
@@ -2700,4 +2752,13 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenSchedulerRequiredWhenDispat
 
     EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
     EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenReturnPtrsRequiredWhenAskingForDispatchSizeTheAddMmioSizes, IsAtLeastXeHpcCore) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    size_t baseSize = directSubmission.getSizeDispatch(true, false);
+    size_t sizeWitfRetPtr = directSubmission.getSizeDispatch(true, true);
+
+    EXPECT_EQ(baseSize + RelaxedOrderingHelper::getSizeReturnPtrRegs<FamilyType>(), sizeWitfRetPtr);
 }

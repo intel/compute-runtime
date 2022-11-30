@@ -138,7 +138,7 @@ class DirectSubmissionHw {
     void setReturnAddress(void *returnCmd, uint64_t returnAddress);
 
     void *dispatchWorkloadSection(BatchBuffer &batchBuffer);
-    size_t getSizeDispatch(bool relaxedOrderingSchedulerRequired);
+    size_t getSizeDispatch(bool relaxedOrderingSchedulerRequired, bool returnPtrsRequired);
 
     void dispatchPrefetchMitigation();
     size_t getSizePrefetchMitigation();

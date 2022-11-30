@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/sys_calls_common.h"
@@ -1149,10 +1150,13 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection(false) +
                           Dispatcher::getSizePreemption() +
-                          directSubmission->getSizeDispatch(false);
+                          directSubmission->getSizeDispatch(false, false);
 
     if (directSubmission->miMemFenceRequired) {
         expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();
+    }
+    if (directSubmission->isRelaxedOrderingEnabled()) {
+        expectedSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
     }
 
     EXPECT_EQ(expectedSize, actualDispatchSize);
@@ -1190,10 +1194,13 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection(false) +
                           Dispatcher::getSizePreemption() +
-                          directSubmission->getSizeDispatch(false);
+                          directSubmission->getSizeDispatch(false, false);
 
     if (directSubmission->miMemFenceRequired) {
         expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();
+    }
+    if (directSubmission->isRelaxedOrderingEnabled()) {
+        expectedSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
     }
 
     EXPECT_EQ(expectedSize, actualDispatchSize);

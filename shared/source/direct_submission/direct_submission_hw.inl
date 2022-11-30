@@ -77,7 +77,12 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     setPostSyncOffset();
 
     dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, *hwInfo);
-    relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
+
+    relaxedOrderingEnabled = HwHelperHw<GfxFamily>::get().isRelaxedOrderingSupported();
+
+    if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != -1) {
+        relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
+    }
 
     if (EngineHelpers::isBcs(this->osContext.getEngineType()) && relaxedOrderingEnabled) {
         relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
@@ -473,7 +478,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
         startSize += RelaxedOrderingHelper::getSizeRegistersInit<GfxFamily>();
     }
 
-    size_t requiredSize = startSize + getSizeDispatch(false) + getSizeEnd(false);
+    size_t requiredSize = startSize + getSizeDispatch(false, false) + getSizeEnd(false);
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
         switchRingBuffers();
     }
@@ -627,11 +632,11 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd(bool relaxed
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool relaxedOrderingSchedulerRequired) {
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool relaxedOrderingSchedulerRequired, bool returnPtrsRequired) {
     size_t size = getSizeSemaphoreSection(relaxedOrderingSchedulerRequired);
     if (workloadMode == 0) {
         size += getSizeStartSection();
-        if (this->relaxedOrderingEnabled) {
+        if (this->relaxedOrderingEnabled && returnPtrsRequired) {
             size += RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
         }
     } else if (workloadMode == 1) {
@@ -867,7 +872,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
 
-    size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded);
+    size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies);
     size_t cycleSize = getSizeSwitchRingBufferSection();
     size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd(relaxedOrderingSchedulerWillBeNeeded);
     if (this->relaxedOrderingEnabled) {

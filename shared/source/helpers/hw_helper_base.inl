@@ -728,4 +728,10 @@ template <typename gfxProduct>
 bool HwHelperHw<gfxProduct>::isTimestampShiftRequired() const {
     return true;
 }
+
+template <typename gfxProduct>
+bool HwHelperHw<gfxProduct>::isRelaxedOrderingSupported() const {
+    return false;
+}
+
 } // namespace NEO

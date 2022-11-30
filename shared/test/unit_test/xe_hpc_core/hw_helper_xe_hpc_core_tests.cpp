@@ -89,3 +89,11 @@ XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenCallGetAmountOfAllocationsToFil
     auto &hwHelper = HwHelperHw<FamilyType>::get();
     EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 1u);
 }
+
+HWTEST_EXCLUDE_PRODUCT(HwHelperTest, givenHwHelperWhenAskingForRelaxedOrderingSupportThenReturnFalse, IGFX_XE_HPC_CORE);
+
+XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenAskingForRelaxedOrderingSupportThenReturnTrue) {
+    auto &hwHelper = HwHelperHw<FamilyType>::get();
+
+    EXPECT_TRUE(hwHelper.isRelaxedOrderingSupported());
+}
