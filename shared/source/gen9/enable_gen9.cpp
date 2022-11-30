@@ -19,27 +19,27 @@ namespace NEO {
 #ifdef SUPPORT_BXT
 template struct L1CachePolicyHelper<IGFX_BROXTON>;
 static EnableGfxProductHw<IGFX_BROXTON> enableGfxProductHwBXT;
-static EnableCompilerHwInfoConfig<IGFX_BROXTON> enableCompilerHwInfoConfigBXT;
+static EnableCompilerProductHelper<IGFX_BROXTON> enableCompilerProductHelperBXT;
 #endif
 #ifdef SUPPORT_CFL
 template struct L1CachePolicyHelper<IGFX_COFFEELAKE>;
 static EnableGfxProductHw<IGFX_COFFEELAKE> enableGfxProductHwCFL;
-static EnableCompilerHwInfoConfig<IGFX_COFFEELAKE> enableCompilerHwInfoConfigCFL;
+static EnableCompilerProductHelper<IGFX_COFFEELAKE> enableCompilerProductHelperCFL;
 #endif
 #ifdef SUPPORT_GLK
 template struct L1CachePolicyHelper<IGFX_GEMINILAKE>;
 static EnableGfxProductHw<IGFX_GEMINILAKE> enableGfxProductHwGLK;
-static EnableCompilerHwInfoConfig<IGFX_GEMINILAKE> enableCompilerHwInfoConfigGLK;
+static EnableCompilerProductHelper<IGFX_GEMINILAKE> enableCompilerProductHelperGLK;
 #endif
 #ifdef SUPPORT_KBL
 template struct L1CachePolicyHelper<IGFX_KABYLAKE>;
 static EnableGfxProductHw<IGFX_KABYLAKE> enableGfxProductHwKBL;
-static EnableCompilerHwInfoConfig<IGFX_KABYLAKE> enableCompilerHwInfoConfigKBL;
+static EnableCompilerProductHelper<IGFX_KABYLAKE> enableCompilerProductHelperKBL;
 #endif
 #ifdef SUPPORT_SKL
 template struct L1CachePolicyHelper<IGFX_SKYLAKE>;
 static EnableGfxProductHw<IGFX_SKYLAKE> enableGfxProductHwSKL;
-static EnableCompilerHwInfoConfig<IGFX_SKYLAKE> enableCompilerHwInfoConfigSKL;
+static EnableCompilerProductHelper<IGFX_SKYLAKE> enableCompilerProductHelperSKL;
 #endif
 
 } // namespace NEO

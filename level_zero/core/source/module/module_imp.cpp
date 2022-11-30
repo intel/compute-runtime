@@ -133,15 +133,15 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
 
-    const auto &compilerHwInfoConfig = *NEO::CompilerHwInfoConfig::get(neoDevice.getHardwareInfo().platform.eProductFamily);
-    auto forceToStatelessRequired = compilerHwInfoConfig.isForceToStatelessRequired();
+    const auto &compilerProductHelper = *NEO::CompilerProductHelper::get(neoDevice.getHardwareInfo().platform.eProductFamily);
+    auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
     auto statelessToStatefulOptimizationDisabled = NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     if (forceToStatelessRequired || statelessToStatefulOptimizationDisabled) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }
     isDebuggerActive |= neoDevice.getDebugger() != nullptr;
-    NEO::CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions(isDebuggerActive));
+    NEO::CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     return internalOptions;
 }
 

@@ -19,7 +19,7 @@ namespace NEO {
 #ifdef SUPPORT_PVC
 static EnableGfxProductHw<IGFX_PVC> enableGfxProductHwPVC;
 template struct L1CachePolicyHelper<IGFX_PVC>;
-static EnableCompilerHwInfoConfig<IGFX_PVC> enableCompilerHwInfoConfigPVC;
+static EnableCompilerProductHelper<IGFX_PVC> enableCompilerProductHelperPVC;
 #endif
 
 } // namespace NEO

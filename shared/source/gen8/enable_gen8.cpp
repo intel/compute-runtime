@@ -21,7 +21,7 @@ template struct L1CachePolicyHelper<IGFX_BROADWELL>;
 static EnableGfxProductHw<IGFX_BROADWELL> enableGfxProductHwBDW;
 
 #include "shared/source/gen8/compiler_hw_info_config_bdw.inl"
-static EnableCompilerHwInfoConfig<IGFX_BROADWELL> enableCompilerHwInfoConfigBDW;
+static EnableCompilerProductHelper<IGFX_BROADWELL> enableCompilerProductHelperBDW;
 #endif
 
 } // namespace NEO

@@ -798,8 +798,8 @@ void OfflineCompiler::unifyExcludeIrFlags() {
 void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
     bool isStatelessToStatefulBufferOffsetSupported = true;
     if (!deviceName.empty()) {
-        const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-        isStatelessToStatefulBufferOffsetSupported = compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported();
+        const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+        isStatelessToStatefulBufferOffsetSupported = compilerProductHelper.isStatelessToStatefulBufferOffsetSupported();
     }
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         isStatelessToStatefulBufferOffsetSupported = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
@@ -810,14 +810,14 @@ void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
 }
 
 void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
-    if (compilerHwInfoConfig.isForceEmuInt32DivRemSPRequired()) {
+    if (compilerProductHelper.isForceEmuInt32DivRemSPRequired()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
-    CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions(false));
+    CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(false));
 }
 
 void OfflineCompiler::parseDebugSettings() {

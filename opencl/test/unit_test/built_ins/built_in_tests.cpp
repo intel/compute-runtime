@@ -169,8 +169,8 @@ INSTANTIATE_TEST_CASE_P(,
 
 HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
 
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
@@ -723,8 +723,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
 }
 
 HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
 
@@ -780,8 +780,8 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
 }
 
 HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
 
@@ -1686,8 +1686,8 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr3
     EXPECT_NE(nullptr, program.get());
     auto builtinInternalOptions = program->getInternalOptions();
 
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired() || is32bit) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired() || is32bit) {
         EXPECT_TRUE(hasSubstr(builtinInternalOptions, std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
     } else {
         EXPECT_FALSE(hasSubstr(builtinInternalOptions, std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
@@ -1740,9 +1740,9 @@ TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreate
     EXPECT_EQ(std::string::npos, it);
 
     it = builtinInternalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
-    if (is32bit || compilerHwInfoConfig.isForceToStatelessRequired()) {
+    if (is32bit || compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_NE(std::string::npos, it);
     } else {
         EXPECT_EQ(std::string::npos, it);

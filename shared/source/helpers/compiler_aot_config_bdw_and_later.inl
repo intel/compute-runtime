@@ -10,7 +10,7 @@
 
 namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
-void CompilerHwInfoConfigHw<gfxProduct>::setProductConfigForHwInfo(HardwareInfo &hwInfo, AheadOfTimeConfig config) const {
+void CompilerProductHelperHw<gfxProduct>::setProductConfigForHwInfo(HardwareInfo &hwInfo, AheadOfTimeConfig config) const {
     hwInfo.platform.usRevId = config.ProductConfigID.Revision;
 }
 

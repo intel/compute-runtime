@@ -580,8 +580,8 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrAndNonZ
 HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtrWhenEnqueueReadBufferRectForNon3DCaseIsCalledThenAddressInStateBaseAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
     hwInfo->capabilityTable.blitterOperationsSupported = false;
     initializeFixture<FamilyType>();
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
 

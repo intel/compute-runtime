@@ -14,14 +14,14 @@
 
 namespace NEO {
 
-class CompilerHwInfoConfig;
+class CompilerProductHelper;
 struct HardwareInfo;
-extern CompilerHwInfoConfig *CompilerHwInfoConfigFactory[IGFX_MAX_PRODUCT];
+extern CompilerProductHelper *CompilerProductHelperFactory[IGFX_MAX_PRODUCT];
 
-class CompilerHwInfoConfig {
+class CompilerProductHelper {
   public:
-    static CompilerHwInfoConfig *get(PRODUCT_FAMILY product) {
-        return CompilerHwInfoConfigFactory[product];
+    static CompilerProductHelper *get(PRODUCT_FAMILY product) {
+        return CompilerProductHelperFactory[product];
     }
 
     virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
@@ -33,10 +33,10 @@ class CompilerHwInfoConfig {
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-class CompilerHwInfoConfigHw : public CompilerHwInfoConfig {
+class CompilerProductHelperHw : public CompilerProductHelper {
   public:
-    static CompilerHwInfoConfig *get() {
-        static CompilerHwInfoConfigHw<gfxProduct> instance;
+    static CompilerProductHelper *get() {
+        static CompilerProductHelperHw<gfxProduct> instance;
         return &instance;
     }
 
@@ -48,16 +48,16 @@ class CompilerHwInfoConfigHw : public CompilerHwInfoConfig {
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
 
   protected:
-    CompilerHwInfoConfigHw() = default;
+    CompilerProductHelperHw() = default;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-struct EnableCompilerHwInfoConfig {
+struct EnableCompilerProductHelper {
     typedef typename HwMapper<gfxProduct>::GfxProduct GfxProduct;
 
-    EnableCompilerHwInfoConfig() {
-        CompilerHwInfoConfig *pCompilerHwInfoConfig = CompilerHwInfoConfigHw<gfxProduct>::get();
-        CompilerHwInfoConfigFactory[gfxProduct] = pCompilerHwInfoConfig;
+    EnableCompilerProductHelper() {
+        CompilerProductHelper *pCompilerProductHelper = CompilerProductHelperHw<gfxProduct>::get();
+        CompilerProductHelperFactory[gfxProduct] = pCompilerProductHelper;
     }
 };
 

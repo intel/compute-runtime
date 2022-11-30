@@ -2389,9 +2389,9 @@ HWTEST_F(ModuleTranslationUnitTest, givenInternalOptionsThenLSCCachePolicyIsSet)
     MockModuleTranslationUnit moduleTu(this->device);
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    auto expectedPolicy = compilerHwInfoConfig.getCachingPolicyOptions(false);
+    auto expectedPolicy = compilerProductHelper.getCachingPolicyOptions(false);
     if (expectedPolicy != nullptr) {
         EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find(expectedPolicy), std::string::npos);
     } else {
@@ -2448,8 +2448,8 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_NE(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
     } else {
         EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
@@ -2782,8 +2782,8 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
         ze_result_t createFromNativeBinary(const char *input, size_t inputSize) override { return ZE_RESULT_SUCCESS; }
     };
 
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if (!compilerHwInfoConfig.isForceToStatelessRequired()) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    if (!compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
 

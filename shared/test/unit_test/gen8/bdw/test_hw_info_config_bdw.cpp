@@ -120,7 +120,7 @@ BDWTEST_F(BdwProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
-using CompilerHwInfoConfigHelperTestsBdw = ::testing::Test;
-BDWTEST_F(CompilerHwInfoConfigHelperTestsBdw, givenBdwWhenIsStatelessToStatefulBufferOffsetSupportedIsCalledThenReturnsTrue) {
-    EXPECT_FALSE(CompilerHwInfoConfig::get(productFamily)->isStatelessToStatefulBufferOffsetSupported());
+using CompilerProductHelperHelperTestsBdw = ::testing::Test;
+BDWTEST_F(CompilerProductHelperHelperTestsBdw, givenBdwWhenIsStatelessToStatefulBufferOffsetSupportedIsCalledThenReturnsTrue) {
+    EXPECT_FALSE(CompilerProductHelper::get(productFamily)->isStatelessToStatefulBufferOffsetSupported());
 }

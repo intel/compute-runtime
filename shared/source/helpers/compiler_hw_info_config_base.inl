@@ -13,16 +13,16 @@
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerHwInfoConfigHw<gfxProduct>::isForceEmuInt32DivRemSPRequired() const {
+bool CompilerProductHelperHw<gfxProduct>::isForceEmuInt32DivRemSPRequired() const {
     return false;
 }
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerHwInfoConfigHw<gfxProduct>::isStatelessToStatefulBufferOffsetSupported() const {
+bool CompilerProductHelperHw<gfxProduct>::isStatelessToStatefulBufferOffsetSupported() const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-const char *CompilerHwInfoConfigHw<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) const {
+const char *CompilerProductHelperHw<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) const {
     return L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(isDebuggerActive);
 };
 

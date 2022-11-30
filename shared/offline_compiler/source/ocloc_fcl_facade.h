@@ -20,7 +20,7 @@ class OclocArgHelper;
 
 namespace NEO {
 
-class CompilerHwInfoConfig;
+class CompilerProductHelper;
 class OsLibrary;
 
 struct HardwareInfo;

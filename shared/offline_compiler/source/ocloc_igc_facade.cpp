@@ -79,12 +79,12 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OclocErrorCode::OUT_OF_HOST_MEMORY;
     }
 
-    const auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
 
     IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo.platform);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
 
-    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerHwInfoConfig);
+    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper);
 
     initialized = true;
     return OclocErrorCode::SUCCESS;
@@ -131,9 +131,9 @@ CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> OclocIgcFacade::getIgcFe
     return igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
 }
 
-void OclocIgcFacade::populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerHwInfoConfig *compilerHwInfoConfig) const {
-    if (compilerHwInfoConfig) {
-        handle->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
+void OclocIgcFacade::populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const {
+    if (compilerProductHelper) {
+        handle->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
     }
 
     handle->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);

@@ -260,8 +260,8 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
                 hardwareInfoSetup[expectedHwInfo.platform.eProductFamily](&expectedHwInfo, true, 0x0);
                 hwConfig.configureHardwareCustom(&expectedHwInfo, nullptr);
 
-                const auto &compilerHwInfoConfig = *NEO::CompilerHwInfoConfig::get(expectedHwInfo.platform.eProductFamily);
-                compilerHwInfoConfig.setProductConfigForHwInfo(expectedHwInfo, deviceAot.aotConfig);
+                const auto &compilerProductHelper = *NEO::CompilerProductHelper::get(expectedHwInfo.platform.eProductFamily);
+                compilerProductHelper.setProductConfigForHwInfo(expectedHwInfo, deviceAot.aotConfig);
                 expectedHwInfo.platform.usDeviceID = deviceAot.deviceIds->front();
 
                 EXPECT_EQ(0, memcmp(&expectedHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));

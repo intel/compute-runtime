@@ -82,8 +82,8 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
         GTEST_SKIP();
     }
     initializeFixture<FamilyType>();
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);

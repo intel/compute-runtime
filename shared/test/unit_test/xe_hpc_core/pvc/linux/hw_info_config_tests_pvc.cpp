@@ -76,7 +76,7 @@ PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThen
     for (const auto &config : AOT_PVC::productConfigs) {
         AheadOfTimeConfig aotConfig = {0};
         aotConfig.ProductConfig = config;
-        CompilerHwInfoConfig::get(pInHwInfo.platform.eProductFamily)->setProductConfigForHwInfo(pInHwInfo, aotConfig);
+        CompilerProductHelper::get(pInHwInfo.platform.eProductFamily)->setProductConfigForHwInfo(pInHwInfo, aotConfig);
         EXPECT_EQ(pInHwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
     }
 }

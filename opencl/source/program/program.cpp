@@ -59,8 +59,8 @@ std::string Program::getInternalOptions() const {
     }
 
     auto &hwInfo = pClDevice->getHardwareInfo();
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto forceToStatelessRequired = compilerHwInfoConfig.isForceToStatelessRequired();
+    const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+    auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
     auto disableStatelessToStatefulOptimization = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     if ((isBuiltIn && is32bit) || forceToStatelessRequired || disableStatelessToStatefulOptimization) {
@@ -91,7 +91,7 @@ std::string Program::getInternalOptions() const {
 
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
     auto isDebuggerActive = pClDevice->getDevice().isDebuggerActive() || pClDevice->getDevice().getDebugger() != nullptr;
-    CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions(isDebuggerActive));
+    CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     return internalOptions;
 }
 

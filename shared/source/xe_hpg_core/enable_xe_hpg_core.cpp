@@ -28,6 +28,6 @@ uint32_t L1CachePolicyHelper<IGFX_DG2>::getDefaultL1CachePolicy(bool isDebuggerA
 
 template struct L1CachePolicyHelper<IGFX_DG2>;
 static EnableGfxProductHw<IGFX_DG2> enableGfxProductHwDG2;
-static EnableCompilerHwInfoConfig<IGFX_DG2> enableCompilerHwInfoConfigDG2;
+static EnableCompilerProductHelper<IGFX_DG2> enableCompilerProductHelperDG2;
 #endif
 } // namespace NEO

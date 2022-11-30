@@ -19,7 +19,7 @@ class OclocArgHelper;
 
 namespace NEO {
 
-class CompilerHwInfoConfig;
+class CompilerProductHelper;
 class OsLibrary;
 
 struct HardwareInfo;
@@ -50,7 +50,7 @@ class OclocIgcFacade {
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getIgcPlatformHandle() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> getGTSystemInfoHandle() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkaroundsHandle() const;
-    void populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerHwInfoConfig *compilerHwInfoConfig) const;
+    void populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const;
 
     OclocArgHelper *argHelper{};
     std::unique_ptr<OsLibrary> igcLib{};

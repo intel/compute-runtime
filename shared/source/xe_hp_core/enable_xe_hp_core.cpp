@@ -19,6 +19,6 @@ namespace NEO {
 #ifdef SUPPORT_XE_HP_SDV
 template struct L1CachePolicyHelper<IGFX_XE_HP_SDV>;
 static EnableGfxProductHw<IGFX_XE_HP_SDV> enableGfxProductHwXEHP;
-static EnableCompilerHwInfoConfig<IGFX_XE_HP_SDV> enableCompilerHwInfoConfigXEHP;
+static EnableCompilerProductHelper<IGFX_XE_HP_SDV> enableCompilerProductHelperXEHP;
 #endif
 } // namespace NEO

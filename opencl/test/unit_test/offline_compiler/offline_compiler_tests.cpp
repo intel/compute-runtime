@@ -2993,15 +2993,15 @@ struct OfflineCompilerStatelessToStatefulTests : public ::testing::Test {
 };
 
 TEST_F(OfflineCompilerStatelessToStatefulTests, whenAppendExtraInternalOptionsThenInternalOptionsAreCorrect) {
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(mockOfflineCompiler->hwInfo.platform.eProductFamily);
-    if (!compilerHwInfoConfig.isForceToStatelessRequired()) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(mockOfflineCompiler->hwInfo.platform.eProductFamily);
+    if (!compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
     runTest();
 }
 
 template <PRODUCT_FAMILY productFamily>
-class MockCompilerHwInfoConfigHw : public CompilerHwInfoConfigHw<productFamily> {
+class MockCompilerProductHelperHw : public CompilerProductHelperHw<productFamily> {
   public:
     bool isForceToStatelessRequired() const override {
         return true;
@@ -3009,8 +3009,8 @@ class MockCompilerHwInfoConfigHw : public CompilerHwInfoConfigHw<productFamily> 
 };
 
 HWTEST2_F(OfflineCompilerStatelessToStatefulTests, givenMockWhenAppendExtraInternalOptionsThenInternalOptionsAreCorrect, MatchAny) {
-    MockCompilerHwInfoConfigHw<productFamily> mockCompilerHwInfoConfig;
-    VariableBackup<CompilerHwInfoConfig *> backupMockHwInfoConfig(&CompilerHwInfoConfigFactory[productFamily], &mockCompilerHwInfoConfig);
+    MockCompilerProductHelperHw<productFamily> mockCompilerProductHelper;
+    VariableBackup<CompilerProductHelper *> backupMockHwInfoConfig(&CompilerProductHelperFactory[productFamily], &mockCompilerProductHelper);
     runTest();
 }
 

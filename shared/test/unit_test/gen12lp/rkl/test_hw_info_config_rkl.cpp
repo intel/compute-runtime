@@ -136,7 +136,7 @@ RKLTEST_F(RklProductHelper, givenProductHelperWhenAskedIf3DPipelineSelectWAIsReq
     EXPECT_TRUE(productHelper->is3DPipelineSelectWARequired());
 }
 
-using CompilerHwInfoConfigHelperTestsRkl = ::testing::Test;
-RKLTEST_F(CompilerHwInfoConfigHelperTestsRkl, givenRklWhenIsForceEmuInt32DivRemSPRequiredIsCalledThenReturnsTrue) {
-    EXPECT_TRUE(CompilerHwInfoConfig::get(productFamily)->isForceEmuInt32DivRemSPRequired());
+using CompilerProductHelperHelperTestsRkl = ::testing::Test;
+RKLTEST_F(CompilerProductHelperHelperTestsRkl, givenRklWhenIsForceEmuInt32DivRemSPRequiredIsCalledThenReturnsTrue) {
+    EXPECT_TRUE(CompilerProductHelper::get(productFamily)->isForceEmuInt32DivRemSPRequired());
 }

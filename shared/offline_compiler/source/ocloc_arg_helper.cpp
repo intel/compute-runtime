@@ -171,8 +171,8 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::Hard
             }
             NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
-            const auto &compilerHwInfoConfig = *NEO::CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-            compilerHwInfoConfig.setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
+            const auto &compilerProductHelper = *NEO::CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+            compilerProductHelper.setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
             hwInfo.platform.usDeviceID = deviceConfig.deviceIds->front();
 
             retVal = true;

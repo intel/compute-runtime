@@ -67,8 +67,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         hwConfig.configureHardwareCustom(hardwareInfo, nullptr);
 
         if (productConfigFound) {
-            const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-            compilerHwInfoConfig.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
+            const auto &compilerProductHelper = *CompilerProductHelper::get(hardwareInfo->platform.eProductFamily);
+            compilerProductHelper.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
             hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
         }
 

@@ -21,7 +21,7 @@ namespace NEO {
 int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
     auto &coreHelper = rootDeviceEnvironemnt.getHelper<CoreHelper>();
     auto &productHelper = rootDeviceEnvironemnt.getHelper<ProductHelper>();
-    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(outHwInfo->platform.eProductFamily);
+    auto compilerProductHelper = CompilerProductHelper::get(outHwInfo->platform.eProductFamily);
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.flags.ftrSVM;
 
     coreHelper.adjustDefaultEngineType(outHwInfo);
@@ -31,7 +31,7 @@ int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo
     outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.flags.ftrL3IACoherency;
 
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  compilerHwInfoConfig->isMidThreadPreemptionSupported(*outHwInfo),
+                                                  compilerProductHelper->isMidThreadPreemptionSupported(*outHwInfo),
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuThreadGroupLevelPreempt),
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuMidBatchPreempt));
 

@@ -19,17 +19,17 @@ namespace NEO {
 #ifdef SUPPORT_ICLLP
 template struct L1CachePolicyHelper<IGFX_ICELAKE_LP>;
 static EnableGfxProductHw<IGFX_ICELAKE_LP> enableGfxProductHwICLLP;
-static EnableCompilerHwInfoConfig<IGFX_ICELAKE_LP> enableCompilerHwInfoConfigICLLP;
+static EnableCompilerProductHelper<IGFX_ICELAKE_LP> enableCompilerProductHelperICLLP;
 #endif
 #ifdef SUPPORT_LKF
 template struct L1CachePolicyHelper<IGFX_LAKEFIELD>;
 static EnableGfxProductHw<IGFX_LAKEFIELD> enableGfxProductHwLKF;
-static EnableCompilerHwInfoConfig<IGFX_LAKEFIELD> enableCompilerHwInfoConfigLKF;
+static EnableCompilerProductHelper<IGFX_LAKEFIELD> enableCompilerProductHelperLKF;
 #endif
 #ifdef SUPPORT_EHL
 template struct L1CachePolicyHelper<IGFX_ELKHARTLAKE>;
 static EnableGfxProductHw<IGFX_ELKHARTLAKE> enableGfxProductHwEHL;
-static EnableCompilerHwInfoConfig<IGFX_ELKHARTLAKE> enableCompilerHwInfoConfigEHL;
+static EnableCompilerProductHelper<IGFX_ELKHARTLAKE> enableCompilerProductHelperEHL;
 #endif
 
 } // namespace NEO
