@@ -1220,6 +1220,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInOther
     NEO::Linker::RelocationInfo unresolvedRelocation;
     unresolvedRelocation.symbolName = "unresolved";
 
+    module1->isFunctionSymbolExportEnabled = true;
     module0->unresolvedExternalsInfo.push_back({unresolvedRelocation});
 
     std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
@@ -1630,7 +1631,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
     zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
-    EXPECT_GT((int)buildLogSize, 0);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
     zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
@@ -1678,13 +1679,71 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
         {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
 
     module0->kernelImmDatas.push_back(std::move(kernelImmData));
+    module0->isFunctionSymbolExportEnabled = true;
+    module1->isFunctionSymbolExportEnabled = true;
 
     std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
     size_t buildLogSize;
     zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
-    EXPECT_GT((int)buildLogSize, 0);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
+    char *logBuffer = new char[buildLogSize]();
+    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    EXPECT_NE(logBuffer, "");
+    delete[] logBuffer;
+    zeModuleBuildLogDestroy(dynLinkLog);
+}
+
+TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnotherModuleWhenDynamicLinkWithoutRequiredFlagsThenLinkFailureIsReturnedAndLogged) {
+    uint32_t offset = 0x20;
+    uint32_t offset2 = 0x40;
+
+    ze_module_build_log_handle_t dynLinkLog;
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+    unresolvedRelocation.offset = offset;
+    unresolvedRelocation.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::Linker::UnresolvedExternal unresolvedExternal;
+    unresolvedExternal.unresolvedRelocation = unresolvedRelocation;
+
+    NEO::Linker::RelocationInfo unresolvedRelocation2;
+    unresolvedRelocation2.symbolName = "unresolved2";
+    unresolvedRelocation2.offset = offset2;
+    unresolvedRelocation2.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::Linker::UnresolvedExternal unresolvedExternal2;
+    unresolvedExternal2.unresolvedRelocation = unresolvedRelocation2;
+
+    char kernelHeap[MemoryConstants::pageSize] = {};
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+
+    module0->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module0->unresolvedExternalsInfo.push_back({unresolvedRelocation2});
+    module0->unresolvedExternalsInfo[0].instructionsSegmentId = 0u;
+    module0->unresolvedExternalsInfo[1].instructionsSegmentId = 0u;
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
+    module0->kernelImmDatas.push_back(std::move(kernelImmData));
+    module0->isFunctionSymbolExportEnabled = false;
+    module1->isFunctionSymbolExportEnabled = false;
+
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+    ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+    size_t buildLogSize;
+    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
     zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
@@ -1790,10 +1849,45 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionP
     module0->symbols["externalFunction"] = relocatedSymbol;
 
     void *functionPointer = nullptr;
+    module0->isFunctionSymbolExportEnabled = true;
     ze_result_t res = module0->getFunctionPointer("externalFunction", &functionPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     EXPECT_EQ(reinterpret_cast<uint64_t>(functionPointer), gpuAddress);
+}
+
+TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolButNoExportFlagsThenReturnsFailure) {
+
+    uint64_t gpuAddress = 0x12345;
+
+    NEO::SymbolInfo symbolInfo{};
+    symbolInfo.segment = NEO::SegmentType::Instructions;
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
+
+    char kernelHeap[MemoryConstants::pageSize] = {};
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
+    module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+    module0->isFunctionSymbolExportEnabled = false;
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
+    kernelImmData->kernelDescriptor = &kernelDescriptor;
+
+    module0->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    module0->symbols["externalFunction"] = relocatedSymbol;
+
+    void *functionPointer = nullptr;
+    ze_result_t res = module0->getFunctionPointer("Invalid", &functionPointer);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
 }
 
 TEST_F(ModuleFunctionPointerTests, givenInvalidFunctionNameAndModuleWithExportedSymbolThenGetFunctionPointerReturnsFailure) {
@@ -1811,6 +1905,7 @@ TEST_F(ModuleFunctionPointerTests, givenInvalidFunctionNameAndModuleWithExported
     kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+    module0->isFunctionSymbolExportEnabled = true;
     NEO::KernelDescriptor kernelDescriptor;
     kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
 
@@ -1843,6 +1938,7 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionP
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
     kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
+    module0->isFunctionSymbolExportEnabled = true;
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
     NEO::KernelDescriptor kernelDescriptor;
     kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
@@ -2039,6 +2135,30 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
     EXPECT_FALSE(tu->wasBuildFromSpirVCalled);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleHasSymbolSupportBooleans) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    Module module(device, nullptr, ModuleType::User);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_TRUE(module.isGlobalSymbolExportEnabled);
+    EXPECT_TRUE(module.isFunctionSymbolExportEnabled);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiled) {
@@ -2558,6 +2678,32 @@ TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPass
     EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessMode));
 }
 
+TEST_F(ModuleTest, givenEnableLibraryCompileThenIsFunctionSymbolExportEnabledTrue) {
+    auto module = std::make_unique<Module>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableLibraryCompile.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+    EXPECT_TRUE(module->isFunctionSymbolExportEnabled);
+}
+
+TEST_F(ModuleTest, givenEnableLibraryCompileThenIsGlobalSymbolExportEnabledTrue) {
+    auto module = std::make_unique<Module>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableGlobalVariableSymbols.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+    EXPECT_TRUE(module->isGlobalSymbolExportEnabled);
+}
+
 TEST_F(ModuleTest, givenInternalOptionsWhenBuildFlagsIsNullPtrAndBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
@@ -2871,6 +3017,7 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThenSizeAndPoint
 
     auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::User);
     module0->symbols["symbol"] = relocatedSymbol;
+    module0->isGlobalSymbolExportEnabled = true;
 
     size_t size = 0;
     void *ptr = nullptr;
@@ -2881,6 +3028,51 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThenSizeAndPoint
     EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(ptr));
 }
 
+TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThatIsAnInstuctionThenFailureReturned) {
+    uint64_t gpuAddress = 0x12345000;
+
+    NEO::SymbolInfo symbolInfo{0, 1024u, SegmentType::Instructions};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
+
+    auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::User);
+    module0->symbols["symbol"] = relocatedSymbol;
+    module0->isGlobalSymbolExportEnabled = true;
+
+    size_t size = 0;
+    void *ptr = nullptr;
+    auto result = module0->getGlobalPointer("symbol", &size, &ptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(0u, size);
+    EXPECT_EQ(nullptr, ptr);
+}
+
+TEST_F(ModuleTest, givenModuleWithoutSymbolsThenFailureReturned) {
+    auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::User);
+    module0->isGlobalSymbolExportEnabled = true;
+
+    size_t size = 0;
+    void *ptr = nullptr;
+    auto result = module0->getGlobalPointer("symbol", &size, &ptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(0u, size);
+    EXPECT_EQ(nullptr, ptr);
+}
+
+TEST_F(ModuleTest, givenModuleWithoutSymbolExportEnabledThenFailureReturned) {
+    auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::User);
+    module0->isGlobalSymbolExportEnabled = false;
+
+    size_t size = 0;
+    void *ptr = nullptr;
+    auto result = module0->getGlobalPointer("symbol", &size, &ptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(0u, size);
+    EXPECT_EQ(nullptr, ptr);
+}
+
 TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerWithNullptrInputsThenSuccessIsReturned) {
     uint64_t gpuAddress = 0x12345000;
 
@@ -2889,6 +3081,7 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerWithNullptrInput
 
     auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::User);
     module0->symbols["symbol"] = relocatedSymbol;
+    module0->isGlobalSymbolExportEnabled = true;
 
     auto result = module0->getGlobalPointer("symbol", nullptr, nullptr);
 
@@ -2916,6 +3109,7 @@ TEST_F(ModuleTest, givenModuleWithGlobalSymbolMapWhenGettingGlobalPointerByHostS
     auto success = module0->populateHostGlobalSymbolsMap(mapping);
     EXPECT_TRUE(success);
     EXPECT_TRUE(module0->getTranslationUnit()->buildLog.empty());
+    module0->isGlobalSymbolExportEnabled = true;
 
     size_t size = 0;
     void *ptr = nullptr;

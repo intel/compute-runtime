@@ -35,6 +35,8 @@ extern NEO::ConstStringRef debugKernelEnable;
 extern NEO::ConstStringRef profileFlags;
 extern NEO::ConstStringRef optLargeRegisterFile;
 extern NEO::ConstStringRef optAutoGrf;
+extern NEO::ConstStringRef enableLibraryCompile;
+extern NEO::ConstStringRef enableGlobalVariableSymbols;
 
 } // namespace BuildOptions
 
@@ -174,6 +176,8 @@ struct ModuleImp : public Module {
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
     bool isZebinBinary = false;
+    bool isFunctionSymbolExportEnabled = false;
+    bool isGlobalSymbolExportEnabled = false;
     ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};

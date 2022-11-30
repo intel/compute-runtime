@@ -27,6 +27,8 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::exportedFunctionsSurface;
     using BaseClass::importedSymbolAllocations;
     using BaseClass::isFullyLinked;
+    using BaseClass::isFunctionSymbolExportEnabled;
+    using BaseClass::isGlobalSymbolExportEnabled;
     using BaseClass::kernelImmDatas;
     using BaseClass::maxGroupSize;
     using BaseClass::symbols;
@@ -78,6 +80,8 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::debugEnabled;
     using ModuleImp::debugModuleHandle;
     using ModuleImp::getModuleAllocations;
+    using ModuleImp::isFunctionSymbolExportEnabled;
+    using ModuleImp::isGlobalSymbolExportEnabled;
     using ModuleImp::kernelImmDatas;
     using ModuleImp::populateHostGlobalSymbolsMap;
     using ModuleImp::symbols;

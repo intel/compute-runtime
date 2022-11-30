@@ -53,6 +53,8 @@ NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
 NEO::ConstStringRef profileFlags = "-zet-profile-flags";
 NEO::ConstStringRef optLargeRegisterFile = "-ze-opt-large-register-file";
 NEO::ConstStringRef optAutoGrf = "-ze-intel-enable-auto-large-GRF-mode";
+NEO::ConstStringRef enableLibraryCompile = "-library-compilation";
+NEO::ConstStringRef enableGlobalVariableSymbols = "-ze-take-global-address";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -541,6 +543,9 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
         }
 
         if (desc->format == ZE_MODULE_FORMAT_NATIVE) {
+            // Assume Symbol Generation Given Prebuilt Binary
+            this->isFunctionSymbolExportEnabled = true;
+            this->isGlobalSymbolExportEnabled = true;
             result = this->translationUnit->createFromNativeBinary(
                 reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
@@ -704,6 +709,8 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
 
         moveOptLevelOption(apiOptions, apiOptions);
         moveProfileFlagsOption(apiOptions, apiOptions);
+        this->isFunctionSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
+        this->isGlobalSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
     }
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessMode.str());
@@ -962,6 +969,10 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
     }
 
     if (*pfnFunction == nullptr) {
+        if (!this->isFunctionSymbolExportEnabled) {
+            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return ZE_RESULT_ERROR_INVALID_FUNCTION_NAME;
     }
     return ZE_RESULT_SUCCESS;
@@ -970,6 +981,7 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
 ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) {
     uint64_t address;
     size_t size;
+
     auto hostSymbolIt = hostGlobalSymbolsMap.find(pGlobalName);
     if (hostSymbolIt != hostGlobalSymbolsMap.end()) {
         address = hostSymbolIt->second.address;
@@ -981,6 +993,10 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
         } else {
+            if (!this->isGlobalSymbolExportEnabled) {
+                PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         address = deviceSymbolIt->second.gpuAddress;
@@ -1093,8 +1109,10 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         // Add all provided Module's Exported Functions Surface to each Module to allow for all symbols
         // to be accessed from any module either directly thru Unresolved symbol resolution below or indirectly
         // thru function pointers or callbacks between the Modules.
+        uint32_t functionSymbolExportEnabledCounter = 0;
         for (auto i = 0u; i < numModules; i++) {
             auto moduleHandle = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
+            functionSymbolExportEnabledCounter += static_cast<uint32_t>(moduleHandle->isFunctionSymbolExportEnabled);
             if (nullptr != moduleHandle->exportedFunctionsSurface) {
                 moduleId->importedSymbolAllocations.insert(moduleHandle->exportedFunctionsSurface);
             }
@@ -1159,6 +1177,10 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
             }
         }
         if (numPatchedSymbols != moduleId->unresolvedExternalsInfo.size()) {
+            if (functionSymbolExportEnabledCounter == 0) {
+                PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }
         moduleId->copyPatchedSegments(isaSegmentsForPatching);
