@@ -5,11 +5,11 @@
 #
 
 if(TESTS_XE_HPG_CORE)
-  set(IGDRCL_SRCS_tests_xe_hpg_core_excludes ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xe_hpg_core.cpp)
-  set_property(GLOBAL APPEND PROPERTY IGDRCL_SRCS_tests_excludes ${IGDRCL_SRCS_tests_xe_hpg_core_excludes})
+  set(NEO_CORE_tests_xe_hpg_core_excludes ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xe_hpg_core.cpp)
+  set_property(GLOBAL APPEND PROPERTY NEO_CORE_tests_excludes ${NEO_CORE_tests_xe_hpg_core_excludes})
 
   target_sources(neo_shared_tests PRIVATE
-                 ${IGDRCL_SRCS_tests_xe_hpg_core_excludes}
+                 ${NEO_CORE_tests_xe_hpg_core_excludes}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe_hpg_core.cpp
