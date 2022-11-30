@@ -133,7 +133,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->internalUsage = internalUsage;
         commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
         commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
-        if ((!NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType)) && !internalUsage) {
+        if (!internalUsage) {
             commandList->isFlushTaskSubmissionEnabled = hwHelper.isPlatformFlushTaskEnabled(hwInfo);
             if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
                 commandList->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();

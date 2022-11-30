@@ -86,9 +86,10 @@ class CommandStreamReceiver {
 
     virtual SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) = 0;
 
-    virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
+    virtual CompletionStamp flushTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
+    virtual CompletionStamp flushBcsTask(LinearStream &commandStream, size_t commandStreamStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) = 0;
 
     virtual bool flushBatchedSubmissions() = 0;
     MOCKABLE_VIRTUAL SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);

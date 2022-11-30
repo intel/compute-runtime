@@ -861,7 +861,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndTbxCsrWithCopyOnlyImmediateComm
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnlyImmediateCommandListCreatedThenSlushTaskSubmissionIsSetToFalse) {
+HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnlyImmediateCommandListCreatedThenFlushTaskSubmissionIsSetToTrue) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -871,7 +871,7 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnl
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
     ASSERT_NE(nullptr, commandList);
 
-    EXPECT_EQ(false, commandList->isFlushTaskSubmissionEnabled);
+    EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
 }
 
 HWTEST2_F(CommandListCreate, givenAllValuesTbxAndSyncModeFlagsWhenCheckingWaitlistEventSyncRequiredThenExpectTrueOnlyForTbxTrueAndAsyncMode, IsAtLeastSkl) {

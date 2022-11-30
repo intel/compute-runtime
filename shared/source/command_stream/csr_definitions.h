@@ -48,6 +48,17 @@ constexpr uint32_t l3AndL1On = 2u;
 constexpr uint32_t NotApplicable = 3u;
 } // namespace L3CachingSettings
 
+struct DispatchBcsFlags {
+    DispatchBcsFlags() = delete;
+
+    DispatchBcsFlags(bool flushTaskCount, bool hasStallingCmds, bool hasRelaxedOrderingDependencies)
+        : flushTaskCount(flushTaskCount), hasStallingCmds(hasStallingCmds), hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies) {}
+
+    bool flushTaskCount = false;
+    bool hasStallingCmds = false;
+    bool hasRelaxedOrderingDependencies = false;
+};
+
 struct DispatchFlags {
     DispatchFlags() = delete;
     DispatchFlags(CsrDependencies csrDependenciesP, TimestampPacketContainer *barrierTimestampPacketNodesP, PipelineSelectArgs pipelineSelectArgsP,

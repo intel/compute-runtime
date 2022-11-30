@@ -180,6 +180,79 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdsSizeForHardwareContext() const
 }
 
 template <typename GfxFamily>
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
+                                                                 const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) {
+    UNRECOVERABLE_IF(this->dispatchMode != DispatchMode::ImmediateDispatch);
+
+    uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamTaskStart;
+
+    if (dispatchBcsFlags.flushTaskCount) {
+        uint64_t postSyncAddress = getTagAllocation()->getGpuAddress();
+        TaskCountType postSyncData = peekTaskCount() + 1;
+
+        NEO::MiFlushArgs args;
+        args.commandWithPostSync = true;
+        args.notifyEnable = isUsedNotifyEnableForPostSync();
+
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStreamTask, postSyncAddress, postSyncData, args, hwInfo);
+    }
+
+    auto &commandStreamCSR = getCS(getRequiredCmdStreamSizeAligned(dispatchBcsFlags));
+    size_t commandStreamStartCSR = commandStreamCSR.getUsed();
+
+    programHardwareContext(commandStreamCSR);
+
+    if (globalFenceAllocation) {
+        makeResident(*globalFenceAllocation);
+    }
+
+    if (dispatchBcsFlags.flushTaskCount) {
+        makeResident(*getTagAllocation());
+    }
+
+    bool submitCSR = (commandStreamStartCSR != commandStreamCSR.getUsed());
+    void *bbEndLocation = nullptr;
+
+    programEndingCmd(commandStreamTask, &bbEndLocation, isBlitterDirectSubmissionEnabled(), dispatchBcsFlags.hasRelaxedOrderingDependencies, false);
+    EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
+
+    if (submitCSR) {
+        auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
+        addBatchBufferStart(bbStart, taskStartAddress, false);
+        EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
+
+        this->makeResident(*commandStreamCSR.getGraphicsAllocation());
+    }
+
+    size_t startOffset = submitCSR ? commandStreamStartCSR : commandStreamTaskStart;
+    auto &streamToSubmit = submitCSR ? commandStreamCSR : commandStreamTask;
+
+    BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, 0, taskStartAddress, nullptr,
+                            false, false, QueueThrottle::MEDIUM, NEO::QueueSliceCount::defaultSliceCount,
+                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, false, (submitCSR || dispatchBcsFlags.hasStallingCmds),
+                            dispatchBcsFlags.hasRelaxedOrderingDependencies};
+
+    streamToSubmit.getGraphicsAllocation()->updateTaskCount(this->taskCount + 1, this->osContext->getContextId());
+    streamToSubmit.getGraphicsAllocation()->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
+
+    auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
+    if (submissionStatus != SubmissionStatus::SUCCESS) {
+        CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
+        return completionStamp;
+    }
+
+    if (dispatchBcsFlags.flushTaskCount) {
+        this->latestFlushedTaskCount = this->taskCount + 1;
+    }
+
+    ++taskCount;
+
+    CompletionStamp completionStamp = {taskCount, taskLevel, flushStamp->peekStamp()};
+
+    return completionStamp;
+}
+
+template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     LinearStream &commandStreamTask,
     size_t commandStreamStartTask,
@@ -854,6 +927,16 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
     }
 
     return submitResult;
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchBcsFlags &dispatchBcsFlags) {
+    return getCmdsSizeForHardwareContext() + sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const DispatchBcsFlags &dispatchBcsFlags) {
+    return alignUp(getRequiredCmdStreamSize(dispatchBcsFlags), MemoryConstants::cacheLineSize);
 }
 
 template <typename GfxFamily>

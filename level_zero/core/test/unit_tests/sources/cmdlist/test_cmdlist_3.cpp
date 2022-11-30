@@ -1289,7 +1289,7 @@ HWTEST2_F(CommandListCreateWithBcs,
     EXPECT_TRUE(commandList->isCopyOnly());
 }
 
-HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingCommandListUsingLinkedCopyThenFlushTaskModeNotUsed, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingCommandListUsingLinkedCopyThenFlushTaskModeUsed, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
 
@@ -1306,7 +1306,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingComman
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_TRUE(commandList->isCopyOnly());
-    EXPECT_FALSE(commandList->isFlushTaskSubmissionEnabled);
+    EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
 }
 
 HWTEST2_F(CommandListCreate, whenGettingCommandsToPatchThenCorrectValuesAreReturned, IsAtLeastSkl) {

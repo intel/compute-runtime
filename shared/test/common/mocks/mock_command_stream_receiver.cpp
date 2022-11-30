@@ -26,3 +26,10 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
     return stamp;
 }
+
+CompletionStamp MockCommandStreamReceiver::flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
+                                                        const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) {
+    ++taskCount;
+    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
+    return stamp;
+}

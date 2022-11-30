@@ -69,7 +69,18 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies) {
+NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies) {
+    NEO::DispatchBcsFlags dispatchBcsFlags(
+        this->isSyncModeQueue,         // flushTaskCount
+        hasStallingCmds,               // hasStallingCmds
+        hasRelaxedOrderingDependencies // hasRelaxedOrderingDependencies
+    );
+
+    return this->csr->flushBcsTask(cmdStreamTask, taskStartOffset, dispatchBcsFlags, this->device->getHwInfo());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies) {
     NEO::DispatchFlags dispatchFlags(
         {},                                                          // csrDependencies
         nullptr,                                                     // barrierTimestampPacketNodes
@@ -103,40 +114,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         hasStallingCmds,                                             // hasStallingCmds
         hasRelaxedOrderingDependencies                               // hasRelaxedOrderingDependencies
     );
+
     this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
-
-    this->commandContainer.removeDuplicatesFromResidencyContainer();
-
-    auto commandStream = this->commandContainer.getCommandStream();
-    size_t commandStreamStart = this->cmdListCurrentStartOffset;
-
-    auto lockCSR = this->csr->obtainUniqueOwnership();
-
-    std::unique_lock<std::mutex> lockForIndirect;
-    if (this->hasIndirectAllocationsAllowed()) {
-        this->cmdQImmediate->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect, performMigration);
-    }
-
     this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
-
-    if (performMigration) {
-        auto deviceImp = static_cast<DeviceImp *>(this->device);
-        auto pageFaultManager = deviceImp->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-        if (pageFaultManager == nullptr) {
-            performMigration = false;
-        }
-    }
-
-    this->cmdQImmediate->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
-
-    if (performMigration) {
-        this->migrateSharedAllocations();
-    }
-
-    if (this->performMemoryPrefetch) {
-        auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
-        prefetchManager->migrateAllocationsToGpu(this->getPrefetchContext(), *this->device->getDriverHandle()->getSvmAllocsManager(), *this->device->getNEODevice());
-    }
 
     auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT));
     NEO::IndirectHeap *dsh = nullptr;
@@ -182,15 +162,56 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         }
     }
 
-    auto completionStamp = this->csr->flushTask(
-        *commandStream,
-        commandStreamStart,
+    return this->csr->flushTask(
+        cmdStreamTask,
+        taskStartOffset,
         dsh,
         ioh,
         ssh,
         this->csr->peekTaskLevel(),
         dispatchFlags,
         *(this->device->getNEODevice()));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies) {
+    this->commandContainer.removeDuplicatesFromResidencyContainer();
+
+    auto commandStream = this->commandContainer.getCommandStream();
+    size_t commandStreamStart = this->cmdListCurrentStartOffset;
+
+    auto lockCSR = this->csr->obtainUniqueOwnership();
+
+    std::unique_lock<std::mutex> lockForIndirect;
+    if (this->hasIndirectAllocationsAllowed()) {
+        this->cmdQImmediate->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect, performMigration);
+    }
+
+    if (performMigration) {
+        auto deviceImp = static_cast<DeviceImp *>(this->device);
+        auto pageFaultManager = deviceImp->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        if (pageFaultManager == nullptr) {
+            performMigration = false;
+        }
+    }
+
+    this->cmdQImmediate->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
+
+    if (performMigration) {
+        this->migrateSharedAllocations();
+    }
+
+    if (this->performMemoryPrefetch) {
+        auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+        prefetchManager->migrateAllocationsToGpu(this->getPrefetchContext(), *this->device->getDriverHandle()->getSvmAllocsManager(), *this->device->getNEODevice());
+    }
+
+    NEO::CompletionStamp completionStamp;
+    if (isCopyOnly()) {
+        completionStamp = flushBcsTask(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies);
+    } else {
+        completionStamp = flushRegularTask(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies);
+    }
 
     if (completionStamp.taskCount > NEO::CompletionStamp::notReady) {
         if (completionStamp.taskCount == NEO::CompletionStamp::outOfHostMemory) {

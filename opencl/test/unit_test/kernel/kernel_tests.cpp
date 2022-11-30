@@ -558,6 +558,12 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return cs;
     }
 
+    CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
+                                 const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override {
+        CompletionStamp cs = {};
+        return cs;
+    }
+
     bool flushBatchedSubmissions() override { return true; }
 
     CommandStreamReceiverType getType() const override {

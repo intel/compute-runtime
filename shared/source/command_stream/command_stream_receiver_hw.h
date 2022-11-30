@@ -45,6 +45,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
+    CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override;
+
     void forcePipeControl(NEO::LinearStream &commandStreamCSR);
 
     bool flushBatchedSubmissions() override;
@@ -58,6 +60,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getRequiredStateBaseAddressSize(const Device &device) const;
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device);
     size_t getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags, Device &device);
+    size_t getRequiredCmdStreamSize(const DispatchBcsFlags &dispatchBcsFlags);
+    size_t getRequiredCmdStreamSizeAligned(const DispatchBcsFlags &dispatchBcsFlags);
     size_t getRequiredCmdSizeForPreamble(Device &device) const;
     size_t getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForEpilogue(const DispatchFlags &dispatchFlags) const;

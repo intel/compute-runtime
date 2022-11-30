@@ -11,7 +11,9 @@
 
 namespace NEO {
 struct SvmAllocationData;
-}
+struct CompletionStamp;
+class LinearStream;
+} // namespace NEO
 
 namespace L0 {
 
@@ -25,6 +27,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass = CommandListCoreFamily<gfxCoreFamily>;
     using BaseClass::BaseClass;
     using BaseClass::executeCommandListImmediate;
+    using BaseClass::isCopyOnly;
 
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                    const ze_group_count_t *threadGroupDimensions,
@@ -125,6 +128,9 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                               ze_event_handle_t *waitEventHandles) override;
 
     MOCKABLE_VIRTUAL ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies);
+
+    NEO::CompletionStamp flushRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies);
+    NEO::CompletionStamp flushBcsTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies);
 
     void checkAvailableSpace();
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
