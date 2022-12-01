@@ -8,6 +8,7 @@
 #include "shared/source/program/kernel_info.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
@@ -183,10 +184,15 @@ std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos) {
     std::string semiColonDelimitedKernelNameStr;
 
     for (const auto &kernelInfo : kernelInfos) {
+        const auto &kernelName = kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
+        if (kernelName == NEO::Elf::SectionsNamesZebin::externalFunctions) {
+            continue;
+        }
+
         if (!semiColonDelimitedKernelNameStr.empty()) {
             semiColonDelimitedKernelNameStr += ';';
         }
-        semiColonDelimitedKernelNameStr += kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
+        semiColonDelimitedKernelNameStr += kernelName;
     }
 
     return semiColonDelimitedKernelNameStr;

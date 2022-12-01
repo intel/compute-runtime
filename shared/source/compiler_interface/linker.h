@@ -129,6 +129,10 @@ struct LinkerInput {
         return exportedFunctionsSegmentId;
     }
 
+    void setExportedFunctionsSegmentId(int32_t functionsSegmentId) {
+        exportedFunctionsSegmentId = functionsSegmentId;
+    }
+
     const SymbolMap &getSymbols() const {
         return symbols;
     }

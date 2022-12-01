@@ -91,7 +91,11 @@ void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<numBits> &elf
 
     LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
     for (uint32_t id = 0; id < static_cast<uint32_t>(programInfo.kernelInfos.size()); id++) {
-        nameToKernelId[programInfo.kernelInfos[id]->kernelDescriptor.kernelMetadata.kernelName] = id;
+        const auto &kernelName = programInfo.kernelInfos[id]->kernelDescriptor.kernelMetadata.kernelName;
+        nameToKernelId[kernelName] = id;
+        if (kernelName == Elf::SectionsNamesZebin::externalFunctions) {
+            programInfo.linkerInput->setExportedFunctionsSegmentId(static_cast<int32_t>(id));
+        }
     }
     programInfo.linkerInput->decodeElfSymbolTableAndRelocations(elf, nameToKernelId);
 }
