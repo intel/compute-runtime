@@ -11,3 +11,7 @@
 #ifdef SUPPORT_DG2
 #include "hw_cmds_dg2.h"
 #endif
+
+#ifdef SUPPORT_MTL
+#include "hw_cmds_mtl.h"
+#endif

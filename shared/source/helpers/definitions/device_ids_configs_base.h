@@ -11,6 +11,9 @@
 #ifdef SUPPORT_DG2
 #include "device_ids_configs_dg2.h"
 #endif
+#ifdef SUPPORT_MTL
+#include "shared/source/xe_hpg_core/mtl/device_ids_configs_mtl.h"
+#endif
 #endif
 
 #if SUPPORT_XE_HPC_CORE

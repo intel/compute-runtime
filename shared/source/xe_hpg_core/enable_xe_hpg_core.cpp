@@ -26,4 +26,10 @@ template struct L1CachePolicyHelper<IGFX_DG2>;
 static EnableGfxProductHw<IGFX_DG2> enableGfxProductHwDG2;
 
 #endif
+
+#ifdef SUPPORT_MTL
+template struct L1CachePolicyHelper<IGFX_METEORLAKE>;
+static EnableGfxProductHw<IGFX_METEORLAKE> enableGfxProductHwMTL;
+#endif
+
 } // namespace NEO

@@ -349,6 +349,12 @@ TEST_F(MockProductHelperTestLinux, givenFailingGttSizeIoctlWhenInitializingHwInf
     EXPECT_EQ(pInHwInfo.capabilityTable.gpuAddressSpace, outHwInfo.capabilityTable.gpuAddressSpace);
 }
 
+HWTEST2_F(MockProductHelperTestLinux, givenPlatformWithPlatformQuerySupportedWhenItIsCalledThenReturnTrue, IsAtLeastMtl) {
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+    auto productHelper = ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    EXPECT_TRUE(productHelper->isPlatformQuerySupported());
+}
+
 using HwConfigLinux = ::testing::Test;
 
 HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwInfoThenMaxSlicesSupportedSetToAvailableCountInGtSystemInfo, MatchAny) {

@@ -206,6 +206,17 @@
                       IGFX_XE_HP_SDV)
 #endif
 
+#ifdef TESTS_MTL
+#define MTLTEST_F(test_fixture, test_name)                           \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_XE_HPG_CORE, IGFX_METEORLAKE)
+#define MTLTEST_P(test_suite_name, test_name)     \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_XE_HPG_CORE,           \
+                      IGFX_METEORLAKE)
+#endif
+
 #ifdef TESTS_DG2
 #define DG2TEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \

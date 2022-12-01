@@ -1,0 +1,139 @@
+/*
+ * Copyright (C) 2022 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/hw_test.h"
+
+using namespace NEO;
+
+using GfxCoreHelperTestMtl = GfxCoreHelperTest;
+
+MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreCorrectlyReported) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto hwInfo = *defaultHwInfo;
+    unsigned int gmdReleases[] = {70, 71, 72, 73};
+    hwInfo.ipVersion.architecture = 12;
+
+    for (auto gmdRelease : gmdReleases) {
+        hwInfo.ipVersion.release = gmdRelease;
+        auto extensions = gfxCoreHelper.getExtensions(hwInfo);
+
+        EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
+        EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
+    }
+}
+
+using ProductHelperTestMtl = Test<DeviceFixture>;
+
+MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCallIsAdjustWalkOrderAvailableThenReturnProperValue) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    const auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    unsigned int gmdReleases[] = {70, 71, 72, 73};
+    defaultHwInfo->ipVersion.architecture = 12;
+
+    for (auto gmdRelease : gmdReleases) {
+        defaultHwInfo->ipVersion.release = gmdRelease;
+        EXPECT_EQ(!MTL::isLpg(*defaultHwInfo), productHelper.isAdjustWalkOrderAvailable(*defaultHwInfo));
+    }
+}
+
+MTLTEST_F(GfxCoreHelperTestMtl, givenAllocationThenCheckResourceCompatibilityReturnsTrue) {
+    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto allocation = std::make_unique<GraphicsAllocation>(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, 3u, 0llu);
+    EXPECT_TRUE(helper.checkResourceCompatibility(*allocation));
+}
+
+MTLTEST_F(GfxCoreHelperTestMtl, givenisCompressionEnabledAndWaAuxTable64KGranularWhenCheckIs1MbAlignmentSupportedThenReturnCorrectValue) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    auto hardwareInfo = *defaultHwInfo;
+    auto isCompressionEnabled = true;
+    hardwareInfo.workaroundTable.flags.waAuxTable64KGranular = true;
+    EXPECT_FALSE(gfxCoreHelper.is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
+
+    isCompressionEnabled = false;
+    hardwareInfo.workaroundTable.flags.waAuxTable64KGranular = true;
+    EXPECT_FALSE(gfxCoreHelper.is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
+
+    isCompressionEnabled = false;
+    hardwareInfo.workaroundTable.flags.waAuxTable64KGranular = false;
+    EXPECT_FALSE(gfxCoreHelper.is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
+
+    isCompressionEnabled = true;
+    hardwareInfo.workaroundTable.flags.waAuxTable64KGranular = false;
+    EXPECT_TRUE(gfxCoreHelper.is1MbAlignmentSupported(hardwareInfo, isCompressionEnabled));
+}
+
+MTLTEST_F(GfxCoreHelperTestMtl, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
+    uint32_t steppings[] = {
+        REVISION_A0,
+        REVISION_B,
+        CommonConstants::invalidStepping,
+    };
+
+    auto hardwareInfo = *defaultHwInfo;
+    const auto &productHelper = getHelper<ProductHelper>();
+
+    for (auto stepping : steppings) {
+        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
+
+        if (stepping == REVISION_A0) {
+            EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
+        } else {
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
+        }
+
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo, productHelper));
+
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo, productHelper));
+    }
+}
+
+MTLTEST_F(ProductHelperTestMtl, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
+    auto &productHelper = getHelper<ProductHelper>();
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    for (uint32_t tileCount = 0; tileCount <= 4; tileCount++) {
+        hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
+
+        EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
+    }
+}
+
+MTLTEST_F(GfxCoreHelperTestMtl, givenMtlWhenSetForceNonCoherentThenNothingChanged) {
+    using FORCE_NON_COHERENT = typename FamilyType::STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
+
+    auto productHelper = ProductHelper::get(productFamily);
+
+    auto stateComputeMode = FamilyType::cmdInitStateComputeMode;
+    auto properties = StateComputeModeProperties{};
+
+    properties.isCoherencyRequired.set(true);
+    productHelper->setForceNonCoherent(&stateComputeMode, properties);
+    EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED, stateComputeMode.getForceNonCoherent());
+    EXPECT_EQ(0u, stateComputeMode.getMaskBits());
+}
+
+MTLTEST_F(GfxCoreHelperTestMtl, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
+    auto hardwareInfo = *defaultHwInfo;
+
+    for (auto &testInput : computeSlmValuesXeHPAndLaterTestsInput) {
+        EXPECT_EQ(testInput.expected, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hardwareInfo, testInput.slmSize));
+    }
+}

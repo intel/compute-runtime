@@ -99,6 +99,10 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_MTL_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_mtl_and_later.inl)
+endif()
+
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_xe_hpc_and_later.inl)
 endif()

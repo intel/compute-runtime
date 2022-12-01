@@ -63,12 +63,14 @@ using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
 using IsXEHP = IsProduct<IGFX_XE_HP_SDV>;
 using IsNotXEHP = IsNotWithinProducts<IGFX_XE_HP_SDV, IGFX_XE_HP_SDV>;
 
+using IsMTL = IsProduct<IGFX_METEORLAKE>;
 using IsDG2 = IsProduct<IGFX_DG2>;
 
 using IsPVC = IsProduct<IGFX_PVC>;
 
 using IsAtLeastSkl = IsAtLeastProduct<IGFX_SKYLAKE>;
 
+using IsAtLeastMtl = IsAtLeastProduct<IGFX_METEORLAKE>;
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
 
 using IsNotPVC = IsNotWithinProducts<IGFX_PVC, IGFX_PVC>;

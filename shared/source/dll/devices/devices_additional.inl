@@ -19,6 +19,13 @@ DEVICE(0x0BDB, PvcHwConfig)
 #endif
 
 #ifdef SUPPORT_XE_HPG_CORE
+#ifdef SUPPORT_MTL
+DEVICE(0x7D40, MtlHwConfig)
+DEVICE(0x7D55, MtlHwConfig)
+DEVICE(0x7DD5, MtlHwConfig)
+DEVICE(0x7D45, MtlHwConfig)
+DEVICE(0x7D60, MtlHwConfig)
+#endif
 #ifdef SUPPORT_DG2
 DEVICE(0x4F80, Dg2HwConfig)
 DEVICE(0x4F81, Dg2HwConfig)

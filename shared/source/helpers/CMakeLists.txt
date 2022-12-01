@@ -162,6 +162,12 @@ if(SUPPORT_DG2_AND_LATER)
   )
 endif()
 
+if(SUPPORT_MTL_AND_LATER)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/compiler_aot_config_mtl_and_later.inl
+  )
+endif()
+
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_pvc_and_later.inl
