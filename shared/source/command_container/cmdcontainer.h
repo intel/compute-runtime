@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/command_stream/csr_definitions.h"
-#include "shared/source/helpers/heap_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 
@@ -17,6 +16,7 @@
 #include <vector>
 
 namespace NEO {
+class HeapHelper;
 class CommandStreamReceiver;
 class Device;
 class GraphicsAllocation;

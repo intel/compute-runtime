@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/timestamp_packet.h"
 
+#include <fstream>
 #include <memory>
 #include <string>
 

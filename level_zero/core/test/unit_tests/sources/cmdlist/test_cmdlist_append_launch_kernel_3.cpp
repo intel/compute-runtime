@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/hw_info_config.h"

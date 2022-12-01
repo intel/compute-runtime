@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/hw_info_config.h"

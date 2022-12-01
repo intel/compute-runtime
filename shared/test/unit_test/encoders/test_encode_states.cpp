@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"

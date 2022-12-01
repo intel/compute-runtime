@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"

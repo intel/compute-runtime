@@ -8,9 +8,11 @@
 #pragma once
 #include "shared/source/utilities/metrics_library.h"
 
-#include "aubstream/engine_node.h"
-
 #include <mutex>
+
+namespace aub_stream {
+enum EngineType : uint32_t;
+}
 
 namespace NEO {
 

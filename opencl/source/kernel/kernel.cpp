@@ -13,6 +13,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_helper.h"

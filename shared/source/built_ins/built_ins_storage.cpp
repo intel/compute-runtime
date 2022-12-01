@@ -14,6 +14,7 @@
 #include "os_inc.h"
 
 #include <cstdint>
+#include <fstream>
 #include <sstream>
 
 namespace NEO {

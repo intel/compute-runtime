@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/hw_helper_tests.h"
 
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"

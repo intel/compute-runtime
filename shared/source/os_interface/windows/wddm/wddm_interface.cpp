@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"

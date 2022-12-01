@@ -15,6 +15,7 @@
 #include "event_fixture.h"
 
 #include <array>
+#include <fstream>
 #include <functional>
 
 struct ClonedStream : std::stringstream {

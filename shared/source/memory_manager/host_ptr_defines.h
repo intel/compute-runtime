@@ -8,7 +8,7 @@
 #pragma once
 
 #include <cinttypes>
-#include <cstdlib>
+#include <cstddef>
 #include <limits>
 
 namespace NEO {

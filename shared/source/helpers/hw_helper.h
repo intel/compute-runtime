@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/aux_translation.h"
@@ -21,6 +20,10 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+
+namespace AubMemDump {
+struct LrcaHelper;
+}
 
 namespace NEO {
 enum class PostSyncMode : uint32_t;

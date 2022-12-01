@@ -6,21 +6,18 @@
  */
 
 #pragma once
-#include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/bindless_heaps_helper.h"
-#include "shared/source/helpers/common_types.h"
-#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/performance_counters.h"
-#include "shared/source/program/sync_buffer_handler.h"
 
 namespace NEO {
+class SyncBufferHandler;
+enum class EngineGroupType : uint32_t;
 class DebuggerL0;
 class OSTime;
 class SourceLevelDebugger;

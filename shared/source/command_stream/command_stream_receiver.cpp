@@ -39,6 +39,10 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
 
+namespace AubMemDump {
+#include "aub_services.h"
+}
+
 namespace NEO {
 
 // Global table of CommandStreamReceiver factories for HW and tests

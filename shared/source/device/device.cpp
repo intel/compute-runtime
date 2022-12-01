@@ -22,6 +22,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 

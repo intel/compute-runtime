@@ -43,6 +43,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include <fstream>
 #include <map>
 
 namespace NEO {

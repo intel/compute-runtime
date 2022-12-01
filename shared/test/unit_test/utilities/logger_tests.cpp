@@ -19,6 +19,7 @@
 
 #include <array>
 #include <cstdio>
+#include <fstream>
 #include <memory>
 #include <sstream>
 #include <string>
