@@ -176,9 +176,6 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
             remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->singlePacketSize);
         }
     }
-    if (this->downloadAllocationRequired) {
-        this->csr->downloadAllocations();
-    }
     this->setIsCompleted();
     this->csr->getInternalAllocationStorage()->cleanAllocationList(this->csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     return ZE_RESULT_SUCCESS;
@@ -190,6 +187,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         hostEventSetValue(metricStreamer->getNotificationState());
     }
     if (this->downloadAllocationRequired) {
+        this->csr->downloadAllocations();
         this->csr->downloadAllocation(*eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));
     }
 
