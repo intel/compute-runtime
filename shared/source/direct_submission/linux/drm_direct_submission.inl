@@ -30,6 +30,10 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
         this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
     }
 
+    if (DebugManager.flags.OverrideUserFenceStartValue.get() != -1) {
+        this->completionFenceValue = static_cast<decltype(completionFenceValue)>(DebugManager.flags.OverrideUserFenceStartValue.get());
+    }
+
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
 
     auto subDevices = osContextLinux->getDeviceBitfield();

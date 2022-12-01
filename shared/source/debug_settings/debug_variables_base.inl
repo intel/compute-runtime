@@ -403,6 +403,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, GTPinAllocateBufferInSharedMemory, -1, "Force GT
 DECLARE_DEBUG_VARIABLE(int32_t, AlignLocalMemoryVaTo2MB, -1, "Allow 2MB pages for allocations with size>=2MB. On Linux it means aligned VA, on Windows it means aligned size. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceForCompletionWait, -1, "-1: default (disabled), 0: disable, 1: enable : Use Wait User Fence instead Gem Wait")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUseCtxId, -1, "-1: default (disabled), 0: disable, 1: enable : Use Context Id in Wait User Fence when waiting for completion tag")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideUserFenceStartValue, -1, "-1: default (disabled), >1: Instead of starting from 0, use different start value.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetKmdWaitTimeout, -1, "-1: default (infinity), >0: amount of time units for wait function timeout")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNotifyEnableForTagUpdatePostSync, -1, "-1: default (usage determined by user fence wait call), 0: disable use of NotifyEnable flag, 1: enable use NotifyEnable flag")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCmdQRoundRobindEngineAssign, -1, "-1: default, 0: disable, 1: enable")
