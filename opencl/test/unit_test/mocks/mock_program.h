@@ -25,6 +25,23 @@ ClDeviceVector toClDeviceVector(ClDevice &clDevice);
 ////////////////////////////////////////////////////////////////////////////////
 // Program - Core implementation
 ////////////////////////////////////////////////////////////////////////////////
+class MockNeoProgram : public NEO::Program {
+  public:
+    using Base = NEO::Program;
+    using Base::buildInfos;
+    using Base::exportedFunctionsKernelId;
+
+    MockNeoProgram(NEO::Context *context, bool isBuiltIn, const NEO::ClDeviceVector &devices)
+        : NEO::Program(context, isBuiltIn, devices) {}
+
+    void resizeAndPopulateKernelInfoArray(size_t size) {
+        buildInfos[0].kernelInfoArray.resize(size);
+        for (auto &entry : buildInfos[0].kernelInfoArray) {
+            entry = new KernelInfo();
+        }
+    }
+};
+
 class MockProgram : public Program {
   public:
     using Program::allowNonUniform;

@@ -565,6 +565,25 @@ TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfo
     EXPECT_EQ(0u, kernelAllocMap.size());
 }
 
+using ProgramGetNumKernelsTest = Test<NEOProgramFixture>;
+TEST_F(ProgramGetNumKernelsTest, givenProgramWithFunctionsWhenGettingNumKernelsFunctionsAreNotExposed) {
+    program->resizeAndPopulateKernelInfoArray(2);
+    program->exportedFunctionsKernelId = 0;
+    EXPECT_EQ(1U, program->getNumKernels());
+}
+
+using ProgramGetKernelInfoTest = Test<NEOProgramFixture>;
+TEST_F(ProgramGetKernelInfoTest, givenProgramWithFunctionsWhenGettingKernelInfoByIndexThenFunctionsAreNotExposed) {
+    program->resizeAndPopulateKernelInfoArray(2);
+    program->exportedFunctionsKernelId = 0;
+    auto kernelInfo = program->getKernelInfo(size_t(0), uint32_t(0));
+    EXPECT_EQ(program->buildInfos[0].kernelInfoArray[1], kernelInfo);
+}
+
+TEST_F(ProgramGetKernelInfoTest, givenProgramFunctionsWhenGettingKernelInfoByNameThenFunctionsAreNotExposed) {
+    EXPECT_EQ(nullptr, program->getKernelInfo(NEO::Elf::SectionsNamesZebin::externalFunctions.data(), uint32_t(0)));
+}
+
 HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDeferredFreeListAndCsrRegistersCacheFlush) {
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());

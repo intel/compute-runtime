@@ -286,6 +286,23 @@ TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
 }
 
+TEST(DecodeSingleDeviceBinary, GivenZebinWithExternalFunctionsThenDecodingSucceedsAndLinkerInputIsSet) {
+    ZebinTestData::ZebinWithExternalFunctionsInfo zebinElf;
+    NEO::ProgramInfo programInfo;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    NEO::SingleDeviceBinary bin;
+    bin.deviceBinary = zebinElf.storage;
+    NEO::DecodeError status;
+    NEO::DeviceBinaryFormat format;
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::Success, status);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
+    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_NE(nullptr, programInfo.linkerInput.get());
+    EXPECT_EQ(1, programInfo.linkerInput->getExportedFunctionsSegmentId());
+}
+
 TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {
     PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
 
