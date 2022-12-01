@@ -154,7 +154,7 @@ struct DebugSessionImp : DebugSession {
     std::vector<std::pair<ze_device_thread_t, bool>> pendingInterrupts;
     std::vector<EuThread::ThreadId> newlyStoppedThreads;
     std::vector<char> stateSaveAreaHeader;
-    SIP::version minSlmSipVersion = {2, 0, 0};
+    SIP::version minSlmSipVersion = {2, 1, 0};
     bool sipSupportsSlm = false;
 
     std::vector<std::pair<DebugSessionImp *, bool>> tileSessions; // DebugSession, attached

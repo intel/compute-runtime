@@ -2057,6 +2057,31 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     EXPECT_EQ(sbaExpected[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU], sba[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU]);
 }
 
+TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipWhenCheckingMinimumSipVersionForSLMThenExpectedResultIsReturned) {
+    session->debugArea.reserved1 = 1u;
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
+    auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+    auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                pStateSaveAreaHeader->regHeader.state_area_offset +
+                pStateSaveAreaHeader->regHeader.state_save_size * 16;
+    session->stateSaveAreaHeader.resize(size);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 0;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 0;
+
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, false);
+
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.major = 2;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.minor = 1;
+    reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 0;
+
+    session->slmSipVersionCheck();
+    EXPECT_EQ(session->sipSupportsSlm, true);
+}
+
 TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipWhenCheckingDifferentSipVersionsThenExpectedResultIsReturned) {
     session->debugArea.reserved1 = 1u;
     session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
