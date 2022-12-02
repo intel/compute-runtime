@@ -90,7 +90,7 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
         }
     } else if (request == DrmIoctl::GemVmPrefetch) {
         auto vmPrefetchParams = static_cast<prelim_drm_i915_gem_vm_prefetch *>(arg);
-        EXPECT_NE(0u, vmPrefetchParams->rsvd);
+        EXPECT_NE(0u, vmPrefetchParams->vm_id);
     }
     return ioctlRetVal;
 }

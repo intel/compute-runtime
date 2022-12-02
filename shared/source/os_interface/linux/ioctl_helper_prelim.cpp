@@ -236,7 +236,7 @@ bool IoctlHelperPrelim20::setVmPrefetch(uint64_t start, uint64_t length, uint32_
     vmPrefetch.length = length;
     vmPrefetch.region = region;
     vmPrefetch.start = start;
-    vmPrefetch.rsvd = vmId;
+    vmPrefetch.vm_id = vmId;
 
     int ret = IoctlHelper::ioctl(DrmIoctl::GemVmPrefetch, &vmPrefetch);
     if (ret != 0) {

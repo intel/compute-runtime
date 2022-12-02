@@ -261,9 +261,11 @@ struct prelim_drm_i915_gem_create_ext {
 	__u32 pad;
 
 #define PRELIM_I915_GEM_CREATE_EXT_SETPARAM	(PRELIM_I915_USER_EXT | 1)
+#define PRELIM_I915_GEM_CREATE_EXT_PROTECTED_CONTENT   (PRELIM_I915_USER_EXT | 2)
 #define PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE	(PRELIM_I915_USER_EXT | 3)
 #define PRELIM_I915_GEM_CREATE_EXT_FLAGS_UNKNOWN			\
 	(~(PRELIM_I915_GEM_CREATE_EXT_SETPARAM |			\
+	   PRELIM_I915_GEM_CREATE_EXT_PROTECTED_CONTENT |		\
 	   PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE))
 	__u64 extensions;
 };
@@ -592,6 +594,24 @@ struct prelim_drm_i915_gem_context_param {
  */
 #define PRELIM_I915_CONTEXT_PARAM_ACC		(PRELIM_I915_CONTEXT_PARAM | 0xd)
 };
+
+/*
+ * I915_CONTEXT_PARAM_PROTECTED_CONTENT:
+ *
+ * Mark that the context makes use of protected content, which will result
+ * in the context being invalidated when the protected content session is.
+ * This flag can only be set at context creation time and, when set to true,
+ * must be preceded by an explicit setting of I915_CONTEXT_PARAM_RECOVERABLE
+ * to false. This flag can't be set to true in conjunction with setting the
+ * I915_CONTEXT_PARAM_BANNABLE flag to false.
+ *
+ * Given the numerous restriction on this flag, there are several unique
+ * failure cases:
+ *
+ * -ENODEV: feature not available
+ * -EPERM: trying to mark a recoverable or not bannable context as protected
+ */
+#define PRELIM_I915_CONTEXT_PARAM_PROTECTED_CONTENT (PRELIM_I915_CONTEXT_PARAM | 0xe)
 
 struct prelim_drm_i915_gem_context_create_ext {
 /* Depricated in favor of PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING */
@@ -1355,14 +1375,19 @@ struct prelim_drm_i915_gem_cache_reserve {
 /**
  * struct prelim_drm_i915_gem_vm_prefetch
  *
- * Prefetch an address range to a memory region.
+ * Prefetch an address range to a memory region, support both
+ * system allocator and runtime allocator.
  */
 struct prelim_drm_i915_gem_vm_prefetch {
 	/** Memory region to prefetch to **/
 	__u32 region;
 
-	/** Reserved **/
-	__u32 rsvd;
+	/**
+	 * Destination vm id to prefetch to.
+	 * Only valid for runtime allocator.
+	 * System allocator doesn't need a vm_id, should be set to 0.
+	 */
+	__u32 vm_id;
 
 	/** VA start to prefetch **/
 	__u64 start;
