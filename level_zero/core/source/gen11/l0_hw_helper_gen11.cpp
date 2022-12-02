@@ -18,11 +18,11 @@ using Family = NEO::Gen11Family;
 static auto gfxCore = IGFX_GEN11_CORE;
 
 template <>
-void populateFactoryTable<L0HwHelperHw<Family>>() {
-    extern L0HwHelper *l0HwHelperFactory[IGFX_MAX_CORE];
-    l0HwHelperFactory[gfxCore] = &L0HwHelperHw<Family>::get();
+void populateFactoryTable<L0GfxCoreHelperHw<Family>>() {
+    extern L0GfxCoreHelper *l0GfxCoreHelperFactory[IGFX_MAX_CORE];
+    l0GfxCoreHelperFactory[gfxCore] = &L0GfxCoreHelperHw<Family>::get();
 }
 
-template class L0HwHelperHw<Family>;
+template class L0GfxCoreHelperHw<Family>;
 
 } // namespace L0

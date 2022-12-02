@@ -71,9 +71,9 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
             device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
         }
         auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-        this->stateComputeModeTracking = L0CoreHelper::enableStateComputeModeTracking(rootDeviceEnvironment);
-        this->frontEndStateTracking = L0CoreHelper::enableFrontEndStateTracking(rootDeviceEnvironment);
-        this->pipelineSelectStateTracking = L0CoreHelper::enablePipelineSelectStateTracking(rootDeviceEnvironment);
+        this->stateComputeModeTracking = L0GfxCoreHelper::enableStateComputeModeTracking(rootDeviceEnvironment);
+        this->frontEndStateTracking = L0GfxCoreHelper::enableFrontEndStateTracking(rootDeviceEnvironment);
+        this->pipelineSelectStateTracking = L0GfxCoreHelper::enablePipelineSelectStateTracking(rootDeviceEnvironment);
     }
     return returnValue;
 }

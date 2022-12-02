@@ -19,7 +19,7 @@
 
 namespace L0 {
 
-extern L0HwHelper *l0HwHelperFactory[IGFX_MAX_CORE];
+extern L0GfxCoreHelper *l0GfxCoreHelperFactory[IGFX_MAX_CORE];
 
 namespace ult {
 
@@ -1354,14 +1354,14 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
 }
 
 template <typename GfxFamily>
-struct MockL0HwHelperSupportsCmdListHeapSharingHw : L0::L0HwHelperHw<GfxFamily> {
+struct MockL0GfxCoreHelperSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw<GfxFamily> {
     bool platformSupportsCmdListHeapSharing() const override { return true; }
 };
 
 HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsFollowsTheSameSetting, IsAtLeastSkl) {
-    MockL0HwHelperSupportsCmdListHeapSharingHw<FamilyType> mockL0HwHelperSupport;
-    VariableBackup<L0HwHelper *> l0HwHelperFactoryBackup{&L0::l0HwHelperFactory[static_cast<size_t>(device->getHwInfo().platform.eRenderCoreFamily)]};
-    l0HwHelperFactoryBackup = &mockL0HwHelperSupport;
+    MockL0GfxCoreHelperSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperSupport;
+    VariableBackup<L0GfxCoreHelper *> l0GfxCoreHelperFactoryBackup{&L0::l0GfxCoreHelperFactory[static_cast<size_t>(device->getHwInfo().platform.eRenderCoreFamily)]};
+    l0GfxCoreHelperFactoryBackup = &mockL0GfxCoreHelperSupport;
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
@@ -1384,14 +1384,14 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdLis
 }
 
 template <typename GfxFamily>
-struct MockL0HwHelperNoSupportsCmdListHeapSharingHw : L0::L0HwHelperHw<GfxFamily> {
+struct MockL0GfxCoreHelperNoSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw<GfxFamily> {
     bool platformSupportsCmdListHeapSharing() const override { return false; }
 };
 
 HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsIsNotEnabled, IsAtLeastSkl) {
-    MockL0HwHelperNoSupportsCmdListHeapSharingHw<FamilyType> mockL0HwHelperNoSupport;
-    VariableBackup<L0HwHelper *> l0HwHelperFactoryBackup{&L0::l0HwHelperFactory[static_cast<size_t>(device->getHwInfo().platform.eRenderCoreFamily)]};
-    l0HwHelperFactoryBackup = &mockL0HwHelperNoSupport;
+    MockL0GfxCoreHelperNoSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperNoSupport;
+    VariableBackup<L0GfxCoreHelper *> l0GfxCoreHelperFactoryBackup{&L0::l0GfxCoreHelperFactory[static_cast<size_t>(device->getHwInfo().platform.eRenderCoreFamily)]};
+    l0GfxCoreHelperFactoryBackup = &mockL0GfxCoreHelperNoSupport;
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);

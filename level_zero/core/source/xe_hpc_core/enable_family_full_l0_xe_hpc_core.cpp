@@ -16,7 +16,7 @@ using Family = XeHpcCoreFamily;
 
 struct EnableL0XeHpcCore {
     EnableL0XeHpcCore() {
-        L0::populateFactoryTable<L0::L0HwHelperHw<Family>>();
+        L0::populateFactoryTable<L0::L0GfxCoreHelperHw<Family>>();
     }
 };
 

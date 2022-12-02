@@ -2329,19 +2329,19 @@ HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothing
 }
 
 TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDefaultValuseIsHwSupported) {
-    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandList(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList.get());
 
-    bool expectedStateComputeModeTracking = l0CoreHelper.platformSupportsStateComputeModeTracking();
+    bool expectedStateComputeModeTracking = l0GfxCoreHelper.platformSupportsStateComputeModeTracking();
     EXPECT_EQ(expectedStateComputeModeTracking, commandList->stateComputeModeTracking);
 
-    bool expectedPipelineSelectTracking = l0CoreHelper.platformSupportsPipelineSelectTracking();
+    bool expectedPipelineSelectTracking = l0GfxCoreHelper.platformSupportsPipelineSelectTracking();
     EXPECT_EQ(expectedPipelineSelectTracking, commandList->pipelineSelectStateTracking);
 
-    bool expectedFrontEndTracking = l0CoreHelper.platformSupportsFrontEndTracking();
+    bool expectedFrontEndTracking = l0GfxCoreHelper.platformSupportsFrontEndTracking();
     EXPECT_EQ(expectedFrontEndTracking, commandList->frontEndStateTracking);
 }
 

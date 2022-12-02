@@ -16,7 +16,7 @@ using Family = Gen11Family;
 
 struct EnableL0Gen11 {
     EnableL0Gen11() {
-        L0::populateFactoryTable<L0::L0HwHelperHw<Family>>();
+        L0::populateFactoryTable<L0::L0GfxCoreHelperHw<Family>>();
     }
 };
 

@@ -161,12 +161,12 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
     ASSERT_NE(nullptr, eventPool);
 
     auto &hwInfo = device->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     uint32_t maxPacketCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
-    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPacketCount = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPacketCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
     uint32_t packetsSize = maxPacketCount *
                            static_cast<uint32_t>(NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize());
@@ -282,9 +282,9 @@ TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
 
-    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    if (l0CoreHelper.alwaysAllocateEventInLocalMem()) {
+    if (l0GfxCoreHelper.alwaysAllocateEventInLocalMem()) {
         EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, eventPool->getAllocation().getAllocationType());
     } else {
         EXPECT_EQ(NEO::AllocationType::BUFFER_HOST_MEMORY, eventPool->getAllocation().getAllocationType());
@@ -674,11 +674,11 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     ASSERT_NE(nullptr, eventPool);
 
     auto &hwInfo = device->getHwInfo();
-    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
-    auto event = std::unique_ptr<L0::Event>(l0CoreHelper.createEvent(eventPool.get(), &eventDesc, device));
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto event = std::unique_ptr<L0::Event>(l0GfxCoreHelper.createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
 
-    if (l0CoreHelper.multiTileCapablePlatform()) {
+    if (l0GfxCoreHelper.multiTileCapablePlatform()) {
         EXPECT_TRUE(event->isUsingContextEndOffset());
     } else {
         EXPECT_FALSE(event->isUsingContextEndOffset());
@@ -689,8 +689,8 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
         eventCompletionMemory = ptrOffset(eventCompletionMemory, event->getContextEndOffset());
     }
     uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
-    if (l0CoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPacketsCount = l0CoreHelper.getEventBaseMaxPacketCount(hwInfo);
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPacketsCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
 
     for (uint32_t i = 0; i < maxPacketsCount; i++) {
@@ -744,9 +744,9 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
 HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, IsXeHpOrXeHpcCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
-    bool useContextEndOffset = l0CoreHelper.multiTileCapablePlatform();
+    bool useContextEndOffset = l0GfxCoreHelper.multiTileCapablePlatform();
     EXPECT_TRUE(useContextEndOffset);
 
     ze_event_pool_desc_t eventPoolDesc = {
@@ -782,8 +782,8 @@ HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseCont
 HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, IsNotXeHpOrXeHpcCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    bool useContextEndOffset = l0CoreHelper.multiTileCapablePlatform();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    bool useContextEndOffset = l0GfxCoreHelper.multiTileCapablePlatform();
     EXPECT_FALSE(useContextEndOffset);
 
     ze_event_pool_desc_t eventPoolDesc = {
@@ -1152,11 +1152,11 @@ TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventF
 
 TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {
     auto &hwInfo = device->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     uint32_t maxKernelCount = EventPacketsCount::maxKernelSplit;
-    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxKernelCount = l0HwHelper.getEventMaxKernelCount(hwInfo);
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxKernelCount = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
     }
 
     EXPECT_NE(nullptr, event->kernelEventCompletionData);
@@ -1186,9 +1186,9 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsDependentIfAllo
     auto allocation = &eventPool->getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    if (l0CoreHelper.alwaysAllocateEventInLocalMem()) {
+    if (l0GfxCoreHelper.alwaysAllocateEventInLocalMem()) {
         EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, allocation->getAllocationType());
     } else {
         EXPECT_EQ(NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
@@ -2009,11 +2009,11 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     auto &hwHelper = device->getHwHelper();
     auto &hwInfo = device->getHwInfo();
 
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     uint32_t packetCount = EventPacketsCount::eventPackets;
-    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-        packetCount = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
 
     auto expectedAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
@@ -2045,11 +2045,11 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
     auto &hwInfo = device->getHwInfo();
     auto expectedAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
 
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     uint32_t packetCount = EventPacketsCount::eventPackets;
-    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-        packetCount = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
 
     {
@@ -2180,13 +2180,13 @@ struct MockEventCompletion : public EventImp<uint32_t> {
     MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device, false) {
         auto neoDevice = device->getNEODevice();
         auto &hwInfo = neoDevice->getHardwareInfo();
-        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-        signalAllEventPackets = L0HwHelper::useSignalAllEventPackets(hwInfo);
+        signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
 
         uint32_t maxKernels = EventPacketsCount::maxKernelSplit;
-        if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-            maxKernels = l0HwHelper.getEventMaxKernelCount(hwInfo);
+        if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+            maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
         }
         kernelEventCompletionData = std::make_unique<KernelEventCompletionData<uint32_t>[]>(maxKernels);
 
@@ -2329,7 +2329,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
     void testAllDevices() {
         auto &hwInfo = device->getHwInfo();
-        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         ze_event_pool_desc_t eventPoolDesc = {
@@ -2344,7 +2344,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         ASSERT_NE(nullptr, eventPool);
 
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
-        auto expectedPoolMaxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
         if constexpr (multiTile == 1) {
             expectedPoolMaxPackets *= 2;
         }
@@ -2365,7 +2365,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
 
-        uint32_t maxKernels = l0HwHelper.getEventMaxKernelCount(hwInfo);
+        uint32_t maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
         EXPECT_EQ(maxKernels, event->getMaxKernelCount());
     }
 
@@ -2373,7 +2373,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto &hwInfo = device->getHwInfo();
-        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         ze_event_pool_desc_t eventPoolDesc = {
@@ -2401,7 +2401,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         ASSERT_NE(nullptr, eventPool);
 
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
-        auto expectedPoolMaxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
 
         EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
 
@@ -2420,7 +2420,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
 
-        uint32_t maxKernels = l0HwHelper.getEventMaxKernelCount(hwInfo);
+        uint32_t maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
         EXPECT_EQ(maxKernels, event->getMaxKernelCount());
     }
 
@@ -2428,7 +2428,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto &hwInfo = device->getHwInfo();
-        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         ze_event_pool_desc_t eventPoolDesc = {
             ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -2441,7 +2441,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         ASSERT_NE(nullptr, eventPool);
 
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
-        auto expectedPoolMaxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
 
         EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
 

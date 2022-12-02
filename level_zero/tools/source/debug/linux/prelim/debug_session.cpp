@@ -1266,9 +1266,9 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
     }
 
     auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    auto threadsWithAttention = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention->bitmask, attention->bitmask_size);
+    auto threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention->bitmask, attention->bitmask_size);
 
     printBitmask(attention->bitmask, attention->bitmask_size);
 
@@ -1365,7 +1365,7 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
     auto classInstance = DrmHelper::getEngineInstance(connectedDevice, tile, hwInfo.capabilityTable.defaultEngineType);
     UNRECOVERABLE_IF(!classInstance);
 
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     bitmaskSizeOut = 0;
 
@@ -1399,7 +1399,7 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED) {
-        l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+        l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
         euControl.bitmask_size = static_cast<uint32_t>(bitmaskSize);
         euControl.bitmask_ptr = reinterpret_cast<uint64_t>(bitmask.get());
     }

@@ -756,9 +756,9 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmask, bitmaskSize);
 
     prelim_drm_i915_debug_event_eu_attention attention = {};
     attention.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;

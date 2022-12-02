@@ -15,7 +15,7 @@
 namespace L0 {
 
 template <typename Family>
-L0::Event *L0HwHelperHw<Family>::createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const {
+L0::Event *L0GfxCoreHelperHw<Family>::createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const {
     if (NEO::DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
         if (NEO::DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
             return Event::create<uint32_t>(eventPool, desc, device);
@@ -30,12 +30,12 @@ L0::Event *L0HwHelperHw<Family>::createEvent(L0::EventPool *eventPool, const ze_
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::isResumeWARequired() {
+bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
     return false;
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
+bool L0GfxCoreHelperHw<Family>::imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
     if (NEO::DebugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
         return !!NEO::DebugManager.flags.RenderCompressedImagesEnabled.get();
     }
@@ -44,7 +44,7 @@ bool L0HwHelperHw<Family>::imageCompressionSupported(const NEO::HardwareInfo &hw
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
+bool L0GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
     if (NEO::DebugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
         return !!NEO::DebugManager.flags.RenderCompressedBuffersEnabled.get();
     }
@@ -53,17 +53,17 @@ bool L0HwHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwIn
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::forceDefaultUsmCompressionSupport() const {
+bool L0GfxCoreHelperHw<Family>::forceDefaultUsmCompressionSupport() const {
     return false;
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
+bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
     return false;
 }
 
 template <typename Family>
-bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
+bool L0GfxCoreHelperHw<Family>::multiTileCapablePlatform() const {
     return false;
 }
 

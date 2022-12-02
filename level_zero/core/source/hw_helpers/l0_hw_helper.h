@@ -27,13 +27,10 @@ namespace L0 {
 struct Event;
 struct Device;
 struct EventPool;
-class L0HwHelper;
 
-using L0CoreHelper = L0HwHelper;
-
-class L0HwHelper {
+class L0GfxCoreHelper {
   public:
-    static L0HwHelper &get(GFXCORE_FAMILY gfxCore);
+    static L0GfxCoreHelper &get(GFXCORE_FAMILY gfxCore);
     static bool enableFrontEndStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enablePipelineSelectStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enableStateComputeModeTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
@@ -64,19 +61,19 @@ class L0HwHelper {
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const = 0;
 
   protected:
-    L0HwHelper() = default;
+    L0GfxCoreHelper() = default;
 };
 
 template <typename GfxFamily>
-class L0HwHelperHw : public L0HwHelper {
+class L0GfxCoreHelperHw : public L0GfxCoreHelper {
   public:
-    static L0HwHelper &get() {
-        static L0HwHelperHw<GfxFamily> l0HwHelper;
-        return l0HwHelper;
+    static L0GfxCoreHelper &get() {
+        static L0GfxCoreHelperHw<GfxFamily> l0GfxCoreHelper;
+        return l0GfxCoreHelper;
     }
     void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const override;
     L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const override;
-    L0HwHelperHw() = default;
+    L0GfxCoreHelperHw() = default;
 
     bool isResumeWARequired() override;
     bool imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;

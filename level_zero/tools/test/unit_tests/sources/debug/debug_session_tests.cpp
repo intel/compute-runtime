@@ -60,13 +60,13 @@ TEST(DebugSessionTest, givenApplyResumeWaCalledThenWAIsApplied) {
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
-    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     size_t bitmaskSize = 32;
     auto bitmask = std::make_unique<uint8_t[]>(bitmaskSize);
     bitmask.get()[0] = 1;
     sessionMock->applyResumeWa(bitmask.get(), bitmaskSize);
-    if (l0CoreHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1, bitmask.get()[4]);
     } else {
         EXPECT_EQ(0, bitmask.get()[4]);
@@ -922,7 +922,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion1AndResumeWARequiredWhenCallingRes
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
-    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -941,7 +941,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion1AndResumeWARequiredWhenCallingRes
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    if (l0CoreHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, sessionMock->readRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeResumeCommandCalled);
@@ -966,7 +966,7 @@ TEST(DebugSessionTest, GivenErrorFromReadRegisterWhenResumingThreadThenRegisterI
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
-    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -984,7 +984,7 @@ TEST(DebugSessionTest, GivenErrorFromReadRegisterWhenResumingThreadThenRegisterI
 
     auto result = sessionMock->resume(thread);
 
-    if (l0CoreHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, sessionMock->readRegistersCallCount);
         EXPECT_EQ(0u, sessionMock->writeRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeResumeCommandCalled);
@@ -1012,7 +1012,7 @@ TEST(DebugSessionTest, GivenErrorFromWriteRegisterWhenResumingThreadThenRegister
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
-    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1030,7 +1030,7 @@ TEST(DebugSessionTest, GivenErrorFromWriteRegisterWhenResumingThreadThenRegister
 
     auto result = sessionMock->resume(thread);
 
-    if (l0CoreHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, sessionMock->readRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeResumeCommandCalled);
@@ -1057,7 +1057,7 @@ TEST(DebugSessionTest, GivenNonBindlessSipVersion1AndResumeWARequiredWhenCalling
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
-    auto &l0CoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1076,7 +1076,7 @@ TEST(DebugSessionTest, GivenNonBindlessSipVersion1AndResumeWARequiredWhenCalling
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    if (l0CoreHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, sessionMock->readRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeRegistersCallCount);
         EXPECT_EQ(1u, sessionMock->writeResumeCommandCalled);
