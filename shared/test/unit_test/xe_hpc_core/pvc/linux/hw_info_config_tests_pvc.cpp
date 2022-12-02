@@ -34,6 +34,10 @@ PVCTEST_F(PvcProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
     EXPECT_EQ(0, ret);
 }
 
+PVCTEST_F(PvcProductHelperLinux, WhenGetSvmCpuAlignmentThenProperValueIsReturned) {
+    EXPECT_EQ(MemoryConstants::pageSize64k, productHelper->getSvmCpuAlignment());
+}
+
 PVCTEST_F(PvcProductHelperLinux, given57bAddressSpaceWhenConfiguringHwInfoThenSetFtrFlag) {
 
     outHwInfo.featureTable.flags.ftr57bGPUAddressing = false;

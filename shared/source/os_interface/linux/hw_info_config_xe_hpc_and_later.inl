@@ -9,3 +9,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isVmBindPatIndexProgrammingSupported() const {
     return true;
 }
+
+template <>
+size_t HwInfoConfigHw<gfxProduct>::getSvmCpuAlignment() const {
+    return MemoryConstants::pageSize64k;
+}

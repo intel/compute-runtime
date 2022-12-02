@@ -121,6 +121,7 @@ class HwInfoConfig {
     virtual bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const = 0;
+    virtual size_t getSvmCpuAlignment() const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
     virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
@@ -262,6 +263,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const override;
     bool isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
+    size_t getSvmCpuAlignment() const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;
     bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;

@@ -248,6 +248,11 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDg2WhenIsBlitterForImagesSupportedIsCalledTh
     EXPECT_TRUE(hwInfoConfig.isBlitterForImagesSupported());
 }
 
+DG2TEST_F(HwInfoConfigTestDg2, WhenGetSvmCpuAlignmentThenProperValueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_EQ(MemoryConstants::pageSize2Mb, hwInfoConfig.getSvmCpuAlignment());
+}
+
 DG2TEST_F(HwInfoConfigTestDg2, givenB0rCSteppingWhenAskingIfTile64With3DSurfaceOnBCSIsSupportedThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 4> revisions = {

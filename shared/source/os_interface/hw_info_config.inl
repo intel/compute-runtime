@@ -400,6 +400,11 @@ uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+size_t HwInfoConfigHw<gfxProduct>::getSvmCpuAlignment() const {
+    return MemoryConstants::pageSize2Mb;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
     return getFrontEndPropertyComputeDispatchAllWalkerSupport();
 }
