@@ -490,7 +490,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                        alignedSize, AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
-    cpuProperties.alignment = pageSizeForAlignment;
+    cpuProperties.alignment = MemoryConstants::pageSize2Mb;
     cpuProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false, cacheRegion);
