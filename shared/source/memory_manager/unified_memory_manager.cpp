@@ -147,9 +147,7 @@ SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager, bool multiOsCon
     }
 }
 
-SVMAllocsManager::~SVMAllocsManager() {
-    this->trimUSMDeviceAllocCache();
-}
+SVMAllocsManager::~SVMAllocsManager() = default;
 
 void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties,
                                        const RootDeviceIndicesContainer &rootDeviceIndices,
@@ -428,8 +426,6 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationD
     if (svmData->cpuAllocation && pageFaultManager) {
         pageFaultManager->removeAllocation(svmData->cpuAllocation->getUnderlyingBuffer());
     }
-    std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
-    std::unique_lock<std::shared_mutex> lock(mtx);
     if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
         freeZeroCopySvmAllocation(svmData);
     } else {
@@ -543,9 +539,15 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     return svmPtr;
 }
 
+void SVMAllocsManager::freeSVMData(SvmAllocationData *svmData) {
+    std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
+    std::unique_lock<std::shared_mutex> lock(mtx);
+    SVMAllocs.remove(*svmData);
+}
+
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
     auto gpuAllocations = svmData->gpuAllocations;
-    SVMAllocs.remove(*svmData);
+    freeSVMData(svmData);
     for (const auto &graphicsAllocation : gpuAllocations.getGraphicsAllocations()) {
         memoryManager->freeGraphicsMemory(graphicsAllocation);
     }
@@ -559,8 +561,7 @@ void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svm
     auto graphicsAllocations = svmData->gpuAllocations.getGraphicsAllocations();
     GraphicsAllocation *cpuAllocation = svmData->cpuAllocation;
     bool isImportedAllocation = svmData->isImportedAllocation;
-    SVMAllocs.remove(*svmData);
-
+    freeSVMData(svmData);
     for (auto gpuAllocation : graphicsAllocations) {
         memoryManager->freeGraphicsMemory(gpuAllocation, isImportedAllocation);
     }

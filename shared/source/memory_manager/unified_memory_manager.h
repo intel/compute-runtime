@@ -203,6 +203,7 @@ class SVMAllocsManager {
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
 
     void initUsmDeviceAllocationsCache();
+    void freeSVMData(SvmAllocationData *svmData);
 
     MapBasedAllocationTracker SVMAllocs;
     MapOperationsTracker svmMapOperations;

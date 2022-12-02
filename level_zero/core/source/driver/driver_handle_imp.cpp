@@ -171,6 +171,7 @@ DriverHandleImp::~DriverHandleImp() {
     this->fabricEdges.clear();
 
     if (this->svmAllocsManager) {
+        this->svmAllocsManager->trimUSMDeviceAllocCache();
         delete this->svmAllocsManager;
         this->svmAllocsManager = nullptr;
     }

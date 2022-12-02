@@ -57,6 +57,7 @@ Context::~Context() {
         }
     }
     if (svmAllocsManager) {
+        svmAllocsManager->trimUSMDeviceAllocCache();
         delete svmAllocsManager;
     }
     if (driverDiagnostics) {
