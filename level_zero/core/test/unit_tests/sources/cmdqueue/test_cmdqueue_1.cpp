@@ -1825,7 +1825,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
 }
 
 TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenDefaultValuseIsHwSupported) {
-    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -1839,13 +1839,13 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
 
-    bool expectedStateComputeModeTracking = l0CoreHelper.platformSupportsStateComputeModeTracking();
+    bool expectedStateComputeModeTracking = l0GfxCoreHelper.platformSupportsStateComputeModeTracking();
     EXPECT_EQ(expectedStateComputeModeTracking, commandQueue->stateComputeModeTracking);
 
-    bool expectedPipelineSelectTracking = l0CoreHelper.platformSupportsPipelineSelectTracking();
+    bool expectedPipelineSelectTracking = l0GfxCoreHelper.platformSupportsPipelineSelectTracking();
     EXPECT_EQ(expectedPipelineSelectTracking, commandQueue->pipelineSelectStateTracking);
 
-    bool expectedFrontEndTracking = l0CoreHelper.platformSupportsFrontEndTracking();
+    bool expectedFrontEndTracking = l0GfxCoreHelper.platformSupportsFrontEndTracking();
     EXPECT_EQ(expectedFrontEndTracking, commandQueue->frontEndStateTracking);
 
     commandQueue->destroy();

@@ -76,8 +76,8 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     rootDeviceIndices.remove_duplicates();
 
     auto &hwInfo = getDevice()->getHwInfo();
-    auto &l0CoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
-    useDeviceAlloc |= l0CoreHelper.alwaysAllocateEventInLocalMem();
+    auto &l0GfxCoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    useDeviceAlloc |= l0GfxCoreHelper.alwaysAllocateEventInLocalMem();
 
     initializeSizeParameters(numDevices, phDevices, *driverHandleImp, hwInfo);
 
@@ -152,20 +152,20 @@ ze_result_t EventPoolImp::createEvent(const ze_event_desc_t *desc, ze_event_hand
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto &l0CoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    *phEvent = l0CoreHelper.createEvent(this, desc, getDevice());
+    *phEvent = l0GfxCoreHelper.createEvent(this, desc, getDevice());
 
     return ZE_RESULT_SUCCESS;
 }
 
 void EventPoolImp::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::HardwareInfo &hwInfo) {
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     setEventAlignment(static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment()));
 
-    bool useDynamicEventPackets = l0HwHelper.useDynamicEventPacketsCount(hwInfo);
+    bool useDynamicEventPackets = l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo);
     eventPackets = EventPacketsCount::eventPackets;
     if (useDynamicEventPackets) {
         eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);

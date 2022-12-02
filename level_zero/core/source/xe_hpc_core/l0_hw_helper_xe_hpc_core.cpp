@@ -18,26 +18,26 @@ using Family = NEO::XeHpcCoreFamily;
 static auto gfxCore = IGFX_XE_HPC_CORE;
 
 template <>
-void populateFactoryTable<L0HwHelperHw<Family>>() {
-    extern L0HwHelper *l0HwHelperFactory[IGFX_MAX_CORE];
-    l0HwHelperFactory[gfxCore] = &L0HwHelperHw<Family>::get();
+void populateFactoryTable<L0GfxCoreHelperHw<Family>>() {
+    extern L0GfxCoreHelper *l0GfxCoreHelperFactory[IGFX_MAX_CORE];
+    l0GfxCoreHelperFactory[gfxCore] = &L0GfxCoreHelperHw<Family>::get();
 }
 
 template <>
-bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
+bool L0GfxCoreHelperHw<Family>::multiTileCapablePlatform() const {
     return true;
 }
 
 template <>
-bool L0HwHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
+bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
     return true;
 }
 
 template <>
-bool L0HwHelperHw<Family>::platformSupportsRayTracing() const {
+bool L0GfxCoreHelperHw<Family>::platformSupportsRayTracing() const {
     return true;
 }
 
-template class L0HwHelperHw<Family>;
+template class L0GfxCoreHelperHw<Family>;
 
 } // namespace L0

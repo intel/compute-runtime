@@ -57,7 +57,7 @@ HelperType &DeviceFixture::getHelper() const {
     return helper;
 }
 
-template L0CoreHelper &DeviceFixture::getHelper() const;
+template L0GfxCoreHelper &DeviceFixture::getHelper() const;
 
 void PageFaultDeviceFixture::setUp() {
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());

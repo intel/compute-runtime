@@ -5204,7 +5204,7 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto &l0HwHelper = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
@@ -5225,7 +5225,7 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     auto bitmask = handler->euControlBitmask.get();
 
     EXPECT_EQ(1u, bitmask[0]);
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, bitmask[4]);
     } else {
         EXPECT_EQ(0u, bitmask[4]);
@@ -5239,7 +5239,7 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
 
     bitmask = handler->euControlBitmask.get();
 
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, bitmask[0]);
         EXPECT_EQ(1u, bitmask[4]);
     } else {
@@ -5437,7 +5437,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEv
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0},
@@ -5452,7 +5452,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEv
         sessionMock->stoppedThreads[thread.packed] = 1;
     }
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
     prelim_drm_i915_debug_event_eu_attention attention = {};
     attention.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;
@@ -5485,7 +5485,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventWithInvalidClientWhenHan
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0},
@@ -5496,7 +5496,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventWithInvalidClientWhenHan
         {0, 0, 0, 0, 5},
         {0, 0, 0, 0, 6}};
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
     prelim_drm_i915_debug_event_eu_attention attention = {};
 
@@ -5577,7 +5577,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsRai
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0}};
@@ -5588,7 +5588,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsRai
         sessionMock->allThreads[EuThread::ThreadId(0, 0, 0, 4, 0)]->stopThread(1u);
     }
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
     ze_device_thread_t thread2 = {0, 0, 1, UINT32_MAX};
@@ -5682,7 +5682,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEventSeqnoLowerEqualThanSentInterruptWhe
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0},
@@ -5693,7 +5693,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEventSeqnoLowerEqualThanSentInterruptWhe
         {0, 0, 0, 0, 5},
         {0, 0, 0, 0, 6}};
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
     sessionMock->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));

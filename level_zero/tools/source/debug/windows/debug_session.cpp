@@ -232,11 +232,11 @@ ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU
                             euAttentionBitsParams.BitMaskSizeInBytes, &euAttentionBitsParams.BitmaskArrayPtr);
 
     auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0CoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    auto threadsWithAttention = l0CoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0u,
-                                                                            reinterpret_cast<uint8_t *>(&euAttentionBitsParams.BitmaskArrayPtr),
-                                                                            euAttentionBitsParams.BitMaskSizeInBytes);
+    auto threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0u,
+                                                                               reinterpret_cast<uint8_t *>(&euAttentionBitsParams.BitmaskArrayPtr),
+                                                                               euAttentionBitsParams.BitMaskSizeInBytes);
 
     printBitmask(reinterpret_cast<uint8_t *>(&euAttentionBitsParams.BitmaskArrayPtr), euAttentionBitsParams.BitMaskSizeInBytes);
 
@@ -547,10 +547,10 @@ ze_result_t DebugSessionWindows::acknowledgeEvent(const zet_debug_event_t *event
 
 ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) {
     auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0CoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
-    l0CoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     printBitmask(bitmask.get(), bitmaskSize);
 
     KM_ESCAPE_INFO escapeInfo = {0};

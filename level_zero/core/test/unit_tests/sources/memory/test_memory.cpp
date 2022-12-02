@@ -340,14 +340,14 @@ struct CompressionMemoryTest : public MemoryTest {
 HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressionIfPossible, IsAtLeastSkl) {
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
     auto &hwInfo = device->getHwInfo();
-    auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto &hwHelper = NEO::HwHelperHw<FamilyType>::get();
 
     // Default path
     {
         auto allocation = allocDeviceMem(2048);
 
-        auto supportedByDefault = l0CoreHelper.usmCompressionSupported(hwInfo) && l0CoreHelper.forceDefaultUsmCompressionSupport();
+        auto supportedByDefault = l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport();
 
         EXPECT_EQ(supportedByDefault, allocation->isCompressionEnabled());
 
@@ -406,7 +406,7 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
 
         auto allocation = allocDeviceMem(2048);
 
-        EXPECT_EQ(l0CoreHelper.usmCompressionSupported(hwInfo), allocation->isCompressionEnabled());
+        EXPECT_EQ(l0GfxCoreHelper.usmCompressionSupported(hwInfo), allocation->isCompressionEnabled());
 
         context->freeMem(ptr);
 

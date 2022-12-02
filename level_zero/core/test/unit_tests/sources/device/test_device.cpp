@@ -974,9 +974,9 @@ HWTEST2_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenPropertie
 
     unsigned int expectedMaxBVHLevels = 0;
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-    if (l0HwHelper.platformSupportsRayTracing()) {
+    if (l0GfxCoreHelper.platformSupportsRayTracing()) {
         expectedMaxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
     }
 

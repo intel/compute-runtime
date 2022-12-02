@@ -304,14 +304,14 @@ uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCo
     }
 
     auto &coreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
-    auto &l0CoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     uint32_t subDeviceQueueGroupsIter = 0;
     for (; subDeviceQueueGroupsIter < std::min(numSubDeviceCopyEngineGroups, numberOfSubDeviceCopyEngineGroupsRequested); subDeviceQueueGroupsIter++) {
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].maxMemoryFillPatternSize = coreHelper.getMaxFillPaternSizeForCopyEngine();
 
-        l0CoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[subDeviceQueueGroupsIter], this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter]);
+        l0GfxCoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[subDeviceQueueGroupsIter], this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter]);
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].numQueues = static_cast<uint32_t>(this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter].engines.size());
     }
 
@@ -334,7 +334,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
     }
 
     auto &coreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
-    auto &l0CoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0HwHelper>();
+    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     *pCount = std::min(totalEngineGroups, *pCount);
     for (uint32_t i = 0; i < std::min(numEngineGroups, *pCount); i++) {
@@ -355,7 +355,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
             pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
             pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = coreHelper.getMaxFillPaternSizeForCopyEngine();
         }
-        l0CoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i]);
+        l0GfxCoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i]);
         pCommandQueueGroupProperties[i].numQueues = static_cast<uint32_t>(engineGroups[i].engines.size());
     }
 
@@ -671,9 +671,9 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_RAYTRACING_EXT_PROPERTIES) {
             ze_device_raytracing_ext_properties_t *rtProperties =
                 reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
-            auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+            auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-            if (l0HwHelper.platformSupportsRayTracing()) {
+            if (l0GfxCoreHelper.platformSupportsRayTracing()) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
                 rtProperties->maxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
             } else {
@@ -1553,9 +1553,9 @@ ze_result_t DeviceImp::getFabricVertex(ze_fabric_vertex_handle_t *phVertex) {
 
 uint32_t DeviceImp::getEventMaxPacketCount() const {
     const auto &hardwareInfo = this->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-    uint32_t basePackets = l0HwHelper.getEventBaseMaxPacketCount(hardwareInfo);
+    uint32_t basePackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hardwareInfo);
     if (this->isImplicitScalingCapable()) {
         basePackets *= static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
     }

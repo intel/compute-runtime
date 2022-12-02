@@ -94,11 +94,11 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
     }
 
     auto &hwInfo = device->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     uint32_t maxPackets = EventPacketsCount::eventPackets;
-    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
 
     auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
@@ -247,7 +247,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInReset
     auto &commandContainer = commandList->commandContainer;
 
     auto &hwInfo = device->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -269,8 +269,8 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInReset
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
 
     uint32_t maxPackets = EventPacketsCount::eventPackets;
-    if (l0HwHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPackets = l0HwHelper.getEventBaseMaxPacketCount(hwInfo);
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
     gpuAddress += ((maxPackets - 1) * event->getSinglePacketSize());
 

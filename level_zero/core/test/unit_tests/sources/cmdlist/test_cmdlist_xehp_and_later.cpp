@@ -437,11 +437,11 @@ HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushDisabledTest,
 HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushDisabledTest,
           givenAppendKernelWithSignalScopeImmediateEventWhenComputeWalkerImmediatePostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
           IsXeHpOrXeHpgCore) {
-    auto &l0CoreHelper = input.device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = input.device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 2;
     arg.expectedPostSyncPipeControls = 1;
-    arg.expectedWalkerPostSyncOp = l0CoreHelper.multiTileCapablePlatform() ? 3 : 1;
+    arg.expectedWalkerPostSyncOp = l0GfxCoreHelper.multiTileCapablePlatform() ? 3 : 1;
     arg.postSyncAddressZero = false;
 
     input.eventPoolFlags = 0;
@@ -644,7 +644,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using OPERATION = typename POSTSYNC_DATA::OPERATION;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-        auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+        auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
@@ -683,7 +683,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         auto firstWalker = itorWalkers[0];
 
         uint32_t expectedWalkerPostSyncOp = 3;
-        if (multiTile == 0 && eventPoolFlags == 0 && !l0CoreHelper.multiTileCapablePlatform()) {
+        if (multiTile == 0 && eventPoolFlags == 0 && !l0GfxCoreHelper.multiTileCapablePlatform()) {
             expectedWalkerPostSyncOp = 1;
         }
         auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);

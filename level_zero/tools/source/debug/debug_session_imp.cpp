@@ -406,9 +406,9 @@ void DebugSessionImp::applyResumeWa(uint8_t *bitmask, size_t bitmaskSize) {
 
     UNRECOVERABLE_IF(bitmaskSize % 8 != 0);
 
-    auto &l0CoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+    auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    if (l0CoreHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
 
         uint32_t *dwordBitmask = reinterpret_cast<uint32_t *>(bitmask);
         for (uint32_t i = 0; i < bitmaskSize / sizeof(uint32_t) - 1; i = i + 2) {
@@ -425,9 +425,9 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
 
     if (stateSaveAreaHeader->versionHeader.version.major < 2u) {
         auto &hwInfo = connectedDevice->getHwInfo();
-        auto &l0CoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
+        auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-        if (l0CoreHelper.isResumeWARequired()) {
+        if (l0GfxCoreHelper.isResumeWARequired()) {
             constexpr uint32_t sipResumeValue = 0x40000000;
 
             bool isBindlessSip = (debugArea.reserved1 == 1);

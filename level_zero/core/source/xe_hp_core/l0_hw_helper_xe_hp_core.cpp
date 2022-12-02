@@ -18,30 +18,30 @@ using Family = NEO::XeHpFamily;
 static auto gfxCore = IGFX_XE_HP_CORE;
 
 template <>
-void populateFactoryTable<L0HwHelperHw<Family>>() {
-    extern L0HwHelper *l0HwHelperFactory[IGFX_MAX_CORE];
-    l0HwHelperFactory[gfxCore] = &L0HwHelperHw<Family>::get();
+void populateFactoryTable<L0GfxCoreHelperHw<Family>>() {
+    extern L0GfxCoreHelper *l0GfxCoreHelperFactory[IGFX_MAX_CORE];
+    l0GfxCoreHelperFactory[gfxCore] = &L0GfxCoreHelperHw<Family>::get();
 }
 
 template <>
-bool L0HwHelperHw<Family>::isResumeWARequired() {
+bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
     return true;
 }
 
 template <>
-bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
+bool L0GfxCoreHelperHw<Family>::multiTileCapablePlatform() const {
     return true;
 }
 
 template <>
-void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
+void L0GfxCoreHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
 }
 
 template <>
-bool L0HwHelperHw<Family>::platformSupportsRayTracing() const {
+bool L0GfxCoreHelperHw<Family>::platformSupportsRayTracing() const {
     return true;
 }
 
-template class L0HwHelperHw<Family>;
+template class L0GfxCoreHelperHw<Family>;
 
 } // namespace L0

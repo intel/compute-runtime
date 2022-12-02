@@ -881,8 +881,8 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
         EXPECT_NE(nullptr, imagePtr);
         std::unique_ptr<L0::Image> image(imagePtr);
 
-        auto &l0CoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0CoreHelper>();
-        EXPECT_EQ(l0CoreHelper.imageCompressionSupported(device->getHwInfo()), image->getAllocation()->isCompressionEnabled());
+        auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+        EXPECT_EQ(l0GfxCoreHelper.imageCompressionSupported(device->getHwInfo()), image->getAllocation()->isCompressionEnabled());
     }
 
     {

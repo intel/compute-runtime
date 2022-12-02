@@ -17,41 +17,41 @@
 namespace L0 {
 namespace ult {
 
-using L0HwHelperTestXeHpc = Test<DeviceFixture>;
+using L0GfxCoreHelperTestXeHpc = Test<DeviceFixture>;
 
-XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForMultiTileCapablePlatformThenReturnTrue) {
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    EXPECT_TRUE(l0CoreHelper.multiTileCapablePlatform());
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForMultiTileCapablePlatformThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.multiTileCapablePlatform());
 }
 
-XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenHpcPlatformsWhenAlwaysAllocateEventInLocalMemCalledThenReturnTrue) {
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    EXPECT_TRUE(l0CoreHelper.alwaysAllocateEventInLocalMem());
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenHpcPlatformsWhenAlwaysAllocateEventInLocalMemCalledThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.alwaysAllocateEventInLocalMem());
 }
 
-XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    EXPECT_TRUE(l0CoreHelper.platformSupportsCmdListHeapSharing());
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
 }
 
-XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnTrue) {
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    EXPECT_TRUE(l0CoreHelper.platformSupportsStateComputeModeTracking());
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsStateComputeModeTracking());
 }
 
-XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnTrue) {
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    EXPECT_TRUE(l0CoreHelper.platformSupportsFrontEndTracking());
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsFrontEndTracking());
 }
 
-XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnTrue) {
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    EXPECT_TRUE(l0CoreHelper.platformSupportsPipelineSelectTracking());
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsPipelineSelectTracking());
 }
 
-XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForRayTracingSupportThenReturnTrue) {
-    auto &l0CoreHelper = getHelper<L0CoreHelper>();
-    EXPECT_TRUE(l0CoreHelper.platformSupportsRayTracing());
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForRayTracingSupportThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsRayTracing());
 }
 
 } // namespace ult
