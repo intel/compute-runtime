@@ -46,19 +46,24 @@ void ClDevice::setupFp64Flags() {
         deviceExtensions += "cl_khr_fp64 ";
         deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
         deviceInfo.doubleFpConfig = defaultFpFlags;
+        deviceInfo.nativeVectorWidthDouble = 1;
+        deviceInfo.preferredVectorWidthDouble = 1;
     } else if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
             deviceExtensions += "cl_khr_fp64 ";
+            deviceInfo.doubleFpConfig = defaultFpFlags;
+            deviceInfo.nativeVectorWidthDouble = 1;
+            deviceInfo.preferredVectorWidthDouble = 1;
+        } else {
+            deviceInfo.doubleFpConfig = 0;
+            deviceInfo.nativeVectorWidthDouble = 0;
+            deviceInfo.preferredVectorWidthDouble = 0;
         }
 
         deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(
             hwInfo.capabilityTable.ftrSupports64BitMath
                 ? CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT
                 : 0);
-
-        deviceInfo.doubleFpConfig = hwInfo.capabilityTable.ftrSupportsFP64
-                                        ? defaultFpFlags
-                                        : 0;
     }
 }
 
@@ -267,14 +272,12 @@ void ClDevice::initializeCaps() {
     deviceInfo.preferredVectorWidthInt = 4;
     deviceInfo.preferredVectorWidthLong = 1;
     deviceInfo.preferredVectorWidthFloat = 1;
-    deviceInfo.preferredVectorWidthDouble = 1;
     deviceInfo.preferredVectorWidthHalf = 8;
     deviceInfo.nativeVectorWidthChar = 16;
     deviceInfo.nativeVectorWidthShort = 8;
     deviceInfo.nativeVectorWidthInt = 4;
     deviceInfo.nativeVectorWidthLong = 1;
     deviceInfo.nativeVectorWidthFloat = 1;
-    deviceInfo.nativeVectorWidthDouble = 1;
     deviceInfo.nativeVectorWidthHalf = 8;
     deviceInfo.maxReadWriteImageArgs = hwInfo.capabilityTable.supportsImages ? 128 : 0;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
