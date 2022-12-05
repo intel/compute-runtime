@@ -1818,8 +1818,8 @@ void *DrmMemoryManager::lockBufferObject(BufferObject *bo) {
     return bo->peekLockedAddress();
 }
 
-void createMemoryRegionsForSharedAllocation(const HardwareInfo &hwInfo, MemoryInfo &memoryInfo, const AllocationData &allocationData, MemRegionsVec &memRegions) {
-    auto memoryBanks = allocationData.storageInfo.memoryBanks;
+MemRegionsVec createMemoryRegionsForSharedAllocation(const HardwareInfo &hwInfo, MemoryInfo &memoryInfo, const AllocationData &allocationData, DeviceBitfield memoryBanks) {
+    MemRegionsVec memRegions;
 
     if (allocationData.usmInitialPlacement == GraphicsAllocation::UsmInitialPlacement::CPU) {
         // System memory region
@@ -1845,6 +1845,8 @@ void createMemoryRegionsForSharedAllocation(const HardwareInfo &hwInfo, MemoryIn
         auto regionClassAndInstance = memoryInfo.getMemoryRegionClassAndInstance(0u, hwInfo);
         memRegions.push_back(regionClassAndInstance);
     }
+
+    return memRegions;
 }
 
 GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const AllocationData &allocationData) {
@@ -1879,9 +1881,6 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
     auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
 
-    MemRegionsVec memRegions;
-    createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memRegions);
-
     BufferObjects bos{};
     auto currentAddress = cpuPointer;
     auto remainingSize = size;
@@ -1894,6 +1893,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         if (currentSize == 0) {
             break;
         }
+
+        auto memoryBanks = DebugManager.flags.CreateContextWithAccessCounters.get() > 0 ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << handleId);
+        auto memRegions = createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memoryBanks);
 
         auto ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1);
 

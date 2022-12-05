@@ -323,7 +323,53 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationT
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationWithMultiMemoryRegionsThenGemCreateExtIsUsedWithAllRegions) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationWithMultiMemoryRegionsThenGemCreateExtIsUsedWithSingleLmemRegions) {
+    std::vector<MemoryRegion> regionInfo(3);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+
+    auto hwInfo = mock->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 3;
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->queryEngineInfo();
+    mock->ioctlCallsCount = 0;
+    DeviceBitfield devices = 0b11;
+    AllocationProperties gpuProperties{
+        0u,
+        true,
+        MemoryConstants::megaByte,
+        AllocationType::UNIFIED_SHARED_MEMORY,
+        false,
+        devices};
+    gpuProperties.alignment = MemoryConstants::pageSize64k;
+    gpuProperties.usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::CPU;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapPtr(), nullptr);
+    EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapSize(), 0u);
+    EXPECT_EQ(allocation->getAllocationOffset(), 0u);
+
+    const auto &createExt = mock->context.receivedCreateGemExt.value();
+    EXPECT_EQ(1u, createExt.handle);
+
+    const auto &memRegions = createExt.memoryRegions;
+    ASSERT_EQ(memRegions.size(), 2u);
+    EXPECT_EQ(memRegions[0].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM);
+    EXPECT_EQ(memRegions[0].memoryInstance, 1u);
+    EXPECT_EQ(memRegions[1].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE);
+    EXPECT_EQ(memRegions[1].memoryInstance, regionInfo[2].region.memoryInstance);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersWhenCreateUnifiedMemoryAllocationWithMultiMemoryRegionsThenGemCreateExtIsUsedWithAllRegions) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+
     std::vector<MemoryRegion> regionInfo(4);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -574,9 +620,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialP
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetToGpuWhenCreateSharedUnifiedMemoryAllocationOnMultiTileArchitectureThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationWithAccessCountersAndUsmInitialPlacementSetToGpuWhenCreateSharedUnifiedMemoryAllocationOnMultiTileArchitectureThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.CreateContextWithAccessCounters.set(1);
     DebugManager.flags.UsmInitialPlacement.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
