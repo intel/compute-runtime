@@ -703,6 +703,8 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
 }
 
 TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerformanceHintIsProvided) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0); // pool buffer will not provide performance hints
     cl_int retVal;
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,29 +20,30 @@ typedef api_tests clGetMemObjectInfoTests;
 
 namespace ULT {
 
-TEST_F(clGetMemObjectInfoTests, GivenValidBufferWhenGettingMemObjectInfoThenCorrectBufferSizeIsReturned) {
-    size_t bufferSize = 16;
+TEST_F(clGetMemObjectInfoTests, givenValidBufferWhenGettingMemObjectInfoThenCorrectBufferSizeIsReturned) {
+    size_t requestedBufferSize = 16;
     cl_mem buffer = nullptr;
 
     buffer = clCreateBuffer(
         pContext,
         0,
-        bufferSize,
+        requestedBufferSize,
         NULL,
         &retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, buffer);
 
-    size_t paramValue = 0;
-    retVal = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(paramValue), &paramValue, nullptr);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_EQ(bufferSize, paramValue);
+    size_t createdBufferSize = 0;
+    auto asBuffer = static_cast<Buffer *>(buffer);
+    retVal = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(createdBufferSize), &createdBufferSize, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(createdBufferSize, asBuffer->getSize());
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectInfoThenCorrectMapCountIsReturned) {
+TEST_F(clGetMemObjectInfoTests, givenBufferWithMappedRegionWhenGettingMemObjectInfoThenCorrectMapCountIsReturned) {
     size_t bufferSize = 16;
     cl_mem buffer = nullptr;
 
@@ -55,8 +56,8 @@ TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectI
         bufferSize,
         NULL,
         &retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, buffer);
 
     clEnqueueMapBuffer(
         cmdQ,
@@ -72,8 +73,8 @@ TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectI
 
     cl_uint paramValue = 0;
     retVal = clGetMemObjectInfo(buffer, CL_MEM_MAP_COUNT, sizeof(paramValue), &paramValue, nullptr);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_EQ(1u, paramValue);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, paramValue);
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -81,7 +82,7 @@ TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectI
     clReleaseCommandQueue(cmdQ);
 }
 
-TEST_F(clGetMemObjectInfoTests, GivenBufferCreatedFromSvmPointerWhenGettingMemObjectInfoThenClTrueIsReturned) {
+TEST_F(clGetMemObjectInfoTests, givenBufferCreatedFromSvmPointerWhenGettingMemObjectInfoThenClTrueIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         size_t bufferSize = 64;
@@ -96,14 +97,14 @@ TEST_F(clGetMemObjectInfoTests, GivenBufferCreatedFromSvmPointerWhenGettingMemOb
             bufferSize,
             ptr,
             &retVal);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        EXPECT_NE(nullptr, buffer);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, buffer);
 
         cl_bool paramValue = CL_FALSE;
         retVal = clGetMemObjectInfo(buffer, CL_MEM_USES_SVM_POINTER, sizeof(paramValue), &paramValue, nullptr);
 
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        ASSERT_EQ(static_cast<cl_bool>(CL_TRUE), paramValue);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), paramValue);
 
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);

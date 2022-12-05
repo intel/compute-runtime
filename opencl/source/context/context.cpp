@@ -502,6 +502,7 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
     errcodeRet = CL_MEM_OBJECT_ALLOCATION_FAILURE;
     if (this->isAggregatedSmallBuffersEnabled() &&
         this->isSizeWithinThreshold(size) &&
+        this->flagsAllowBufferFromPool(flags, flagsIntel) &&
         this->mainStorage) {
         auto lock = std::unique_lock<std::mutex>(this->mutex);
         cl_buffer_region bufferRegion{};

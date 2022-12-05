@@ -537,9 +537,9 @@ XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, GENERATEONLY_givenC
 
     commandQueues[0][0]->finish();
 
-    expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation), writePattern, bufferSize, 0, 0);
+    expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation, compressedBuffer->getOffset()), writePattern, bufferSize, 0, 0);
 
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(unCompressedAllocation), writePattern, bufferSize, 0, 0);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(unCompressedAllocation, unCompressedBuffer->getOffset()), writePattern, bufferSize, 0, 0);
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, givenUncompressibleBufferInHostMemoryWhenAccessedStatelesslyThenDisableCompressionInSBA) {
@@ -573,7 +573,7 @@ XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, givenUncompressible
 
     commandQueues[0][0]->finish();
 
-    expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation), writePattern, bufferSize, 0, 0);
+    expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation, compressedBuffer->getOffset()), writePattern, bufferSize, 0, 0);
 
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(uncompressibleAllocationInHostMemory), writePattern, bufferSize, 0, 0);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(uncompressibleAllocationInHostMemory, uncompressibleBufferInHostMemory->getOffset()), writePattern, bufferSize, 0, 0);
 }

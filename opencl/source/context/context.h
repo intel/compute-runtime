@@ -71,6 +71,8 @@ class Context : public BaseObject<_cl_context> {
 
         bool isPoolBuffer(const MemObj *buffer) const;
 
+        bool flagsAllowBufferFromPool(const cl_mem_flags &flags, const cl_mem_flags_intel &flagsIntel) const;
+
       protected:
         inline bool isSizeWithinThreshold(size_t size) const {
             return BufferPoolAllocator::smallBufferThreshold >= size;

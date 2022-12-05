@@ -165,6 +165,10 @@ class AUBFixture : public CommandQueueHwFixture {
         return reinterpret_cast<void *>(allocation->getGpuAddress());
     }
 
+    static void *getGpuPointer(GraphicsAllocation *allocation, size_t offset) {
+        return reinterpret_cast<void *>(allocation->getGpuAddress() + offset);
+    }
+
     const uint32_t rootDeviceIndex = 0;
     CommandStreamReceiver *csr = nullptr;
     volatile uint32_t *pTagMemory = nullptr;

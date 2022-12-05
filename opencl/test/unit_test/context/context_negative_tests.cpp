@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/context/context.h"
@@ -24,6 +25,8 @@ using namespace NEO;
 typedef Test<MemoryManagementFixture> ContextFailureInjection;
 
 TEST_F(ContextFailureInjection, GivenFailedAllocationInjectionWhenCreatingContextThenOutOfHostMemoryErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0); //failing to allocate pool buffer is non-critical
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
 
