@@ -251,6 +251,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         this->programOneCmdListBatchBufferStart(commandList, child);
         this->mergeOneCmdListPipelinedState(commandList);
+        this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
     }
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, phCommandLists[0]);
 

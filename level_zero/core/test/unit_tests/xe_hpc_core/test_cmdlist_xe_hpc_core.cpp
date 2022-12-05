@@ -389,6 +389,87 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     commandQueue->destroy();
 }
 
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledForUnifiedSharedMemoryOnCmdListCopyOnlyThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
+    DebugManager.flags.UseKmdMigration.set(1);
+
+    neoDevice->deviceBitfield = 0b001;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    memoryManager->prefetchManager.reset(new MockPrefetchManager());
+
+    createKernel();
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+
+    ze_command_list_handle_t commandListHandle = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue)->toHandle();
+    auto commandList = CommandList::fromHandle(commandListHandle);
+    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, commandList->isCopyOnly(), false, returnValue);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &srcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, srcPtr);
+
+    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, dstPtr);
+
+    result = commandList->appendMemoryPrefetch(srcPtr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendMemoryPrefetch(dstPtr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto prefetchManager = static_cast<MockPrefetchManager *>(memoryManager->prefetchManager.get());
+    EXPECT_EQ(2u, commandList->getPrefetchContext().allocations.size());
+
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(0u, memoryManager->memPrefetchSubDeviceId);
+
+    EXPECT_TRUE(prefetchManager->migrateAllocationsToGpuCalled);
+    EXPECT_EQ(2u, commandList->getPrefetchContext().allocations.size());
+
+    commandList->reset();
+    EXPECT_TRUE(prefetchManager->removeAllocationsCalled);
+    EXPECT_EQ(0u, commandList->getPrefetchContext().allocations.size());
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+
+    commandList->destroy();
+    commandQueue->destroy();
+}
+
 using CommandListEventFenceTestsXeHpcCore = Test<ModuleFixture>;
 
 HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandWhenRevId03ThenMiFenceIsAdded, IsXeHpcCore) {
