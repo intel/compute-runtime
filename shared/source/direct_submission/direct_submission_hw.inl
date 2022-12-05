@@ -80,7 +80,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
 
     if (EngineHelpers::isBcs(this->osContext.getEngineType()) && relaxedOrderingEnabled) {
-        relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() == 1);
+        relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
     }
 }
 

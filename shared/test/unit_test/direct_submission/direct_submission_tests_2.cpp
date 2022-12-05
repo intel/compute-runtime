@@ -2099,6 +2099,15 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcs
 
     {
         DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(-1);
+
+        MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
+
+        EXPECT_TRUE(directSubmission.isRelaxedOrderingEnabled());
+    }
+
+    {
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
         DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(0);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
