@@ -90,6 +90,8 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     uint64_t schedulerStartAddress = schedulerCmdStream.getGpuBase();
     uint64_t deferredTasksListGpuVa = deferredTasksListAllocation->getGpuAddress();
 
+    uint64_t loopSectionStartAddress = schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::loopStartSectionStart;
+
     // 1. Init section
     {
         EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
@@ -182,7 +184,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
 
         EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalRegRegBatchBufferStart(
             schedulerCmdStream,
-            schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::loopStartSectionStart,
+            loopSectionStartAddress,
             AluRegisters::R_1, AluRegisters::R_2, CompareOperation::NotEqual, false);
 
         LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2, 0, true);
@@ -193,9 +195,19 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     {
         *schedulerCmdStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>() = GfxFamily::cmdInitArbCheck;
 
+        uint32_t queueSizeLimit = 2;
+        if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
+            queueSizeLimit = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
+        }
+
         EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
             schedulerCmdStream,
-            schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::loopStartSectionStart,
+            loopSectionStartAddress,
+            CS_GPR_R1, queueSizeLimit, CompareOperation::GreaterOrEqual, false);
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
+            schedulerCmdStream,
+            loopSectionStartAddress,
             CS_GPR_R5, 1, CompareOperation::Equal, false);
     }
 
@@ -246,7 +258,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingScheduler
         schedulerCmdStream.getSpace(sizeof(typename GfxFamily::MI_BATCH_BUFFER_START)); // skip patching
     }
 
-    // 7. Semaphore section
+    // 3. Semaphore section
     {
         using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;

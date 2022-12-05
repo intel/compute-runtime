@@ -1458,13 +1458,25 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
+    uint32_t queueLimit = 2;
+    if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
+        queueLimit = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
+    }
+
     if (!verifyConditionalDataRegBbStart<FamilyType>(++arbCheck, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
+                                                     CS_GPR_R1, queueLimit, CompareOperation::GreaterOrEqual, false)) {
+        return false;
+    }
+
+    auto conditionalBbStartcmds = ptrOffset(arbCheck, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart());
+
+    if (!verifyConditionalDataRegBbStart<FamilyType>(conditionalBbStartcmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
                                                      CS_GPR_R5, 1, CompareOperation::Equal, false)) {
         return false;
     }
 
     // 6. Jump to scheduler loop check section (dynamic scheduler)
-    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(arbCheck, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
+    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(conditionalBbStartcmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
 
     if (!verifyLrr<FamilyType>(lrrCmd, CS_GPR_R0, CS_GPR_R9)) {
         return false;
@@ -1636,6 +1648,19 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenAllocatingResourcesThenCreate
     EXPECT_EQ(AllocationType::DEFERRED_TASKS_LIST, directSubmission.deferredTasksListAllocation->getAllocationType());
     EXPECT_NE(nullptr, directSubmission.deferredTasksListAllocation);
     EXPECT_EQ(directSubmission.deferredTasksListAllocation, *allocsIter);
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenDispatchingStaticSchedulerThenOverrideQueueSizeLimit, IsAtLeastXeHpcCore) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.set(123);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.initialize(true, false);
+
+    EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
+    EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
+                                                             directSubmission.deferredTasksListAllocation->getGpuAddress()));
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStaticScheduler, IsAtLeastXeHpcCore) {

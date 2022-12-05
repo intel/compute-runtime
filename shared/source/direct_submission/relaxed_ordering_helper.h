@@ -53,7 +53,7 @@ struct StaticSchedulerSizeAndOffsetSection {
                                                               (2 * sizeof(MI_LOAD_REGISTER_IMM)) + EncodeMiPredicate<GfxFamily>::getCmdSize();
 
     static constexpr uint64_t drainRequestSectionStart = tasksListLoopCheckSectionStart + tasksListLoopCheckSectionSize;
-    static constexpr uint64_t drainRequestSectionSize = sizeof(typename GfxFamily::MI_ARB_CHECK) + EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart();
+    static constexpr uint64_t drainRequestSectionSize = sizeof(typename GfxFamily::MI_ARB_CHECK) + (2 * EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart());
 
     static constexpr uint64_t schedulerLoopCheckSectionJumpStart = drainRequestSectionStart + drainRequestSectionSize;
     static constexpr uint64_t schedulerLoopCheckSectionJumpSize = 2 * sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_BATCH_BUFFER_START);
