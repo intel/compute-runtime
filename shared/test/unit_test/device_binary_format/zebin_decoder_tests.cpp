@@ -5640,6 +5640,7 @@ TEST(PopulateArgDescriptor, GivenValidArgOfTypeRTGlobalBufferThenRtGlobalBufferI
     EXPECT_EQ(40U, crossThreadDataSize);
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize);
     EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.stateless);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.hasRTCalls);
 }
 
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {

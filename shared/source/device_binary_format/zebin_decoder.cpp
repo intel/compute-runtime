@@ -1100,6 +1100,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeRtGlobalBuffer:
         dst.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = src.size;
         dst.payloadMappings.implicitArgs.rtDispatchGlobals.stateless = src.offset;
+        dst.kernelAttributes.flags.hasRTCalls = true;
         break;
     }
 
