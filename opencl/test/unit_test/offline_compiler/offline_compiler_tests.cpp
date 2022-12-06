@@ -534,7 +534,7 @@ TEST_F(MockOfflineCompilerTests, givenProductConfigValueAndRevisionIdWhenInitHwI
     auto config = AOT::UNKNOWN_ISA;
     for (const auto &deviceMapConfig : allEnabledDeviceConfigs) {
         if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
-            config = static_cast<AOT::PRODUCT_CONFIG>(deviceMapConfig.aotConfig.ProductConfig);
+            config = static_cast<AOT::PRODUCT_CONFIG>(deviceMapConfig.aotConfig.value);
             break;
         }
     }
@@ -809,7 +809,7 @@ TEST_F(OfflineCompilerTests, givenProductAcronymWhenIdsCommandIsInvokeThenSucces
         std::vector<std::string> expected{};
         auto product = ProductConfigHelper::getProductConfigForAcronym(productAcronym.str());
         for (const auto &device : supportedDevicesConfigs) {
-            if (device.aotConfig.ProductConfig == product) {
+            if (device.aotConfig.value == product) {
                 auto config = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
                 expected.push_back(config);
             }

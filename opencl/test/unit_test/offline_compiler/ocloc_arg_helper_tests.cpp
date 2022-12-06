@@ -29,7 +29,7 @@ TEST_F(OclocArgHelperTests, givenProductOrAotConfigWhenParseMajorMinorRevisionVa
     }
 
     for (const auto &device : enabledDeviceConfigs) {
-        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.ProductConfig);
+        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.value);
         auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
         auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
         EXPECT_STREQ(configStr0.c_str(), configStr1.c_str());
@@ -56,7 +56,7 @@ TEST_F(OclocArgHelperTests, givenProductConfigAcronymWhenCheckAllEnabledThenCorr
             EXPECT_TRUE(acronymFound);
 
             device.acronyms.clear();
-            device.aotConfig.ProductConfig = AOT::UNKNOWN_ISA;
+            device.aotConfig.value = AOT::UNKNOWN_ISA;
 
             enabledAcronyms = argHelper->getEnabledProductAcronyms();
             acronymFound = std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), findAcronym(acronym));

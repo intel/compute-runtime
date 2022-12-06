@@ -16,9 +16,9 @@ TEST_P(OclocProductConfigTests, GivenProductConfigValuesWhenInitHardwareInfoThen
     auto &allSupportedConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
 
     for (const auto &deviceConfig : allSupportedConfigs) {
-        if (aotConfig.ProductConfig == deviceConfig.aotConfig.ProductConfig) {
+        if (aotConfig.value == deviceConfig.aotConfig.value) {
             deviceId = deviceConfig.deviceIds->front();
-            revId = deviceConfig.aotConfig.ProductConfigID.Revision;
+            revId = deviceConfig.aotConfig.revision;
             break;
         }
     }

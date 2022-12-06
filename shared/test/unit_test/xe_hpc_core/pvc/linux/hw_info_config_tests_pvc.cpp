@@ -74,10 +74,10 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammin
 
 PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
     for (const auto &config : AOT_PVC::productConfigs) {
-        AheadOfTimeConfig aotConfig = {0};
-        aotConfig.ProductConfig = config;
+        HardwareIpVersion aotConfig = {0};
+        aotConfig.value = config;
         CompilerProductHelper::get(pInHwInfo.platform.eProductFamily)->setProductConfigForHwInfo(pInHwInfo, aotConfig);
-        EXPECT_EQ(pInHwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
+        EXPECT_EQ(pInHwInfo.platform.usRevId, aotConfig.revision);
     }
 }
 

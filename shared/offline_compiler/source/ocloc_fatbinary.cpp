@@ -86,8 +86,8 @@ void getProductsForRange(unsigned int productFrom, unsigned int productTo, std::
     auto &allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
 
     for (const auto &device : allSuppportedProducts) {
-        auto validAcronym = device.aotConfig.ProductConfig >= productFrom;
-        validAcronym &= device.aotConfig.ProductConfig <= productTo;
+        auto validAcronym = device.aotConfig.value >= productFrom;
+        validAcronym &= device.aotConfig.value <= productTo;
         validAcronym &= !device.acronyms.empty();
         if (validAcronym) {
             out.push_back(device.acronyms.front());

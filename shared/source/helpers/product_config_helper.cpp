@@ -21,7 +21,7 @@ ProductConfigHelper::ProductConfigHelper() : deviceAotInfo({
 }
 
 bool ProductConfigHelper::compareConfigs(DeviceAotInfo deviceAotInfo0, DeviceAotInfo deviceAotInfo1) {
-    return deviceAotInfo0.aotConfig.ProductConfig < deviceAotInfo1.aotConfig.ProductConfig;
+    return deviceAotInfo0.aotConfig.value < deviceAotInfo1.aotConfig.value;
 }
 
 std::vector<DeviceAotInfo> &ProductConfigHelper::getDeviceAotInfo() {
@@ -181,15 +181,15 @@ std::vector<NEO::ConstStringRef> ProductConfigHelper::getDeprecatedAcronyms() {
     return deprecatedAcronyms;
 }
 
-std::string ProductConfigHelper::parseMajorMinorRevisionValue(AheadOfTimeConfig config) {
+std::string ProductConfigHelper::parseMajorMinorRevisionValue(NEO::HardwareIpVersion config) {
     std::stringstream stringConfig;
-    stringConfig << config.ProductConfigID.Major << "." << config.ProductConfigID.Minor << "." << config.ProductConfigID.Revision;
+    stringConfig << config.architecture << "." << config.release << "." << config.revision;
     return stringConfig.str();
 }
 
-std::string ProductConfigHelper::parseMajorMinorValue(AheadOfTimeConfig config) {
+std::string ProductConfigHelper::parseMajorMinorValue(NEO::HardwareIpVersion config) {
     std::stringstream stringConfig;
-    stringConfig << config.ProductConfigID.Major << "." << config.ProductConfigID.Minor;
+    stringConfig << config.architecture << "." << config.release;
     return stringConfig.str();
 }
 
@@ -229,10 +229,10 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForVersionValue(const s
         return AOT::UNKNOWN_ISA;
     }
 
-    AheadOfTimeConfig product = {0};
-    product.ProductConfigID.Major = major;
-    product.ProductConfigID.Minor = minor;
-    product.ProductConfigID.Revision = revision;
+    NEO::HardwareIpVersion product = {0};
+    product.architecture = major;
+    product.release = minor;
+    product.revision = revision;
 
-    return static_cast<AOT::PRODUCT_CONFIG>(product.ProductConfig);
+    return static_cast<AOT::PRODUCT_CONFIG>(product.value);
 }

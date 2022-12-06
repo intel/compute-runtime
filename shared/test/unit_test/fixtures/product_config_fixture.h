@@ -39,7 +39,7 @@ struct ProductConfigHwInfoTests : public ProductConfigTest<::testing::TestWithPa
         }
     }
     PRODUCT_FAMILY prod = IGFX_UNKNOWN;
-    const AheadOfTimeConfig invalidConfig = {CommonConstants::invalidRevisionID};
+    const HardwareIpVersion invalidConfig = {CommonConstants::invalidRevisionID};
 };
 
 using ProductConfigTests = ProductConfigTest<::testing::Test>;

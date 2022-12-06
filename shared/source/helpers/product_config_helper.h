@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include "igfxfmid.h"
@@ -26,21 +27,8 @@ namespace NEO {
 struct HardwareInfo;
 } // namespace NEO
 
-struct AheadOfTimeConfig {
-    union {
-        uint32_t ProductConfig;
-        struct
-        {
-            uint32_t Revision : 6;
-            uint32_t Reserved : 8;
-            uint32_t Minor : 8;
-            uint32_t Major : 10;
-        } ProductConfigID;
-    };
-};
-
 struct DeviceAotInfo {
-    AheadOfTimeConfig aotConfig = {};
+    NEO::HardwareIpVersion aotConfig{};
     const NEO::HardwareInfo *hwInfo = nullptr;
     const std::vector<unsigned short> *deviceIds = nullptr;
     AOT::FAMILY family = {};
@@ -48,7 +36,7 @@ struct DeviceAotInfo {
     std::vector<NEO::ConstStringRef> acronyms{};
 
     bool operator==(const DeviceAotInfo &rhs) {
-        return aotConfig.ProductConfig == rhs.aotConfig.ProductConfig && family == rhs.family && release == rhs.release && hwInfo == rhs.hwInfo;
+        return aotConfig.value == rhs.aotConfig.value && family == rhs.family && release == rhs.release && hwInfo == rhs.hwInfo;
     }
 };
 
@@ -59,13 +47,13 @@ struct ProductConfigHelper {
         MismatchedValue = -1,
     };
     static void adjustDeviceName(std::string &device);
-    static std::string parseMajorMinorValue(AheadOfTimeConfig config);
-    static std::string parseMajorMinorRevisionValue(AheadOfTimeConfig config);
+    static std::string parseMajorMinorValue(NEO::HardwareIpVersion config);
+    static std::string parseMajorMinorRevisionValue(NEO::HardwareIpVersion config);
     static int parseProductConfigFromString(const std::string &device, size_t begin, size_t end);
     inline static std::string parseMajorMinorRevisionValue(AOT::PRODUCT_CONFIG config) {
         std::stringstream stringConfig;
-        AheadOfTimeConfig aotConfig = {0};
-        aotConfig.ProductConfig = config;
+        NEO::HardwareIpVersion aotConfig = {0};
+        aotConfig.value = config;
         return parseMajorMinorRevisionValue(aotConfig);
     }
 
@@ -107,7 +95,7 @@ struct ProductConfigHelper {
 
     template <typename EqComparableT>
     static auto findProductConfig(const EqComparableT &lhs) {
-        return [&lhs](const auto &rhs) { return lhs == rhs.aotConfig.ProductConfig; };
+        return [&lhs](const auto &rhs) { return lhs == rhs.aotConfig.value; };
     }
 
     void initialize();

@@ -14,7 +14,7 @@
 void ProductConfigHelper::initialize() {
     for (auto &device : deviceAotInfo) {
         for (const auto &[acronym, value] : AOT::deviceAcronyms) {
-            if (value == device.aotConfig.ProductConfig) {
+            if (value == device.aotConfig.value) {
                 device.acronyms.push_back(NEO::ConstStringRef(acronym));
             }
         }

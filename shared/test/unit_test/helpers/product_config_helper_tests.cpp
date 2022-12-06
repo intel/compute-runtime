@@ -241,7 +241,7 @@ TEST_F(AotDeviceInfoTests, givenProductOrAotConfigWhenParseMajorMinorRevisionVal
     }
 
     for (const auto &device : enabledDeviceConfigs) {
-        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.ProductConfig);
+        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.value);
         auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
         auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
         EXPECT_STREQ(configStr0.c_str(), configStr1.c_str());
@@ -268,7 +268,7 @@ TEST_F(AotDeviceInfoTests, givenProductConfigAcronymWhenCheckAllEnabledThenCorre
             EXPECT_TRUE(acronymFound);
 
             device.acronyms.clear();
-            device.aotConfig.ProductConfig = AOT::UNKNOWN_ISA;
+            device.aotConfig.value = AOT::UNKNOWN_ISA;
 
             enabledAcronyms = productConfigHelper->getAllProductAcronyms();
             acronymFound = std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), findAcronym(acronym));
@@ -425,7 +425,7 @@ TEST_F(AotDeviceInfoTests, givenNotFullConfigWhenGetProductConfigThenUnknownIsaI
     }
     auto aotConfig = allEnabledDeviceConfigs[0].aotConfig;
     std::stringstream majorString;
-    majorString << aotConfig.ProductConfigID.Major;
+    majorString << aotConfig.architecture;
     auto major = majorString.str();
 
     auto aotValue0 = ProductConfigHelper::getProductConfigForVersionValue(major);
@@ -481,7 +481,7 @@ TEST_F(AotDeviceInfoTests, givenProductConfigWhenGetDeviceAotInfoThenCorrectValu
     DeviceAotInfo aotInfo{};
 
     for (auto &product : enabledProducts) {
-        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(product.aotConfig.ProductConfig);
+        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(product.aotConfig.value);
         EXPECT_TRUE(productConfigHelper->getDeviceAotInfoForProductConfig(productConfig, aotInfo));
         EXPECT_TRUE(aotInfo == product);
     }

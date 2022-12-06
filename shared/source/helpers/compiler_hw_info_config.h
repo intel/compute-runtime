@@ -28,7 +28,7 @@ class CompilerProductHelper {
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isForceToStatelessRequired() const = 0;
-    virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, AheadOfTimeConfig config) const = 0;
+    virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
 };
 
@@ -44,7 +44,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isForceToStatelessRequired() const override;
-    void setProductConfigForHwInfo(HardwareInfo &hwInfo, AheadOfTimeConfig config) const override;
+    void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
 
   protected:

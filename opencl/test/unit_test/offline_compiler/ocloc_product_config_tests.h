@@ -12,11 +12,11 @@
 namespace NEO {
 struct OclocProductConfigTests : public ::testing::TestWithParam<std::tuple<AOT::PRODUCT_CONFIG, PRODUCT_FAMILY>> {
     void SetUp() override {
-        std::tie(aotConfig.ProductConfig, productFamily) = GetParam();
+        std::tie(aotConfig.value, productFamily) = GetParam();
         mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     }
 
-    AheadOfTimeConfig aotConfig;
+    HardwareIpVersion aotConfig;
     PRODUCT_FAMILY productFamily;
     std::unique_ptr<MockOfflineCompiler> mockOfflineCompiler;
 };

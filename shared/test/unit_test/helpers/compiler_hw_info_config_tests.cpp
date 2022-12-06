@@ -49,10 +49,10 @@ HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThe
     auto hwInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
     auto productConfig = productHelper.getProductConfigFromHwInfo(*defaultHwInfo);
-    AheadOfTimeConfig aotConfig = {0};
-    aotConfig.ProductConfig = productConfig;
+    HardwareIpVersion aotConfig = {0};
+    aotConfig.value = productConfig;
     CompilerProductHelper::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
-    EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
+    EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.revision);
 }
 
 HWTEST2_F(CompilerProductHelperFixture, givenAtMostXeHPWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtMostXeHpCore) {

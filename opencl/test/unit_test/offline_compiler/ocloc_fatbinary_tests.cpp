@@ -191,7 +191,7 @@ TEST(OclocFatBinaryRequestedFatBinary, givenDeviceArgToFatBinaryWhenConfigIsNotF
     auto aotConfig = allEnabledDeviceConfigs[0].aotConfig;
 
     std::stringstream majorString;
-    majorString << aotConfig.ProductConfigID.Major;
+    majorString << aotConfig.architecture;
     auto major = majorString.str();
 
     auto aotValue0 = argHelper->productConfigHelper->getProductConfigForVersionValue(major);

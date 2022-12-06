@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/direct_submission/direct_submission_properties.h"
+#include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 
 #include "gtsysinfo.h"
@@ -132,15 +133,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
 
     return result;
 }
-
-struct HardwareIpVersion {
-    uint8_t architecture{};
-    uint8_t release{};
-    uint8_t revision{};
-
-  protected:
-    uint8_t reserved[5]{};
-};
 
 struct HardwareInfo {
     HardwareInfo() = default;

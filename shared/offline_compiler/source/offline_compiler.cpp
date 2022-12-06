@@ -170,7 +170,7 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
     } else if (helper->productConfigHelper->isProductConfig(queryAcronym)) {
         auto product = ProductConfigHelper::getProductConfigForAcronym(queryAcronym);
         for (const auto &device : enabledDevices) {
-            if (device.aotConfig.ProductConfig == product) {
+            if (device.aotConfig.value == product) {
                 matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
             }
         }

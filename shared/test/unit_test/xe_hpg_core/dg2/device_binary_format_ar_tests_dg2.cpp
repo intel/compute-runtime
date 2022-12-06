@@ -28,9 +28,9 @@ DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductCo
     PatchTokensTestData::ValidEmptyProgram programTokens;
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
-    AheadOfTimeConfig aotConfig0{}, aotConfig1{};
-    aotConfig0.ProductConfig = AOT::DG2_G10_A0;
-    aotConfig1.ProductConfig = AOT::DG2_G10_B0;
+    NEO::HardwareIpVersion aotConfig0{}, aotConfig1{};
+    aotConfig0.value = AOT::DG2_G10_A0;
+    aotConfig1.value = AOT::DG2_G10_B0;
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig0);
     std::string anotherProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig1);

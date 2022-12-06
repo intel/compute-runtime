@@ -28,9 +28,9 @@ PVCTEST_F(PvcUnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithPvcProductCo
     PatchTokensTestData::ValidEmptyProgram programTokens;
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
-    AheadOfTimeConfig aotConfig0{}, aotConfig1{};
-    aotConfig0.ProductConfig = AOT::PVC_XL_A0;
-    aotConfig1.ProductConfig = AOT::PVC_XL_A0P;
+    NEO::HardwareIpVersion aotConfig0{}, aotConfig1{};
+    aotConfig0.value = AOT::PVC_XL_A0;
+    aotConfig1.value = AOT::PVC_XL_A0P;
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig0);
     std::string anotherProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig1);
