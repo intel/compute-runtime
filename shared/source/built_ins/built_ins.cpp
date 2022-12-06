@@ -9,7 +9,9 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include <cstdint>

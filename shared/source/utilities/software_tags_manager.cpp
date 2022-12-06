@@ -7,6 +7,9 @@
 
 #include "shared/source/utilities/software_tags_manager.h"
 
+#include "shared/source/device/device.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+
 namespace NEO {
 
 void SWTagsManager::initialize(Device &device) {

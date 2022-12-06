@@ -10,6 +10,7 @@
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/string.h"

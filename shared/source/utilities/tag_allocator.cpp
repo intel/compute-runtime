@@ -7,6 +7,8 @@
 
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
+
 namespace NEO {
 
 TagAllocatorBase::TagAllocatorBase(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)

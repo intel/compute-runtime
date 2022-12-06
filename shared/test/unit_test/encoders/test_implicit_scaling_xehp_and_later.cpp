@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/walker_partition_interface.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"

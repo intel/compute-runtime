@@ -9,7 +9,9 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 

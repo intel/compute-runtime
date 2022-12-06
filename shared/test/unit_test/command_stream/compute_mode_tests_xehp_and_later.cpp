@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"

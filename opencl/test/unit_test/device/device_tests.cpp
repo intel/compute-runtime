@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/os_context.h"

@@ -7,8 +7,11 @@
 
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/idlist.h"
+
+#include "metrics_library_api_1_0.h"
 
 #include <atomic>
 #include <cstdint>

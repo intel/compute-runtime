@@ -13,9 +13,11 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/affinity_mask.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/wait_util.h"
@@ -80,8 +82,8 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
     MemoryManager::maxOsContextCount = 0u;
     for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-        auto osContextCount = static_cast<uint32_t>(hwHelper.getGpgpuEngineInstances(*hwInfo).size());
+        auto &coreHelper = rootDeviceEnvironment->getHelper<CoreHelper>();
+        auto osContextCount = static_cast<uint32_t>(coreHelper.getGpgpuEngineInstances(*hwInfo).size());
         auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
         auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         bool hasRootCsr = subDevicesCount > 1;
@@ -203,8 +205,8 @@ void ExecutionEnvironment::parseAffinityMask() {
 
 void ExecutionEnvironment::adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const {
     auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfoConfig->adjustNumberOfCcs(*hwInfo);
+    auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    productHelper.adjustNumberOfCcs(*hwInfo);
 }
 
 void ExecutionEnvironment::adjustCcsCount() {

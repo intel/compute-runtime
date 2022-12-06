@@ -8,6 +8,8 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/app_resource_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include <bitset>

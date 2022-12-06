@@ -15,6 +15,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -25,8 +26,8 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
                                                                        ExecutionEnvironment &environment,
                                                                        InternalAllocationStorage &allocationStorage)
     : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
-    auto &hwHelper = HwHelper::get(environment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
-    singleSurfaceStateSize = hwHelper.getRenderSurfaceStateSize();
+    auto &coreHelper = environment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<CoreHelper>();
+    singleSurfaceStateSize = coreHelper.getRenderSurfaceStateSize();
     if (DebugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
         privateScratchSpaceSupported = !!DebugManager.flags.EnablePrivateScratchSlot1.get();
     }
@@ -80,14 +81,14 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceState() {
 }
 
 void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) {
-    auto &hwHelper = HwHelper::get(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &coreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<CoreHelper>();
     uint64_t scratchAllocationAddress = 0u;
     if (scratchAllocation) {
         scratchAllocationAddress = scratchAllocation->getGpuAddress();
     }
-    hwHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                                     surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
-                                                     perThreadScratchSize, nullptr, false, scratchType, false, true);
+    coreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
+                                                       surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
+                                                       perThreadScratchSize, nullptr, false, scratchType, false, true);
 
     if (privateScratchSpaceSupported) {
         void *surfaceStateForPrivateScratchAllocation = ptrOffset(surfaceStateForScratchAllocation, singleSurfaceStateSize);
@@ -96,10 +97,10 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceS
         if (privateScratchAllocation) {
             privateScratchAllocationAddress = privateScratchAllocation->getGpuAddress();
         }
-        hwHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                                         surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
-                                                         privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
-                                                         scratchType, false, true);
+        coreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
+                                                           surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
+                                                           privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
+                                                           scratchType, false, true);
     }
 }
 

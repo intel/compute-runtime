@@ -6,27 +6,25 @@
  */
 
 #pragma once
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/bit_helpers.h"
-#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/heap_assigner.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/alignment_selector.h"
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_memory.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include <cstdint>
 #include <cstring>
 #include <map>
 #include <mutex>
+#include <unordered_map>
 #include <vector>
 
 namespace NEO {

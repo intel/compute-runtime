@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/sleep.h"
 
 #include "level_zero/core/source/driver/driver.h"
