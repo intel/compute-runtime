@@ -9,7 +9,7 @@
 
 #include "mock_gdi.h"
 
-extern ADAPTER_INFO gAdapterInfo;
+extern ADAPTER_INFO_KMD gAdapterInfo;
 extern uint64_t gGpuAddressSpace;
 
 void initGfxPartition() {

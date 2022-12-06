@@ -22,11 +22,10 @@ class WddmSharedAllocationsMock : public WddmMock {
     }
 };
 
-class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnvironmentGmmFixture {
+class WddmSharedTestsFixture : public MockExecutionEnvironmentGmmFixture {
   public:
     void setUp() {
         MockExecutionEnvironmentGmmFixture::setUp();
-        GdiDllFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = new WddmSharedAllocationsMock(*rootDeviceEnvironment);
         wddmMockInterface = new WddmMockInterface20(*wddm);
@@ -50,7 +49,6 @@ class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnviron
     }
 
     void tearDown() {
-        GdiDllFixture::tearDown();
     }
 
     WddmSharedAllocationsMock *wddm = nullptr;

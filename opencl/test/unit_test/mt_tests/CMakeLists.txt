@@ -38,10 +38,6 @@ target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCK
 target_link_libraries(igdrcl_mt_tests gmock-gtest)
 target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${NEO_EXTRA_LIBS})
 
-if(WIN32)
-  add_dependencies(igdrcl_mt_tests mock_gdi igdrcl_tests)
-endif()
-
 add_dependencies(igdrcl_mt_tests
                  prepare_test_kernels_for_shared
                  prepare_test_kernels_for_ocl

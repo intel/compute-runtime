@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/os_library.h"
+#include "shared/test/common/mock_gdi/mock_os_library.h"
 
 #include "common/gtsysinfo.h"
 #include "igfxfmid.h"
@@ -17,7 +17,7 @@ namespace Os {
 ///////////////////////////////////////////////////////////////////////////////
 const char *frontEndDllName = "";
 const char *igcDllName = "";
-const char *gdiDllName = "gdi32_mock.dll";
+const char *gdiDllName = "";
 const char *dxcoreDllName = "";
 const char *testDllName = "test_dynamic_lib.dll";
 const char *metricsLibraryDllName = "";
@@ -25,10 +25,10 @@ const char *metricsLibraryDllName = "";
 
 NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
     NEO::OsLibrary *mockGdiDll;
-    mockGdiDll = NEO::OsLibrary::load("gdi32_mock.dll");
+    mockGdiDll = NEO::MockOsLibrary::load("");
 
-    typedef void(__stdcall * pfSetAdapterInfo)(const void *, const void *, uint64_t);
-    pfSetAdapterInfo setAdapterInfo = reinterpret_cast<pfSetAdapterInfo>(mockGdiDll->getProcAddress("MockSetAdapterInfo"));
+    typedef void (*pfSetAdapterInfo)(const void *, const void *, uint64_t);
+    pfSetAdapterInfo setAdapterInfo = reinterpret_cast<pfSetAdapterInfo>(mockGdiDll->getProcAddress("mockSetAdapterInfo"));
 
     setAdapterInfo(platform, gtSystemInfo, gpuAddressSpace);
 

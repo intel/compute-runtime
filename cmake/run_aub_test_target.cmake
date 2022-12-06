@@ -24,10 +24,6 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
   add_dependencies(run_aub_tests run_${product}_${revision_id}_aub_tests)
   set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES FOLDER "${AUB_TESTS_TARGETS_FOLDER}/${product}/${revision_id}")
 
-  if(WIN32)
-    add_dependencies(run_${product}_${revision_id}_aub_tests mock_gdi)
-  endif()
-
   set(aub_tests_options "")
   if(NOT ${AUB_DUMP_BUFFER_FORMAT} STREQUAL "")
     list(APPEND aub_tests_options --dump_buffer_format)

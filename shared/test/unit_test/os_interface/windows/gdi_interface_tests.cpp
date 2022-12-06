@@ -22,7 +22,7 @@ TEST(GdiInterface, WhenGdiIsCreatedThenItIsInitialized) {
     ASSERT_TRUE(gdi.isInitialized());
 }
 
-TEST(GdiInterface, GivenInvalidGdiDllNameWhenCreatingGdiThenGdiIsNotInitialized) {
+TEST(GdiInterface, DISABLED_GivenInvalidGdiDllNameWhenCreatingGdiThenGdiIsNotInitialized) {
     const char *oldName = Os::gdiDllName;
     Os::gdiDllName = "surely_not_exists_.dll";
 

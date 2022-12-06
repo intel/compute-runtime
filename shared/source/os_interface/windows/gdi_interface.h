@@ -79,6 +79,7 @@ class Gdi {
     MOCKABLE_VIRTUAL bool setupHwQueueProcAddresses();
 
   protected:
+    OsLibrary *createGdiDLL();
     MOCKABLE_VIRTUAL bool getAllProcAddresses();
     std::unique_ptr<NEO::OsLibrary> gdiDll;
     bool initialized = false;

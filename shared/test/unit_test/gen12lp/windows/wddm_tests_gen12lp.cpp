@@ -17,10 +17,8 @@
 
 using namespace NEO;
 
-struct Gen12LpWddmTest : public GdiDllFixture, ::testing::Test {
+struct Gen12LpWddmTest : public ::testing::Test {
     void SetUp() override {
-        GdiDllFixture::setUp();
-
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         rootDeviceEnvironment->initGmm();
@@ -30,7 +28,6 @@ struct Gen12LpWddmTest : public GdiDllFixture, ::testing::Test {
     }
 
     void TearDown() override {
-        GdiDllFixture::tearDown();
     }
 
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;

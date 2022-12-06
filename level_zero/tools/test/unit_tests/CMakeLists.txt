@@ -58,7 +58,6 @@ target_include_directories(${TARGET_NAME}
 
 if(WIN32)
   target_link_libraries(${TARGET_NAME} dbghelp)
-  add_dependencies(${TARGET_NAME} mock_gdi)
 endif()
 
 target_link_libraries(${TARGET_NAME}
