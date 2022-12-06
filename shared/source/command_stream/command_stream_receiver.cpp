@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
@@ -444,7 +445,7 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     UNRECOVERABLE_IF(allocation == nullptr);
     this->tagAddress = reinterpret_cast<TagAddressType *>(allocation->getUnderlyingBuffer());
     this->debugPauseStateAddress = reinterpret_cast<DebugPauseState *>(
-        reinterpret_cast<uint8_t *>(allocation->getUnderlyingBuffer()) + debugPauseStateAddressOffset);
+        reinterpret_cast<uint8_t *>(allocation->getUnderlyingBuffer()) + TagAllocationLayout::debugPauseStateAddressOffset);
 }
 
 MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
@@ -687,10 +688,14 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     this->setTagAllocation(tagAllocation);
     auto initValue = DebugManager.flags.EnableNullHardware.get() ? static_cast<uint32_t>(-1) : initialHardwareTag;
     auto tagAddress = this->tagAddress;
+    auto completionFence = reinterpret_cast<TaskCountType *>(getCompletionAddress());
+    UNRECOVERABLE_IF(!completionFence);
     uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
     for (uint32_t i = 0; i < subDevices; i++) {
         *tagAddress = initValue;
         tagAddress = ptrOffset(tagAddress, this->postSyncWriteOffset);
+        *completionFence = 0;
+        completionFence = ptrOffset(completionFence, this->postSyncWriteOffset);
     }
     *this->debugPauseStateAddress = DebugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 
@@ -956,4 +961,13 @@ TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionS
     }
 }
 
+uint64_t CommandStreamReceiver::getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + TagAllocationLayout::debugPauseStateAddressOffset; }
+uint64_t CommandStreamReceiver::getCompletionAddress() const {
+    uint64_t completionFenceAddress = castToUint64(const_cast<TagAddressType *>(tagAddress));
+    if (completionFenceAddress == 0) {
+        return 0;
+    }
+    completionFenceAddress += TagAllocationLayout::completionFenceOffset;
+    return completionFenceAddress;
+}
 } // namespace NEO

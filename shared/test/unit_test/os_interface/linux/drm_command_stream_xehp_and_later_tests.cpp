@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -100,7 +101,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     testCsr->latestSentTaskCount = 2;
     testCsr->postSyncWriteOffset = 16;
 
-    uint64_t expectedCompletionGpuAddress = testCsr->getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset + testCsr->postSyncWriteOffset;
+    uint64_t expectedCompletionGpuAddress = testCsr->getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset + testCsr->postSyncWriteOffset;
 
     SubmissionStatus ret = testCsr->flushInternal(batchBuffer, testCsr->getResidencyAllocations());
     EXPECT_EQ(SubmissionStatus::SUCCESS, ret);
@@ -127,7 +128,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
 
     volatile TagAddressType *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
-    completionAddress += (Drm::completionFenceOffset / sizeof(TagAddressType));
+    completionAddress += (TagAllocationLayout::completionFenceOffset / sizeof(TagAddressType));
     *completionAddress = 1;
     completionAddress += (postSyncOffset / sizeof(TagAddressType));
     *completionAddress = 1;
@@ -135,7 +136,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     memoryManager->handleFenceCompletion(allocation);
 
     uint64_t expectedAddress = castToUint64(const_cast<TagAddressType *>(defaultEngine.commandStreamReceiver->getTagAddress())) +
-                               Drm::completionFenceOffset +
+                               TagAllocationLayout::completionFenceOffset +
                                postSyncOffset;
     constexpr uint64_t expectedValue = 2;
 
@@ -161,7 +162,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
 
     volatile TagAddressType *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
-    completionAddress += (Drm::completionFenceOffset / sizeof(TagAddressType));
+    completionAddress += (TagAllocationLayout::completionFenceOffset / sizeof(TagAddressType));
     *completionAddress = 2; //1st context is ready
     completionAddress += (postSyncOffset / sizeof(TagAddressType));
     *completionAddress = 1;
@@ -169,7 +170,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     memoryManager->handleFenceCompletion(allocation);
 
     uint64_t expectedAddress = castToUint64(const_cast<TagAddressType *>(defaultEngine.commandStreamReceiver->getTagAddress())) +
-                               Drm::completionFenceOffset +
+                               TagAllocationLayout::completionFenceOffset +
                                postSyncOffset;
     constexpr uint64_t expectedValue = 2;
 

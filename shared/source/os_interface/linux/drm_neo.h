@@ -61,7 +61,6 @@ class Drm : public DriverModel {
 
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::DRM;
-    static constexpr size_t completionFenceOffset = 1024;
 
     static SubmissionStatus getSubmissionStatusFromReturnCode(int32_t retCode);
 

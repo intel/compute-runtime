@@ -133,7 +133,7 @@ class CommandStreamReceiver {
     }
     MultiGraphicsAllocation &createTagsMultiAllocation();
     volatile TagAddressType *getTagAddress() const { return tagAddress; }
-    uint64_t getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + debugPauseStateAddressOffset; }
+    uint64_t getDebugPauseStateGPUAddress() const;
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
 
@@ -335,14 +335,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
     MOCKABLE_VIRTUAL bool checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const;
 
-    uint64_t getCompletionAddress() const {
-        uint64_t completionFenceAddress = castToUint64(const_cast<TagAddressType *>(tagAddress));
-        if (completionFenceAddress == 0) {
-            return 0;
-        }
-        completionFenceAddress += completionFenceOffset;
-        return completionFenceAddress;
-    }
+    uint64_t getCompletionAddress() const;
 
     TaskCountType getCompletionValue(const GraphicsAllocation &gfxAllocation);
     DispatchMode getDispatchMode() const {
@@ -424,8 +417,6 @@ class CommandStreamReceiver {
     FrontEndPropertiesSupport feSupportFlags{};
     PipelineSelectPropertiesSupport pipelineSupportFlags{};
 
-    // offset for debug state is 1kbyte, tag writes can use multiple offsets for multiple partitions and each offset can vary per platform
-    const uint64_t debugPauseStateAddressOffset = MemoryConstants::kiloByte;
     uint64_t totalMemoryUsed = 0u;
 
     volatile TagAddressType *tagAddress = nullptr;
@@ -476,7 +467,6 @@ class CommandStreamReceiver {
     uint32_t activePartitions = 1;
     uint32_t activePartitionsConfig = 1;
     uint32_t postSyncWriteOffset = 0;
-    uint32_t completionFenceOffset = 0;
     TaskCountType completionFenceValue = 0;
 
     const uint32_t rootDeviceIndex;

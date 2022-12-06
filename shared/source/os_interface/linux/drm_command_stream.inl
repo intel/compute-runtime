@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
@@ -38,8 +39,6 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
                                                               const DeviceBitfield deviceBitfield,
                                                               gemCloseWorkerMode mode)
     : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), gemCloseWorkerOperationMode(mode) {
-
-    this->completionFenceOffset = Drm::completionFenceOffset;
 
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
 
@@ -226,7 +225,7 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
     uint64_t completionGpuAddress = 0;
     TaskCountType completionValue = 0;
     if (this->drm->isVmBindAvailable() && this->drm->completionFenceSupport()) {
-        completionGpuAddress = getTagAllocation()->getGpuAddress() + (index * this->postSyncWriteOffset) + Drm::completionFenceOffset;
+        completionGpuAddress = getTagAllocation()->getGpuAddress() + (index * this->postSyncWriteOffset) + TagAllocationLayout::completionFenceOffset;
         completionValue = this->latestSentTaskCount;
     }
 

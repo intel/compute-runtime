@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -62,8 +63,8 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
 
             if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
                 std::cout << "Completion fence for DirectSubmission:"
-                          << " GPU address: " << std::hex << (this->completionFenceAllocation->getGpuAddress() + Drm::completionFenceOffset)
-                          << ", CPU address: " << (castToUint64(this->completionFenceAllocation->getUnderlyingBuffer()) + Drm::completionFenceOffset)
+                          << " GPU address: " << std::hex << (this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::completionFenceOffset)
+                          << ", CPU address: " << (castToUint64(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset)
                           << std::dec << std::endl;
             }
         }
@@ -79,7 +80,7 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
     if (this->isCompletionFenceSupported()) {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
-        auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + Drm::completionFenceOffset;
+        auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset;
         drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, this->postSyncOffset);
     }
     this->deallocateResources();
@@ -124,7 +125,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     uint64_t completionFenceGpuAddress = 0u;
     if (this->isCompletionFenceSupported()) {
         completionValue = ++completionFenceValue;
-        completionFenceGpuAddress = this->completionFenceAllocation->getGpuAddress() + Drm::completionFenceOffset;
+        completionFenceGpuAddress = this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
     }
 
     for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {

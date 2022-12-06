@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
@@ -63,7 +64,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionAddressThenOffsett
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAddress());
     uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(csr->getTagAddress()));
-    auto expectedAddress = tagAddress + Drm::completionFenceOffset;
+    auto expectedAddress = tagAddress + TagAllocationLayout::completionFenceOffset;
     EXPECT_EQ(expectedAddress, csr->getCompletionAddress());
 }
 

@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/command_stream/scratch_space_controller_base.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -77,9 +78,14 @@ TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionValueTh
     EXPECT_EQ(expectedValue, commandStreamReceiver->getCompletionValue(allocation));
 }
 
-TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionAddressThenProperAddressIsReturned) {
+TEST_F(CommandStreamReceiverTest, givenCsrWhenGettingCompletionAddressThenProperAddressIsReturned) {
     auto expectedAddress = castToUint64(const_cast<TagAddressType *>(commandStreamReceiver->getTagAddress()));
-    EXPECT_EQ(expectedAddress, commandStreamReceiver->getCompletionAddress());
+    EXPECT_EQ(expectedAddress + TagAllocationLayout::completionFenceOffset, commandStreamReceiver->getCompletionAddress());
+}
+
+TEST_F(CommandStreamReceiverTest, givenCsrWhenGettingCompletionAddressThenUnderlyingMemoryIsZeroed) {
+    auto completionFence = reinterpret_cast<TaskCountType *>(commandStreamReceiver->getCompletionAddress());
+    EXPECT_EQ(0u, *completionFence);
 }
 
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {

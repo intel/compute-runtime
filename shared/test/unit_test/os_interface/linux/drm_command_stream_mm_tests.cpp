@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -119,7 +120,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndComplet
     csr->makeResident(*allocation);
     csr->makeResident(*csr->getTagAllocation());
 
-    uint64_t expectedCompletionGpuAddress = csr->getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset;
+    uint64_t expectedCompletionGpuAddress = csr->getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
     auto *testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testCsr->latestSentTaskCount = 2;
 

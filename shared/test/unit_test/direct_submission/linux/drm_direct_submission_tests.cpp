@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
@@ -262,7 +263,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
     auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
 
     ASSERT_TRUE(drm->completionFenceSupport());
-    auto completionFenceBaseCpuAddress = reinterpret_cast<uint64_t>(commandStreamReceiver.getTagAddress()) + Drm::completionFenceOffset;
+    auto completionFenceBaseCpuAddress = reinterpret_cast<uint64_t>(commandStreamReceiver.getTagAddress()) + TagAllocationLayout::completionFenceOffset;
     uint32_t expectedCompletionValueToWait = 10u;
 
     {
@@ -360,7 +361,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
-    auto completionFenceBaseGpuAddress = commandStreamReceiver.getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset;
+    auto completionFenceBaseGpuAddress = commandStreamReceiver.getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
 
     DeviceBitfield firstTileBitfield{0b01};
     OsContextLinux osContextTile0(*drm, 0, 0u,
@@ -399,7 +400,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
-    auto completionFenceBaseGpuAddress = commandStreamReceiver.getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset;
+    auto completionFenceBaseGpuAddress = commandStreamReceiver.getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
 
     DeviceBitfield secondTileBitfield{0b10};
     OsContextLinux osContextTile1(*drm, 0, 0u,
@@ -438,7 +439,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
 
     auto &commandStreamReceiver = device->getUltCommandStreamReceiver<FamilyType>();
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
-    auto completionFenceBaseGpuAddress = commandStreamReceiver.getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset;
+    auto completionFenceBaseGpuAddress = commandStreamReceiver.getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
 
     DeviceBitfield twoTilesBitfield{0b11};
     OsContextLinux osContextBothTiles(*drm, 0, 0u,

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/memory_banks.h"
@@ -5501,7 +5502,7 @@ TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOf
     auto engine = memoryManager->getRegisteredEngines()[0];
     allocation->updateTaskCount(2, engine.osContext->getContextId());
 
-    uint64_t expectedFenceAddress = castToUint64(const_cast<TagAddressType *>(engine.commandStreamReceiver->getTagAddress())) + Drm::completionFenceOffset;
+    uint64_t expectedFenceAddress = castToUint64(const_cast<TagAddressType *>(engine.commandStreamReceiver->getTagAddress())) + TagAllocationLayout::completionFenceOffset;
     constexpr uint64_t expectedValue = 2;
 
     memoryManager->handleFenceCompletion(allocation);
