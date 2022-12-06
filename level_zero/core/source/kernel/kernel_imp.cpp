@@ -730,7 +730,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
 
     void *pNext = pKernelProperties->pNext;
     while (pNext) {
-        ze_base_desc_t *extendedProperties = reinterpret_cast<ze_base_desc_t *>(pKernelProperties->pNext);
+        ze_base_desc_t *extendedProperties = reinterpret_cast<ze_base_desc_t *>(pNext);
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_KERNEL_PREFERRED_GROUP_SIZE_PROPERTIES) {
             ze_kernel_preferred_group_size_properties_t *preferredGroupSizeProperties =
                 reinterpret_cast<ze_kernel_preferred_group_size_properties_t *>(extendedProperties);

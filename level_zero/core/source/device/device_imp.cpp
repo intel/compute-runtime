@@ -643,7 +643,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
 
     void *pNext = pKernelProperties->pNext;
     while (pNext) {
-        ze_base_desc_t *extendedProperties = reinterpret_cast<ze_base_desc_t *>(pKernelProperties->pNext);
+        ze_base_desc_t *extendedProperties = reinterpret_cast<ze_base_desc_t *>(pNext);
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
             ze_float_atomic_ext_properties_t *floatProperties =
                 reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);

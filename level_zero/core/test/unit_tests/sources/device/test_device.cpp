@@ -823,6 +823,35 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelAndHostPointerC
     delete[] buffer;
 }
 
+TEST_F(DeviceTest, givenMoreThanOneExtendedPropertiesStructuresWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {
+    ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
+    schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;
+    schedulingHintProperties.schedulingHintFlags = ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32;
+    schedulingHintProperties.pNext = nullptr;
+
+    ze_float_atomic_ext_properties_t floatAtomicExtendedProperties = {};
+    floatAtomicExtendedProperties.stype = ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES;
+    floatAtomicExtendedProperties.pNext = &schedulingHintProperties;
+
+    const ze_device_fp_flags_t maxValue{std::numeric_limits<uint32_t>::max()};
+    floatAtomicExtendedProperties.fp16Flags = maxValue;
+    floatAtomicExtendedProperties.fp32Flags = maxValue;
+    floatAtomicExtendedProperties.fp64Flags = maxValue;
+
+    ze_device_module_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
+    kernelProperties.pNext = &floatAtomicExtendedProperties;
+
+    ze_result_t res = device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    EXPECT_NE(maxValue, floatAtomicExtendedProperties.fp16Flags);
+    EXPECT_NE(maxValue, floatAtomicExtendedProperties.fp32Flags);
+    EXPECT_NE(maxValue, floatAtomicExtendedProperties.fp64Flags);
+
+    EXPECT_NE(ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32, schedulingHintProperties.schedulingHintFlags);
+}
+
 TEST_F(DeviceTest, givenKernelExtendedPropertiesStructureWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {
     ze_device_module_properties_t kernelProperties = {};
 
