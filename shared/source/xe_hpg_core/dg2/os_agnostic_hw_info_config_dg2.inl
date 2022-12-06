@@ -210,7 +210,7 @@ bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const {
-    const bool enabled = false;
+    const bool enabled = !isOOQ;
     if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }

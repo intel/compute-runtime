@@ -182,7 +182,14 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
         }
     }
 
-    size_t extendedSize = sizeWithDisabled + EnqueueOperation<FamilyType>::getSizeRequiredForTimestampPacketWrite() + sizeForNodeDependency;
+    size_t sizeForPipeControl = 0;
+    const auto &hwInfo = device->getHardwareInfo();
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isResolveDependenciesByPipeControlsSupported(hwInfo, mockCmdQHw->isOOQEnabled())) {
+        sizeForPipeControl = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+    }
+
+    size_t extendedSize = sizeWithDisabled + EnqueueOperation<FamilyType>::getSizeRequiredForTimestampPacketWrite() + sizeForNodeDependency + sizeForPipeControl;
 
     EXPECT_EQ(sizeWithEnabled, extendedSize);
 }

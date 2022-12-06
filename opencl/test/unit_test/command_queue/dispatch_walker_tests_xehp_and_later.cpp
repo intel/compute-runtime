@@ -558,13 +558,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false);
-    auto sizeWithDisabled = cmdQ.requestedCmdStreamSize;
+    size_t sizeWithDisabled = cmdQ.requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false);
-    auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
+    size_t sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
-    EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + 0);
+    size_t additionalSize = 0u;
+    const auto &hwInfo = device->getHardwareInfo();
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isResolveDependenciesByPipeControlsSupported(hwInfo, cmdQ.isOOQEnabled())) {
+        additionalSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+    }
+
+    EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + additionalSize);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {

@@ -552,3 +552,21 @@ DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagS
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }
+
+DG2TEST_F(HwInfoConfigTestDg2, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    // ResolveDependenciesViaPipeControls = -1 (default)
+    EXPECT_TRUE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(hwInfo, false));
+    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(hwInfo, true));
+
+    DebugManager.flags.ResolveDependenciesViaPipeControls.set(0);
+    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(hwInfo, false));
+    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(hwInfo, true));
+
+    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    EXPECT_TRUE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(hwInfo, false));
+    EXPECT_TRUE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(hwInfo, true));
+}
