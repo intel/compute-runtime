@@ -70,6 +70,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     void overrideAsyncDeleterFlag(bool newValue);
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
+    GraphicsAllocation *allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
     int redundancyRatio = 1;
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
@@ -198,6 +200,13 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         }
     }
 
+    bool mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override {
+        if (failMapPhysicalToVirtualMemory) {
+            return false;
+        }
+        return OsAgnosticMemoryManager::mapPhysicalToVirtualMemory(physicalAllocation, gpuRange, bufferSize);
+    };
+
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
     uint32_t populateOsHandlesCalled = 0u;
     uint32_t allocateGraphicsMemoryForNonSvmHostPtrCalled = 0u;
@@ -244,6 +253,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool returnFakeAllocation = false;
     bool callBasePopulateOsHandles = true;
     bool callBaseAllocateGraphicsMemoryForNonSvmHostPtr = true;
+    bool failMapPhysicalToVirtualMemory = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;

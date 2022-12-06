@@ -186,5 +186,6 @@ class WddmMock : public Wddm {
     bool callBaseSetAllocationPriority = true;
     bool callBaseWaitFromCpu = true;
     bool failReserveGpuVirtualAddress = false;
+    bool failCreateAllocation = false;
 };
 } // namespace NEO

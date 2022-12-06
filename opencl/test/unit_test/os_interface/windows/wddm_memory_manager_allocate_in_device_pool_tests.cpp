@@ -365,6 +365,101 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocateFailsThen
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocateFailsThenGraphicsAllocationInPhysicalLocalDeviceMemoryReturnsError) {
+    const bool localMemoryEnabled = true;
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+
+    wddm->callBaseDestroyAllocations = false;
+    wddm->createAllocationStatus = STATUS_NO_MEMORY;
+
+    auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocData, status);
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryThenLocalMemoryAllocationHasCorrectStorageInfoAndNoGpuAddress) {
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.storageInfo.memoryBanks = 0x1;
+    allocData.storageInfo.pageTablesVisibility = 0x2;
+    allocData.storageInfo.cloningOfPageTables = false;
+    allocData.flags.flushL3 = true;
+
+    auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(allocData.storageInfo.memoryBanks, allocation->storageInfo.memoryBanks);
+    EXPECT_EQ(allocData.storageInfo.pageTablesVisibility, allocation->storageInfo.pageTablesVisibility);
+    EXPECT_FALSE(allocation->storageInfo.cloningOfPageTables);
+    EXPECT_EQ(0u, allocation->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryWithMultiStorageThenLocalMemoryAllocationHasCorrectStorageInfoAndNoGpuAddress) {
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize64k * 4;
+    allocData.flags.allocateMemory = true;
+    allocData.storageInfo.memoryBanks = 0b11;
+    allocData.storageInfo.pageTablesVisibility = 0x2;
+    allocData.storageInfo.cloningOfPageTables = false;
+    allocData.flags.flushL3 = true;
+    allocData.storageInfo.multiStorage = true;
+
+    auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(allocData.storageInfo.memoryBanks, allocation->storageInfo.memoryBanks);
+    EXPECT_EQ(allocData.storageInfo.pageTablesVisibility, allocation->storageInfo.pageTablesVisibility);
+    EXPECT_FALSE(allocation->storageInfo.cloningOfPageTables);
+    EXPECT_EQ(0u, allocation->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocatePhysicalLocalDeviceMemoryWithMultiBanksThenLocalMemoryAllocationHasCorrectStorageInfoAndNoGpuAddress) {
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, *executionEnvironment);
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize64k * 4;
+    allocData.flags.allocateMemory = true;
+    allocData.storageInfo.memoryBanks = 0b11;
+    allocData.storageInfo.pageTablesVisibility = 0x2;
+    allocData.storageInfo.cloningOfPageTables = false;
+    allocData.flags.flushL3 = true;
+    allocData.storageInfo.multiStorage = false;
+
+    auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(allocData.storageInfo.memoryBanks, allocation->storageInfo.memoryBanks);
+    EXPECT_EQ(allocData.storageInfo.pageTablesVisibility, allocation->storageInfo.pageTablesVisibility);
+    EXPECT_FALSE(allocation->storageInfo.cloningOfPageTables);
+    EXPECT_EQ(0u, allocation->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerTest, givenLocalMemoryAllocationWhenCpuPointerNotMeetRestrictionsThenDontReserveMemRangeForMap) {
     const bool localMemoryEnabled = true;
     auto executionEnvironment = platform()->peekExecutionEnvironment();
@@ -475,6 +570,25 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSetAllocationPriorityFailureWhenMemoryI
     wddm->setAllocationPriorityResult.success = false;
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status));
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenSetAllocationPriorityFailureWhenMemoryIsAllocatedInLocalPhysicalMemoryThenNullptrIsReturned) {
+    const bool localMemoryEnabled = true;
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+
+    wddm->callBaseSetAllocationPriority = false;
+    wddm->setAllocationPriorityResult.success = false;
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocatePhysicalLocalDeviceMemory(allocData, status));
     EXPECT_EQ(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
 }

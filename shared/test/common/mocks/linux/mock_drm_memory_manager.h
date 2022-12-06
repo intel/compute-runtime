@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocateGraphicsMemoryWithAlignment;
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::allocateMemoryByKMD;
+    using DrmMemoryManager::allocatePhysicalDeviceMemory;
+    using DrmMemoryManager::allocatePhysicalLocalDeviceMemory;
     using DrmMemoryManager::allocationTypeForCompletionFence;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::createAllocWithAlignment;
@@ -86,6 +88,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::handleFenceCompletion;
     using DrmMemoryManager::lockBufferObject;
     using DrmMemoryManager::lockResourceImpl;
+    using DrmMemoryManager::mapPhysicalToVirtualMemory;
     using DrmMemoryManager::memoryForPinBBs;
     using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::munmapFunction;
@@ -99,6 +102,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::sharingBufferObjects;
     using DrmMemoryManager::supportsMultiStorageResources;
     using DrmMemoryManager::unlockBufferObject;
+    using DrmMemoryManager::unMapPhysicalToVirtualMemory;
     using DrmMemoryManager::waitOnCompletionFence;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
     using MemoryManager::heapAssigner;

@@ -109,6 +109,9 @@ NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {
 }
 NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle) {
     createAllocationResult.called++;
+    if (failCreateAllocation) {
+        return STATUS_NO_MEMORY;
+    }
     if (callBaseDestroyAllocations) {
         createAllocationStatus = Wddm::createAllocation(alignedCpuPtr, gmm, outHandle, outResourceHandle, outSharedHandle);
         createAllocationResult.success = createAllocationStatus == STATUS_SUCCESS;

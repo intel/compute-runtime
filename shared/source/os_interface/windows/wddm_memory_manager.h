@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,10 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
+    GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
+    void unMapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
+    bool mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override { return nullptr; }
 
@@ -108,6 +112,7 @@ class WddmMemoryManager : public MemoryManager {
     static bool validateAllocation(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr);
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
+    MOCKABLE_VIRTUAL bool createPhysicalAllocation(WddmAllocation *allocation);
     bool mapGpuVaForOneHandleAllocation(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, const void *requiredGpuPtr);
     bool createGpuAllocationsWithRetry(WddmAllocation *graphicsAllocation);

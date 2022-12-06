@@ -540,6 +540,63 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const Allocatio
     return nullptr;
 }
 
+void DrmMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+    DrmAllocation *drmAllocation = reinterpret_cast<DrmAllocation *>(physicalAllocation);
+    auto bufferObjects = drmAllocation->getBOs();
+    for (auto bufferObject : bufferObjects) {
+        if (bufferObject) {
+            auto address = bufferObject->peekAddress();
+            uint64_t offset = address - gpuRange;
+            bufferObject->setAddress(offset);
+        }
+    }
+    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
+    physicalAllocation->setReservedAddressRange(nullptr, 0u);
+}
+
+bool DrmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+    DrmAllocation *drmAllocation = reinterpret_cast<DrmAllocation *>(physicalAllocation);
+    auto bufferObjects = drmAllocation->getBOs();
+    for (auto bufferObject : bufferObjects) {
+        if (bufferObject) {
+            auto offset = bufferObject->peekAddress();
+            bufferObject->setAddress(gpuRange + offset);
+        }
+    }
+    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
+    physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
+    return true;
+}
+
+GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+
+    StorageInfo systemMemoryStorageInfo = {};
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
+    size_t bufferSize = allocationData.size;
+
+    GemCreate create{};
+    create.size = bufferSize;
+
+    auto &drm = getDrm(allocationData.rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
+
+    [[maybe_unused]] auto ret = ioctlHelper->ioctl(DrmIoctl::GemCreate, &create);
+    DEBUG_BREAK_IF(ret != 0);
+
+    auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
+
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(&drm, patIndex, create.handle, bufferSize, maxOsContextCount));
+
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), nullptr, 0u, bufferSize, MemoryPool::SystemCpuInaccessible);
+    allocation->setDefaultGmm(gmm.release());
+
+    bo.release();
+    status = AllocationStatus::Success;
+    return allocation;
+}
+
 GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
@@ -1459,6 +1516,66 @@ void DrmMemoryManager::cleanupBeforeReturn(const AllocationData &allocationData,
     }
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
+}
+
+GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+
+    std::unique_ptr<Gmm> gmm;
+    size_t sizeAligned = 0;
+    auto numHandles = allocationData.storageInfo.getNumBanks();
+    bool createSingleHandle = 1 == numHandles;
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+
+    sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+    if (createSingleHandle) {
+        gmm = std::make_unique<Gmm>(gmmHelper,
+                                    nullptr,
+                                    sizeAligned,
+                                    0u,
+                                    CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *hwInfo),
+                                    allocationData.flags.preferCompressed,
+                                    allocationData.storageInfo,
+                                    true);
+    }
+
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, numHandles, allocationData.type, nullptr, nullptr, 0u, sizeAligned, MemoryPool::LocalMemory);
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
+
+    if (createSingleHandle) {
+        allocation->setDefaultGmm(gmm.release());
+    } else if (allocationData.storageInfo.multiStorage) {
+        createColouredGmms(gmmHelper,
+                           *allocation,
+                           allocationData.storageInfo,
+                           allocationData.flags.preferCompressed);
+    } else {
+        fillGmmsInAllocation(gmmHelper, allocation.get(), allocationData.storageInfo);
+    }
+    allocation->storageInfo = allocationData.storageInfo;
+    allocation->setFlushL3Required(allocationData.flags.flushL3);
+    allocation->setUncacheable(allocationData.flags.uncacheable);
+
+    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), 0u, maxOsContextCount)) {
+        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+            delete allocation->getGmm(handleId);
+        }
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
+    if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
+        for (auto bo : drmAllocation->getBOs()) {
+            delete bo;
+        }
+        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+            delete allocation->getGmm(handleId);
+        }
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
+
+    status = AllocationStatus::Success;
+    return allocation.release();
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {

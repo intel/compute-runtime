@@ -58,8 +58,13 @@ struct AddressRange {
 struct VirtualMemoryReservation {
     AddressRange virtualAddressRange;
     MemoryFlags flags;
-    bool mapped;
+    struct PhysicalMemoryAllocation *mappedAllocation;
     uint32_t rootDeviceIndex;
+};
+
+struct PhysicalMemoryAllocation {
+    GraphicsAllocation *allocation;
+    Device *device;
 };
 
 constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
@@ -99,6 +104,7 @@ class MemoryManager {
     GraphicsAllocation *allocateInternalGraphicsMemoryWithHostCopy(uint32_t rootDeviceIndex, DeviceBitfield bitField, const void *ptr, size_t size);
 
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocatePhysicalGraphicsMemory(const AllocationProperties &properties);
 
     virtual bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) { return true; }
     virtual bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) { return false; }
@@ -257,6 +263,10 @@ class MemoryManager {
     [[nodiscard]] std::unique_lock<std::mutex> lockKernelAllocationMap() { return std::unique_lock<std::mutex>(this->kernelAllocationMutex); };
     std::map<void *, VirtualMemoryReservation *> &getVirtualMemoryReservationMap() { return this->virtualMemoryReservationMap; };
     [[nodiscard]] std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() { return std::unique_lock<std::mutex>(this->virtualMemoryReservationMapMutex); };
+    std::map<void *, PhysicalMemoryAllocation *> &getPhysicalMemoryAllocationMap() { return this->physicalMemoryAllocationMap; };
+    [[nodiscard]] std::unique_lock<std::mutex> lockPhysicalMemoryAllocationMap() { return std::unique_lock<std::mutex>(this->physicalMemoryAllocationMapMutex); };
+    virtual bool mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) = 0;
+    virtual void unMapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) = 0;
 
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
@@ -282,6 +292,8 @@ class MemoryManager {
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) = 0;
     virtual GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) = 0;
+    virtual GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) = 0;
+    virtual GraphicsAllocation *allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) = 0;
     virtual void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
@@ -320,6 +332,8 @@ class MemoryManager {
     std::mutex kernelAllocationMutex;
     std::map<void *, VirtualMemoryReservation *> virtualMemoryReservationMap;
     std::mutex virtualMemoryReservationMapMutex;
+    std::map<void *, PhysicalMemoryAllocation *> physicalMemoryAllocationMap;
+    std::mutex physicalMemoryAllocationMapMutex;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

@@ -206,6 +206,9 @@ class MockCreateWddmAllocationMemoryManager : public MockWddmMemoryManager {
     bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr) override {
         return false;
     }
+    bool createPhysicalAllocation(WddmAllocation *allocation) override {
+        return false;
+    }
 };
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryFailedThenNullptrFromAllocateMemoryByKMDIsReturned) {
@@ -213,6 +216,24 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize;
     auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_EQ(nullptr, allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryFailedThenNullptrFromAllocatePhysicalDeviceMemoryIsReturned) {
+    memoryManager.reset(new MockCreateWddmAllocationMemoryManager(*executionEnvironment));
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize;
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalDeviceMemory(allocationData, status);
+    EXPECT_EQ(nullptr, allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryFailedThenNullptrFromAllocatePhysicalLocalDeviceMemoryIsReturned) {
+    memoryManager.reset(new MockCreateWddmAllocationMemoryManager(*executionEnvironment));
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize;
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
     EXPECT_EQ(nullptr, allocation);
 }
 
@@ -467,6 +488,45 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndHugeSizeWhenAskedToC
     auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_TRUE(memoryManager->allocateHugeGraphicsMemoryCalled);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndSmallSizeWhenAskedToCreatePhysicalGraphicsAllocationThenValidAllocationIsReturned) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    allocationData.flags.shareable = true;
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalDeviceMemory(allocationData, status);
+    EXPECT_NE(nullptr, allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndHugeSizeWhenAskedToCreatePhysicalLocalGraphicsAllocationThenValidAllocationIsReturned) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    AllocationData allocationData;
+    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
+    allocationData.flags.shareable = true;
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
+    EXPECT_NE(nullptr, allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalMemoryAndVirtualMemoryThenMapSucceeds) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    AllocationData allocationData;
+    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
+    uint64_t gpuRange = 0x1234;
+    MemoryManager::AllocationStatus status;
+    auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
+    EXPECT_NE(nullptr, allocation);
+    auto res = memoryManager->mapPhysicalToVirtualMemory(allocation, gpuRange, allocationData.size);
+    EXPECT_TRUE(res);
+    memoryManager->unMapPhysicalToVirtualMemory(allocation, gpuRange, allocationData.size, osContext, 0u);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -2421,6 +2481,40 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaI
     EXPECT_EQ(lastRequiredAddress, wddm->mapGpuVirtualAddressResult.uint64ParamPassed);
     EXPECT_GT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_SVM));
     EXPECT_LT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_SVM));
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysicalAllocationIsCalledThenAllocationSuccess) {
+    if (memoryManager->isLimitedRange(0)) {
+        GTEST_SKIP();
+    }
+
+    uint32_t numGmms = 10;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
+    allocation.setAllocationType(AllocationType::BUFFER);
+    allocation.storageInfo.multiStorage = true;
+
+    wddm->callBaseMapGpuVa = true;
+
+    memoryManager->createPhysicalAllocation(&allocation);
+    EXPECT_EQ(0ull, allocation.getGpuAddress());
+    EXPECT_EQ(0u, wddm->mapGpuVirtualAddressResult.called);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysicalAllocationIsCalledThenFailureReturned) {
+    if (memoryManager->isLimitedRange(0)) {
+        GTEST_SKIP();
+    }
+
+    uint32_t numGmms = 10;
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
+    allocation.setAllocationType(AllocationType::BUFFER);
+    allocation.storageInfo.multiStorage = true;
+
+    wddm->callBaseMapGpuVa = true;
+
+    wddm->failCreateAllocation = true;
+    auto ret = memoryManager->createPhysicalAllocation(&allocation);
+    EXPECT_FALSE(ret);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedThenAllocateMemoryReserveGpuVa) {

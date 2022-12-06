@@ -536,6 +536,34 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     return true;
 }
 
+GraphicsAllocation *MemoryManager::allocatePhysicalGraphicsMemory(const AllocationProperties &properties) {
+    AllocationData allocationData;
+    GraphicsAllocation *allocation = nullptr;
+    getAllocationData(allocationData, properties, nullptr, createStorageInfoFromProperties(properties));
+
+    AllocationStatus status = AllocationStatus::Error;
+    if (this->localMemorySupported[allocationData.rootDeviceIndex]) {
+        allocation = allocatePhysicalLocalDeviceMemory(allocationData, status);
+        if (allocation) {
+            getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
+            status = this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
+        }
+    } else {
+        allocation = allocatePhysicalDeviceMemory(allocationData, status);
+    }
+    if (allocation && status != AllocationStatus::Success) {
+        freeGraphicsMemory(allocation);
+        allocation = nullptr;
+    }
+    if (!allocation) {
+        return nullptr;
+    }
+
+    fileLoggerInstance().logAllocation(allocation);
+    registerAllocationInOs(allocation);
+    return allocation;
+}
+
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) {
     AllocationData allocationData;
     getAllocationData(allocationData, properties, hostPtr, createStorageInfoFromProperties(properties));

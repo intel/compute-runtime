@@ -77,6 +77,12 @@ struct MockGmmMemoryWddmLinux : NEO::GmmMemory {
 
 struct MockWddmLinuxMemoryManager : NEO::WddmMemoryManager {
     using WddmMemoryManager::allocate32BitGraphicsMemoryImpl;
+    using WddmMemoryManager::allocatePhysicalDeviceMemory;
+    using WddmMemoryManager::allocatePhysicalLocalDeviceMemory;
+    using WddmMemoryManager::createPhysicalAllocation;
+    using WddmMemoryManager::localMemorySupported;
+    using WddmMemoryManager::mapPhysicalToVirtualMemory;
+    using WddmMemoryManager::unMapPhysicalToVirtualMemory;
     using WddmMemoryManager::WddmMemoryManager;
 };
 
@@ -636,6 +642,41 @@ TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhe
     ASSERT_NE(nullptr, alloc);
     EXPECT_TRUE(isAligned<MemoryConstants::allocationAlignment>(alloc->getUnderlyingBufferSize()));
     memoryManager.freeGraphicsMemoryImpl(alloc);
+}
+
+TEST_F(WddmLinuxTest, givenAllocatePhysicalDeviceMemoryThenAllocationReturned) {
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
+    osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;
+    osEnvironment->gdi->lock2 = lock2Mock;
+    osEnvironment->gdi->destroyAllocation2 = destroyAllocations2Mock;
+
+    MockWddmLinuxMemoryManager memoryManager{mockExecEnv};
+
+    NEO::AllocationData allocData = {};
+    NEO::MemoryManager::AllocationStatus status = NEO::MemoryManager::AllocationStatus::Error;
+    allocData.size = 3U;
+
+    auto alloc = memoryManager.allocatePhysicalDeviceMemory(allocData, status);
+    ASSERT_NE(nullptr, alloc);
+    memoryManager.freeGraphicsMemoryImpl(alloc);
+}
+
+TEST_F(WddmLinuxTest, givenAllocatePhysicalLocalDeviceMemoryThenErrorReturned) {
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
+    osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;
+    osEnvironment->gdi->lock2 = lock2Mock;
+    osEnvironment->gdi->destroyAllocation2 = destroyAllocations2Mock;
+
+    MockWddmLinuxMemoryManager memoryManager{mockExecEnv};
+
+    NEO::AllocationData allocData = {};
+    NEO::MemoryManager::AllocationStatus status = NEO::MemoryManager::AllocationStatus::Error;
+    allocData.size = 3U;
+
+    auto alloc = memoryManager.allocatePhysicalLocalDeviceMemory(allocData, status);
+    EXPECT_EQ(nullptr, alloc);
 }
 
 TEST_F(WddmLinuxTest, whenCheckedIfResourcesCleanupCanBeSkippedAndDeviceIsAliveThenReturnsFalse) {

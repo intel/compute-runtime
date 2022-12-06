@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,6 +69,41 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     }
 
     initialized = true;
+}
+
+void WddmMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+    const auto wddm = static_cast<OsContextWin *>(osContext)->getWddm();
+    wddm->freeGpuVirtualAddress(gpuRange, bufferSize);
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    wddm->reserveGpuVirtualAddress(gpuRange, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), bufferSize);
+    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
+    physicalAllocation->setReservedAddressRange(nullptr, 0u);
+}
+
+bool WddmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+    WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
+    wddmAllocation->mappedPhysicalMemoryReservation = mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(gpuRange));
+    return wddmAllocation->mappedPhysicalMemoryReservation;
+}
+
+GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+
+    StorageInfo systemMemoryStorageInfo = {};
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr, allocationData.size, 0u,
+                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
+    auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
+                                                       1u, // numGmms
+                                                       allocationData.type, nullptr, 0, allocationData.size, nullptr,
+                                                       MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
+    allocation->setDefaultGmm(gmm.get());
+    if (!createPhysicalAllocation(allocation.get())) {
+        return nullptr;
+    }
+
+    gmm.release();
+    status = AllocationStatus::Success;
+    return allocation.release();
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
@@ -642,6 +677,9 @@ bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     if (alloc == nullptr)
         return false;
     auto size = alloc->getUnderlyingBufferSize();
+    if (alloc->physicalMemoryReservation && !alloc->mappedPhysicalMemoryReservation) {
+        return true;
+    }
     if (alloc->getGpuAddress() == 0u || size == 0 || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0))
         return false;
     return true;
@@ -756,6 +794,15 @@ double WddmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceI
 
 AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
     return &mallocRestrictions;
+}
+
+bool WddmMemoryManager::createPhysicalAllocation(WddmAllocation *allocation) {
+    auto status = createGpuAllocationsWithRetry(allocation);
+    if (!status) {
+        return false;
+    }
+    allocation->physicalMemoryReservation = true;
+    return true;
 }
 
 bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr) {
@@ -1055,6 +1102,73 @@ uint32_t getPriorityForAllocation(AllocationType allocationType) {
         return DXGI_RESOURCE_PRIORITY_HIGH;
     }
     return DXGI_RESOURCE_PRIORITY_NORMAL;
+}
+
+GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper();
+
+    std::unique_ptr<Gmm> gmm;
+    size_t sizeAligned = 0;
+    size_t alignment = 0;
+    auto numBanks = allocationData.storageInfo.getNumBanks();
+    bool singleBankAllocation = numBanks == 1;
+    alignment = alignmentSelector.selectAlignment(allocationData.size).alignment;
+    sizeAligned = alignUp(allocationData.size, alignment);
+
+    if (singleBankAllocation) {
+        gmm = std::make_unique<Gmm>(gmmHelper,
+                                    nullptr,
+                                    sizeAligned,
+                                    alignment,
+                                    CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *rootDeviceEnvironment.getHardwareInfo()),
+                                    allocationData.flags.preferCompressed,
+                                    allocationData.storageInfo,
+                                    true);
+    }
+
+    const auto chunkSize = alignDown(getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd), alignment);
+    const size_t numGmms = (static_cast<uint64_t>(sizeAligned) + chunkSize - 1) / chunkSize;
+
+    auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,
+                                                           allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::LocalMemory, allocationData.flags.shareable, maxOsContextCount);
+    if (singleBankAllocation) {
+        if (numGmms > 1) {
+            splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo));
+        } else {
+            wddmAllocation->setDefaultGmm(gmm.release());
+        }
+    } else if (allocationData.storageInfo.multiStorage) {
+        createColouredGmms(gmmHelper, *wddmAllocation, allocationData.storageInfo, allocationData.flags.preferCompressed);
+    } else {
+        fillGmmsInAllocation(gmmHelper, wddmAllocation.get(), allocationData.storageInfo);
+    }
+    wddmAllocation->storageInfo = allocationData.storageInfo;
+    wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
+    wddmAllocation->needsMakeResidentBeforeLock = true;
+
+    auto &wddm = getWddm(allocationData.rootDeviceIndex);
+
+    if (!createPhysicalAllocation(wddmAllocation.get())) {
+        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+            delete wddmAllocation->getGmm(handleId);
+        }
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
+
+    auto handles = wddmAllocation->getHandles();
+
+    if (!wddm.setAllocationPriority(handles.data(), static_cast<UINT>(handles.size()), getPriorityForAllocation(allocationData.type))) {
+        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+            delete wddmAllocation->getGmm(handleId);
+        }
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
+
+    status = AllocationStatus::Success;
+    return wddmAllocation.release();
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {

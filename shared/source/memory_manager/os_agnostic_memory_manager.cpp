@@ -372,6 +372,80 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
     }
 }
 
+void OsAgnosticMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
+    physicalAllocation->setReservedAddressRange(nullptr, 0u);
+}
+
+bool OsAgnosticMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
+    physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
+    return true;
+}
+
+GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    status = AllocationStatus::Error;
+    MemoryAllocation *allocation = nullptr;
+    auto numHandles = allocationData.storageInfo.getNumBanks();
+
+    std::unique_ptr<Gmm> gmm;
+    size_t sizeAligned64k = 0;
+    sizeAligned64k = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+    gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
+                                nullptr,
+                                sizeAligned64k,
+                                MemoryConstants::pageSize64k,
+                                CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo),
+                                allocationData.flags.preferCompressed,
+                                allocationData.storageInfo,
+                                true);
+
+    auto systemMemory = allocateSystemMemory(sizeAligned64k, MemoryConstants::pageSize64k);
+    if (systemMemory) {
+        auto sizeOfHeapChunk = sizeAligned64k;
+        allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, systemMemory, systemMemory,
+                                          0u, sizeAligned64k, counter,
+                                          MemoryPool::LocalMemory, false, allocationData.flags.flushL3, maxOsContextCount);
+        counter++;
+        allocation->setDefaultGmm(gmm.release());
+        allocation->sizeToFree = sizeOfHeapChunk;
+    }
+
+    if (allocation) {
+        allocation->overrideMemoryPool(MemoryPool::LocalMemory);
+        allocation->storageInfo = allocationData.storageInfo;
+        status = AllocationStatus::Success;
+    }
+
+    return allocation;
+}
+
+GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    status = AllocationStatus::Error;
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo),
+                                     allocationData.flags.preferCompressed, allocationData.storageInfo, true);
+
+    GraphicsAllocation *alloc = nullptr;
+
+    auto ptr = allocateSystemMemory(alignUp(allocationData.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
+    if (ptr != nullptr) {
+        alloc = new MemoryAllocation(allocationData.rootDeviceIndex, allocationData.type, ptr, ptr, 0u, allocationData.size,
+                                     counter, MemoryPool::SystemCpuInaccessible, allocationData.flags.uncacheable, allocationData.flags.flushL3, maxOsContextCount);
+        counter++;
+    }
+
+    if (alloc) {
+        alloc->setDefaultGmm(gmm.release());
+        status = AllocationStatus::Success;
+    }
+    return alloc;
+}
+
 GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 

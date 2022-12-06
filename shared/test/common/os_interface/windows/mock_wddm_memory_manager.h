@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,12 +23,17 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateGraphicsMemoryWithGpuVa;
     using BaseClass::allocateGraphicsMemoryWithProperties;
     using BaseClass::allocateMemoryByKMD;
+    using BaseClass::allocatePhysicalDeviceMemory;
+    using BaseClass::allocatePhysicalLocalDeviceMemory;
     using BaseClass::createGraphicsAllocation;
+    using BaseClass::createPhysicalAllocation;
     using BaseClass::createWddmAllocation;
     using BaseClass::getWddm;
     using BaseClass::gfxPartitions;
     using BaseClass::localMemorySupported;
+    using BaseClass::mapPhysicalToVirtualMemory;
     using BaseClass::supportsMultiStorageResources;
+    using BaseClass::unMapPhysicalToVirtualMemory;
     using MemoryManagerCreate<WddmMemoryManager>::MemoryManagerCreate;
     using BaseClass::getHugeGfxMemoryChunkSize;
 

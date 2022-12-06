@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,6 +108,8 @@ class WddmAllocation : public GraphicsAllocation {
     uint64_t reservedSizeForGpuVirtualAddress = 0u;
     uint32_t shareable = 0u;
     bool allocInFrontWindowPool = false;
+    bool physicalMemoryReservation = false;
+    bool mappedPhysicalMemoryReservation = false;
 
   protected:
     uint64_t ntSecureHandle = 0u;

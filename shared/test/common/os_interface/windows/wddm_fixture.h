@@ -28,6 +28,7 @@
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
+#include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
@@ -46,6 +47,8 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
         osInterface = rootDeviceEnvironment->osInterface.get();
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
+        executionEnvironment->initializeMemoryManager();
+        memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         auto engine = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0];
@@ -58,6 +61,7 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
     OSInterface *osInterface;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     std::unique_ptr<OsContextWin> osContext;
+    std::unique_ptr<MockWddmMemoryManager> memoryManager;
 
     MockGdi *gdi = nullptr;
     MockWddmResidentAllocationsContainer *mockTemporaryResources;
