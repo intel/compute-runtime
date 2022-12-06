@@ -9,6 +9,7 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 
@@ -1108,6 +1109,9 @@ void TbxImmediateCommandListFixture::setUpT() {
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ModuleImmutableDataFixture::setUp();
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
 
     neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
     ModuleMutableCommandListFixture::setUpImpl(0u);

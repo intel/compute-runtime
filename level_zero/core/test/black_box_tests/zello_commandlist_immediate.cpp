@@ -12,7 +12,8 @@
 #include <iostream>
 #include <limits>
 
-void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &useSyncCmdQ, bool &validRet, ze_command_list_handle_t &sharedCmdList) {
+void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &useSyncCmdQ, bool &validRet,
+                          ze_command_list_handle_t &sharedCmdList, ze_event_handle_t &sharedEvent, ze_event_handle_t &sharedEvent2) {
     const size_t allocSize = 4096;
     char *heapBuffer = new char[allocSize];
     void *zeBuffer = nullptr;
@@ -51,8 +52,16 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
     }
 
     if (!useSyncCmdQ) {
-        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
-        createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        if (sharedEvent == nullptr) {
+            createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        } else {
+            event = sharedEvent;
+        }
+        if (sharedEvent2 == nullptr) {
+            createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        } else {
+            event2 = sharedEvent2;
+        }
     }
     // Copy from heap to device-allocated memory
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, heapBuffer, allocSize,
@@ -74,13 +83,18 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
     if (sharedCmdList == nullptr) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     }
-    SUCCESS_OR_TERMINATE(zeEventDestroy(event));
-    SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
-    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
-    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
+    if (sharedEvent == nullptr) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    }
+    if (sharedEvent2 == nullptr) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
+    }
 }
 
-void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t &device, bool useSyncCmdQ, bool &validRet, ze_command_list_handle_t &sharedCmdList) {
+void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t &device, bool useSyncCmdQ, bool &validRet,
+                                ze_command_list_handle_t &sharedCmdList, ze_event_handle_t &sharedEvent, ze_event_handle_t &sharedEvent2) {
     validRet = true;
     ze_command_list_handle_t cmdList;
     ze_event_pool_handle_t eventPool, eventPool2;
@@ -148,8 +162,16 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
 
     if (!useSyncCmdQ) {
         // Create Event Pool and kernel launch event
-        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
-        createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        if (sharedEvent == nullptr) {
+            createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        } else {
+            event = sharedEvent;
+        }
+        if (sharedEvent2 == nullptr) {
+            createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        } else {
+            event2 = sharedEvent2;
+        }
     }
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, srcBuffer, stackBuffer,
@@ -220,13 +242,18 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
     if (sharedCmdList == nullptr) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     }
-    SUCCESS_OR_TERMINATE(zeEventDestroy(event));
-    SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
-    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
-    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
+    if (sharedEvent == nullptr) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    }
+    if (sharedEvent2 == nullptr) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
+    }
 }
 
-void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &device, bool useSyncCmdQ, bool &validRet, ze_command_list_handle_t &sharedCmdList) {
+void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &device, bool useSyncCmdQ, bool &validRet,
+                         ze_command_list_handle_t &sharedCmdList, ze_event_handle_t &sharedEvent, ze_event_handle_t &sharedEvent2) {
     constexpr size_t allocSize = 4096;
     constexpr size_t bytesPerThread = sizeof(char);
     constexpr size_t numThreads = allocSize / bytesPerThread;
@@ -307,8 +334,16 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
 
     if (!useSyncCmdQ) {
         // Create Event Pool and kernel launch event
-        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
-        createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        if (sharedEvent == nullptr) {
+            createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        } else {
+            event = sharedEvent;
+        }
+        if (sharedEvent2 == nullptr) {
+            createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        } else {
+            event2 = sharedEvent2;
+        }
     }
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, srcBuffer, initDataSrc,
@@ -372,10 +407,15 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     }
 
-    SUCCESS_OR_TERMINATE(zeEventDestroy(event));
-    SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
-    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
-    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
+    if (sharedEvent == nullptr) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    }
+    if (sharedEvent2 == nullptr) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
+    }
+
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 }
@@ -386,10 +426,15 @@ int main(int argc, char *argv[]) {
     bool useSyncQueue = isSyncQueueEnabled(argc, argv);
     bool commandListShared = isCommandListShared(argc, argv);
     bool commandListCoexist = isParamEnabled(argc, argv, "-o", "--coexists");
+    bool eventPoolShared = isParamEnabled(argc, argv, "-p", "--poolshared");
+    if (eventPoolShared) {
+        std::cerr << "Event pool shared between tests" << std::endl;
+    }
     if (commandListCoexist) {
         std::cerr << "Command List coexists between tests" << std::endl;
         commandListShared = false;
     }
+
     bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
@@ -403,7 +448,17 @@ int main(int argc, char *argv[]) {
 
     bool outputValidationSuccessful = false;
 
+    ze_event_pool_handle_t eventPool = nullptr, eventPool2 = nullptr;
+    ze_event_handle_t event = nullptr, event2 = nullptr;
+
+    if (!useSyncQueue && eventPoolShared) {
+        // Create Event Pool and kernel launch event
+        createEventPoolAndEvents(context, device0, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        createEventPoolAndEvents(context, device0, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    }
+
     ze_command_list_handle_t cmdList = nullptr;
+    ze_command_list_handle_t cmdListShared = nullptr;
     if (commandListShared) {
         ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
         cmdQueueDesc.pNext = nullptr;
@@ -412,7 +467,8 @@ int main(int argc, char *argv[]) {
         cmdQueueDesc.ordinal = getCommandQueueOrdinal(device0);
         cmdQueueDesc.index = 0;
         selectQueueMode(cmdQueueDesc, useSyncQueue);
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdList));
+        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListShared));
+        cmdList = cmdListShared;
     }
 
     ze_command_list_handle_t cmdListStandardMemoryCopy = nullptr;
@@ -436,15 +492,19 @@ int main(int argc, char *argv[]) {
 
     std::string currentTest;
     currentTest = "Standard Memory Copy";
-    testAppendMemoryCopy(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
+    testAppendMemoryCopy(context, device0, useSyncQueue, outputValidationSuccessful, cmdList, event, event2);
     printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
     if (outputValidationSuccessful || aubMode) {
         if (commandListCoexist) {
             cmdList = cmdListMemoryCopyRegion;
         }
+        if (event != nullptr) {
+            SUCCESS_OR_TERMINATE(zeEventHostReset(event));
+            SUCCESS_OR_TERMINATE(zeEventHostReset(event2));
+        }
         currentTest = "Memory Copy Region";
-        testAppendMemoryCopyRegion(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
+        testAppendMemoryCopyRegion(context, device0, useSyncQueue, outputValidationSuccessful, cmdList, event, event2);
         printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
@@ -452,18 +512,30 @@ int main(int argc, char *argv[]) {
         if (commandListCoexist) {
             cmdList = cmdListLaunchGpuKernel;
         }
+        if (event != nullptr) {
+            SUCCESS_OR_TERMINATE(zeEventHostReset(event));
+            SUCCESS_OR_TERMINATE(zeEventHostReset(event2));
+        }
         currentTest = "Launch GPU Kernel";
-        testAppendGpuKernel(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
+        testAppendGpuKernel(context, device0, useSyncQueue, outputValidationSuccessful, cmdList, event, event2);
         printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     if (commandListShared) {
-        SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+        SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListShared));
     }
     if (commandListCoexist) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListStandardMemoryCopy));
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListMemoryCopyRegion));
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListLaunchGpuKernel));
+    }
+
+    if (event != nullptr) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
     }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/event/event.h"
@@ -176,6 +177,9 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
             remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->singlePacketSize);
         }
     }
+    if (this->downloadAllocationRequired) {
+        this->csr->downloadAllocations();
+    }
     this->setIsCompleted();
     this->csr->getInternalAllocationStorage()->cleanAllocationList(this->csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     return ZE_RESULT_SUCCESS;
@@ -187,8 +191,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         hostEventSetValue(metricStreamer->getNotificationState());
     }
     if (this->downloadAllocationRequired) {
-        this->csr->downloadAllocations();
-        this->csr->downloadAllocation(*eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));
+        this->csr->downloadAllocation(this->getAllocation(this->device));
     }
 
     if (isAlreadyCompleted()) {
@@ -248,6 +251,16 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
     UNRECOVERABLE_IF(hostAddress == nullptr);
+
+    if (this->downloadAllocationRequired) {
+        auto eventAllocation = &this->getAllocation(device);
+
+        auto memoryIface = this->device->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get();
+        if (NEO::MemoryOperationsStatus::SUCCESS != memoryIface->isResident(nullptr, *eventAllocation)) {
+            ArrayRef<NEO::GraphicsAllocation *> allocationArray(&eventAllocation, 1);
+            memoryIface->makeResident(nullptr, allocationArray);
+        }
+    }
 
     if (isEventTimestampFlagSet()) {
         return hostEventSetValueTimestamps(eventVal);

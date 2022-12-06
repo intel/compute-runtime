@@ -2113,6 +2113,8 @@ HWTEST_F(EventTests,
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
     neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
     auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     ASSERT_NE(event, nullptr);
@@ -2150,27 +2152,123 @@ HWTEST_F(EventTests,
     auto eventAllocation = &event->getAllocation(device);
     uint32_t downloadedAllocations = downloadAllocationTrack[eventAllocation];
     EXPECT_EQ(iterations + 1, downloadedAllocations);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 
     event->destroy();
 }
 
-HWTEST_F(EventTests, WhenDownloadAllocationNotRequiredThenDontDownloadAllocation) {
+HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocationNotRequiredThenDontDownloadAllocations) {
     neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+
     auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    event->queryStatus();
+
+    size_t offset = 0;
+    if (event->isUsingContextEndOffset()) {
+        offset = event->getContextEndOffset();
+    }
+    void *completionAddress = ptrOffset(event->hostAddress, offset);
+    size_t packets = event->getPacketsInUse();
+    uint32_t signaledValue = Event::STATE_SIGNALED;
+    for (size_t i = 0; i < packets; i++) {
+        memcpy(completionAddress, &signaledValue, sizeof(uint32_t));
+        completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
+    }
+
+    auto status = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
     EXPECT_FALSE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr)->downloadAllocationsCalled);
     event->destroy();
 }
 
-HWTEST_F(EventTests, WhenDownloadAllocationRequiredThenDownloadAllocation) {
-    CommandStreamReceiverType csrTypes[] = {CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB};
-    for (auto csrType : csrTypes) {
-        neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = csrType;
+HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequiredThenDownloadAllocationsOnce) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    CommandStreamReceiverType tbxCsrTypes[] = {CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB};
+
+    auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(neoDevice->getUltCommandStreamReceiver<FamilyType>());
+    for (auto csrType : tbxCsrTypes) {
+        ultCsr.commandStreamReceiverType = csrType;
         auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-        event->queryStatus();
-        EXPECT_TRUE(static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr)->downloadAllocationsCalled);
+
+        auto status = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_NOT_READY, status);
+        EXPECT_FALSE(ultCsr.downloadAllocationsCalled);
+        EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
+
+        size_t offset = 0;
+        if (event->isUsingContextEndOffset()) {
+            offset = event->getContextEndOffset();
+        }
+        void *completionAddress = ptrOffset(event->hostAddress, offset);
+        size_t packets = event->getPacketsInUse();
+        uint32_t signaledValue = Event::STATE_SIGNALED;
+        for (size_t i = 0; i < packets; i++) {
+            memcpy(completionAddress, &signaledValue, sizeof(uint32_t));
+            completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
+        }
+
+        status = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+        EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+        EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
+
+        status = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+        EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+        EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
+
         event->destroy();
+        ultCsr.downloadAllocationsCalledCount = 0;
+        ultCsr.downloadAllocationsCalled = false;
     }
+}
+HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocationIsResidentOnce) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+    auto mockMemIface = static_cast<NEO::MockMemoryOperations *>(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
+
+    mockMemIface->captureGfxAllocationsForMakeResident = true;
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    auto eventAllocItor = std::find(mockMemIface->gfxAllocationsForMakeResident.begin(),
+                                    mockMemIface->gfxAllocationsForMakeResident.end(),
+                                    &event->getAllocation(device));
+    EXPECT_NE(mockMemIface->gfxAllocationsForMakeResident.end(), eventAllocItor);
+    EXPECT_EQ(1u, mockMemIface->isResidentCalledCount);
+    EXPECT_EQ(1, mockMemIface->makeResidentCalledCount);
+
+    auto status = event->hostSignal();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+
+    EXPECT_EQ(2u, mockMemIface->isResidentCalledCount);
+    EXPECT_EQ(1, mockMemIface->makeResidentCalledCount);
+
+    event->reset();
+    EXPECT_EQ(3u, mockMemIface->isResidentCalledCount);
+    EXPECT_EQ(1, mockMemIface->makeResidentCalledCount);
+
+    size_t offset = 0;
+    if (event->isUsingContextEndOffset()) {
+        offset = event->getContextEndOffset();
+    }
+    void *completionAddress = ptrOffset(event->hostAddress, offset);
+    size_t packets = event->getPacketsInUse();
+    uint32_t signaledValue = Event::STATE_SIGNALED;
+    for (size_t i = 0; i < packets; i++) {
+        memcpy(completionAddress, &signaledValue, sizeof(uint32_t));
+        completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
+    }
+
+    status = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+    EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
+    EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
+
+    event->destroy();
 }
 
 struct MockEventCompletion : public EventImp<uint32_t> {
