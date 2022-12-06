@@ -88,17 +88,19 @@ For more code samples, please refer [compute-benchmarks](https://github.com/inte
 
 # Availability
 
-* Level-Zero support for immediate command list is available for all platforms
-* Optimized support for immediate command lists is currently available by default on DG2 and PVC only.
+* Level-Zero support for immediate command list is available for all platforms.
 * Immediate command lists support both Compute and Copy engines.
+
+# Optimizations
+
+* Optimized support using CSR flush task interface for immediate command lists is available by default on all platforms (Gen 9 onwards)
+* Optimized CSR heap sharing functionality for immediate command list is available from Xe_HPG/Xe_HPC onwards.
 
 # Debug Keys
 
-* Users can force optimized immediate command list by using `EnableFlushTaskSubmission=1`.
+* `EnableFlushTaskSubmission=0/1` : Force enable/disable support for using optimizations in non-pipelined state filtering for immediate command lists. Defaults to 1.
+* `EnableImmediateCmdListHeapSharing=0/1` : Force enable/disable support for using CSR heap resources for immediate command list. Defaults to 1 from Xe_HPG/Xe_HPC onwards. When enabled, all immediate command lists created against same ordinal share GPU heaps instead of allocating separate heaps for each command list.
 
-# Limitations
- Usage of `EnableFlushTaskSubmission=1` has been verified to to work on XeHP_SDV, PVC and DG2 only. So, it may or may not work depending on platform being used. Support for optimized immediate command lists for more platforms is work in progress.
- 
 # References
 
 * https://one-api.gitlab-pages.devtools.intel.com/level_zero/core/PROG.html#low-latency-immediate-command-lists
