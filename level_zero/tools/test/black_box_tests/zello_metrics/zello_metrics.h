@@ -124,6 +124,28 @@ class SingleDeviceSingleQueueExecutionCtxt : public ExecutionContext {
     uint32_t executionTimeInMilliSeconds = 0;
 };
 
+class SingleDeviceImmediateCommandListCtxt : public ExecutionContext {
+  public:
+    SingleDeviceImmediateCommandListCtxt(uint32_t deviceIndex, int32_t subDeviceIndex = -1) { initialize(deviceIndex, subDeviceIndex); }
+    ~SingleDeviceImmediateCommandListCtxt() override { finalize(); }
+    bool run() override { return true; }
+
+    ze_driver_handle_t getDriverHandle(uint32_t index) override { return driverHandle; }
+    ze_context_handle_t getContextHandle(uint32_t index) override { return contextHandle; }
+    ze_device_handle_t getDeviceHandle(uint32_t index) override { return deviceHandle; }
+    ze_command_queue_handle_t getCommandQueue(uint32_t index) override { return commandQueue; }
+    ze_command_list_handle_t getCommandList(uint32_t index) override { return commandList; }
+
+  private:
+    ze_driver_handle_t driverHandle = {};
+    ze_context_handle_t contextHandle = {};
+    ze_device_handle_t deviceHandle = {};
+    ze_command_queue_handle_t commandQueue = {};
+    ze_command_list_handle_t commandList = {};
+    bool initialize(uint32_t deviceIndex, int32_t subDeviceIndex);
+    bool finalize();
+};
+
 class AppendMemoryCopyFromHeapToDeviceAndBackToHost : public Workload {
   public:
     AppendMemoryCopyFromHeapToDeviceAndBackToHost(ExecutionContext *execCtxt) : Workload(execCtxt) { initialize(); }
@@ -152,8 +174,6 @@ class CopyBufferToBuffer : public Workload {
   private:
     void initialize();
     void finalize();
-
-  private:
     const uint32_t allocationSize = 4096;
     void *sourceBuffer = nullptr;
     void *destinationBuffer = nullptr;

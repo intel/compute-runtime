@@ -12,8 +12,8 @@
 #include <iostream>
 
 #define MAX_DEVICES_IN_MACHINE (64u)
-#define LOG(level) (((level) <= (ZelloMetricsUtility::TestSettings::get())->verboseLevel) \
-                        ? (std::cout)                                                     \
+#define LOG(level) (((level) <= (ZelloMetricsUtility::TestSettings::get())->verboseLevel.get()) \
+                        ? (std::cout)                                                           \
                         : (ZelloMetricsUtility::emptyCout))
 
 namespace ZelloMetricsUtility {
@@ -28,18 +28,35 @@ struct TestMachineConfiguration {
     uint32_t deviceId;
 };
 
+template <class T>
+class TestParameter {
+  public:
+    TestParameter(T param) : param(param) {}
+    bool isSet = false;
+    T &get() { return param; }
+    void set(T value) {
+        param = value;
+        isSet = true;
+    }
+
+  private:
+    T param;
+};
+
 class TestSettings {
   public:
     static TestSettings *get();
     void parseArguments(int argc, char *argv[]);
 
     std::string testName = {};
-    int32_t deviceId = -1;
-    int32_t subDeviceId = -1;
-    int32_t verboseLevel = 0;
-    std::string metricGroupName = "TestOa";
-    uint32_t eventNReportCount = 1;
-    bool showSystemInfo = false;
+    TestParameter<int32_t> deviceId{-1};
+    TestParameter<int32_t> subDeviceId{-1};
+    TestParameter<int32_t> verboseLevel{0};
+    TestParameter<std::string> metricGroupName{"TestOa"};
+    std::vector<TestParameter<std::string>> metricNames{};
+    TestParameter<uint32_t> eventNReportCount{1};
+    TestParameter<bool> showSystemInfo{false};
+    void readMetricNames(char *optArg);
 
   private:
     TestSettings() = default;
@@ -66,6 +83,7 @@ ze_device_handle_t getSubDevice(ze_device_handle_t &deviceHandle, uint32_t subDe
 ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &contextHandle,
                                              ze_device_handle_t &deviceHandle);
 ze_command_list_handle_t createCommandList(ze_context_handle_t &contextHandle, ze_device_handle_t &deviceHandle);
+ze_command_list_handle_t createImmediateCommandList(ze_context_handle_t &contextHandle, ze_device_handle_t &deviceHandle);
 void printMetricGroupProperties(const zet_metric_group_properties_t &properties);
 void printMetricProperties(const zet_metric_properties_t &properties);
 void sleep(uint32_t milliseconds);

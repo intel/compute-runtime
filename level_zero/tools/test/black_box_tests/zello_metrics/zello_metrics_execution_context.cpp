@@ -98,8 +98,6 @@ bool SingleDeviceSingleQueueExecutionCtxt::run() {
     uint32_t diff = 0;
     uint32_t runCount = 0;
 
-    Power capturePower(getDeviceHandle(0));
-    Frequency captureFrequency(getDeviceHandle(0));
     if (systemParameterList.size() > 0) {
         for (const auto &systemParameter : systemParameterList) {
             systemParameter->capture("initial");
@@ -126,6 +124,41 @@ bool SingleDeviceSingleQueueExecutionCtxt::run() {
 
     LOG(zmu::LogLevel::DEBUG) << "CommandList Run count : " << runCount << "\n";
 
+    return true;
+}
+
+//////////////////////////////////////////
+/////SingleDeviceImmediateCommandListCtxt
+//////////////////////////////////////////
+bool SingleDeviceImmediateCommandListCtxt::initialize(uint32_t deviceIndex, int32_t subDeviceIndex) {
+
+    zmu::createL0();
+    driverHandle = zmu::getDriver();
+    EXPECT(driverHandle != nullptr);
+    contextHandle = zmu::createContext(driverHandle);
+    EXPECT(contextHandle != nullptr);
+
+    deviceHandle = zmu::getDevice(driverHandle, deviceIndex);
+    EXPECT(deviceHandle != nullptr);
+    if (subDeviceIndex != -1) {
+        deviceHandle = zmu::getSubDevice(deviceHandle, subDeviceIndex);
+        EXPECT(deviceHandle != nullptr);
+    }
+    commandQueue = zmu::createCommandQueue(contextHandle, deviceHandle);
+    EXPECT(commandQueue != nullptr);
+    commandList = zmu::createImmediateCommandList(contextHandle, deviceHandle);
+    EXPECT(commandList != nullptr);
+    return true;
+}
+
+bool SingleDeviceImmediateCommandListCtxt::finalize() {
+
+    VALIDATECALL(zeCommandListDestroy(commandList));
+    VALIDATECALL(zeCommandQueueDestroy(commandQueue));
+    VALIDATECALL(zeContextDestroy(contextHandle));
+
+    deviceHandle = nullptr;
+    driverHandle = nullptr;
     return true;
 }
 

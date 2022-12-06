@@ -170,6 +170,32 @@ ze_command_list_handle_t createCommandList(ze_context_handle_t &contextHandle, z
     return commandList;
 }
 
+ze_command_list_handle_t createImmediateCommandList(ze_context_handle_t &contextHandle, ze_device_handle_t &deviceHandle) {
+
+    ze_command_queue_desc_t queueDescription = {};
+    uint32_t queueGroupsCount = 0;
+    zeDeviceGetCommandQueueGroupProperties(deviceHandle, &queueGroupsCount, nullptr);
+    std::vector<ze_command_queue_group_properties_t> queueProperties(queueGroupsCount);
+    zeDeviceGetCommandQueueGroupProperties(deviceHandle, &queueGroupsCount, queueProperties.data());
+
+    for (uint32_t i = 0; i < queueGroupsCount; ++i) {
+        if (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) {
+            queueDescription.ordinal = i;
+        }
+    }
+
+    queueDescription.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    queueDescription.pNext = nullptr;
+    queueDescription.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    queueDescription.flags = ZE_COMMAND_QUEUE_FLAG_EXPLICIT_ONLY;
+    queueDescription.index = queueDescription.ordinal;
+
+    // Create command list.
+    ze_command_list_handle_t commandList = {};
+    VALIDATECALL(zeCommandListCreateImmediate(contextHandle, deviceHandle, &queueDescription, &commandList));
+    return commandList;
+}
+
 void printMetricGroupProperties(const zet_metric_group_properties_t &properties) {
     LOG(LogLevel::DEBUG) << "METRIC GROUP: "
                          << "name: " << properties.name << ", "
@@ -268,6 +294,25 @@ ze_event_handle_t createHostVisibleEvent(ze_event_pool_handle_t hostVisibleEvent
     return notificationEvent;
 }
 
+bool shouldMetricBeCaptured(zet_metric_handle_t hMetric) {
+
+    auto testSettings = TestSettings::get();
+
+    zet_metric_properties_t metricProperties = {};
+    VALIDATECALL(zetMetricGetProperties(hMetric, &metricProperties));
+
+    if (testSettings->metricNames.size() > 0) {
+        for (auto &metricName : testSettings->metricNames) {
+            if (strncmp(metricName.get().c_str(), metricProperties.name, sizeof(metricProperties.name)) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    return true;
+}
+
 void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *rawData, uint32_t rawDataSize) {
 
     uint32_t setCount = 0;
@@ -324,6 +369,10 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
             // Obtain single metric properties to learn output value type.
             VALIDATECALL(zetMetricGetProperties(metrics[metricIndex], &metricProperties));
 
+            if (!shouldMetricBeCaptured(metrics[metricIndex])) {
+                continue;
+            }
+
             VALIDATECALL((results[resultIndex].type == metricProperties.resultType) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN)
 
             if (metricIndex == 0) {
@@ -368,6 +417,26 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
     }
 }
 
+void TestSettings::readMetricNames(char *optArg) {
+    std::string args = optArg;
+    std::string delim(",");
+    size_t pos = 0, prevPos = 0;
+    metricNames.clear();
+    while (1) {
+        pos = args.find(delim, prevPos);
+        if (pos == std::string::npos) {
+            metricNames.push_back(args.substr(prevPos));
+            break;
+        }
+        metricNames.push_back(args.substr(prevPos, pos - prevPos));
+        prevPos = pos + delim.length();
+    }
+
+    for (auto &name : metricNames) {
+        LOG(LogLevel::DEBUG) << "XX1: " << name.get() << "\n";
+    }
+}
+
 ////////////////
 // Test Settings
 ////////////////
@@ -380,7 +449,8 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
         {"device", required_argument, nullptr, 'd'},
         {"subdevice", required_argument, nullptr, 's'},
         {"verboseLevel", required_argument, nullptr, 'v'},
-        {"metricGroupName", required_argument, nullptr, 'm'},
+        {"metricGroupName", required_argument, nullptr, 'M'},
+        {"metricName", required_argument, nullptr, 'm'},
         {"eventNReports", required_argument, nullptr, 'e'},
         {"showSystemInfo", no_argument, nullptr, 'y'},
         {0, 0, 0, 0},
@@ -396,7 +466,8 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
                      "\n  -d,   --device <deviceId>             device ID to run the test"
                      "\n  -s,   --subdevice <subdeviceId>       sub-device ID to run the test"
                      "\n  -v,   --verboseLevel <verboseLevel>   verbosity level(-2:error|-1:warning|(default)0:info|1:debug)"
-                     "\n  -m,   --metricGroupName <name>        metric group name"
+                     "\n  -m,   --metricName <name1,name2,..>   metric names seperated by a comma"
+                     "\n  -M,   --metricGroupName <name>        metric group name"
                      "\n  -e,   --eventNReports <report count>  report count threshold for event generation"
                      "\n  -y,   --showSystemInfo                capture and show system info like frequency and power"
                      "\n                                        (requires ZES_ENABLE_SYSMAN=1)"
@@ -409,34 +480,38 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
         return;
     }
 
-    while ((opt = getopt_long(argc, argv, "ht:d:s:v:m:e:y", longOpts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "ht:d:s:v:M:m:e:y", longOpts, nullptr)) != -1) {
         switch (opt) {
         case 't':
             testName = optarg;
             break;
 
         case 'd':
-            deviceId = std::atoi(optarg);
+            deviceId.set(std::atoi(optarg));
             break;
 
         case 's':
-            subDeviceId = std::atoi(optarg);
+            subDeviceId.set(std::atoi(optarg));
             break;
 
         case 'v':
-            verboseLevel = std::atoi(optarg);
+            verboseLevel.set(std::atoi(optarg));
+            break;
+
+        case 'M':
+            metricGroupName.set(optarg);
             break;
 
         case 'm':
-            metricGroupName = optarg;
+            readMetricNames(optarg);
             break;
 
         case 'e':
-            eventNReportCount = std::atoi(optarg);
+            eventNReportCount.set(std::atoi(optarg));
             break;
 
         case 'y':
-            showSystemInfo = true;
+            showSystemInfo.set(true);
             break;
 
         case 'h':
