@@ -8,6 +8,7 @@
 #include "shared/source/helpers/hw_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include <algorithm>
@@ -78,6 +79,18 @@ uint32_t GfxCoreHelper::getHighestEnabledSlice(const HardwareInfo &hwInfo) {
         }
     }
     return highestEnabledSlice;
+}
+
+void HwHelper::getCpuCopyThresholds(size_t &h2DThreshold, size_t &d2HThreshold) {
+    h2DThreshold = NonUsmCpuCopyConstants::h2DThreshold;
+    d2HThreshold = NonUsmCpuCopyConstants::d2HThreshold;
+
+    if (NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
+        h2DThreshold = NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
+    }
+    if (NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
+        d2HThreshold = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
+    }
 }
 
 } // namespace NEO

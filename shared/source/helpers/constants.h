@@ -93,3 +93,8 @@ inline constexpr uint32_t maximalSimdSize = 32;
 inline constexpr uint32_t maximalSizeOfAtomicType = 8;
 inline constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups);
 } // namespace CommonConstants
+
+namespace NonUsmCpuCopyConstants {
+constexpr size_t h2DThreshold = 2 * MemoryConstants::megaByte;
+constexpr size_t d2HThreshold = 1 * MemoryConstants::kiloByte;
+} // namespace NonUsmCpuCopyConstants

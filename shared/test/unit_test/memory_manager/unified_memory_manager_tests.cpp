@@ -92,3 +92,36 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenKmdMigratedSharedAllocationWhenPrefetch
 
     svmManager->freeSVMAlloc(ptr);
 }
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenCreateUnifiedMemoryAllocationWithSmallSizeThenSetLockable) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    DebugManager.flags.EnableLocalMemory.set(1);
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_TRUE(svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)->storageInfo.isLockable);
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenCreateUnifiedMemoryAllocationWithLargeSizeThenSetLockable) {
+    if (HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    DebugManager.flags.EnableLocalMemory.set(1);
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    size_t largeSize = std::max(NonUsmCpuCopyConstants::d2HThreshold, NonUsmCpuCopyConstants::h2DThreshold) + 1;
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(largeSize, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+
+    EXPECT_FALSE(svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)->storageInfo.isLockable);
+    svmManager->freeSVMAlloc(ptr);
+}

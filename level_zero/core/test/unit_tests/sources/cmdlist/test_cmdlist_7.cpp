@@ -1883,8 +1883,9 @@ HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataT
 
 struct AppendMemoryLockedCopyFixture : public DeviceFixture {
     void setUp() {
-        DebugManager.flags.ExperimentalCopyThroughLock.set(1);
         DebugManager.flags.EnableLocalMemory.set(1);
+        DebugManager.flags.ExperimentalCopyThroughLock.set(1);
+        DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
         DeviceFixture::setUp();
 
         nonUsmHostPtr = new char[sz];
@@ -1900,7 +1901,7 @@ struct AppendMemoryLockedCopyFixture : public DeviceFixture {
     DebugManagerStateRestore restore;
     char *nonUsmHostPtr;
     void *devicePtr;
-    size_t sz = 4 * MemoryConstants::megaByte;
+    size_t sz = 2 * MemoryConstants::megaByte;
 };
 
 using AppendMemoryLockedCopyTest = Test<AppendMemoryLockedCopyFixture>;
@@ -1924,6 +1925,9 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
     EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(srcAllocData, srcFound));
     EXPECT_TRUE(cmdList.isSuitableUSMDeviceAlloc(dstAllocData, dstFound));
+
+    dstAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->storageInfo.isLockable = 0;
+    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(dstAllocData, dstFound));
 }
 
 struct LocalMemoryMultiSubDeviceFixture : public SingleRootMultiSubDeviceFixture {
@@ -2286,22 +2290,50 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmDstHostP
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
-    DebugManager.flags.ExperimentalD2HCpuCopyThreshold.set(2048);
+    constexpr size_t largeSize = 3 * MemoryConstants::megaByte;
+    DebugManager.flags.ExperimentalD2HCpuCopyThreshold.set(largeSize);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
-
-    cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *deviceAlloc;
+    char *hostAlloc = new char[largeSize];
+    context->allocDeviceMem(device->toHandle(), &deviceDesc, largeSize, 1u, &deviceAlloc);
+    cmdList.appendMemoryCopy(hostAlloc, deviceAlloc, largeSize, nullptr, 0, nullptr);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
+    context->freeMem(deviceAlloc);
+    delete[] hostAlloc;
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSizeTooLargeThenUseGpuMemcpy, IsAtLeastSkl) {
+    constexpr size_t largeSize = 3 * MemoryConstants::megaByte;
+    MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *deviceAlloc;
+    char *hostAlloc = new char[largeSize];
+    context->allocDeviceMem(device->toHandle(), &deviceDesc, largeSize, 1u, &deviceAlloc);
+    cmdList.appendMemoryCopy(deviceAlloc, hostAlloc, largeSize, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
+    context->freeMem(deviceAlloc);
+    delete[] hostAlloc;
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
-    DebugManager.flags.ExperimentalH2DCpuCopyThreshold.set(3 * MemoryConstants::megaByte);
+    constexpr size_t largeSize = 3 * MemoryConstants::megaByte;
+    DebugManager.flags.ExperimentalH2DCpuCopyThreshold.set(largeSize);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 3 * MemoryConstants::megaByte, nullptr, 0, nullptr);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *deviceAlloc;
+    char *hostAlloc = new char[largeSize];
+    context->allocDeviceMem(device->toHandle(), &deviceDesc, largeSize, 1u, &deviceAlloc);
+    cmdList.appendMemoryCopy(deviceAlloc, hostAlloc, largeSize, nullptr, 0, nullptr);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
+    context->freeMem(deviceAlloc);
+    delete[] hostAlloc;
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyThenAppendBarrierCalled, IsAtLeastSkl) {

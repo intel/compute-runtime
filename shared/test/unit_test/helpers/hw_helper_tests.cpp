@@ -1433,3 +1433,23 @@ TEST(GfxCoreHelperTests, whenIsDynamicallyPopulatedisTrueThengetHighestEnabledSl
     auto maxSlice = gfxCoreHelper.getHighestEnabledSlice(hwInfo);
     EXPECT_EQ(maxSlice, 7u);
 }
+
+TEST(GfxCoreHelperTests, whenGetCpuCopyThresholdsThenCorrectValueSet) {
+    size_t h2DThreshold = 0;
+    size_t d2HThreshold = 0;
+    GfxCoreHelper::getCpuCopyThresholds(h2DThreshold, d2HThreshold);
+    EXPECT_EQ(h2DThreshold, NonUsmCpuCopyConstants::h2DThreshold);
+    EXPECT_EQ(d2HThreshold, NonUsmCpuCopyConstants::d2HThreshold);
+}
+
+TEST(GfxCoreHelperTests, givenThresholdChangedWhenGetCpuCopyThresholdsThenCorrectValueSet) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ExperimentalH2DCpuCopyThreshold.set(2048);
+    DebugManager.flags.ExperimentalD2HCpuCopyThreshold.set(2048);
+
+    size_t h2DThreshold = 0;
+    size_t d2HThreshold = 0;
+    GfxCoreHelper::getCpuCopyThresholds(h2DThreshold, d2HThreshold);
+    EXPECT_EQ(h2DThreshold, 2048u);
+    EXPECT_EQ(d2HThreshold, 2048u);
+}
