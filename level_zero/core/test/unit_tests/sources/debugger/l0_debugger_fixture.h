@@ -35,8 +35,8 @@ struct L0DebuggerFixture {
         hwInfo = *NEO::defaultHwInfo.get();
         hwInfo.featureTable.flags.ftrLocalMemory = true;
 
-        auto isHexadecimalArrayPrefered = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
-        if (isHexadecimalArrayPrefered) {
+        auto isHexadecimalArrayPreferred = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+        if (isHexadecimalArrayPreferred) {
             MockSipData::useMockSip = true;
         }
 

@@ -470,8 +470,8 @@ HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsRet
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
 
-    auto isHexadecimalArrayPrefered = NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
-    if (isHexadecimalArrayPrefered) {
+    auto isHexadecimalArrayPreferred = NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+    if (isHexadecimalArrayPreferred) {
         backupSipInitType = true;
     }
 

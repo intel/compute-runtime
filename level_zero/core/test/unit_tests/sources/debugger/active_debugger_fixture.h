@@ -39,8 +39,8 @@ struct ActiveDebuggerFixture {
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
-        auto isHexadecimalArrayPrefered = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
-        if (isHexadecimalArrayPrefered) {
+        auto isHexadecimalArrayPreferred = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+        if (isHexadecimalArrayPreferred) {
             MockSipData::useMockSip = true;
         }
 

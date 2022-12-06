@@ -312,7 +312,7 @@ TEST_F(KernelTests, GivenKernelCompileWorkGroupSizeWhenGettingWorkGroupInfoThenC
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
-TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPrefferedWorkGroupSizeMultipleThenCorectValueIsReturned) {
+TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPreferredWorkGroupSizeMultipleThenCorectValueIsReturned) {
     KernelInfo kernelInfo = {};
     kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
     MockKernel kernel(pProgram, kernelInfo, *pClDevice);
@@ -337,7 +337,7 @@ TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPrefferedWorkGro
     EXPECT_EQ(expectedValue, paramValue);
 }
 
-TEST_F(KernelTests, GivenCFEFusedEUDispatchEnabledAndRequiredDisabledUEFusionWhenGettingPrefferedWorkGroupSizeMultipleThenCorectValueIsReturned) {
+TEST_F(KernelTests, GivenCFEFusedEUDispatchEnabledAndRequiredDisabledUEFusionWhenGettingPreferredWorkGroupSizeMultipleThenCorectValueIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.CFEFusedEUDispatch.set(0);
 
