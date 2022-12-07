@@ -609,6 +609,7 @@ ze_result_t DebugSessionWindows::readGpuMemory(uint64_t memoryHandle, char *outp
         PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_GFX_MEMORY: Failed - gpuVA: 0x%llx Size: %zu ProcessId: %d Status: %d EscapeReturnStatus: %d\n", gpuVa, size, processId, status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
         return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
     }
+    PRINT_DEBUGGER_MEM_ACCESS_LOG("DBGUMD_ACTION_READ_GFX_MEMORY: Success - gpuVA: 0x%llx Size: %zu ProcessId: %d \n", gpuVa, size, processId);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -629,6 +630,7 @@ ze_result_t DebugSessionWindows::writeGpuMemory(uint64_t memoryHandle, const cha
         PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_WRITE_GFX_MEMORY: Failed - gpuVA: 0x%llx size: %zu ProcessId: %d Status: %d EscapeReturnStatus: %d\n", gpuVa, size, processId, status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
         return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
     }
+    PRINT_DEBUGGER_MEM_ACCESS_LOG("DBGUMD_ACTION_WRITE_GFX_MEMORY: Success - gpuVA: 0x%llx Size: %zu ProcessId: %d \n", gpuVa, size, processId);
     return ZE_RESULT_SUCCESS;
 }
 
