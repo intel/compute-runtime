@@ -580,12 +580,12 @@ ze_result_t DebugSessionWindows::interruptImp(uint32_t deviceIndex) {
     auto status = runEscape(escapeInfo);
     if (STATUS_SUCCESS != status) {
         PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CONTROL_INT_ALL: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
-        return DebugSessionWindows::translateNtStatusToZeResult(status);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
         PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CONTROL_INT_ALL: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
-        return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CONTROL_INT_ALL - Success\n");

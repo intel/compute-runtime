@@ -1794,13 +1794,17 @@ TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenInterruptImpIsCalledThenErrorIsRe
     session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
 
     mockWddm->ntStatus = STATUS_WAIT_1;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->interruptImp(0));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->interruptImp(0));
     EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_INT_ALL]);
 
     mockWddm->ntStatus = STATUS_SUCCESS;
     mockWddm->escapeReturnStatus = DBGUMD_RETURN_DEBUGGER_ATTACH_DEVICE_BUSY;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->interruptImp(0));
     EXPECT_EQ(2u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_INT_ALL]);
+
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_KMD_DEBUG_ERROR;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->interruptImp(0));
+    EXPECT_EQ(3u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_INT_ALL]);
 }
 
 TEST_F(DebugApiWindowsTest, GivenInterruptImpSucceededThenSuccessIsReturned) {
