@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -494,4 +495,23 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
 }
 
+TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
+    auto sharedHandleToModify = allocation.getSharedHandleToModify();
+    EXPECT_NE(nullptr, sharedHandleToModify);
+    *sharedHandleToModify = 1234u;
+    uint64_t handle = 0;
+    int ret = allocation.peekInternalHandle(nullptr, handle);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(*sharedHandleToModify, handle);
+}
+
+TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHandleToModifyAndCantPeekInternalHandle) {
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, false, 1u);
+    auto sharedHandleToModify = allocation.getSharedHandleToModify();
+    EXPECT_EQ(nullptr, sharedHandleToModify);
+    uint64_t handle = 0;
+    int ret = allocation.peekInternalHandle(nullptr, handle);
+    EXPECT_NE(ret, 0);
+}
 } // namespace NEO

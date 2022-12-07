@@ -74,7 +74,7 @@ class WddmAllocation : public GraphicsAllocation {
 
     int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override {
         handle = ntSecureHandle;
-        return 0;
+        return handle == 0;
     }
 
     uint64_t *getSharedHandleToModify() {

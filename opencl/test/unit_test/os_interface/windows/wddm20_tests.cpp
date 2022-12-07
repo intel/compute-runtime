@@ -466,23 +466,6 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     EXPECT_NE(0u, handle);
 }
 
-TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
-    auto sharedHandleToModify = allocation.getSharedHandleToModify();
-    EXPECT_NE(nullptr, sharedHandleToModify);
-    *sharedHandleToModify = 1234u;
-    uint64_t handle = 0;
-    int ret = allocation.peekInternalHandle(nullptr, handle);
-    EXPECT_EQ(ret, 0);
-    EXPECT_EQ(*sharedHandleToModify, handle);
-}
-
-TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHandleToModify) {
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, false, 1u);
-    auto sharedHandleToModify = allocation.getSharedHandleToModify();
-    EXPECT_EQ(nullptr, sharedHandleToModify);
-}
-
 TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
     auto gmmHelper = getGmmHelper();
