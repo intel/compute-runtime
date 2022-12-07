@@ -11,6 +11,8 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
+#include "hw_cmds_xe_hpc_core_base.h"
+
 using namespace NEO;
 
 using XeHpcCoreDeviceCaps = Test<DeviceFixture>;
