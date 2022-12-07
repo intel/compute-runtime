@@ -38,10 +38,14 @@ class MemoryNeoDrm : public Drm {
     MemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 };
 
-template <>
-struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
-    Mock<MemoryNeoDrm>(RootDeviceEnvironment &rootDeviceEnvironment) : MemoryNeoDrm(rootDeviceEnvironment) {}
-    bool queryMemoryInfoMockPositiveTest() {
+struct MockMemoryNeoDrm : public MemoryNeoDrm {
+    MockMemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : MemoryNeoDrm(rootDeviceEnvironment) {}
+    std::vector<bool> mockQueryMemoryInfoReturnStatus{};
+    bool queryMemoryInfo() override {
+        if (!mockQueryMemoryInfoReturnStatus.empty()) {
+            return mockQueryMemoryInfoReturnStatus.front();
+        }
+
         std::vector<MemoryRegion> regionInfo(2);
         regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
         regionInfo[0].probedSize = probedSizeRegionZero;
@@ -53,16 +57,6 @@ struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
         this->memoryInfo.reset(new MemoryInfo(regionInfo, *this));
         return true;
     }
-
-    bool queryMemoryInfoMockReturnFalse() {
-        return false;
-    }
-
-    bool queryMemoryInfoMockReturnFakeTrue() {
-        return true;
-    }
-
-    MOCK_METHOD(bool, queryMemoryInfo, (), (override));
 };
 
 } // namespace ult

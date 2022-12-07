@@ -27,7 +27,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
-        pMemoryManager = new ::testing::NiceMock<MockMemoryManagerSysman>(*neoDevice->getExecutionEnvironment());
+        pMemoryManager = new MockMemoryManagerSysman(*neoDevice->getExecutionEnvironment());
         pMemoryManager->localMemorySupported[0] = false;
         device->getDriverHandle()->setMemoryManager(pMemoryManager);
 
