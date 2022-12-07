@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"

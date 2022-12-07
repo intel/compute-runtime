@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"

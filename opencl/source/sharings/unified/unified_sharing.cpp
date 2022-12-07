@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"

@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"

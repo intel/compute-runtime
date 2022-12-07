@@ -7,6 +7,7 @@
 
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"

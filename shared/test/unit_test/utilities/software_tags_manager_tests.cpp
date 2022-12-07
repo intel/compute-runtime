@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

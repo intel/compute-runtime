@@ -21,6 +21,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"

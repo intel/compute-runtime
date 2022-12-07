@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/device_command_stream.inl"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_neo.h"

@@ -24,6 +24,7 @@
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"

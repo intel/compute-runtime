@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using IsBetweenSklAndTgllp = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

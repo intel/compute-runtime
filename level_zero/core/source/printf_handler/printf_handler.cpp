@@ -8,6 +8,7 @@
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/print_formatter.h"
 

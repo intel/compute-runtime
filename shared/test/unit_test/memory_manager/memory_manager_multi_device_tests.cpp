@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"

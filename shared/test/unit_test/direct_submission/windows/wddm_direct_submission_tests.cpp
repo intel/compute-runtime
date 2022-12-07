@@ -7,6 +7,7 @@
 
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"

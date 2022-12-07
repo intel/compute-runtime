@@ -27,6 +27,7 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
@@ -77,6 +78,26 @@ MemoryManager::~MemoryManager() {
     registeredEngines.clear();
     if (reservedMemory) {
         MemoryManager::alignedFreeWrapper(reservedMemory);
+    }
+}
+
+bool MemoryManager::isLimitedGPU(uint32_t rootDeviceIndex) {
+    return peek32bit() && !peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm();
+}
+
+bool MemoryManager::isLimitedGPUOnType(uint32_t rootDeviceIndex, AllocationType type) {
+    return isLimitedGPU(rootDeviceIndex) &&
+           (type != AllocationType::MAP_ALLOCATION) &&
+           (type != AllocationType::IMAGE);
+}
+
+GmmHelper *MemoryManager::getGmmHelper(uint32_t rootDeviceIndex) {
+    return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
+}
+
+void MemoryManager::zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
+    if (allocationData.flags.zeroMemory) {
+        memset(cpuPtr, 0, size);
     }
 }
 

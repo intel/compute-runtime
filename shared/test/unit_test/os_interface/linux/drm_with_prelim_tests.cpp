@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"

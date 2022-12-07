@@ -28,6 +28,7 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"

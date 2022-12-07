@@ -12,6 +12,7 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/program_info.h"

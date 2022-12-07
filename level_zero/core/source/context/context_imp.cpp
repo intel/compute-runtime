@@ -8,6 +8,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 

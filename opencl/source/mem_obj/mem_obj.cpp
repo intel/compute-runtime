@@ -13,6 +13,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"

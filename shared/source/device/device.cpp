@@ -17,6 +17,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"

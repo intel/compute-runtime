@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 

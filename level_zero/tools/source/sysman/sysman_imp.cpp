@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/sleep.h"
 

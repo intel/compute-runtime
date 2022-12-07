@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"

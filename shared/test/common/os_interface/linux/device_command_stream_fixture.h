@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"

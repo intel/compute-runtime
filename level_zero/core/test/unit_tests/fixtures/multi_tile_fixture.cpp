@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 

@@ -9,6 +9,7 @@
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/blit_commands_helper_bdw_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/helpers/state_base_address_bdw.inl"
+#include "shared/source/memory_manager/allocation_properties.h"
 
 namespace NEO {
 typedef Gen8Family Family;

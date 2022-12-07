@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 

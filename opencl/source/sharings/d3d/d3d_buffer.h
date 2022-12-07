@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/source/mem_obj/buffer.h"

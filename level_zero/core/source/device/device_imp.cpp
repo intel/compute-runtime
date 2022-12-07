@@ -24,6 +24,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"

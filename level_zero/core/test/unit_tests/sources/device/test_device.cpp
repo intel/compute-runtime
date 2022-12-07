@@ -14,6 +14,7 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_inc_base.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

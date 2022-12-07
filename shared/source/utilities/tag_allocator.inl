@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 namespace NEO {

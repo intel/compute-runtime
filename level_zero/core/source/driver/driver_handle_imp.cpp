@@ -11,6 +11,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_library.h"

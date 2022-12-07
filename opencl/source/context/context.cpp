@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/deferred_deleter.h"

@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"

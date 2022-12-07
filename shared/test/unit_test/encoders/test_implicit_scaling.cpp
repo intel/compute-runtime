@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/walker_partition_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/unit_test/fixtures/implicit_scaling_fixture.h"
 
 TEST_F(ImplicitScalingTests, givenMultiTileDeviceWhenApiAndOsSupportThenFeatureEnabled) {

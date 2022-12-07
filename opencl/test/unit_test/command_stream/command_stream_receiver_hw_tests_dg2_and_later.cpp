@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"

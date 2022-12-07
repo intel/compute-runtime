@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/device.h"
 
 namespace NEO {
 std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {

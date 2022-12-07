@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/debugger/debugger_l0.h"
-#include "shared/source/device/device.h"
+#include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"

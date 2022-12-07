@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"

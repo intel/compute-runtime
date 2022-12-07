@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_inc_base.h"

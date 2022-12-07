@@ -23,6 +23,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/deferrable_deletion.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"

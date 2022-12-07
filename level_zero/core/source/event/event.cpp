@@ -15,6 +15,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/cpuintrinsics.h"

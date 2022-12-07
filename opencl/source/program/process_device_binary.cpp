@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"

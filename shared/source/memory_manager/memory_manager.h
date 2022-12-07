@@ -10,10 +10,7 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/memory_manager/alignment_selector.h"
-#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/host_ptr_defines.h"
-#include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -28,6 +25,12 @@
 #include <vector>
 
 namespace NEO {
+struct ImageInfo;
+struct AllocationData;
+class GmmHelper;
+enum class DriverModelType;
+struct AllocationProperties;
+class LocalMemoryUsageBankSelector;
 class DeferredDeleter;
 class ExecutionEnvironment;
 class Gmm;
@@ -109,14 +112,8 @@ class MemoryManager {
     MOCKABLE_VIRTUAL bool peek32bit() {
         return is32bit;
     }
-    MOCKABLE_VIRTUAL bool isLimitedGPU(uint32_t rootDeviceIndex) {
-        return peek32bit() && !peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm();
-    }
-    MOCKABLE_VIRTUAL bool isLimitedGPUOnType(uint32_t rootDeviceIndex, AllocationType type) {
-        return isLimitedGPU(rootDeviceIndex) &&
-               (type != AllocationType::MAP_ALLOCATION) &&
-               (type != AllocationType::IMAGE);
-    }
+    MOCKABLE_VIRTUAL bool isLimitedGPU(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL bool isLimitedGPUOnType(uint32_t rootDeviceIndex, AllocationType type);
 
     void cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *);
 
@@ -213,9 +210,7 @@ class MemoryManager {
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex){};
     void *getReservedMemory(size_t size, size_t alignment);
     GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
-    GmmHelper *getGmmHelper(uint32_t rootDeviceIndex) {
-        return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
-    }
+    GmmHelper *getGmmHelper(uint32_t rootDeviceIndex);
     virtual AddressRange reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) = 0;
     virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;
     static HeapIndex selectInternalHeap(bool useLocalMemory) { return useLocalMemory ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_INTERNAL; }
@@ -301,11 +296,7 @@ class MemoryManager {
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
     virtual void registerAllocationInOs(GraphicsAllocation *allocation) {}
     bool isAllocationTypeToCapture(AllocationType type) const;
-    void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
-        if (allocationData.flags.zeroMemory) {
-            memset(cpuPtr, 0, size);
-        }
-    }
+    void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size);
     void updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex);
 
     bool initialized = false;

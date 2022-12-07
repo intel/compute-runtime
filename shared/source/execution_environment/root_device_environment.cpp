@@ -23,6 +23,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/software_tags_manager.h"
