@@ -148,7 +148,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
 
-    bool isMarkerWithProfiling = (CL_COMMAND_MARKER == commandType) && (eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled());
+    bool isMarkerWithPostSyncWrite = (CL_COMMAND_MARKER == commandType) && ((eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled()) || multiDispatchInfo.peekBuiltinOpParams().bcsSplit);
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
     std::unique_ptr<PrintfHandler> printfHandler;
@@ -189,7 +189,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         auto allocator = computeCommandStreamReceiver.getTimestampPacketAllocator();
 
         size_t nodesCount = 0u;
-        if (isCacheFlushCommand(commandType) || isMarkerWithProfiling) {
+        if (isCacheFlushCommand(commandType) || isMarkerWithPostSyncWrite) {
             nodesCount = 1;
         } else if (!multiDispatchInfo.empty()) {
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
@@ -207,7 +207,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     auto &commandStream = *obtainCommandStream<commandType>(csrDeps, false, blockQueue, multiDispatchInfo, eventsRequest,
-                                                            blockedCommandsData, surfacesForResidency, numSurfaceForResidency, isMarkerWithProfiling);
+                                                            blockedCommandsData, surfacesForResidency, numSurfaceForResidency, isMarkerWithPostSyncWrite);
     auto commandStreamStart = commandStream.getUsed();
 
     if (this->context->getRootDeviceIndices().size() > 1) {
@@ -248,7 +248,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
-        if (isMarkerWithProfiling) {
+        if (isMarkerWithPostSyncWrite) {
             flushDependenciesForNonKernelCommand = true;
         }
 
@@ -256,19 +256,19 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps);
         }
 
-        if (isMarkerWithProfiling) {
+        if (isMarkerWithPostSyncWrite) {
             if (numEventsInWaitList == 0) {
                 computeCommandStreamReceiver.programComputeBarrierCommand(commandStream);
             }
             processDispatchForMarkerWithTimestampPacket(*this, &commandStream, eventsRequest, csrDeps);
         }
-    } else if (isMarkerWithProfiling) {
+    } else if (isMarkerWithPostSyncWrite) {
         processDispatchForMarker(*this, &commandStream, eventsRequest, csrDeps);
     }
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
     const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
-                                              flushDependenciesForNonKernelCommand, isMarkerWithProfiling, &blitPropertiesContainer);
+                                              flushDependenciesForNonKernelCommand, isMarkerWithPostSyncWrite, &blitPropertiesContainer);
 
     if (!blockQueue && isOOQEnabled()) {
         setupBarrierTimestampForBcsEngines(computeCommandStreamReceiver.getOsContext().getEngineType(), timestampPacketDependencies);
@@ -1165,6 +1165,21 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
 
     DEBUG_BREAK_IF(copyEngines.size() == 0);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
+
+    if (isOOQEnabled() && getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired()) {
+        NullSurface s;
+        Surface *surfaces[] = {&s};
+        BuiltinOpParams params{};
+        params.bcsSplit = true;
+        MultiDispatchInfo di(params);
+        ret = enqueueHandler<CL_COMMAND_MARKER>(surfaces,
+                                                false,
+                                                di,
+                                                numEventsInWaitList,
+                                                eventWaitList,
+                                                event);
+        DEBUG_BREAK_IF(ret != CL_SUCCESS);
+    }
 
     TimestampPacketContainer splitNodes;
     TimestampPacketContainer previousEnqueueNode;
