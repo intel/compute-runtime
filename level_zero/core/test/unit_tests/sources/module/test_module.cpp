@@ -28,6 +28,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/module_imp.h"
@@ -2454,6 +2455,79 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     } else {
         EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
     }
+}
+
+HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndAllowZebinBuildOptionWhenBuildWithSpirvThenModuleBuildFails, IsAtMostGen11) {
+
+    if (device->getHwInfo().capabilityTable.debuggerSupported == false) {
+        GTEST_SKIP();
+    }
+
+    auto mockCompilerInterface = new MockCompilerInterface;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
+    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnit moduleTu(device);
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto buildOption = NEO::CompilerOptions::allowZebin.str();
+
+    result = moduleTu.buildFromSpirV("", 0U, buildOption.c_str(), "", nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_MODULE_BUILD_FAILURE);
+}
+
+HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndAllowZebinBuildOptionWhenBuildWithSpirvThenModuleBuildsWithSuccess, IsAtLeastGen12lp) {
+
+    if (device->getHwInfo().capabilityTable.debuggerSupported == false) {
+        GTEST_SKIP();
+    }
+
+    auto mockCompilerInterface = new MockCompilerInterface;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
+    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnit moduleTu(device);
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto buildOption = NEO::CompilerOptions::allowZebin.str();
+
+    result = moduleTu.buildFromSpirV("", 0U, buildOption.c_str(), "", nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_NE(mockCompilerInterface->receivedApiOptions.find(NEO::CompilerOptions::allowZebin.str()), std::string::npos);
+    EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find(NEO::CompilerOptions::disableZebin.str()), std::string::npos);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, givenAllowZebinBuildOptionWhenBuildWithSpirvThenOptionsContainsAllowZebin) {
+    auto mockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnit moduleTu(device);
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    auto buildOption = NEO::CompilerOptions::allowZebin.str();
+
+    result = moduleTu.buildFromSpirV("", 0U, buildOption.c_str(), "", nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_NE(mockCompilerInterface->receivedApiOptions.find(NEO::CompilerOptions::allowZebin.str()), std::string::npos);
+    EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find(NEO::CompilerOptions::disableZebin.str()), std::string::npos);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerWhenBuildWithSpirvThenModuleBuildsWithSuccess) {
+
+    if (device->getHwInfo().capabilityTable.debuggerSupported == false) {
+        GTEST_SKIP();
+    }
+
+    auto mockCompilerInterface = new MockCompilerInterface;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockActiveSourceLevelDebugger);
+    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnit moduleTu(device);
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+
+    result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
 TEST(ModuleBuildLog, WhenGreaterBufferIsPassedToGetStringThenOutputSizeIsOverridden) {
