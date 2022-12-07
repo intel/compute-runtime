@@ -145,6 +145,7 @@ struct HardwareInfo {
     alignas(4) GT_SYSTEM_INFO gtSystemInfo{};
     alignas(8) RuntimeCapabilityTable capabilityTable{};
     alignas(8) HardwareIpVersion ipVersion{};
+    uint8_t reserved[4]{}; // to keep optimal alignment
 };
 
 template <PRODUCT_FAMILY product>
