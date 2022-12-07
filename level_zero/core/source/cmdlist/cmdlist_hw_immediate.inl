@@ -338,7 +338,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, &srcAllocData);
     bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, &dstAllocData);
     if (preferCopyThroughLockedPtr(dstAllocData, dstAllocFound, srcAllocData, srcAllocFound, size)) {
-        return performCpuMemcpy(dstptr, srcptr, size, dstAllocFound, hSignalEvent, numWaitEvents, phWaitEvents);
+        return performCpuMemcpy(dstptr, srcptr, size, dstAllocData, srcAllocData, hSignalEvent, numWaitEvents, phWaitEvents);
     }
 
     if (this->isAppendSplitNeeded(dstptr, srcptr, size)) {
@@ -616,6 +616,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound, size_t size) {
+    if (NEO::DebugManager.flags.ExperimentalForceCopyThroughLock.get() == 1) {
+        return true;
+    }
+
     size_t h2DThreshold = 2 * MemoryConstants::megaByte;
     size_t d2HThreshold = 1 * MemoryConstants::kiloByte;
     if (NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
@@ -638,7 +642,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMDeviceAlloc(NEO
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void *dstptr, const void *srcptr, size_t size, bool isDstDeviceMemory, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void *dstptr, const void *srcptr, size_t size, NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
     bool needsBarrier = (numWaitEvents > 0);
     if (needsBarrier) {
@@ -657,15 +661,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    const void *cpuMemcpySrcPtr = nullptr;
-    void *cpuMemcpyDstPtr = nullptr;
-    if (isDstDeviceMemory) {
-        cpuMemcpySrcPtr = srcptr;
-        cpuMemcpyDstPtr = obtainLockedPtrFromDevice(dstptr, size);
-    } else {
-        cpuMemcpySrcPtr = obtainLockedPtrFromDevice(const_cast<void *>(srcptr), size);
-        cpuMemcpyDstPtr = dstptr;
-    }
+    auto srcLockPointer = obtainLockedPtrFromDevice(srcAlloc, const_cast<void *>(srcptr));
+    auto dstLockPointer = obtainLockedPtrFromDevice(dstAlloc, dstptr);
+
+    const void *cpuMemcpySrcPtr = srcLockPointer ? srcLockPointer : srcptr;
+    void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : dstptr;
 
     if (this->dependenciesPresent) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
@@ -690,12 +690,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(void *ptr, size_t size) {
-    NEO::SvmAllocationData *allocData = nullptr;
-    auto allocFound = this->device->getDriverHandle()->findAllocationDataForRange(ptr, size, &allocData);
-    UNRECOVERABLE_IF(!allocFound);
+void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(NEO::SvmAllocationData *allocData, void *ptr) {
+    if (!allocData) {
+        return nullptr;
+    }
 
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex());
+    if (alloc->getMemoryPool() != NEO::MemoryPool::LocalMemory) {
+        return nullptr;
+    }
+
     if (!alloc->isLocked()) {
         this->device->getDriverHandle()->getMemoryManager()->lockResource(alloc);
     }

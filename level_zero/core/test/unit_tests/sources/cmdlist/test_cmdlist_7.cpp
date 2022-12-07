@@ -444,12 +444,12 @@ HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenError
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
 
-    returnValue = commandList0->performCpuMemcpy(nullptr, nullptr, 8, false, nullptr, 1, nullptr);
+    returnValue = commandList0->performCpuMemcpy(nullptr, nullptr, 8, nullptr, nullptr, nullptr, 1, nullptr);
     ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
 
-    returnValue = commandList0->performCpuMemcpy(nullptr, nullptr, 8, false, nullptr, 1, nullptr);
+    returnValue = commandList0->performCpuMemcpy(nullptr, nullptr, 8, nullptr, nullptr, nullptr, 1, nullptr);
     ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);
 }
 
@@ -1884,6 +1884,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataT
 struct AppendMemoryLockedCopyFixture : public DeviceFixture {
     void setUp() {
         DebugManager.flags.ExperimentalCopyThroughLock.set(1);
+        DebugManager.flags.EnableLocalMemory.set(1);
         DeviceFixture::setUp();
 
         nonUsmHostPtr = new char[sz];
@@ -1961,6 +1962,17 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrA
     EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(dstAllocData, dstFound, srcAllocData, srcFound, 1024));
 }
 
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtrViaEnvVariableWhenPreferCopyThroughLockPointerCalledThenTrueIsReturned, IsAtLeastSkl) {
+    DebugManager.flags.ExperimentalForceCopyThroughLock.set(1);
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    NEO::SvmAllocationData *srcAllocData;
+    NEO::SvmAllocationData *dstAllocData;
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &srcAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(dstAllocData, dstFound, srcAllocData, srcFound, 1024));
+}
+
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenLockPtr, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -1989,6 +2001,62 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 1024, nullptr, 0, nullptr);
     EXPECT_EQ(1u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
     EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllocationsAreLocked, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ExperimentalForceCopyThroughLock.set(1);
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *devicePtr2 = nullptr;
+    context->allocDeviceMem(device->toHandle(), &deviceDesc, sz, 1u, &devicePtr2);
+    NEO::SvmAllocationData *allocData2;
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr2, 1024, &allocData2);
+    auto dstAlloc2 = allocData2->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    NEO::SvmAllocationData *allocData;
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
+    auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
+    EXPECT_EQ(nullptr, dstAlloc2->getLockedPtr());
+    cmdList.appendMemoryCopy(devicePtr2, devicePtr, 1024, nullptr, 0, nullptr);
+    EXPECT_EQ(2u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
+    EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
+    EXPECT_NE(nullptr, dstAlloc2->getLockedPtr());
+    context->freeMem(devicePtr2);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmToDeviceUsmThenOnlyDeviceAllocationIsLocked, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ExperimentalForceCopyThroughLock.set(1);
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *hostPtr = nullptr;
+    context->allocHostMem(&hostDesc, sz, 1u, &hostPtr);
+    NEO::SvmAllocationData *hostAlloc;
+    device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &hostAlloc);
+    auto hostAlloction = hostAlloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    NEO::SvmAllocationData *allocData;
+    device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
+    auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
+    EXPECT_EQ(nullptr, hostAlloction->getLockedPtr());
+    cmdList.appendMemoryCopy(hostPtr, devicePtr, 1024, nullptr, 0, nullptr);
+    EXPECT_EQ(1u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
+    EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
+    EXPECT_EQ(nullptr, hostAlloction->getLockedPtr());
+    context->freeMem(hostPtr);
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DAndDstPtrLockedThenDontLockAgain, IsAtLeastSkl) {
