@@ -241,12 +241,12 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
-    memAdviseFlags.non_atomic = 1;
+    memAdviseFlags.nonAtomic = 1;
 
     allocation.setMemAdvise(drm.get(), memAdviseFlags);
 
     EXPECT_EQ(1u, drm->ioctlCallsCount);
-    EXPECT_NE(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+    EXPECT_NE(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
@@ -258,10 +258,10 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomic
     MemAdviseFlags memAdviseFlags{};
 
     for (auto nonAtomic : {true, false}) {
-        memAdviseFlags.non_atomic = nonAtomic;
+        memAdviseFlags.nonAtomic = nonAtomic;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
@@ -275,10 +275,10 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
     MemAdviseFlags memAdviseFlags{};
 
     for (auto devicePreferredLocation : {true, false}) {
-        memAdviseFlags.device_preferred_location = devicePreferredLocation;
+        memAdviseFlags.devicePreferredLocation = devicePreferredLocation;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }

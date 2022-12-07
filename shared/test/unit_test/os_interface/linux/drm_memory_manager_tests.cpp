@@ -3856,16 +3856,16 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCa
     EXPECT_EQ(CachePolicy::WriteBack, bo.peekCachePolicy());
 
     MemAdviseFlags memAdviseFlags{};
-    EXPECT_TRUE(memAdviseFlags.cached_memory);
+    EXPECT_TRUE(memAdviseFlags.cachedMemory);
 
     for (auto cached : {true, false, true}) {
-        memAdviseFlags.cached_memory = cached;
+        memAdviseFlags.cachedMemory = cached;
 
         EXPECT_TRUE(allocation.setMemAdvise(&drm, memAdviseFlags));
 
         EXPECT_EQ(cached ? CachePolicy::WriteBack : CachePolicy::Uncached, bo.peekCachePolicy());
 
-        EXPECT_EQ(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
     }
 }
 
@@ -4291,7 +4291,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUp
 
     for (auto isCached : {false, true}) {
         MemAdviseFlags flags{};
-        flags.cached_memory = isCached;
+        flags.cachedMemory = isCached;
 
         EXPECT_TRUE(memoryManager.setMemAdvise(&drmAllocation, flags, rootDeviceIndex));
         EXPECT_EQ(isCached ? CachePolicy::WriteBack : CachePolicy::Uncached, bo.peekCachePolicy());

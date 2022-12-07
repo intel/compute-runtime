@@ -50,9 +50,9 @@ void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler
         NEO::SvmAllocationData *allocData = deviceImp->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(allocPtr);
 
         if (deviceImp->memAdviseSharedAllocations.find(allocData) != deviceImp->memAdviseSharedAllocations.end()) {
-            if (deviceImp->memAdviseSharedAllocations[allocData].read_only && deviceImp->memAdviseSharedAllocations[allocData].device_preferred_location) {
+            if (deviceImp->memAdviseSharedAllocations[allocData].readOnly && deviceImp->memAdviseSharedAllocations[allocData].devicePreferredLocation) {
                 migration = false;
-                deviceImp->memAdviseSharedAllocations[allocData].cpu_migration_blocked = 1;
+                deviceImp->memAdviseSharedAllocations[allocData].cpuMigrationBlocked = 1;
             }
         }
         if (migration) {

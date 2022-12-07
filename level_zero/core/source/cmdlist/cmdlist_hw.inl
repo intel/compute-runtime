@@ -878,7 +878,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
     NEO::MemAdviseFlags flags;
-    flags.memadvise_flags = 0;
+    flags.allFlags = 0;
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     if (allocData) {
@@ -890,22 +890,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
 
         switch (advice) {
         case ZE_MEMORY_ADVICE_SET_READ_MOSTLY:
-            flags.read_only = 1;
+            flags.readOnly = 1;
             break;
         case ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY:
-            flags.read_only = 0;
+            flags.readOnly = 0;
             break;
         case ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION:
-            flags.device_preferred_location = 1;
+            flags.devicePreferredLocation = 1;
             break;
         case ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION:
-            flags.device_preferred_location = 0;
+            flags.devicePreferredLocation = 0;
             break;
         case ZE_MEMORY_ADVICE_BIAS_CACHED:
-            flags.cached_memory = 1;
+            flags.cachedMemory = 1;
             break;
         case ZE_MEMORY_ADVICE_BIAS_UNCACHED:
-            flags.cached_memory = 0;
+            flags.cachedMemory = 0;
             break;
         case ZE_MEMORY_ADVICE_SET_NON_ATOMIC_MOSTLY:
         case ZE_MEMORY_ADVICE_CLEAR_NON_ATOMIC_MOSTLY:
@@ -917,10 +917,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
         auto pageFaultManager = memoryManager->getPageFaultManager();
         if (pageFaultManager) {
             /* If Read Only and Device Preferred Hints have been cleared, then cpu_migration of Shared memory can be re-enabled*/
-            if (flags.cpu_migration_blocked) {
-                if (flags.read_only == 0 && flags.device_preferred_location == 0) {
+            if (flags.cpuMigrationBlocked) {
+                if (flags.readOnly == 0 && flags.devicePreferredLocation == 0) {
                     pageFaultManager->protectCPUMemoryAccess(const_cast<void *>(ptr), size);
-                    flags.cpu_migration_blocked = 0;
+                    flags.cpuMigrationBlocked = 0;
                 }
             }
             /* Given MemAdvise hints, use different gpu Domain Handler for the Page Fault Handling */

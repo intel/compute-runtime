@@ -297,26 +297,26 @@ bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
 bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     bool success = true;
 
-    if (flags.cached_memory != enabledMemAdviseFlags.cached_memory) {
-        CachePolicy memType = flags.cached_memory ? CachePolicy::WriteBack : CachePolicy::Uncached;
+    if (flags.cachedMemory != enabledMemAdviseFlags.cachedMemory) {
+        CachePolicy memType = flags.cachedMemory ? CachePolicy::WriteBack : CachePolicy::Uncached;
         setCachePolicy(memType);
     }
 
     auto ioctlHelper = drm->getIoctlHelper();
-    if (flags.non_atomic != enabledMemAdviseFlags.non_atomic) {
+    if (flags.nonAtomic != enabledMemAdviseFlags.nonAtomic) {
         for (auto bo : bufferObjects) {
             if (bo != nullptr) {
-                success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getAtomicAdvise(flags.non_atomic), nullptr);
+                success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getAtomicAdvise(flags.nonAtomic), nullptr);
             }
         }
     }
 
-    if (flags.device_preferred_location != enabledMemAdviseFlags.device_preferred_location) {
+    if (flags.devicePreferredLocation != enabledMemAdviseFlags.devicePreferredLocation) {
         MemoryClassInstance region{};
         for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
             auto bo = bufferObjects[handleId];
             if (bo != nullptr) {
-                if (flags.device_preferred_location) {
+                if (flags.devicePreferredLocation) {
                     region.memoryClass = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
                     region.memoryInstance = handleId;
                 } else {
