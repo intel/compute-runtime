@@ -1126,7 +1126,7 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
 };
 
 TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartWithSuccessfulAllocationThenSuccessReturned) {
-    ze_context_handle_t hContext;
+    ze_context_handle_t hContext{};
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
@@ -1141,18 +1141,16 @@ TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartWithSuccessfulAllocati
 
     res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    ReserveMemoryManagerMock *ReserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
+    auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
     auto memoryManager = driverHandle->getMemoryManager();
-    ReserveMemoryManager->failReserveGpuAddress = false;
-    NEO::MemoryManager *mockingMemoryManager = (NEO::MemoryManager *)ReserveMemoryManager;
-    driverHandle->setMemoryManager(mockingMemoryManager);
+    reserveMemoryManager->failReserveGpuAddress = false;
+    driverHandle->setMemoryManager(reserveMemoryManager.get());
     res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_GT((int)mockingMemoryManager->getVirtualMemoryReservationMap().size(), 0);
+    EXPECT_GT(reserveMemoryManager->getVirtualMemoryReservationMap().size(), 0u);
     res = contextImp->freeVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     driverHandle->setMemoryManager(memoryManager);
-    delete ReserveMemoryManager;
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
