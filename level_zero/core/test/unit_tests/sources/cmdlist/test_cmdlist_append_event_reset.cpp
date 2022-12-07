@@ -200,10 +200,22 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenEve
     }
 }
 
-HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenIsCompletedFlagDisabled) {
+HWTEST_F(CommandListAppendEventReset, givenRegularCmdlistWhenAppendingEventResetThenHostBufferCachingDisabledPermanently) {
     MockEvent event;
     event.isCompleted = MockEvent::STATE_SIGNALED;
     auto result = commandList->appendEventReset(event.toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(MockEvent::HOST_CACHING_DISABLED_PERMANENT, event.isCompleted);
+}
+
+HWTEST_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenHostBufferCachingDisabled) {
+    MockEvent event;
+    event.isCompleted = MockEvent::STATE_SIGNALED;
+
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    auto result = commandList->appendEventReset(event.toHandle());
+    commandList->cmdListType = CommandList::CommandListType::TYPE_REGULAR;
+
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_EQ(MockEvent::HOST_CACHING_DISABLED, event.isCompleted);
 }
@@ -221,6 +233,26 @@ HWTEST_F(CommandListAppendEventReset, WhenIsCompletedDisabledThenDontSetStateSig
     EXPECT_FALSE(event->isAlreadyCompleted());
     event->hostSignal();
     EXPECT_FALSE(event->isAlreadyCompleted());
+}
+
+HWTEST_F(CommandListAppendEventReset, givenRegularCommandListWhenHostCachingDisabledThenDisablePermanently) {
+    auto result = commandList->appendEventReset(event->toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(event->isAlreadyCompleted());
+    event->reset();
+    event->hostSignal();
+    EXPECT_FALSE(event->isAlreadyCompleted());
+}
+
+HWTEST_F(CommandListAppendEventReset, givenRegulatCommandListWhenHostCachingDisabledThenEnableAfterCpuReset) {
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->appendEventReset(event->toHandle());
+    commandList->cmdListType = CommandList::CommandListType::TYPE_REGULAR;
+
+    EXPECT_FALSE(event->isAlreadyCompleted());
+    event->reset();
+    event->hostSignal();
+    EXPECT_TRUE(event->isAlreadyCompleted());
 }
 
 HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenCommandsAreExecuted, IsAtLeastSkl) {
