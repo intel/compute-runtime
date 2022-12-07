@@ -1272,13 +1272,12 @@ void Drm::waitForBind(uint32_t vmHandleId) {
 }
 
 bool Drm::isSetPairAvailable() {
-    if (DebugManager.flags.EnableSetPair.get() == 0) {
-        return static_cast<bool>(DebugManager.flags.EnableSetPair.get());
+    if (DebugManager.flags.EnableSetPair.get() == 1) {
+        std::call_once(checkSetPairOnce, [this]() {
+            int ret = ioctlHelper->isSetPairAvailable();
+            setPairAvailable = ret;
+        });
     }
-    std::call_once(checkSetPairOnce, [this]() {
-        int ret = ioctlHelper->isSetPairAvailable();
-        setPairAvailable = ret;
-    });
 
     return setPairAvailable;
 }

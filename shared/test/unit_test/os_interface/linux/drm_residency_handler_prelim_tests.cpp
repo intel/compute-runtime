@@ -1261,7 +1261,24 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVm
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 
-TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndNoSupportAvailableThenExpectedValueIsReturned) {
+TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndNoDebugKeyThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.setPairQueryValue = 0;
+    drm.context.setPairQueryReturn = 0;
+    EXPECT_FALSE(drm.setPairAvailable);
+
+    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
+    drm.callBaseIsSetPairAvailable = true;
+    EXPECT_FALSE(drm.isSetPairAvailable());
+    EXPECT_FALSE(drm.setPairAvailable);
+    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
+}
+
+TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeySetAndNoSupportAvailableThenFalseIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableSetPair.set(1);
+
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.context.setPairQueryValue = 0;
@@ -1294,6 +1311,7 @@ TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeyNotSetThenNoSupp
 TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailableThenBothExpectedValueIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseVmBind.set(-1);
+    DebugManager.flags.EnableSetPair.set(1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1323,6 +1341,9 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailable
 }
 
 TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndSupportAvailableThenExpectedValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableSetPair.set(1);
+
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.context.setPairQueryValue = 1;
@@ -1336,7 +1357,10 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndSupportAvailabl
     EXPECT_EQ(1u, drm.context.setPairQueryCalled);
 }
 
-TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndFailureInQueryThenValueIsReturned) {
+TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndFailureInQueryThenFalseIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableSetPair.set(1);
+
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.context.setPairQueryValue = 1;
@@ -1348,4 +1372,21 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndFailureInQueryT
     EXPECT_FALSE(drm.isSetPairAvailable());
     EXPECT_FALSE(drm.setPairAvailable);
     EXPECT_EQ(1u, drm.context.setPairQueryCalled);
+}
+
+TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableWithDebugKeySetToZeroThenFalseIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableSetPair.set(0);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.setPairQueryValue = 1;
+    drm.context.setPairQueryReturn = 1;
+    EXPECT_FALSE(drm.setPairAvailable);
+
+    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
+    drm.callBaseIsSetPairAvailable = true;
+    EXPECT_FALSE(drm.isSetPairAvailable());
+    EXPECT_FALSE(drm.setPairAvailable);
+    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
 }
