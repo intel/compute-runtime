@@ -2810,8 +2810,15 @@ void CommandListCoreFamily<gfxCoreFamily>::setRemainingEventPackets(Event *event
         gpuAddress += event->getContextEndOffset();
     }
 
-    uint32_t operationsRemaining = packetsRemaining / this->partitionCount;
-    size_t operationOffset = this->partitionCount * packetSize;
+    uint32_t operationsRemaining = packetsRemaining;
+    size_t operationOffset = packetSize;
+    bool partitionEnabled = false;
+
+    if ((this->partitionCount > 1) && (packetsRemaining % this->partitionCount == 0)) {
+        operationsRemaining = operationsRemaining / this->partitionCount;
+        operationOffset = operationOffset * this->partitionCount;
+        partitionEnabled = true;
+    }
 
     for (uint32_t i = 0; i < operationsRemaining; i++) {
         if (isCopyOnly()) {
@@ -2831,7 +2838,7 @@ void CommandListCoreFamily<gfxCoreFamily>::setRemainingEventPackets(Event *event
                 value,
                 0u,
                 false,
-                this->partitionCount > 1);
+                partitionEnabled);
         }
 
         gpuAddress += operationOffset;

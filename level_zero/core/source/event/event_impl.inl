@@ -160,21 +160,23 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
         }
     }
     if (this->signalAllEventPackets) {
-        uint32_t remainingPackets = getMaxPacketsCount() - packets;
-        auto remainingPacketSyncAddress = ptrOffset(this->hostAddress, packets * this->singlePacketSize);
-        if (isUsingContextEndOffset()) {
-            remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->contextEndOffset);
-        }
-        for (uint32_t i = 0; i < remainingPackets; i++) {
-            void const *queryAddress = remainingPacketSyncAddress;
-            bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
-                static_cast<TagSizeT const *>(queryAddress),
-                queryVal,
-                std::not_equal_to<TagSizeT>());
-            if (!ready) {
-                return ZE_RESULT_NOT_READY;
+        if (packets < getMaxPacketsCount()) {
+            uint32_t remainingPackets = getMaxPacketsCount() - packets;
+            auto remainingPacketSyncAddress = ptrOffset(this->hostAddress, packets * this->singlePacketSize);
+            if (isUsingContextEndOffset()) {
+                remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->contextEndOffset);
             }
-            remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->singlePacketSize);
+            for (uint32_t i = 0; i < remainingPackets; i++) {
+                void const *queryAddress = remainingPacketSyncAddress;
+                bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
+                    static_cast<TagSizeT const *>(queryAddress),
+                    queryVal,
+                    std::not_equal_to<TagSizeT>());
+                if (!ready) {
+                    return ZE_RESULT_NOT_READY;
+                }
+                remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->singlePacketSize);
+            }
         }
     }
     if (this->downloadAllocationRequired) {

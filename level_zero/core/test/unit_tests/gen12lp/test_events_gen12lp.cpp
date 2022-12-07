@@ -17,7 +17,7 @@ namespace L0 {
 namespace ult {
 
 using TimestampEvent = Test<EventFixture<1, 1>>;
-using TimestampUsedPacketSignalEvent = Test<EventUsedPacketSignalFixture<1, 1>>;
+using TimestampUsedPacketSignalEvent = Test<EventUsedPacketSignalFixture<1, 1, 0, -1>>;
 
 GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
     typename MockTimestampPackets32::Packet data = {};

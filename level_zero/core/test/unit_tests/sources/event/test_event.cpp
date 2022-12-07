@@ -817,7 +817,7 @@ HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseCon
 }
 
 using EventSynchronizeTest = Test<EventFixture<1, 0>>;
-using EventUsedPacketSignalSynchronizeTest = Test<EventUsedPacketSignalFixture<1, 0>>;
+using EventUsedPacketSignalSynchronizeTest = Test<EventUsedPacketSignalFixture<1, 0, 0, -1>>;
 
 TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
@@ -1144,7 +1144,7 @@ struct TimestampEventCreateMultiKernelFixture : public EventFixture<1, 1> {
 
 using TimestampEventCreate = Test<EventFixture<1, 1>>;
 using TimestampEventCreateMultiKernel = Test<TimestampEventCreateMultiKernelFixture>;
-using TimestampEventUsedPacketSignalCreate = Test<EventUsedPacketSignalFixture<1, 1>>;
+using TimestampEventUsedPacketSignalCreate = Test<EventUsedPacketSignalFixture<1, 1, 0, -1>>;
 
 TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventFlagSet) {
     EXPECT_TRUE(event->isEventTimestampFlagSet());
@@ -1810,7 +1810,7 @@ TEST_F(EventPoolCreateNegativeTest, whenInitializingEventPoolButMemoryManagerFai
 }
 
 using EventTests = Test<EventFixture<1, 0>>;
-using EventUsedPacketSignalTests = Test<EventUsedPacketSignalFixture<1, 0>>;
+using EventUsedPacketSignalTests = Test<EventUsedPacketSignalFixture<1, 0, 0, -1>>;
 
 TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
     auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
@@ -2669,6 +2669,97 @@ HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenImmediateS
 
 HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenTimestampSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeHpCore) {
     testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false);
+}
+
+void testQueryAllPackets(L0::Event *event, bool singlePacket) {
+    auto result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    uint32_t usedPackets = event->getPacketsInUse();
+
+    uint32_t maxPackets = event->getMaxPacketsCount();
+    size_t packetSize = event->getSinglePacketSize();
+    void *firstPacketAddress = event->getHostAddress();
+    if (event->isUsingContextEndOffset()) {
+        firstPacketAddress = ptrOffset(firstPacketAddress, event->getContextEndOffset());
+    }
+    void *eventHostAddress = firstPacketAddress;
+    for (uint32_t i = 0; i < usedPackets; i++) {
+        uint32_t *completionField = reinterpret_cast<uint32_t *>(eventHostAddress);
+        EXPECT_EQ(Event::STATE_INITIAL, *completionField);
+        *completionField = Event::STATE_SIGNALED;
+        eventHostAddress = ptrOffset(eventHostAddress, packetSize);
+    }
+
+    if (singlePacket) {
+        EXPECT_EQ(maxPackets, usedPackets);
+    } else {
+        result = event->queryStatus();
+        EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+        ASSERT_LT(usedPackets, maxPackets);
+
+        uint32_t remainingPackets = maxPackets - usedPackets;
+        for (uint32_t i = 0; i < remainingPackets; i++) {
+            uint32_t *completionField = reinterpret_cast<uint32_t *>(eventHostAddress);
+            EXPECT_EQ(Event::STATE_INITIAL, *completionField);
+            *completionField = Event::STATE_SIGNALED;
+            eventHostAddress = ptrOffset(eventHostAddress, packetSize);
+        }
+    }
+
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = event->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    eventHostAddress = firstPacketAddress;
+    for (uint32_t i = 0; i < maxPackets; i++) {
+        uint32_t *completionField = reinterpret_cast<uint32_t *>(eventHostAddress);
+        EXPECT_EQ(Event::STATE_INITIAL, *completionField);
+        eventHostAddress = ptrOffset(eventHostAddress, packetSize);
+    }
+
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    result = event->hostSignal();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    eventHostAddress = firstPacketAddress;
+    for (uint32_t i = 0; i < maxPackets; i++) {
+        uint32_t *completionField = reinterpret_cast<uint32_t *>(eventHostAddress);
+        EXPECT_EQ(Event::STATE_SIGNALED, *completionField);
+        eventHostAddress = ptrOffset(eventHostAddress, packetSize);
+    }
+
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+using TimestampEventAllPacketSignalMultiPacketUseTest = Test<EventUsedPacketSignalFixture<1, 1, 1, 0>>;
+HWTEST2_F(TimestampEventAllPacketSignalMultiPacketUseTest,
+          givenSignalAllEventPacketWhenQueryingAndSignalingTimestampEventThenUseEventMaxPackets,
+          IsAtLeastXeHpCore) {
+    testQueryAllPackets(event.get(), false);
+}
+
+using ImmediateEventAllPacketSignalMultiPacketUseTest = Test<EventUsedPacketSignalFixture<1, 0, 1, 0>>;
+HWTEST2_F(ImmediateEventAllPacketSignalMultiPacketUseTest,
+          givenSignalAllEventPacketWhenQueryingAndSignalingImmediateEventThenUseEventMaxPackets,
+          IsAtLeastXeHpCore) {
+    testQueryAllPackets(event.get(), false);
+}
+
+using TimestampEventAllPacketSignalSinglePacketUseTest = Test<EventUsedPacketSignalFixture<1, 1, 1, 1>>;
+TEST_F(TimestampEventAllPacketSignalSinglePacketUseTest, givenSignalAllEventPacketWhenQueryingAndSignalingTimestampEventThenUseEventMaxPackets) {
+    testQueryAllPackets(event.get(), true);
+}
+
+using ImmediateEventAllPacketSignalSinglePacketUseTest = Test<EventUsedPacketSignalFixture<1, 0, 1, 1>>;
+TEST_F(ImmediateEventAllPacketSignalSinglePacketUseTest, givenSignalAllEventPacketWhenQueryingAndSignalingImmediateEventThenUseEventMaxPackets) {
+    testQueryAllPackets(event.get(), true);
 }
 
 } // namespace ult
