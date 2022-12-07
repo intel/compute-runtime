@@ -53,7 +53,7 @@ HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoTh
     std::vector<Surface *> v;
 
     pKernel->setAdditionalKernelExecInfo(AdditionalKernelExecInfo::DisableOverdispatch);
-    std::unique_ptr<CommandComputeKernel> cmd(new CommandComputeKernel(*mockCmdQ.get(), blockedCommandsData, v, false, false, false, std::move(printfHandler), PreemptionMode::Disabled, pKernel, 1));
+    std::unique_ptr<CommandComputeKernel> cmd(new CommandComputeKernel(*mockCmdQ.get(), blockedCommandsData, v, false, false, false, std::move(printfHandler), PreemptionMode::Disabled, pKernel, 1, nullptr));
     cmd->submit(1u, false);
     EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::DisableOverdispatch);
 

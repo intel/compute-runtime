@@ -26,7 +26,6 @@ void populateFactoryTable<CommandQueueHw<Family>>() {
     extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
 }
-
 } // namespace NEO
 
 template class NEO::CommandQueueHw<NEO::Family>;

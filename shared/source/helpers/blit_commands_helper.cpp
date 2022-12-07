@@ -50,6 +50,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
         BlitterConstants::BlitDirection::HostPtrToImage == blitDirection) {
         return {
             nullptr,                       // outputTimestampPacket
+            nullptr,                       // multiRootDeviceEventSync
             blitDirection,                 // blitDirection
             {},                            // csrDependencies
             AuxTranslationDirection::None, // auxTranslationDirection
@@ -73,6 +74,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
     } else {
         return {
             nullptr,                       // outputTimestampPacket
+            nullptr,                       // multiRootDeviceEventSync
             blitDirection,                 // blitDirection
             {},                            // csrDependencies
             AuxTranslationDirection::None, // auxTranslationDirection
@@ -104,6 +106,7 @@ BlitProperties BlitProperties::constructPropertiesForCopy(GraphicsAllocation *ds
 
     return {
         nullptr,                                         // outputTimestampPacket
+        nullptr,                                         // multiRootDeviceEventSync
         BlitterConstants::BlitDirection::BufferToBuffer, // blitDirection
         {},                                              // csrDependencies
         AuxTranslationDirection::None,                   // auxTranslationDirection
@@ -128,6 +131,7 @@ BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslati
     auto allocationSize = allocation->getUnderlyingBufferSize();
     return {
         nullptr,                                         // outputTimestampPacket
+        nullptr,                                         // multiRootDeviceEventSync
         BlitterConstants::BlitDirection::BufferToBuffer, // blitDirection
         {},                                              // csrDependencies
         auxTranslationDirection,                         // auxTranslationDirection

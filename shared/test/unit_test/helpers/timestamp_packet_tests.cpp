@@ -301,3 +301,35 @@ HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacke
 
     EXPECT_FALSE(tag->canBeReleased());
 }
+
+using TimestampPacketHelperTests = Test<DeviceFixture>;
+
+HWTEST_F(TimestampPacketHelperTests, givenTagNodesInMultiRootSyncContainerWhenProgramingDependensiecThenSemaforesAreProgrammed) {
+    StackVec<char, 4096> buffer(4096);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+    CsrDependencies deps;
+    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(0, pDevice->getMemoryManager());
+    TimestampPacketContainer container = {};
+    container.add(mockTagAllocator->getTag());
+    deps.multiRootTimeStampSyncContainer.push_back(&container);
+    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps);
+    EXPECT_EQ(cmdStream.getUsed(), sizeof(typename FamilyType::MI_SEMAPHORE_WAIT));
+}
+
+HWTEST_F(TimestampPacketHelperTests, givenEmptyContainerMultiRootSyncContainerWhenProgramingDependensiecThenZeroSemaforesAreProgrammed) {
+    StackVec<char, 4096> buffer(4096);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+    CsrDependencies deps;
+    TimestampPacketContainer container = {};
+    deps.multiRootTimeStampSyncContainer.push_back(&container);
+    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps);
+    EXPECT_EQ(cmdStream.getUsed(), 0u);
+}
+
+HWTEST_F(TimestampPacketHelperTests, givenEmptyMultiRootSyncContainerWhenProgramingDependensiecThenZeroSemaforesAreProgrammed) {
+    StackVec<char, 4096> buffer(4096);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+    CsrDependencies deps;
+    TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps);
+    EXPECT_EQ(cmdStream.getUsed(), 0u);
+}

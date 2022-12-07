@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_mdi.h"
 
 using namespace NEO;
 
@@ -276,7 +277,7 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
 
     cmdQHw->taskLevel = 23;
     cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
-    //new virtual event is created on enqueue, bind it to the created virtual event
+    // new virtual event is created on enqueue, bind it to the created virtual event
     EXPECT_NE(cmdQHw->virtualEvent, &virtualEvent);
 
     event.setStatus(CL_SUBMITTED);
@@ -285,7 +286,7 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     EXPECT_FALSE(cmdQHw->isQueueBlocked());
 
     //+1 due to dependency between virtual event & new virtual event
-    //new virtual event is actually responsible for command delivery
+    // new virtual event is actually responsible for command delivery
     EXPECT_EQ(virtualEventTaskLevel + 1, cmdQHw->taskLevel);
     EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
 }
@@ -969,4 +970,91 @@ HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsP
     EXPECT_EQ(builder.paramsToUse.elws.x, dispatchInfo->getEnqueuedWorkgroupSize().x);
     EXPECT_EQ(builder.paramsToUse.offset.x, dispatchInfo->getOffset().x);
     EXPECT_EQ(builder.paramsToUse.kernel, dispatchInfo->getKernel());
+}
+HWTEST_F(CommandQueueHwTest, GivenMultiRootDeviceSyncEventWhenProcessDispatchForKernelsThenSyncNodeSignaledByPipeControll) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    MockDefaultContext context{true};
+    std::unique_ptr<CommandQueue> pCmdQ1(createCommandQueue(context.getDevice(0), nullptr, &context));
+    CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ1.get());
+    MockKernelWithInternals mockKernelWithInternals(*context.getDevice(0), &context);
+
+    MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({mockKernelWithInternals.mockKernel}));
+    std::unique_ptr<PrintfHandler> printfHandler;
+    std::unique_ptr<TagNodeBase> hwTimeStamps = std::make_unique<TagNode<TimestampPackets<uint32_t>>>();
+    TagNodeBase *hwTimeStampsPtr = hwTimeStamps.get();
+    bool blockQueue = false;
+    CsrDependencies csrDeps = {};
+    KernelOperation *blockedCommandsData = nullptr;
+    TimestampPacketDependencies timestampPacketDependencies = {};
+    std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(cmdQHw, CL_COMMAND_COPY_BUFFER, 0, 0));
+    auto node = event->getMultiRootTimestampSyncNode();
+    reinterpret_cast<MockCommandQueueHw<FamilyType> *>(cmdQHw)->timestampPacketContainer.reset();
+    reinterpret_cast<MockCommandQueueHw<FamilyType> *>(cmdQHw)->template processDispatchForKernels<CL_COMMAND_NDRANGE_KERNEL>(multiDispatchInfo,
+                                                                                                                              printfHandler,
+                                                                                                                              event.get(),
+                                                                                                                              hwTimeStampsPtr,
+                                                                                                                              blockQueue,
+                                                                                                                              csrDeps,
+                                                                                                                              blockedCommandsData,
+                                                                                                                              timestampPacketDependencies);
+
+    HardwareParse ccsHwParser;
+    ccsHwParser.parseCommands<FamilyType>(cmdQHw->getCS(0), 0u);
+
+    auto pipeControlItor = find<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+    bool expectedAddressInPipeControl = false;
+    while (pipeControlItor != ccsHwParser.cmdList.end()) {
+        auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
+        uint64_t addressHigh = pipeControlCmd->getAddressHigh();
+        uint64_t addressLow = pipeControlCmd->getAddress();
+        addressHigh = addressHigh << 32;
+        uint64_t address = addressHigh | addressLow;
+        if (address == node->getGpuAddress() + node->getContextEndOffset()) {
+            expectedAddressInPipeControl = true;
+            break;
+        }
+        pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(++pipeControlItor, ccsHwParser.cmdList.end());
+    }
+    EXPECT_TRUE(expectedAddressInPipeControl);
+}
+HWTEST_F(CommandQueueHwTest, GivenMultiRootDeviceSyncEventWithEmptyDeviceSyncContainerWhenProcessDispatchForKernelsThenSyncNodeNotSignalled) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    MockDefaultContext context{true};
+    std::unique_ptr<CommandQueue> pCmdQ1(createCommandQueue(context.getDevice(0), nullptr, &context));
+    CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ1.get());
+    MockKernelWithInternals mockKernelWithInternals(*context.getDevice(0), &context);
+
+    MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({mockKernelWithInternals.mockKernel}));
+    std::unique_ptr<PrintfHandler> printfHandler;
+    std::unique_ptr<TagNodeBase> hwTimeStamps = std::make_unique<TagNode<TimestampPackets<uint32_t>>>();
+    TagNodeBase *hwTimeStampsPtr = hwTimeStamps.get();
+    bool blockQueue = false;
+    CsrDependencies csrDeps = {};
+    KernelOperation *blockedCommandsData = nullptr;
+    TimestampPacketDependencies timestampPacketDependencies = {};
+    std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(cmdQHw, CL_COMMAND_COPY_BUFFER, 0, 0));
+    auto node = event->getMultiRootTimestampSyncNode();
+    node->incRefCount();
+    event->multiRootDeviceTimestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    reinterpret_cast<MockCommandQueueHw<FamilyType> *>(cmdQHw)->timestampPacketContainer.reset();
+    reinterpret_cast<MockCommandQueueHw<FamilyType> *>(cmdQHw)->template processDispatchForKernels<CL_COMMAND_NDRANGE_KERNEL>(multiDispatchInfo, printfHandler, event.get(), hwTimeStampsPtr, blockQueue, csrDeps, blockedCommandsData, timestampPacketDependencies);
+    HardwareParse ccsHwParser;
+    ccsHwParser.parseCommands<FamilyType>(cmdQHw->getCS(0), 0u);
+
+    auto pipeControlItor = find<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+    bool expectedAddressInPipeControl = false;
+    while (pipeControlItor != ccsHwParser.cmdList.end()) {
+        auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
+        uint64_t addressHigh = pipeControlCmd->getAddressHigh();
+        uint64_t addressLow = pipeControlCmd->getAddress();
+        addressHigh = addressHigh << 32;
+        uint64_t address = addressHigh | addressLow;
+        if (address == node->getGpuAddress() + node->getContextEndOffset()) {
+            expectedAddressInPipeControl = true;
+            break;
+        }
+        pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(++pipeControlItor, ccsHwParser.cmdList.end());
+    }
+    EXPECT_FALSE(expectedAddressInPipeControl);
+    node->returnTag();
 }

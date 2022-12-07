@@ -15,6 +15,7 @@
 namespace NEO {
 
 using Family = XeHpcCoreFamily;
+#include "opencl/source/command_queue/command_queue_process_dispatch_for_kernels_instance.inl"
 static auto gfxCore = IGFX_XE_HPC_CORE;
 } // namespace NEO
 

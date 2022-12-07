@@ -125,7 +125,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
 
     sizePerBlit += estimatePostBlitCommandSize();
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
-           TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(csrDependencies) +
+           TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDependencies) +
            (sizePerBlit * nBlits) +
            timestampCmdSize +
            estimatePreBlitCommandSize();
@@ -141,6 +141,9 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
         auto isImage = blitProperties.isImageOperation();
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, updateTimestampPacket,
                                                                        profilingEnabled, isImage, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+        if (blitProperties.multiRootDeviceEventSync != nullptr) {
+            size += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+        }
     }
     size += BlitCommandsHelper<GfxFamily>::getWaCmdsSize(blitPropertiesContainer);
     size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(*rootDeviceEnvironment.getHardwareInfo());

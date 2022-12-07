@@ -21,6 +21,7 @@ static auto gfxCore = IGFX_XE_HPG_CORE;
 #include "opencl/source/command_queue/command_queue_hw_xehp_and_later.inl"
 
 namespace NEO {
+#include "opencl/source/command_queue/command_queue_process_dispatch_for_kernels_instance.inl"
 template <>
 void populateFactoryTable<CommandQueueHw<Family>>() {
     extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];

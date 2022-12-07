@@ -14,16 +14,13 @@
 #include "command_queue_helpers_gen12lp.inl"
 
 namespace NEO {
-
 typedef Gen12LpFamily Family;
+#include "opencl/source/command_queue/command_queue_process_dispatch_for_kernels_instance.inl"
 static auto gfxCore = IGFX_GEN12LP_CORE;
-
 template <>
 void populateFactoryTable<CommandQueueHw<Family>>() {
     extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
 }
-
 template class CommandQueueHw<Family>;
-
 } // namespace NEO
