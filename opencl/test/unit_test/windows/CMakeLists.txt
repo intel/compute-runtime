@@ -26,7 +26,7 @@ if(WIN32)
                  ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
-                 ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+                 ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.cpp

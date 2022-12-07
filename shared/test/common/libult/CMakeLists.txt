@@ -169,12 +169,6 @@ elseif(UNIX)
   target_sources(neo_libult_common PRIVATE ${neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX})
 endif()
 
-if(UNIX AND NOT DISABLE_WDDM_LINUX)
-  target_sources(neo_libult_common PRIVATE
-                 ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-  )
-endif()
-
 set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
@@ -184,7 +178,7 @@ set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/create_drm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_memory_manager_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_neo_create.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/options.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/options_${DRIVER_MODEL}.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
 )
 
@@ -197,7 +191,6 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_create.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/mock_environment_variables.h
 )
@@ -212,6 +205,7 @@ endif()
 if(WIN32 OR NOT DISABLE_WDDM_LINUX)
   list(APPEND neo_libult_SRCS
        ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_create.cpp
   )
 endif()
 

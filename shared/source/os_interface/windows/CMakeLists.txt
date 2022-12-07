@@ -123,6 +123,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
 
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_dxcore.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback_stub.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper_drm_or_wddm.cpp

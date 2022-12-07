@@ -8,6 +8,7 @@
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/string.h"
 
 ADAPTER_INFO_KMD gAdapterInfo{};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg{};
@@ -325,6 +326,49 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         adapterInfo->stAdapterBDF.Data = gAdapterBDF.Data;
         return STATUS_SUCCESS;
     }
+
+    if (KMTQAITYPE_QUERYREGISTRY == queryAdapterInfo->Type) {
+        const wchar_t *driverStorePathStr = L"some/path/fffff";
+
+        if ((nullptr == queryAdapterInfo->pPrivateDriverData) || (sizeof(D3DDDI_QUERYREGISTRY_INFO) > queryAdapterInfo->PrivateDriverDataSize)) {
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        D3DDDI_QUERYREGISTRY_INFO *queryRegistryInfo = reinterpret_cast<D3DDDI_QUERYREGISTRY_INFO *>(queryAdapterInfo->pPrivateDriverData);
+        if (D3DDDI_QUERYREGISTRY_DRIVERSTOREPATH != queryRegistryInfo->QueryType) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (0U != queryRegistryInfo->QueryFlags.Value) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        bool regValueNameIsEmpty = std::wstring(std::wstring(queryRegistryInfo->ValueName[0], queryRegistryInfo->ValueName[0] + sizeof(queryRegistryInfo->ValueName)).c_str()).empty();
+        if (false == regValueNameIsEmpty) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (0U != queryRegistryInfo->ValueType) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (0U != queryRegistryInfo->PhysicalAdapterIndex) {
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        if (D3DDDI_QUERYREGISTRY_DRIVERSTOREPATH != queryRegistryInfo->QueryType) {
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        queryRegistryInfo->OutputValueSize = static_cast<ULONG>(std::wstring(driverStorePathStr).size() * sizeof(wchar_t));
+        if (queryAdapterInfo->PrivateDriverDataSize < queryRegistryInfo->OutputValueSize + sizeof(D3DDDI_QUERYREGISTRY_INFO)) {
+            queryRegistryInfo->Status = D3DDDI_QUERYREGISTRY_STATUS_BUFFER_OVERFLOW;
+            return STATUS_SUCCESS;
+        }
+
+        memcpy_s(queryRegistryInfo->OutputString, queryAdapterInfo->PrivateDriverDataSize - sizeof(D3DDDI_QUERYREGISTRY_INFO),
+                 driverStorePathStr, queryRegistryInfo->OutputValueSize);
+
+        queryRegistryInfo->Status = D3DDDI_QUERYREGISTRY_STATUS_SUCCESS;
+        return STATUS_SUCCESS;
+    }
+
     return STATUS_INVALID_PARAMETER;
 }
 

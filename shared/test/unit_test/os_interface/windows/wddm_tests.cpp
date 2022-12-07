@@ -28,20 +28,6 @@ TEST_F(WddmTests, whenCreatingAllocation64kThenDoNotCreateResource) {
     EXPECT_EQ(FALSE, gdiParam->Flags.CreateResource);
 }
 
-TEST_F(WddmTests, whenInitializingWddmThenSetMinAddressToCorrectValue) {
-    constexpr static uintptr_t mockedInternalGpuVaRange = 0x9876u;
-    auto gmmMemory = new MockGmmMemoryBase(wddm->rootDeviceEnvironment.getGmmClientContext());
-    gmmMemory->overrideInternalGpuVaRangeLimit(mockedInternalGpuVaRange);
-    wddm->gmmMemory.reset(gmmMemory);
-
-    ASSERT_EQ(0u, wddm->getWddmMinAddress());
-    wddm->init();
-
-    const bool obtainFromGmm = defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
-    const auto expectedMinAddress = obtainFromGmm ? mockedInternalGpuVaRange : windowsMinAddress;
-    ASSERT_EQ(expectedMinAddress, wddm->getWddmMinAddress());
-}
-
 TEST_F(WddmTests, whenInitializingWddmThenSetTimestampFrequencyToCorrectValue) {
     EXPECT_EQ(0u, wddm->timestampFrequency);
     init();
@@ -192,7 +178,7 @@ TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenE
 
 TEST_F(WddmTests, GivenProperTopologyDataAndDebugFlagsEnabledWhenInitializingWddmThenExpectTopologyMapCreateAndReturnTrue) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = GT_MAX_SLICE;
     defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
 
@@ -217,7 +203,7 @@ TEST_F(WddmTests, GivenProperTopologyDataAndDebugFlagsEnabledWhenInitializingWdd
 
 TEST_F(WddmTests, GivenNoSubsliceEnabledAndDebugFlagsEnabledWhenInitializingWddmThenExpectTopologyMapNotCreateAndReturnFalse) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = GT_MAX_SLICE;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
     defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 1;
@@ -239,7 +225,7 @@ TEST_F(WddmTests, GivenNoSubsliceEnabledAndDebugFlagsEnabledWhenInitializingWddm
 TEST_F(WddmTests, GivenProperTopologyDataWhenQueryingTopologyThenExpectTrue) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
-    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = GT_MAX_SLICE;
     defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
 
@@ -274,7 +260,7 @@ TEST_F(WddmTests, GivenProperTopologyDataWhenQueryingTopologyThenExpectTrue) {
 TEST_F(WddmTests, GivenMoreThanOneEnabledSliceWhenQueryingTopologyThenExpectTrueAndNoSubSliceIndicesInTopology) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
-    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = GT_MAX_SLICE;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 2;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = false;
     defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
@@ -307,7 +293,7 @@ TEST_F(WddmTests, GivenMoreThanOneEnabledSliceWhenQueryingTopologyThenExpectTrue
 TEST_F(WddmTests, GivenNoSubsliceEnabledWhenQueryingTopologyThenExpectFalse) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
-    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = GT_MAX_SLICE;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1;
     defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
 
@@ -325,7 +311,7 @@ TEST_F(WddmTests, GivenNoSubsliceEnabledWhenQueryingTopologyThenExpectFalse) {
 TEST_F(WddmTests, GivenNoEuThreadsEnabledWhenQueryingTopologyThenExpectFalse) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
-    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = GT_MAX_SLICE;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1;
     defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
 
@@ -388,17 +374,6 @@ TEST_F(WddmTests, GivenPlatformNotSupportEvictIfNecessaryWhenAdjustingEvictNeede
     wddm->platformSupportsEvictIfNecessary = false;
     bool value = wddm->adjustEvictNeededParameter(false);
     EXPECT_TRUE(value);
-}
-using WddmOsContextDeviceLuidTests = WddmFixtureLuid;
-TEST_F(WddmFixtureLuid, givenValidOsContextAndLuidDataRequestThenValidDataReturned) {
-    LUID adapterLuid = {0x12, 0x1234};
-    wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid);
-    std::vector<uint8_t> luidData;
-    size_t arraySize = 8;
-    osContext->getDeviceLuidArray(luidData, arraySize);
-    uint64_t luid = 0;
-    memcpy_s(&luid, sizeof(uint64_t), luidData.data(), sizeof(uint8_t) * luidData.size());
-    EXPECT_NE(luid, (uint64_t)0);
 }
 
 uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;

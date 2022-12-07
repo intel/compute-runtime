@@ -19,7 +19,9 @@ if(WIN32)
   )
 elseif(UNIX AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_SHARED_unit_tests_configurations
-       ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory/mock_gmm_memory.h
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/mock_gmm_memory_base.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/mock_gmm_memory_base.h
   )
 endif()
 list(APPEND NEO_SHARED_unit_tests_configurations
@@ -37,6 +39,10 @@ target_include_directories(neo_unit_tests_config PRIVATE
 if(WIN32)
   target_include_directories(neo_unit_tests_config PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory${BRANCH_DIR_SUFFIX}
+  )
+elseif(NOT DISABLE_WDDM_LINUX)
+  target_include_directories(neo_unit_tests_config PRIVATE
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory
   )
 endif()
 target_compile_definitions(neo_unit_tests_config PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)

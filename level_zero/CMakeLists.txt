@@ -258,18 +258,18 @@ if(BUILD_WITH_L0)
   if(WIN32)
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
+                   ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/debugger_l0_windows.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/create_gdi.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_interface_win.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
-                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
     )
     target_link_libraries(${TARGET_NAME_L0} PRIVATE
                           dxgi
@@ -295,8 +295,8 @@ if(BUILD_WITH_L0)
       target_sources(${TARGET_NAME_L0}
                      PRIVATE
                      ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-                     ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-                     ${NEO_SHARED_DIRECTORY}/os_interface/windows/create_gdi.cpp
+                     ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
+                     ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
       )
     endif()
   endif()

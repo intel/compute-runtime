@@ -23,7 +23,7 @@ namespace NEO {
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    if (nullptr == osIface) {
+    if (nullptr == osIface || osIface->getDriverModel()->getDriverModelType() == DriverModelType::WDDM) {
         return 0;
     }
 

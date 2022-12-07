@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -139,4 +140,20 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSeco
     auto ret = wddm->reserveValidAddressRange(size, reserve);
     EXPECT_FALSE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
+}
+
+using WddmTests = WddmTestWithMockGdiDll;
+
+TEST_F(WddmTests, whenInitializingWddmThenSetMinAddressToCorrectValue) {
+    constexpr static uintptr_t mockedInternalGpuVaRange = 0x9876u;
+    auto gmmMemory = new MockGmmMemoryBase(wddm->rootDeviceEnvironment.getGmmClientContext());
+    gmmMemory->overrideInternalGpuVaRangeLimit(mockedInternalGpuVaRange);
+    wddm->gmmMemory.reset(gmmMemory);
+
+    ASSERT_EQ(0u, wddm->getWddmMinAddress());
+    wddm->init();
+
+    const bool obtainFromGmm = defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
+    const auto expectedMinAddress = obtainFromGmm ? mockedInternalGpuVaRange : windowsMinAddress;
+    ASSERT_EQ(expectedMinAddress, wddm->getWddmMinAddress());
 }

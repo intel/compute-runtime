@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -17,7 +18,7 @@ namespace NEO {
 
 class MockGmmMemoryBase : public GmmMemory {
   public:
-    ~MockGmmMemoryBase() = default;
+    ~MockGmmMemoryBase() override = default;
 
     MockGmmMemoryBase(GmmClientContext *gmmClientContext) : GmmMemory(gmmClientContext){};
 
