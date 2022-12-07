@@ -33,6 +33,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 
@@ -243,17 +244,28 @@ ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t in
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
-    std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
-
     auto specConstantResult = this->processSpecConstantInfo(compilerInterface, pConstants, input, inputSize);
     if (!specConstantResult) {
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
+    auto &l0GfxCoreHelper = this->device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
+
+    auto isZebinAllowed = l0GfxCoreHelper.isZebinAllowed(this->device->getSourceLevelDebugger());
+    if (isZebinAllowed == false) {
+        auto pos = this->options.find(NEO::CompilerOptions::allowZebin.str());
+        if (pos != std::string::npos) {
+            updateBuildLog("Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-allow-zebin\" build flag.");
+            return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+        }
+        internalOptions += " " + NEO::CompilerOptions::disableZebin.str();
+    }
+
     NEO::TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
 
     inputArgs.src = ArrayRef<const char>(input, inputSize);
-    inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
+    inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
     inputArgs.allowCaching = true;
     return this->compileGenBinary(inputArgs, false);

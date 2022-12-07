@@ -110,11 +110,18 @@ if(SUPPORT_GEN9 OR SUPPORT_GEN11 OR SUPPORT_GEN12LP)
   )
 endif()
 
+if(SUPPORT_GEN12LP)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_tgllp_and_later.inl
+  )
+endif()
+
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_xe_hp_core_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_tgllp_and_later.inl
   )
 endif()
 

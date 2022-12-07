@@ -20,6 +20,7 @@ enum class EngineGroupType : uint32_t;
 struct HardwareInfo;
 struct EngineGroupT;
 struct RootDeviceEnvironment;
+class SourceLevelDebugger;
 } // namespace NEO
 
 namespace L0 {
@@ -56,7 +57,7 @@ class L0GfxCoreHelper {
     virtual bool platformSupportsFrontEndTracking() const = 0;
     virtual bool platformSupportsPipelineSelectTracking() const = 0;
     virtual bool platformSupportsRayTracing() const = 0;
-
+    virtual bool isZebinAllowed(const NEO::SourceLevelDebugger *debugger) const = 0;
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const = 0;
 
@@ -88,7 +89,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool platformSupportsFrontEndTracking() const override;
     bool platformSupportsPipelineSelectTracking() const override;
     bool platformSupportsRayTracing() const override;
-
+    bool isZebinAllowed(const NEO::SourceLevelDebugger *debugger) const override;
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const override;
 };
