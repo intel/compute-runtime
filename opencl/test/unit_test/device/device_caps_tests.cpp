@@ -146,12 +146,14 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(4u, caps.preferredVectorWidthInt);
     EXPECT_EQ(1u, caps.preferredVectorWidthLong);
     EXPECT_EQ(1u, caps.preferredVectorWidthFloat);
+    EXPECT_EQ(1u, caps.preferredVectorWidthDouble);
     EXPECT_EQ(8u, caps.preferredVectorWidthHalf);
     EXPECT_EQ(16u, caps.nativeVectorWidthChar);
     EXPECT_EQ(8u, caps.nativeVectorWidthShort);
     EXPECT_EQ(4u, caps.nativeVectorWidthInt);
     EXPECT_EQ(1u, caps.nativeVectorWidthLong);
     EXPECT_EQ(1u, caps.nativeVectorWidthFloat);
+    EXPECT_EQ(1u, caps.nativeVectorWidthDouble);
     EXPECT_EQ(8u, caps.nativeVectorWidthHalf);
     EXPECT_EQ(1u, caps.linkerAvailable);
     EXPECT_NE(0u, sharedCaps.globalMemCachelineSize);
@@ -994,15 +996,11 @@ TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64I
                 EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
                 EXPECT_NE(0u, caps.doubleFpConfig);
                 EXPECT_EQ(1u, fp64FeaturesCount);
-                EXPECT_NE(0u, caps.nativeVectorWidthDouble);
-                EXPECT_NE(0u, caps.preferredVectorWidthDouble);
                 EXPECT_TRUE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
             } else {
                 EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
                 EXPECT_EQ(0u, caps.doubleFpConfig);
                 EXPECT_EQ(0u, fp64FeaturesCount);
-                EXPECT_EQ(0u, caps.nativeVectorWidthDouble);
-                EXPECT_EQ(0u, caps.preferredVectorWidthDouble);
                 EXPECT_FALSE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
             }
         }
