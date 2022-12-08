@@ -36,11 +36,11 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenCompressionIsDisabled) {
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &coreHelperl = getHelper<CoreHelper>();
+    auto &gfxCoreHelperl = getHelper<GfxCoreHelper>();
 
     uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice * 8;
 
-    EXPECT_EQ(expectedValue, coreHelperl.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(expectedValue, gfxCoreHelperl.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }
 

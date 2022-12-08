@@ -11,14 +11,14 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
-using HwHelperXeHpCoreTest = ::testing::Test;
+using GfxCoreHelperXeHpCoreTest = ::testing::Test;
 
-XE_HP_CORE_TEST_F(HwHelperXeHpCoreTest, givenSteppingAorBWhenCheckingSipWAThenTrueIsReturned) {
+XE_HP_CORE_TEST_F(GfxCoreHelperXeHpCoreTest, givenSteppingAorBWhenCheckingSipWAThenTrueIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto renderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
     auto productFamily = defaultHwInfo->platform.eProductFamily;
 
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &helper = GfxCoreHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
 
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
@@ -28,12 +28,12 @@ XE_HP_CORE_TEST_F(HwHelperXeHpCoreTest, givenSteppingAorBWhenCheckingSipWAThenTr
     EXPECT_TRUE(helper.isSipWANeeded(hwInfo));
 }
 
-XE_HP_CORE_TEST_F(HwHelperXeHpCoreTest, givenSteppingCWhenCheckingSipWAThenFalseIsReturned) {
+XE_HP_CORE_TEST_F(GfxCoreHelperXeHpCoreTest, givenSteppingCWhenCheckingSipWAThenFalseIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto renderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
     auto productFamily = defaultHwInfo->platform.eProductFamily;
 
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &helper = GfxCoreHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
 
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_C, hwInfo);

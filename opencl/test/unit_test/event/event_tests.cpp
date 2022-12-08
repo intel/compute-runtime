@@ -829,8 +829,8 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartT
     event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
 
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
-    auto &hwHelper = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    auto c0 = event.queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(event.queueTimeStamp.GPUTimeStamp, resolution);
+    auto &gfxCoreHelper = GfxCoreHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto c0 = event.queueTimeStamp.CPUTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(event.queueTimeStamp.GPUTimeStamp, resolution);
     EXPECT_EQ(start, static_cast<uint64_t>(timestamp.GlobalStartTS * resolution) + c0);
 
     event.timeStampNode = nullptr;
@@ -888,9 +888,9 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
     uint64_t start = 0u;
     event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
 
-    auto &hwHelper = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
     auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
-    auto refStartTime = static_cast<uint64_t>(timestamp.GlobalStartTS * resolution + (1ULL << hwHelper.getGlobalTimeStampBits()) * resolution);
+    auto refStartTime = static_cast<uint64_t>(timestamp.GlobalStartTS * resolution + (1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
     EXPECT_EQ(start, refStartTime);
 
     event.timeStampNode = nullptr;

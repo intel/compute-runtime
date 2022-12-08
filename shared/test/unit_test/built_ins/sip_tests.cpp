@@ -341,16 +341,16 @@ TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSi
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {

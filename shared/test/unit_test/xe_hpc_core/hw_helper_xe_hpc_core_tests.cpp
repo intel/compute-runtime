@@ -14,9 +14,9 @@
 #include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
-using HwHelperXeHpcCoreTest = ::testing::Test;
+using GfxCoreHelperXeHpcCoreTest = ::testing::Test;
 
-XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
+XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
     ComputeSlmTestInput computeSlmValuesXeHpcTestsInput[] = {
         {0, 0 * KB},
         {1, 0 * KB + 1},
@@ -43,27 +43,27 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturnCorre
         {11, 128 * KB}};
 
     auto hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     for (auto &testInput : computeSlmValuesXeHpcTestsInput) {
-        EXPECT_EQ(testInput.expected, hwHelper.computeSlmValues(hwInfo, testInput.slmSize));
+        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize));
     }
 
-    EXPECT_THROW(hwHelper.computeSlmValues(hwInfo, 129 * KB), std::exception);
+    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 129 * KB), std::exception);
 }
 
-XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, WhenGettingIsCpuImageTransferPreferredThenTrueIsReturned) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(hwHelper.isCpuImageTransferPreferred(*defaultHwInfo));
+XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, WhenGettingIsCpuImageTransferPreferredThenTrueIsReturned) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+    EXPECT_TRUE(gfxCoreHelper.isCpuImageTransferPreferred(*defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenTrueIsReturned) {
-    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_TRUE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
+XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenTrueIsReturned) {
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_TRUE(gfxCoreHelper.isRevisionSpecificBinaryBuiltinRequired());
 }
 
-XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
+    auto &helper = GfxCoreHelper::get(renderCoreFamily);
     EXPECT_TRUE(helper.isTimestampWaitSupportedForQueues());
 }
 
@@ -74,26 +74,26 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimesta
     EXPECT_TRUE(helper.isTimestampWaitSupportedForEvents());
 }
 
-XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnTrue) {
+XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnTrue) {
     auto hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_EQ(hwHelper.isAssignEngineRoundRobinSupported(hwInfo), HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported());
+    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    EXPECT_EQ(gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo), HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported());
 }
 
-XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
+    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenCallGetAmountOfAllocationsToFillThenReturnTrue) {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 1u);
+XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallGetAmountOfAllocationsToFillThenReturnTrue) {
+    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
 }
 
-HWTEST_EXCLUDE_PRODUCT(HwHelperTest, givenHwHelperWhenAskingForRelaxedOrderingSupportThenReturnFalse, IGFX_XE_HPC_CORE);
+HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenReturnFalse, IGFX_XE_HPC_CORE);
 
-XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenAskingForRelaxedOrderingSupportThenReturnTrue) {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
+XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenReturnTrue) {
+    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
 
-    EXPECT_TRUE(hwHelper.isRelaxedOrderingSupported());
+    EXPECT_TRUE(gfxCoreHelper.isRelaxedOrderingSupported());
 }

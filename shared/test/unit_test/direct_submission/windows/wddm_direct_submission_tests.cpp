@@ -60,7 +60,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
     size_t expectedAllocationsCnt = 3;
-    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+    if (GfxCoreHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
 
@@ -96,7 +96,7 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
     size_t expectedAllocationsCnt = 3;
-    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+    if (GfxCoreHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
 
@@ -139,7 +139,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
     EXPECT_TRUE(ret);
 
     size_t expectedAllocationsCnt = 3;
-    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+    if (GfxCoreHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
 
@@ -183,7 +183,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
     EXPECT_FALSE(ret);
 
     size_t expectedAllocationsCnt = 3;
-    if (HwHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
+    if (GfxCoreHelperHw<FamilyType>::get().isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
 

@@ -32,8 +32,8 @@ void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version) {
             pStateSaveAreaHeader->regHeader.num_subslices_per_slice * pStateSaveAreaHeader->regHeader.num_eus_per_subslice * pStateSaveAreaHeader->regHeader.num_threads_per_eu * pStateSaveAreaHeader->regHeader.state_save_size);
     } else {
         auto &hwInfo = *NEO::defaultHwInfo.get();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        stateSaveArea.resize(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo) + MemoryConstants::pageSize);
+        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        stateSaveArea.resize(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo) + MemoryConstants::pageSize);
     }
 
     memcpy(stateSaveArea.data(), pStateSaveAreaHeader, sizeof(*pStateSaveAreaHeader));

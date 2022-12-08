@@ -29,7 +29,7 @@ struct DeviceImp;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
-    auto &helper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto &helper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
     return helper.getRenderSurfaceStateSize();
 }
 

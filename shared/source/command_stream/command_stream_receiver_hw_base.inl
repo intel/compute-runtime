@@ -60,8 +60,8 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     : CommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
 
     const auto &hwInfo = peekHwInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfo);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hwInfo);
 
     resetKmdNotifyHelper(new KmdNotifyHelper(&hwInfo.capabilityTable.kmdNotifyProperties));
 
@@ -71,7 +71,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     defaultSshSize = getSshHeapSize();
     canUse4GbHeaps = are4GbHeapsAvailable();
 
-    timestampPacketWriteEnabled = hwHelper.timestampPacketWriteSupported();
+    timestampPacketWriteEnabled = gfxCoreHelper.timestampPacketWriteSupported();
     if (DebugManager.flags.EnableTimestampPacket.get() != -1) {
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
@@ -292,7 +292,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     const auto &hwInfo = peekHwInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageReqiuresRecyclingTag) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
@@ -356,7 +356,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectSupport = this->pipelineSupportFlags.systolicMode;
     handlePipelineSelectStateTransition(dispatchFlags);
 
-    auto requiresCoherency = hwHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
+    auto requiresCoherency = gfxCoreHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
     this->streamProperties.stateComputeMode.setProperties(requiresCoherency, dispatchFlags.numGrfRequired,
                                                           dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), hwInfo);
 
@@ -445,7 +445,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (dispatchFlags.l3CacheSettings != L3CachingSettings::NotApplicable) {
         auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;
         auto l1On = dispatchFlags.l3CacheSettings == L3CachingSettings::l3AndL1On;
-        mocsIndex = hwHelper.getMocsIndex(*device.getGmmHelper(), l3On, l1On);
+        mocsIndex = gfxCoreHelper.getMocsIndex(*device.getGmmHelper(), l3On, l1On);
     }
 
     if (mocsIndex != latestSentStatelessMocsConfig) {
@@ -1082,8 +1082,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
         streamProperties.frontEndState.setProperties(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), hwInfo);
 
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        auto engineGroupType = hwHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
+        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, hwInfo, requiredScratchSize, getScratchPatchAddress(),
@@ -1394,8 +1394,8 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBu
 
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
-    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
-    auto enabled = hwHelper.isUpdateTaskCountFromWaitSupported();
+    auto &gfxCoreHelper = GfxCoreHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+    auto enabled = gfxCoreHelper.isUpdateTaskCountFromWaitSupported();
     enabled &= this->isAnyDirectSubmissionEnabled();
 
     switch (DebugManager.flags.UpdateTaskCountFromWait.get()) {
@@ -1514,10 +1514,10 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
 template <typename GfxFamily>
 TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
-        auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(peekHwInfo().platform.eRenderCoreFamily);
         const RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
 
-        timestampPacketAllocator = hwHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());
+        timestampPacketAllocator = gfxCoreHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());
     }
     return timestampPacketAllocator.get();
 }

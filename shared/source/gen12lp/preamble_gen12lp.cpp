@@ -89,8 +89,8 @@ template <>
 void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {
     VFE_STATE_TYPE *mediaVfeState = static_cast<VFE_STATE_TYPE *>(cmd);
     bool disableEUFusion = streamProperties.frontEndState.disableEUFusion.value == 1;
-    auto &hwHelper = HwHelperHw<Family>::get();
-    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
+    auto &gfxCoreHelper = GfxCoreHelperHw<Family>::get();
+    if (!gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
         mediaVfeState->setDisableSlice0Subslice2(true);
     }
     if (DebugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {

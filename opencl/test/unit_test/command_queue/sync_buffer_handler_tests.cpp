@@ -98,10 +98,10 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     bool isCooperativeDispatchSupported() {
-        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-        auto engineGroupType = hwHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
-                                                           commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        return hwHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());
+        auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        auto engineGroupType = gfxCoreHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
+                                                                commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+        return gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());
     }
 
     const cl_uint workDim = 1;

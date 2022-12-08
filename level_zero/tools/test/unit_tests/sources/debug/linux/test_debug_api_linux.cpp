@@ -6222,8 +6222,8 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
         session = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{}, device, 0);
         session->clientHandle = MockDebugSessionLinux::mockClientHandle;
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = {stateSaveAreaGpuVa, maxDbgSurfaceSize};
         session->allThreadsStopped = true;
         session->allThreads[stoppedThreadId]->stopThread(1u);
@@ -6632,8 +6632,8 @@ static_assert(64 == sizeof(MockRenderSurfaceState));
 
 void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaTrackedAddresses &sba, uint32_t r0[8]) {
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     uint64_t surfaceStateBaseAddress = stateSaveAreaGpuVa + maxDbgSurfaceSize + sizeof(SbaTrackedAddresses);
     uint32_t renderSurfaceStateOffset = 256;
     r0[4] = 0xAAAAAAAA;
@@ -6729,8 +6729,8 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
     uint64_t expectedBindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaExpected.SurfaceStateBaseAddress;
     uint64_t expectedScratchSpaceBaseAddress = 0;
 
-    auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         expectedScratchSpaceBaseAddress = 0xBA5EBA5E;
     } else {
         expectedScratchSpaceBaseAddress = ((r0[5] >> 10) << 10) + sbaExpected.GeneralStateBaseAddress;
@@ -6765,8 +6765,8 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
     r0[4] = 0xAAAAAAAA;
     r0[5] = ((renderSurfaceStateOffset) >> 6) << 10;
 
-    auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!hwHelper.isScratchSpaceSurfaceStateAccessible()) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         r0[5] = 0;
     }
     sbaExpected.SurfaceStateBaseAddress = surfaceStateBaseAddress;

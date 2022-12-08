@@ -26,10 +26,10 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
     if (kernel != nullptr) {
         auto &device = dispatchInfo.getClDevice();
         const auto &hwInfo = device.getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
-            if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers && !wsInfo.imgUsed && hwHelper.preferSmallWorkgroupSizeForKernel(kernel->getKernelInfo().heapInfo.KernelUnpaddedSize, hwInfo) &&
+            if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers && !wsInfo.imgUsed && gfxCoreHelper.preferSmallWorkgroupSizeForKernel(kernel->getKernelInfo().heapInfo.KernelUnpaddedSize, hwInfo) &&
                 ((dispatchInfo.getDim() == 1) && (dispatchInfo.getGWS().x % wsInfo.simdSize * 2 == 0))) {
                 wsInfo.maxWorkGroupSize = wsInfo.simdSize * 2;
             }

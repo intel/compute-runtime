@@ -14,20 +14,20 @@
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
-using HwHelperTestDg2 = ::testing::Test;
+using GfxCoreHelperTestDg2 = ::testing::Test;
 
-DG2TEST_F(HwHelperTestDg2, GivenDifferentSteppingWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
+DG2TEST_F(GfxCoreHelperTestDg2, GivenDifferentSteppingWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     using SHARED_LOCAL_MEMORY_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     __REVID revisions[] = {REVISION_A0, REVISION_B};
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
+    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
 
     auto hwInfo = *defaultHwInfo;
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
         for (auto &testInput : computeSlmValuesXeHPAndLaterTestsInput) {
-            EXPECT_EQ(testInput.expected, hwHelper.computeSlmValues(hwInfo, testInput.slmSize));
+            EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize));
         }
     }
 }

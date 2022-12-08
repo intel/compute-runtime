@@ -50,7 +50,7 @@ struct MockMemoryManagerAllocationHelper : public MemoryManagerMock {
     }
     bool passedUseLocalMem = false;
 };
-TEST_F(AlocationHelperTests, GivenLinearStreamAllocTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUseLocalMemEqualHwHelperValue) {
+TEST_F(AlocationHelperTests, GivenLinearStreamAllocTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUseLocalMemEqualGfxCoreHelperValue) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     AllocationData allocationData;

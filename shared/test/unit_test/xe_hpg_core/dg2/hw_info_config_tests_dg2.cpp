@@ -119,17 +119,17 @@ DG2TEST_F(HwInfoConfigTestDg2, whenAdjustingDefaultEngineTypeThenSelectEngineTyp
     auto hardwareInfo = *defaultHwInfo;
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
 
-    auto &coreHelper = getHelper<CoreHelper>();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = getHelper<ProductHelper>();
 
     hardwareInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 
     hardwareInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
@@ -303,7 +303,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenRevisionEnumAndPlatformFamilyTypeThenProperV
     };
 
     auto hardwareInfo = *defaultHwInfo;
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
 
     for (auto stepping : steppings) {
@@ -311,45 +311,45 @@ DG2TEST_F(HwInfoConfigTestDg2, givenRevisionEnumAndPlatformFamilyTypeThenProperV
 
         if (stepping <= REVISION_B) {
             if (stepping == REVISION_A0) {
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
+                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
+                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
             } else if (stepping == REVISION_A1) {
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
+                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
             } else { // REVISION_B
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
+                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
+                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
             }
         } else {
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
         }
 
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_C, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A1, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_C, REVISION_A1, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_C, REVISION_B, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_C, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_A1, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_C, REVISION_A1, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_C, REVISION_B, hardwareInfo));
 
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo));
     }
 }
 
@@ -363,15 +363,15 @@ DG2TEST_F(HwInfoConfigTestDg2, givenRevisionEnumAndDisableL3CacheForDebugCalledT
     };
 
     auto hardwareInfo = *defaultHwInfo;
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
 
     for (auto stepping : steppings) {
         hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
         if (stepping < REVISION_B) {
-            EXPECT_TRUE(hwHelper.disableL3CacheForDebug(hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.disableL3CacheForDebug(hardwareInfo));
         } else {
-            EXPECT_FALSE(hwHelper.disableL3CacheForDebug(hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.disableL3CacheForDebug(hardwareInfo));
         }
     }
 }
@@ -408,11 +408,11 @@ DG2TEST_F(HwInfoConfigTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeUn
     auto subSlicesPerSlice = testSysInfo.MaxSubSlicesSupported / testSysInfo.MaxSlicesSupported;
     auto maxSubSlice = highestEnabledSlice * subSlicesPerSlice;
 
-    auto &coreHelper = getHelper<CoreHelper>();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     uint32_t expectedCalculation = maxSubSlice * testSysInfo.MaxEuPerSubSlice * (testSysInfo.ThreadCount / testSysInfo.EUCount);
 
-    EXPECT_EQ(expectedCalculation, coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(expectedCalculation, gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScratchThenThrowUnrecoverableIf) {
@@ -423,9 +423,9 @@ DG2TEST_F(HwInfoConfigTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScratc
         testSysInfo.SliceInfo[i].Enabled = false;
     }
 
-    auto &coreHelper = getHelper<CoreHelper>();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    EXPECT_THROW(coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()), std::exception);
+    EXPECT_THROW(gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {

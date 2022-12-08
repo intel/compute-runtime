@@ -394,7 +394,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
 
-    auto &helper = module->getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    auto &helper = module->getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
     auto &descriptor = kernelImmData->getDescriptor();
     auto availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, descriptor.kernelAttributes.numGrfRequired);
 
@@ -737,8 +737,8 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
                 reinterpret_cast<ze_kernel_preferred_group_size_properties_t *>(extendedProperties);
 
             preferredGroupSizeProperties->preferredMultiple = this->kernelImmData->getKernelInfo()->getMaxSimdSize();
-            auto &hwHelper = NEO::HwHelper::get(this->module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
-            if (hwHelper.isFusedEuDispatchEnabled(this->module->getDevice()->getHwInfo(), kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
+            auto &gfxCoreHelper = NEO::GfxCoreHelper::get(this->module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
+            if (gfxCoreHelper.isFusedEuDispatchEnabled(this->module->getDevice()->getHwInfo(), kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
                 preferredGroupSizeProperties->preferredMultiple *= 2;
             }
         }
@@ -990,13 +990,13 @@ void KernelImp::setDebugSurface() {
     }
 }
 void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
-    auto &hwHelper = NEO::HwHelper::get(this->module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
-    auto surfaceStateSize = hwHelper.getRenderSurfaceStateSize();
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(this->module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
     auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
     this->residencyContainer.push_back(ssInHeap.heapAllocation);
     auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
-    auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
+    auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
     patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
     return ssInHeap.ssPtr;
 }

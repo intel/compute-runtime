@@ -17,17 +17,17 @@
 
 using namespace NEO;
 
-using HwHelperTestDg2 = ::testing::Test;
+using GfxCoreHelperTestDg2 = ::testing::Test;
 
-DG2TEST_F(HwHelperTestDg2, whenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreReturned) {
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    auto extensions = hwHelper.getExtensions(*defaultHwInfo);
+DG2TEST_F(GfxCoreHelperTestDg2, whenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreReturned) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto extensions = gfxCoreHelper.getExtensions(*defaultHwInfo);
 
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
 }
 
-DG2TEST_F(HwHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetRcs) {
+DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -41,7 +41,7 @@ DG2TEST_F(HwHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetR
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(8u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(8u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -54,7 +54,7 @@ DG2TEST_F(HwHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetR
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
 }
 
-DG2TEST_F(HwHelperTestDg2, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEnginesCalledThenSetRcs) {
+DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEnginesCalledThenSetRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
@@ -69,7 +69,7 @@ DG2TEST_F(HwHelperTestDg2, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEngine
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(9u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(9u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);

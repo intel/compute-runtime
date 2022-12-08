@@ -42,11 +42,11 @@ TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsR
     HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
     DebugManager.flags.CreateMultipleSubDevices.set(2);
 
-    uint32_t devicesCount = HwHelper::getSubDevicesCount(&hwInfo);
+    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 2u);
 
     DebugManager.flags.CreateMultipleSubDevices.set(0);
-    devicesCount = HwHelper::getSubDevicesCount(&hwInfo);
+    devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
 

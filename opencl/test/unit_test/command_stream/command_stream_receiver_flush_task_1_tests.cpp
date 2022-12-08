@@ -550,8 +550,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, WhenFlushingTas
     ASSERT_NE(nullptr, cmdStateBaseAddress);
     auto &cmd = *reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
 
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    auto instructionHeapBaseAddress = commandStreamReceiver.getMemoryManager()->getInternalHeapBaseAddress(commandStreamReceiver.rootDeviceIndex, !hwHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo()));
+    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto instructionHeapBaseAddress = commandStreamReceiver.getMemoryManager()->getInternalHeapBaseAddress(commandStreamReceiver.rootDeviceIndex, !gfxCoreHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo()));
 
     EXPECT_EQ(dsh.getCpuBase(), reinterpret_cast<void *>(cmd.getDynamicStateBaseAddress()));
     EXPECT_EQ(instructionHeapBaseAddress, cmd.getInstructionBaseAddress());

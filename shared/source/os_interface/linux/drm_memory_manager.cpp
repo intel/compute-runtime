@@ -220,9 +220,9 @@ void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t
 
 bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
 
-    auto useKmdMigration = hwHelper.isKmdMigrationSupported(*hwInfo);
+    auto useKmdMigration = gfxCoreHelper.isKmdMigrationSupported(*hwInfo);
 
     if (DebugManager.flags.UseKmdMigration.get() != -1) {
         useKmdMigration = DebugManager.flags.UseKmdMigration.get();
@@ -1277,7 +1277,7 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
     }
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    uint32_t subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+    uint32_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
     size_t size = 0;
 
     for (uint32_t i = 0; i < subDevicesCount; i++) {

@@ -57,7 +57,7 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
 
 using CommandListExecuteImmediate = Test<DeviceFixture>;
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastSkl) {
-    auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily);
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
@@ -81,7 +81,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     hwInfoConfig.fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, device->getHwInfo());
 
     int expectedDisableOverdispatch = frontEndPropertiesSupport.disableOverdispatch;
-    int32_t expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? hwHelper.forceNonGpuCoherencyWA(true) : -1;
+    int32_t expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? gfxCoreHelper.forceNonGpuCoherencyWA(true) : -1;
     int expectedLargeGrfMode = scmPropertiesSupport.largeGrfMode ? 1 : -1;
     int expectedThreadArbitrationPolicy = scmPropertiesSupport.threadArbitrationPolicy ? NEO::ThreadArbitrationPolicy::RoundRobin : -1;
 

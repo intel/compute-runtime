@@ -162,16 +162,16 @@ ze_result_t EventPoolImp::createEvent(const ze_event_desc_t *desc, ze_event_hand
 
 void EventPoolImp::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::HardwareInfo &hwInfo) {
     auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    setEventAlignment(static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment()));
+    setEventAlignment(static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
 
     bool useDynamicEventPackets = l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo);
     eventPackets = EventPacketsCount::eventPackets;
     if (useDynamicEventPackets) {
         eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);
     }
-    setEventSize(static_cast<uint32_t>(alignUp(eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment)));
+    setEventSize(static_cast<uint32_t>(alignUp(eventPackets * gfxCoreHelper.getSingleTimestampPacketSize(), eventAlignment)));
 
     eventPoolSize = alignUp<size_t>(this->numEvents * eventSize, MemoryConstants::pageSize64k);
 }

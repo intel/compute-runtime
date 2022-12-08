@@ -142,20 +142,20 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsed
     HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.MaxSubSlicesSupported = 24;
-    auto &coreHelper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &gfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     uint32_t minMaxSubSlicesSupported = 32;
     uint32_t minCalculation = minMaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
                               hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
 
     EXPECT_LE(testSysInfo.MaxSubSlicesSupported, minMaxSubSlicesSupported);
-    EXPECT_EQ(minCalculation, coreHelper.getComputeUnitsUsedForScratch(pClDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(minCalculation, gfxCoreHelper.getComputeUnitsUsedForScratch(pClDevice->getRootDeviceEnvironment()));
 }
 XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchAndMaxSubSlicesSupportedIsGreaterThanMinMaxSubSlicesSupportedThenReturnValidValue) {
     HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.MaxSubSlicesSupported = 40;
 
-    auto &coreHelper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &gfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     uint32_t minMaxSubSlicesSupported = 32;
     uint32_t minCalculation = minMaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
                               hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
@@ -164,7 +164,7 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsed
 
     EXPECT_GT(testSysInfo.MaxSubSlicesSupported, minMaxSubSlicesSupported);
     EXPECT_GT(properCalculation, minCalculation);
-    EXPECT_EQ(properCalculation, coreHelper.getComputeUnitsUsedForScratch(pClDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(properCalculation, gfxCoreHelper.getComputeUnitsUsedForScratch(pClDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_EXCLUDE_PRODUCT(DeviceGetCapsTest, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin, IGFX_XE_HP_CORE);

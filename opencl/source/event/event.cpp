@@ -267,10 +267,10 @@ cl_ulong Event::getDelta(cl_ulong startTime,
 void Event::calculateSubmitTimestampData() {
     if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         auto &device = cmdQueue->getDevice();
-        auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
         double resolution = device.getDeviceInfo().profilingTimerResolution;
 
-        int64_t timerDiff = queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, resolution);
+        int64_t timerDiff = queueTimeStamp.CPUTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, resolution);
         submitTimeStamp.GPUTimeStamp = static_cast<uint64_t>((submitTimeStamp.CPUTimeinNS - timerDiff) / resolution);
     }
 }
@@ -286,10 +286,10 @@ uint64_t Event::getTimeInNSFromTimestampData(const TimeStampData &timestamp) con
 
     if (cmdQueue && DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         auto &device = cmdQueue->getDevice();
-        auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
         double resolution = device.getDeviceInfo().profilingTimerResolution;
 
-        return hwHelper.getGpuTimeStampInNS(timestamp.GPUTimeStamp, resolution);
+        return gfxCoreHelper.getGpuTimeStampInNS(timestamp.GPUTimeStamp, resolution);
     }
 
     return timestamp.CPUTimeinNS;
@@ -324,7 +324,7 @@ bool Event::calcProfilingData() {
             calculateProfilingDataInternal(globalStartTS, globalEndTS, &globalEndTS, globalStartTS);
 
         } else if (timeStampNode) {
-            if (HwHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+            if (GfxCoreHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
                 calculateProfilingDataInternal(
                     timeStampNode->getGlobalStartValue(0),
                     timeStampNode->getGlobalEndValue(0),
@@ -350,20 +350,20 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     uint64_t cpuCompleteDuration = 0;
 
     auto &device = this->cmdQueue->getDevice();
-    auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
     auto frequency = device.getDeviceInfo().profilingTimerResolution;
-    auto gpuQueueTimeStamp = hwHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, frequency);
+    auto gpuQueueTimeStamp = gfxCoreHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, frequency);
 
     if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency);
         if (startTimeStamp < gpuQueueTimeStamp) {
-            startTimeStamp += static_cast<uint64_t>((1ULL << hwHelper.getGlobalTimeStampBits()) * frequency);
+            startTimeStamp += static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * frequency);
         }
     } else {
         int64_t c0 = queueTimeStamp.CPUTimeinNS - gpuQueueTimeStamp;
         startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
         if (startTimeStamp < queueTimeStamp.CPUTimeinNS) {
-            c0 += static_cast<uint64_t>((1ULL << (hwHelper.getGlobalTimeStampBits())) * frequency);
+            c0 += static_cast<uint64_t>((1ULL << (gfxCoreHelper.getGlobalTimeStampBits())) * frequency);
             startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
         }
     }

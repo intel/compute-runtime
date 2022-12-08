@@ -82,9 +82,9 @@ XEHPTEST_F(XeHPHwInfoConfig, givenA0OrA1SteppingWhenAskingIfExtraParametersAreIn
     }
 }
 
-using XeHPHwHelperTest = HwHelperTest;
+using XeHPGfxCoreHelperTest = GfxCoreHelperTest;
 
-XEHPTEST_F(XeHPHwHelperTest, givenXeHPMultiConfigWhenAllowCompressionIsCalledThenCorrectValueIsReturned) {
+XEHPTEST_F(XeHPGfxCoreHelperTest, givenXeHPMultiConfigWhenAllowCompressionIsCalledThenCorrectValueIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     HardwareInfo hwInfo = *defaultHwInfo;
 

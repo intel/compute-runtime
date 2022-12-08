@@ -92,7 +92,7 @@ bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &h
     if (!hwInfo.capabilityTable.ftrRenderCompressedBuffers) {
         return false;
     }
-    if (HwHelper::getSubDevicesCount(&hwInfo) > 1) {
+    if (GfxCoreHelper::getSubDevicesCount(&hwInfo) > 1) {
         return DebugManager.flags.EnableMultiTileCompression.get() > 0 ? true : false;
     }
     if (hwInfo.platform.usRevId < getHwRevIdFromStepping(REVISION_B, hwInfo)) {
@@ -103,7 +103,7 @@ bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &h
 
 template <>
 LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
+    if (GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
         return LocalMemoryAccessMode::CpuAccessDisallowed;
     }
     return LocalMemoryAccessMode::Default;
@@ -123,12 +123,12 @@ std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelin
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
-    return !HwHelper::get(hwInfo.platform.eDisplayCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return !GfxCoreHelper::get(hwInfo.platform.eDisplayCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
-    return HwHelper::get(hwInfo.platform.eDisplayCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return GfxCoreHelper::get(hwInfo.platform.eDisplayCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>

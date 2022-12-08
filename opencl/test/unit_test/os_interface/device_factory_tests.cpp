@@ -203,9 +203,9 @@ TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSur
     ASSERT_TRUE(success);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
-    const auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
     auto expextedSize = static_cast<size_t>(hwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte);
-    hwHelper.adjustPreemptionSurfaceSize(expextedSize);
+    gfxCoreHelper.adjustPreemptionSurfaceSize(expextedSize);
 
     EXPECT_EQ(expextedSize, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 }

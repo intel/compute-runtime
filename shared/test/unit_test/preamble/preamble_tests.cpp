@@ -186,7 +186,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveAndMidThreadPreemptionWhenGetAd
 HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsReturned) {
     const HardwareInfo &hwInfo = *defaultHwInfo;
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
-    uint32_t value = HwHelper::getMaxThreadsForVfe(hwInfo);
+    uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
     uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
     EXPECT_EQ(expected, value);
@@ -197,7 +197,7 @@ HWTEST_F(PreambleTest, givenMaxHwThreadsPercentDebugVariableWhenGetThreadsMaxNum
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.MaxHwThreadsPercent.set(80);
-    uint32_t value = HwHelper::getMaxThreadsForVfe(hwInfo);
+    uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
     uint32_t expected = int(hwInfo.gtSystemInfo.EUCount * threadsPerEU * 80 / 100.0f);
     EXPECT_EQ(expected, value);
@@ -208,7 +208,7 @@ HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMax
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.MinHwThreadsUnoccupied.set(2);
-    uint32_t value = HwHelper::getMaxThreadsForVfe(hwInfo);
+    uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
     uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU - 2;
     EXPECT_EQ(expected, value);

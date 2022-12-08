@@ -120,7 +120,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
         hwInfo,
         args);
 
-    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+    if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
         // MI_STORE_REGISTER_MEM for context local timestamp
         timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);
 
@@ -152,7 +152,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
         hwInfo,
         args);
 
-    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+    if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
         // MI_STORE_REGISTER_MEM for context local timestamp
         uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
 

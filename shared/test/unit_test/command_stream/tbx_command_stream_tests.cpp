@@ -563,7 +563,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxSt
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareContext) {
     auto hwInfo = pDevice->getHardwareInfo();
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0], pDevice->getDeviceBitfield()));
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0], pDevice->getDeviceBitfield()));
     std::string fileName = "";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::CSR_TBX);

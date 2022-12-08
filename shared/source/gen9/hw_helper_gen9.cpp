@@ -19,7 +19,7 @@ namespace NEO {
 typedef Gen9Family Family;
 
 template <>
-SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
+SipKernelType GfxCoreHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
     if (!debuggingActive) {
         return SipKernelType::Csr;
     }
@@ -27,12 +27,12 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
+uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
 }
 
 template <>
-int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::RoundRobin;
 }
 
@@ -40,11 +40,11 @@ template <>
 bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) { return true; }
 
 template <>
-bool HwHelperHw<Family>::isTimestampShiftRequired() const {
+bool GfxCoreHelperHw<Family>::isTimestampShiftRequired() const {
     return false;
 }
 
-template class HwHelperHw<Family>;
+template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;

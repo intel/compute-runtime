@@ -11,44 +11,44 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
-using HwHelperTestGen12Lp = HwHelperTest;
+using GfxCoreHelperTestGen12Lp = GfxCoreHelperTest;
 
-TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpSteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
+TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpSteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
 
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpSteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
+TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpSteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
 
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
 
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllWhenWaForDefaultEngineIsNotAppliedThenCcsIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
+TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllWhenWaForDefaultEngineIsNotAppliedThenCcsIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
 
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
     hardwareInfo.platform.eProductFamily = IGFX_UNKNOWN;
 
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIsWorkaroundRequiredThenCorrectValueIsReturned) {
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIsWorkaroundRequiredThenCorrectValueIsReturned) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
     uint32_t steppings[] = {
         REVISION_A0,
@@ -61,14 +61,14 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIsWorka
 
         switch (stepping) {
         case REVISION_A0:
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
             [[fallthrough]];
         case REVISION_B:
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
             [[fallthrough]];
         default:
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
         }
     }
 }

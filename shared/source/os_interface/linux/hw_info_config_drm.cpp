@@ -141,10 +141,10 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
     outHwInfo->capabilityTable.ftrSvm = featureTable->flags.ftrSVM;
 
-    HwHelper &hwHelper = HwHelper::get(platform->eRenderCoreFamily);
+    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(platform->eRenderCoreFamily);
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
-    hwHelper.adjustDefaultEngineType(outHwInfo);
+    gfxCoreHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     drm->checkQueueSliceSupport();
@@ -158,7 +158,7 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuMidBatchPreempt) && preemption);
 
     outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
-    hwHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
+    gfxCoreHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);

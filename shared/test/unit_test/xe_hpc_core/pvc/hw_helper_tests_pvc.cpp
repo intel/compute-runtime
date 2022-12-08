@@ -16,9 +16,9 @@
 
 namespace NEO {
 
-using HwHelperTestsPvc = HwHelperTest;
+using GfxCoreHelperTestsPvc = GfxCoreHelperTest;
 
-PVCTEST_F(HwHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
+PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
     uint32_t steppings[] = {
         REVISION_A0,
         REVISION_B,
@@ -27,44 +27,44 @@ PVCTEST_F(HwHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenProperValu
         CommonConstants::invalidStepping,
     };
 
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
 
     for (auto stepping : steppings) {
         hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
 
         if (stepping == REVISION_A0) {
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
         } else if (stepping == REVISION_B) {
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
         } else {
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
         }
 
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_C, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_C, REVISION_B, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_C, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_C, REVISION_B, hardwareInfo));
 
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
+        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_A0, hardwareInfo));
     }
 }
 
-PVCTEST_F(HwHelperTestsPvc, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
+PVCTEST_F(GfxCoreHelperTestsPvc, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     using MI_SEMAPHORE_WAIT = typename XeHpcCoreFamily::MI_SEMAPHORE_WAIT;
 
     EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(*defaultHwInfo));
 }
 
-PVCTEST_F(HwHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
+PVCTEST_F(GfxCoreHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     using MI_SEMAPHORE_WAIT = typename XeHpcCoreFamily::MI_SEMAPHORE_WAIT;
@@ -72,8 +72,8 @@ PVCTEST_F(HwHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSi
     EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(*defaultHwInfo));
 }
 
-PVCTEST_F(HwHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {
-    auto &coreHelper = pDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.gtSystemInfo.EUCount *= 2;
 
@@ -93,11 +93,11 @@ PVCTEST_F(HwHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThen
 
     for (auto &testInput : testInputs) {
         hwInfo.platform.usRevId = testInput.revId;
-        EXPECT_EQ(expectedValue * testInput.expectedRatio, coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
+        EXPECT_EQ(expectedValue * testInput.expectedRatio, gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
     }
 }
 
-PVCTEST_F(HwHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSynchronizationThenCorrectMethodIsUsed) {
+PVCTEST_F(GfxCoreHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSynchronizationThenCorrectMethodIsUsed) {
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 

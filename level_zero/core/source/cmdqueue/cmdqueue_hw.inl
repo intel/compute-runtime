@@ -347,9 +347,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &cmdStream, NEO::StreamProperties &streamProperties) {
     UNRECOVERABLE_IF(csr == nullptr);
     auto &hwInfo = device->getHwInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto engineGroupType = hwHelper.getEngineGroupType(csr->getOsContext().getEngineType(),
-                                                       csr->getOsContext().getEngineUsage(), hwInfo);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(csr->getOsContext().getEngineType(),
+                                                            csr->getOsContext().getEngineUsage(), hwInfo);
     auto pVfeState = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(&cmdStream, hwInfo, engineGroupType);
     NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState,
                                                     hwInfo,

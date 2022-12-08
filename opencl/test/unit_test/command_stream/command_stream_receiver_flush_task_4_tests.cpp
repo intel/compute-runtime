@@ -741,7 +741,7 @@ struct PreambleThreadArbitrationMatcher {
 
 HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenPolicyValueChangedWhenFlushingTaskThenProgramThreadArbitrationPolicy, PreambleThreadArbitrationMatcher) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
 
@@ -749,7 +749,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenPolicyValueChangedWhenFlushi
     size_t parsingOffset = commandStreamReceiver.commandStream.getUsed();
     for (auto arbitrationChanged : ::testing::Bool()) {
         commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value =
-            arbitrationChanged ? -1 : hwHelper.getDefaultThreadArbitrationPolicy();
+            arbitrationChanged ? -1 : gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
         flushTask(commandStreamReceiver);
         HardwareParse csHwParser;

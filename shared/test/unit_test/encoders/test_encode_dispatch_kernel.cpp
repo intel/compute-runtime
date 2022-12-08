@@ -251,7 +251,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThan
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
     uint32_t expectedValue = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
-        HwHelperHw<FamilyType>::get().computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize));
+        GfxCoreHelperHw<FamilyType>::get().computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize));
 
     EXPECT_EQ(expectedValue, interfaceDescriptorData->getSharedLocalMemorySize());
 }

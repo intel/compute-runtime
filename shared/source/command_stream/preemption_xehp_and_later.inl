@@ -18,10 +18,10 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
     bool debuggingEnabled = device.getDebugger() != nullptr;
 
     if (debuggingEnabled) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
 
-        if (hwHelper.isSipWANeeded(hwInfo)) {
+        if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
             auto mmio = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(preambleCmdStream.getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
             MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
 
@@ -47,8 +47,8 @@ void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, 
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
     if (debuggerActive) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        if (hwHelper.isSipWANeeded(hwInfo)) {
+        GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
 
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
@@ -75,9 +75,9 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
     auto &hwInfo = device.getHardwareInfo();
 
     if (debuggingEnabled) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-        if (hwHelper.isSipWANeeded(hwInfo)) {
+        if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
             size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
             size += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
         } else {

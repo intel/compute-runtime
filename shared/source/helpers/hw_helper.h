@@ -40,10 +40,18 @@ struct AllocationProperties;
 struct EncodeSurfaceStateArgs;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
+class GfxCoreHelper;
+template <typename GfxFamily>
+class GfxCoreHelperHw;
 
-class HwHelper {
+using HwHelper = GfxCoreHelper;
+
+template <typename GfxFamily>
+using HwHelperHw = GfxCoreHelperHw<GfxFamily>;
+
+class GfxCoreHelper {
   public:
-    static HwHelper &get(GFXCORE_FAMILY gfxCore);
+    static GfxCoreHelper &get(GFXCORE_FAMILY gfxCore);
     virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
     virtual size_t getPaddingForISAAllocation() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -164,15 +172,15 @@ class HwHelper {
     virtual bool isRelaxedOrderingSupported() const = 0;
 
   protected:
-    HwHelper() = default;
+    GfxCoreHelper() = default;
 };
 
 template <typename GfxFamily>
-class HwHelperHw : public HwHelper {
+class GfxCoreHelperHw : public GfxCoreHelper {
   public:
-    static HwHelperHw<GfxFamily> &get() {
-        static HwHelperHw<GfxFamily> hwHelper;
-        return hwHelper;
+    static GfxCoreHelperHw<GfxFamily> &get() {
+        static GfxCoreHelperHw<GfxFamily> gfxCoreHelper;
+        return gfxCoreHelper;
     }
 
     size_t getRenderSurfaceStateSize() const override {
@@ -382,7 +390,7 @@ class HwHelperHw : public HwHelper {
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;
-    HwHelperHw() = default;
+    GfxCoreHelperHw() = default;
 };
 
 struct DwordBuilder {

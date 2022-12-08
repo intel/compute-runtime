@@ -39,13 +39,13 @@ XE_HPC_CORETEST_F(ClGfxCoreHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitte
     EXPECT_FALSE(clGfxCoreHelper.preferBlitterForLocalToLocalTransfers());
 }
 
-using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
+using GfxCoreHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperwhenAskingForDcFlushThenReturnFalse) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperwhenAskingForDcFlushThenReturnFalse) {
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequested) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequested) {
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::COMMAND_BUFFER, false, mockDeviceBitfield);
 
@@ -55,7 +55,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGe
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCsrSpecificAllocationsThenStoreThemInProperMemoryPool) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCsrSpecificAllocationsThenStoreThemInProperMemoryPool) {
     const uint32_t numDevices = 4u;
     const uint32_t tileIndex = 2u;
     [[maybe_unused]] const DeviceBitfield tile0Mask = 1;
@@ -91,30 +91,30 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCs
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSimdThen16IsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSimdThen16IsReturned) {
+    auto &helper = GfxCoreHelper::get(renderCoreFamily);
     EXPECT_EQ(16u, helper.getMinimalSIMDSize());
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenReturnZero) {
-    auto &coreHelper = getHelper<CoreHelper>();
-    EXPECT_EQ(0u, coreHelper.getMaxNumSamplers());
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenReturnZero) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(0u, gfxCoreHelper.getMaxNumSamplers());
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-    EXPECT_EQ(0u, hwHelper.getBarriersCountFromHasBarriers(0u));
-    EXPECT_EQ(1u, hwHelper.getBarriersCountFromHasBarriers(1u));
-    EXPECT_EQ(2u, hwHelper.getBarriersCountFromHasBarriers(2u));
-    EXPECT_EQ(4u, hwHelper.getBarriersCountFromHasBarriers(3u));
-    EXPECT_EQ(8u, hwHelper.getBarriersCountFromHasBarriers(4u));
-    EXPECT_EQ(16u, hwHelper.getBarriersCountFromHasBarriers(5u));
-    EXPECT_EQ(24u, hwHelper.getBarriersCountFromHasBarriers(6u));
-    EXPECT_EQ(32u, hwHelper.getBarriersCountFromHasBarriers(7u));
+    EXPECT_EQ(0u, gfxCoreHelper.getBarriersCountFromHasBarriers(0u));
+    EXPECT_EQ(1u, gfxCoreHelper.getBarriersCountFromHasBarriers(1u));
+    EXPECT_EQ(2u, gfxCoreHelper.getBarriersCountFromHasBarriers(2u));
+    EXPECT_EQ(4u, gfxCoreHelper.getBarriersCountFromHasBarriers(3u));
+    EXPECT_EQ(8u, gfxCoreHelper.getBarriersCountFromHasBarriers(4u));
+    EXPECT_EQ(16u, gfxCoreHelper.getBarriersCountFromHasBarriers(5u));
+    EXPECT_EQ(24u, gfxCoreHelper.getBarriersCountFromHasBarriers(6u));
+    EXPECT_EQ(32u, gfxCoreHelper.getBarriersCountFromHasBarriers(7u));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenSetCccsProperly) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenSetCccsProperly) {
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -131,7 +131,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWh
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(13u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(13u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -149,7 +149,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWh
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[12].first);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenDontSetCccs) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenDontSetCccs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -163,7 +163,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledWhenIsCooperativeEngi
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(12u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(12u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -180,7 +180,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledWhenIsCooperativeEngi
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[11].first);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBcsDisabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenDontCreateAnyBcs) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBcsDisabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenDontCreateAnyBcs) {
     const size_t numEngines = 11;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -194,7 +194,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBcsDisabledWhenIsCooperativeEngin
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -224,7 +224,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBcsDisabledWhenIsCooperativeEngin
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneBcsEnabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenCreateOnlyOneBcs) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenOneBcsEnabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenCreateOnlyOneBcs) {
     const size_t numEngines = 13;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -239,7 +239,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneBcsEnabledWhenIsCooperativeEng
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -271,7 +271,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneBcsEnabledWhenIsCooperativeEng
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenIsCooperativeEngineSupportedEnabledAndSettingEngineTableThenDontAddUnsupported) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenIsCooperativeEngineSupportedEnabledAndSettingEngineTableThenDontAddUnsupported) {
     const size_t numEngines = 10;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -290,7 +290,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenIsCooperativ
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -319,7 +319,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenIsCooperativ
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneCcsEnabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenCreateOnlyOneCcs) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenOneCcsEnabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenCreateOnlyOneCcs) {
     const size_t numEngines = 16;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -334,7 +334,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneCcsEnabledWhenIsCooperativeEng
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -369,7 +369,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneCcsEnabledWhenIsCooperativeEng
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenChangeDefaultEngine) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenChangeDefaultEngine) {
     const size_t numEngines = 22;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -384,7 +384,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenIsCooperat
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -425,7 +425,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenIsCooperat
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
     const size_t numEngines = 22;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -440,7 +440,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnable
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -481,7 +481,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnable
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndLinkCopyEngines) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndLinkCopyEngines) {
     const size_t numEngines = 22;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -496,7 +496,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnable
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -537,7 +537,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnable
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCcsDisabledAndNumberOfCcsEnabledWhenGetGpgpuEnginesThenReturnCccsEngines) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCcsDisabledAndNumberOfCcsEnabledWhenGetGpgpuEnginesThenReturnCccsEngines) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 0;
@@ -547,7 +547,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCcsDisabledAndNumberOfCcsEnabledW
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(3u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);
@@ -555,7 +555,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCcsDisabledAndNumberOfCcsEnabledW
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[2].first);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCcsDisabledWhenGetGpgpuEnginesThenReturnCccsEngines) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCcsDisabledWhenGetGpgpuEnginesThenReturnCccsEngines) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 0;
@@ -565,7 +565,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCcsDisabledWhenGetGpgpuEnginesThe
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(3u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);
@@ -573,11 +573,11 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCcsDisabledWhenGetGpgpuEnginesThe
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[2].first);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenNonBcsEngineIsVerifiedThenReturnFalse) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenNonBcsEngineIsVerifiedThenReturnFalse) {
     EXPECT_FALSE(EngineHelpers::isBcs(static_cast<aub_stream::EngineType>(aub_stream::ENGINE_BCS8 + 1)));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenPipecontrolWaIsProgrammedThenFlushL1Cache) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenPipecontrolWaIsProgrammedThenFlushL1Cache) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -594,39 +594,39 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenPipecontrolWaIsProgrammedThenFlush
     EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenAskedIfFenceAllocationRequiredThenReturnCorrectValue) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperWhenAskedIfFenceAllocationRequiredThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
 
     auto hwInfo = *defaultHwInfo;
-    auto &coreHelper = getHelper<CoreHelper>();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
-    EXPECT_TRUE(coreHelper.isFenceAllocationRequired(hwInfo));
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_FALSE(coreHelper.isFenceAllocationRequired(hwInfo));
+    EXPECT_FALSE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_TRUE(coreHelper.isFenceAllocationRequired(hwInfo));
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    EXPECT_TRUE(coreHelper.isFenceAllocationRequired(hwInfo));
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
-    EXPECT_TRUE(coreHelper.isFenceAllocationRequired(hwInfo));
+    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
 
@@ -637,7 +637,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDontProgramGlobalFenceAsMiMemFenc
     EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
 
@@ -648,8 +648,8 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFenceCom
     EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
-    auto &helper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
+    auto &helper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     EXPECT_NE(nullptr, &helper);
 
     auto &configs = helper.getThreadsPerEUConfigs();
@@ -721,15 +721,15 @@ XE_HPC_CORETEST_F(LriHelperTestsXeHpcCore, whenProgrammingLriCommandThenExpectMm
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenCheckingSipWAThenFalseIsReturned) {
-    EXPECT_FALSE(HwHelper::get(renderCoreFamily).isSipWANeeded(*defaultHwInfo));
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, WhenCheckingSipWAThenFalseIsReturned) {
+    EXPECT_FALSE(GfxCoreHelper::get(renderCoreFamily).isSipWANeeded(*defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsCheckedThenReturnFalse) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsCheckedThenReturnFalse) {
     DebugManagerStateRestore restore;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
@@ -744,7 +744,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsChec
                 for (uint32_t engineType = 0; engineType < static_cast<uint32_t>(aub_stream::EngineType::NUM_ENGINES); engineType++) {
                     auto engineTypeT = static_cast<aub_stream::EngineType>(engineType);
 
-                    bool result = hwHelper.isSubDeviceEngineSupported(hwInfo, DeviceBitfield(1llu << subDevice), engineTypeT);
+                    bool result = gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, DeviceBitfield(1llu << subDevice), engineTypeT);
 
                     bool affectedEngine = ((subDevice == 1) &&
                                            (aub_stream::ENGINE_BCS == engineTypeT ||
@@ -763,11 +763,11 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsChec
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZeroThenForceTile0) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZeroThenForceTile0) {
     DebugManagerStateRestore restore;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
@@ -792,7 +792,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZeroTh
                 allocData.flags.requiresCpuAccess = true;
                 allocData.storageInfo.memoryBanks = originalMask;
 
-                hwHelper.setExtraAllocationData(allocData, allocProperties, hwInfo);
+                gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, hwInfo);
 
                 bool applyWa = (isBdA0 || (debugFlag == 1));
                 applyWa &= (debugFlag != 0);
@@ -807,9 +807,9 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZeroTh
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExtraAllocationDataThenUseSystemLocalMemoryOnlyForImplicitScalingCommandBuffers) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExtraAllocationDataThenUseSystemLocalMemoryOnlyForImplicitScalingCommandBuffers) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     constexpr DeviceBitfield singleTileBitfield = 0b0100;
     constexpr DeviceBitfield allTilesBitfield = 0b1111;
@@ -820,14 +820,14 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExt
     AllocationData allocData;
     allocData.flags.useSystemMemory = false;
 
-    hwHelper.setExtraAllocationData(allocData, singleTileAllocProperties, hwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, singleTileAllocProperties, hwInfo);
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 
-    hwHelper.setExtraAllocationData(allocData, allTilesAllocProperties, hwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, allTilesAllocProperties, hwInfo);
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 8, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));

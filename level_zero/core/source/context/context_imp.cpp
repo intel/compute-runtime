@@ -926,10 +926,10 @@ ze_result_t ContextImp::createImage(ze_device_handle_t hDevice,
 
 bool ContextImp::isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize) {
     auto &hwInfo = device.getHwInfo();
-    auto &hwHelper = device.getHwHelper();
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto &l0GfxCoreHelper = device.getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    if (!l0GfxCoreHelper.usmCompressionSupported(hwInfo) || !hwHelper.isBufferSizeSuitableForCompression(allocSize, hwInfo) || structuresLookupTable.uncompressedHint) {
+    if (!l0GfxCoreHelper.usmCompressionSupported(hwInfo) || !gfxCoreHelper.isBufferSizeSuitableForCompression(allocSize, hwInfo) || structuresLookupTable.uncompressedHint) {
         return false;
     }
 

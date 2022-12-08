@@ -223,10 +223,10 @@ void DeviceImp::adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index) {
     auto nodeOrdinal = NEO::DebugManager.flags.NodeOrdinal.get();
     if (nodeOrdinal != -1) {
         const NEO::HardwareInfo &hwInfo = neoDevice->getHardwareInfo();
-        const NEO::HwHelper &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        const NEO::GfxCoreHelper &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
 
-        auto engineGroupType = hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), NEO::EngineUsage::Regular, hwInfo);
+        auto engineGroupType = gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), NEO::EngineUsage::Regular, hwInfo);
         uint32_t currentEngineIndex = 0u;
         for (const auto &engine : engineGroups) {
             if (engine.engineGroupType == engineGroupType) {
@@ -304,13 +304,13 @@ uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCo
         return numSubDeviceCopyEngineGroups;
     }
 
-    auto &coreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    auto &gfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
     auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     uint32_t subDeviceQueueGroupsIter = 0;
     for (; subDeviceQueueGroupsIter < std::min(numSubDeviceCopyEngineGroups, numberOfSubDeviceCopyEngineGroupsRequested); subDeviceQueueGroupsIter++) {
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
-        pCommandQueueGroupProperties[subDeviceQueueGroupsIter].maxMemoryFillPatternSize = coreHelper.getMaxFillPaternSizeForCopyEngine();
+        pCommandQueueGroupProperties[subDeviceQueueGroupsIter].maxMemoryFillPatternSize = gfxCoreHelper.getMaxFillPaternSizeForCopyEngine();
 
         l0GfxCoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[subDeviceQueueGroupsIter], this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter]);
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].numQueues = static_cast<uint32_t>(this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter].engines.size());
@@ -334,7 +334,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
         return ZE_RESULT_SUCCESS;
     }
 
-    auto &coreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    auto &gfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
     auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     *pCount = std::min(totalEngineGroups, *pCount);
@@ -354,7 +354,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
         }
         if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Copy) {
             pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
-            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = coreHelper.getMaxFillPaternSizeForCopyEngine();
+            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = gfxCoreHelper.getMaxFillPaternSizeForCopyEngine();
         }
         l0GfxCoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i]);
         pCommandQueueGroupProperties[i].numQueues = static_cast<uint32_t>(engineGroups[i].engines.size());
@@ -643,7 +643,7 @@ static constexpr ze_device_fp_flags_t defaultFpFlags = static_cast<ze_device_fp_
 ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKernelProperties) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
-    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     std::string ilVersion = deviceInfo.ilVersion;
     size_t majorVersionPos = ilVersion.find('_');
@@ -683,7 +683,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
 
     pKernelProperties->nativeKernelSupported.id[0] = 0;
 
-    processAdditionalKernelProperties(hwHelper, pKernelProperties);
+    processAdditionalKernelProperties(gfxCoreHelper, pKernelProperties);
 
     pKernelProperties->maxArgumentsSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().maxParameterSize);
 
@@ -741,7 +741,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
 ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) {
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
 
@@ -769,7 +769,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->numThreadsPerEU = deviceInfo.numThreadsPerEU;
 
-    pDeviceProperties->physicalEUSimdWidth = hwHelper.getMinimalSIMDSize();
+    pDeviceProperties->physicalEUSimdWidth = gfxCoreHelper.getMinimalSIMDSize();
 
     pDeviceProperties->numEUsPerSubslice = hardwareInfo.gtSystemInfo.MaxEuPerSubSlice;
 
@@ -1042,12 +1042,12 @@ void *DeviceImp::getExecEnvironment() { return execEnvironment; }
 BuiltinFunctionsLib *DeviceImp::getBuiltinFunctionsLib() { return builtins.get(); }
 
 uint32_t DeviceImp::getMOCS(bool l3enabled, bool l1enabled) {
-    return getHwHelper().getMocsIndex(*getNEODevice()->getGmmHelper(), l3enabled, l1enabled) << 1;
+    return getGfxCoreHelper().getMocsIndex(*getNEODevice()->getGmmHelper(), l3enabled, l1enabled) << 1;
 }
 
-NEO::HwHelper &DeviceImp::getHwHelper() {
+NEO::GfxCoreHelper &DeviceImp::getGfxCoreHelper() {
     const auto &hardwareInfo = neoDevice->getHardwareInfo();
-    return NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    return NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 }
 
 NEO::OSInterface &DeviceImp::getOsInterface() { return *neoDevice->getRootDeviceEnvironment().osInterface; }
@@ -1103,22 +1103,22 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     neoDevice->incRefInternal();
 
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &coreHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    auto &gfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
 
     device->execEnvironment = (void *)neoDevice->getExecutionEnvironment();
     device->allocationsForReuse = std::make_unique<NEO::AllocationsList>();
-    bool platformImplicitScaling = coreHelper.platformSupportsImplicitScaling(hwInfo);
+    bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(hwInfo);
     device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), platformImplicitScaling);
     device->metricContext = MetricDeviceContext::create(*device);
     device->builtins = BuiltinFunctionsLib::create(
         device, neoDevice->getBuiltIns());
     device->cacheReservation = CacheReservation::create(*device);
-    device->maxNumHwThreads = NEO::HwHelper::getMaxThreadsForVfe(hwInfo);
+    device->maxNumHwThreads = NEO::GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
     auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
     device->driverInfo.reset(NEO::DriverInfo::create(&hwInfo, osInterface));
 
-    auto debugSurfaceSize = coreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+    auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     std::vector<char> stateSaveAreaHeader;
 
     if (neoDevice->getDebugger() || neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
@@ -1474,7 +1474,7 @@ void DeviceImp::setDebugSession(DebugSession *session) {
 }
 bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t &deviceIndex) {
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getHardwareInfo();
-    uint32_t subDeviceCount = NEO::HwHelper::getSubDevicesCount(hwInfo);
+    uint32_t subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(hwInfo);
     auto deviceBitfield = neoDevice->getDeviceBitfield();
 
     if (topologyMap.size() == subDeviceCount && !isSubdevice) {

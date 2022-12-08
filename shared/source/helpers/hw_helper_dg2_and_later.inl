@@ -57,12 +57,12 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(void *barrierCm
 }
 
 template <>
-bool HwHelperHw<Family>::isUpdateTaskCountFromWaitSupported() const {
+bool GfxCoreHelperHw<Family>::isUpdateTaskCountFromWaitSupported() const {
     return true;
 }
 
 template <>
-bool HwHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
+bool GfxCoreHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
     return true;
 }
 } // namespace NEO

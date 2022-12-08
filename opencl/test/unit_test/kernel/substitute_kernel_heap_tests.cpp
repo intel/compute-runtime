@@ -27,7 +27,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
@@ -59,7 +59,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
@@ -90,7 +90,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 

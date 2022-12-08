@@ -441,7 +441,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverT
     EXPECT_EQ(ThreadArbitrationPolicy::NotPresent, pCommandStreamReceiver->peekThreadArbitrationPolicy());
 
     flushTask(*pCommandStreamReceiver);
-    EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(), pCommandStreamReceiver->peekThreadArbitrationPolicy());
+    EXPECT_EQ(GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(), pCommandStreamReceiver->peekThreadArbitrationPolicy());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML3WasSentThenDontProgramL3) {
@@ -529,7 +529,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingThenScratchAllocationI
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndFlushTaskIsCalledThenFenceAllocationIsMadeResident) {
-    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
@@ -547,7 +547,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndCreatedThenItIsMadeResidentDuringFlushSmallTask) {
-    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
@@ -568,7 +568,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredButNotCreatedThenItIsNotMadeResidentDuringFlushSmallTask) {
-    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.setupContext(*pDevice->getDefaultEngine().osContext);

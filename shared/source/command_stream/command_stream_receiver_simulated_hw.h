@@ -85,7 +85,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     }
     PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo) {
         const auto bankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
-        const auto devicesCount = HwHelper::getSubDevicesCount(hwInfo);
+        const auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         return new PhysicalAddressAllocatorHw<GfxFamily>(bankSize, devicesCount);
     }
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override {

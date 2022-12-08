@@ -12,7 +12,7 @@ using namespace NEO;
 
 template <typename FamilyType>
 void whenGetGpgpuEnginesThenReturnTwoRcsEngines(const HardwareInfo &hwInfo) {
-    auto gpgpuEngines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto gpgpuEngines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, gpgpuEngines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[0].first);
     EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[1].first);

@@ -98,7 +98,7 @@ void ModuleMutableCommandListFixture::setUpImpl(uint32_t revision) {
                                                      false,
                                                      returnValue));
 
-    engineGroupType = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
+    engineGroupType = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
 
     commandList.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
     commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));

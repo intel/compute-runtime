@@ -43,7 +43,7 @@ struct UltCommandStreamReceiverTest
 
         initHeaps();
 
-        flushTaskFlags.threadArbitrationPolicy = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).getDefaultThreadArbitrationPolicy();
+        flushTaskFlags.threadArbitrationPolicy = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily).getDefaultThreadArbitrationPolicy();
 
         pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
     }
@@ -141,8 +141,8 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
         auto gmmHelper = pDevice->getGmmHelper();
-        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eDisplayCoreFamily);
-        auto mocsIndex = hwHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
+        auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eDisplayCoreFamily);
+        auto mocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
 
         commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex;
         commandStreamReceiver.lastSentL3Config = l3Config;
@@ -153,7 +153,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.pipelineSelect.setProperties(true, false, false, *defaultHwInfo);
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
-                                                                              hwHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), *defaultHwInfo);
+                                                                              gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), *defaultHwInfo);
         commandStreamReceiver.streamProperties.frontEndState.setProperties(false, false, false, -1, *defaultHwInfo);
 
         auto logicalStateHelper = commandStreamReceiver.getLogicalStateHelper();

@@ -341,7 +341,7 @@ TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIs
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
     csr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
     OsContextWin osContext(*wddm, csr->getRootDeviceIndex(), 0u,
-                           EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                           EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                                         PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
     csr->setupContext(osContext);
 
@@ -366,7 +366,7 @@ TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIs
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
     csr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
     OsContextWin osContext(*wddm, csr->getRootDeviceIndex(), 0u,
-                           EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                           EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                                         PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
     csr->setupContext(osContext);
 

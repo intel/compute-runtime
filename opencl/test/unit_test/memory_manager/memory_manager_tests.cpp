@@ -239,7 +239,7 @@ TEST_F(MemoryAllocatorTest, GivenAlignmentWhenAllocatingSystemMemoryThenAllocate
 TEST_F(MemoryAllocatorTest, WhenAllocatingGraphicsMemoryThenAllocationHasCorrectProperties) {
     unsigned int alignment = 4096;
 
-    memoryManager->createAndRegisterOsContext(csr, EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    memoryManager->createAndRegisterOsContext(csr, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                 PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
@@ -602,19 +602,19 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
     }
 }
 HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAlignmentWhenAllocateGraphicsMemoryThenAlignmentIsSetCorrect) {
-    class MockHwHelperHw : public HwHelperHw<FamilyType> {
+    class MockGfxCoreHelperHw : public GfxCoreHelperHw<FamilyType> {
       public:
-        using HwHelperHw<FamilyType>::HwHelperHw;
+        using GfxCoreHelperHw<FamilyType>::GfxCoreHelperHw;
         bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override {
             return isEnable;
         }
         bool isEnable = false;
     };
-    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperHw>(defaultHwInfo->platform.eRenderCoreFamily);
+    auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw>(defaultHwInfo->platform.eRenderCoreFamily);
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    raiiFactory.mockHwHelper.isEnable = true;
+    raiiFactory.mockGfxCoreHelper.isEnable = true;
 
     auto osAgnosticMemoryManager = std::make_unique<MemoryManagerCreate<MockMemoryManager>>(true, false, *executionEnvironment);
     osAgnosticMemoryManager->failInDevicePool = true;
@@ -629,7 +629,7 @@ HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAlignmentWhenAllocateGraphicsMem
 
     osAgnosticMemoryManager->freeGraphicsMemory(allocationWithEnabled1MbAlignment);
 
-    raiiFactory.mockHwHelper.isEnable = false;
+    raiiFactory.mockGfxCoreHelper.isEnable = false;
     auto allocationWithoutEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
 
     ASSERT_NE(nullptr, allocationWithoutEnabled1MbAlignment);
@@ -827,7 +827,7 @@ TEST(OsAgnosticMemoryManager, givenDestroyedTagAllocationWhenWaitForCompletiionT
     DeviceBitfield deviceBitfield(1);
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
     executionEnvironment.memoryManager.reset(memoryManager);
-    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                                        PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
@@ -1310,8 +1310,8 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreating
     DebugManager.flags.EnableLocalMemory.set(true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
-    auto &coreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CoreHelper>();
-    if (!coreHelper.isLocalMemoryEnabled(hwInfo)) {
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    if (!gfxCoreHelper.isLocalMemoryEnabled(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1694,7 +1694,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenGpuAddressIsSetThenAllocatio
     DeviceBitfield deviceBitfield(1);
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
     executionEnvironment.memoryManager.reset(memoryManager);
-    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                                        PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
     MockAllocationProperties properties = {0, MemoryConstants::pageSize};
@@ -1971,7 +1971,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
 }
 
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
-    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
@@ -2234,7 +2234,7 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
     executionEnvironment.memoryManager.reset(memoryManager);
     DeviceBitfield deviceBitfield(1);
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
-    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     EXPECT_EQ(1u, memoryManager->getRegisteredEnginesCount());
     EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
@@ -2261,7 +2261,7 @@ TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValu
     DeviceBitfield deviceBitfield(0b11);
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
     PreemptionMode preemptionMode = PreemptionMode::MidThread;
-    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                       preemptionMode,
                                                                                                       deviceBitfield));
     EXPECT_EQ(2u, memoryManager->registeredEngines[0].osContext->getNumSupportedDevices());
@@ -2276,9 +2276,9 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
     DeviceBitfield deviceBitfield(1);
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
     std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(executionEnvironment, 1u, deviceBitfield));
-    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-    memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                        PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     EXPECT_EQ(2u, memoryManager->getRegisteredEnginesCount());
     EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
@@ -2286,7 +2286,7 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
 }
 
 TEST(ResidencyDataTest, givenGpgpuEnginesWhenAskedForMaxOsContextCountThenValueIsGreaterOrEqual) {
-    auto &engines = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
+    auto &engines = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
     EXPECT_TRUE(MemoryManager::maxOsContextCount >= engines.size());
 }
 
@@ -2298,9 +2298,9 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
 
     MockResidencyData residency(MemoryManager::maxOsContextCount);
 
-    MockOsContext osContext(0u, EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    MockOsContext osContext(0u, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-    MockOsContext osContext2(1u, EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+    MockOsContext osContext2(1u, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
     auto lastFenceValue = 45llu;
@@ -2543,7 +2543,7 @@ TEST(MemoryManagerTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhe
 TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCopyRequiredIsCalledThenFalseIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceLinearImages.set(true);
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
     ImageInfo imgInfo{};
 
@@ -2565,7 +2565,7 @@ TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesW
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
-    imgInfo.linearStorage = hwHelper.isLinearStoragePreferred(false, Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
+    imgInfo.linearStorage = gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
 
     auto hostPtr = alignedMalloc(imgInfo.size, MemoryConstants::cacheLineSize);
 
@@ -3000,7 +3000,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenRetur
     executionEnvironment->memoryManager.reset(memoryManager);
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 1u, 1));
     auto hwInfo = *defaultHwInfo;
-    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0],
+    memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0],
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
     for (auto engine : memoryManager->getRegisteredEngines()) {

@@ -3785,7 +3785,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
 
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    if ((HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getNumCacheRegions() == 0) &&
+    if ((GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getNumCacheRegions() == 0) &&
         HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
         EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
     } else {
@@ -3802,7 +3802,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
-    if ((HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getNumCacheRegions() == 0) &&
+    if ((GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getNumCacheRegions() == 0) &&
         HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
         EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
     } else {
@@ -3883,7 +3883,7 @@ TEST_F(DrmAllocationTests, givenBoWhenMarkingForCaptureThenBosAreMarked) {
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCacheRegionThenSetRegionInBufferObject) {
-    if (HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getNumCacheRegions() == 0) {
+    if (GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
     mock->ioctl_expected.total = -1;

@@ -24,7 +24,7 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
         this->propertiesSupportLoaded = true;
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     clearIsDirty();
 
     if (this->scmPropertiesSupport.coherencyRequired) {
@@ -58,7 +58,7 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
                                              (NEO::DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
                                               (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
     if (setDefaultThreadArbitrationPolicy) {
-        threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+        threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
     }
     if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();

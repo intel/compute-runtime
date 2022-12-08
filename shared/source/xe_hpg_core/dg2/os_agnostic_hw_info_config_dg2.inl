@@ -18,10 +18,10 @@ void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwar
         samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
     }
 
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto isMirrorAddressMode = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR == samplerState->getTcxAddressControlMode();
     auto isNearestFilter = SAMPLER_STATE::MIN_MODE_FILTER_NEAREST == samplerState->getMinModeFilter();
-    if (isNearestFilter && isMirrorAddressMode && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo)) {
+    if (isNearestFilter && isMirrorAddressMode && gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo)) {
         samplerState->setRAddressMinFilterRoundingEnable(true);
         samplerState->setRAddressMagFilterRoundingEnable(true);
     }
@@ -102,7 +102,7 @@ void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>
@@ -112,7 +112,7 @@ bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareIn
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
-    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo) &&
+    if (GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo) &&
         (hwInfo.gtSystemInfo.EUCount != 128)) {
         return false;
     }
@@ -121,7 +121,7 @@ bool HwInfoConfigHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) co
 
 template <>
 LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
+    if (GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
         return LocalMemoryAccessMode::CpuAccessDisallowed;
     }
     return LocalMemoryAccessMode::Default;
@@ -129,12 +129,12 @@ LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMod
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
-    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>
@@ -161,7 +161,7 @@ bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const Hardw
 
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
-    const uint32_t highestEnabledSlice = NEO::HwHelper::getHighestEnabledSlice(hwInfo);
+    const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
 
     auto subSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     auto maxSubSlice = highestEnabledSlice * subSlicesPerSlice;

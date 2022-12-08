@@ -308,7 +308,7 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     DebugManager.flags.OverrideDrmRegion.set(-1);
     DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
 
-    auto &helper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
+    auto &helper = GfxCoreHelper::get(pHwInfo->platform.eRenderCoreFamily);
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(1), *pHwInfo);
     if (helper.isBankOverrideRequired(*pHwInfo)) {
         EXPECT_EQ(regionInfo[1].region.memoryInstance, regionClassAndInstance.memoryInstance);

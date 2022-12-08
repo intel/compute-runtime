@@ -672,7 +672,7 @@ TEST(GetDeviceInfo, WhenQueryingGenericAddressSpaceSupportThenProperValueIsRetur
 }
 
 template <typename GfxFamily, int ccsCount, int bcsCount>
-class MockHwHelper : public HwHelperHw<GfxFamily> {
+class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
   public:
     const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
         EngineInstancesContainer result{};
@@ -709,8 +709,8 @@ class MockHwHelper : public HwHelperHw<GfxFamily> {
         return true;
     }
 
-    static auto overrideHwHelper() {
-        return RAIIHwHelperFactory<MockHwHelper<GfxFamily, ccsCount, bcsCount>>{::defaultHwInfo->platform.eRenderCoreFamily};
+    static auto overrideGfxCoreHelper() {
+        return RAIIGfxCoreHelperFactory<MockGfxCoreHelper<GfxFamily, ccsCount, bcsCount>>{::defaultHwInfo->platform.eRenderCoreFamily};
     }
 
     uint64_t disableEngineSupportOnSubDevice = -1; // disabled by default
@@ -720,7 +720,7 @@ class MockHwHelper : public HwHelperHw<GfxFamily> {
 using GetDeviceInfoQueueFamilyTest = ::testing::Test;
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
-    auto raiiHwHelper = MockHwHelper<FamilyType, 3, 1>::overrideHwHelper();
+    auto raiiGfxCoreHelper = MockGfxCoreHelper<FamilyType, 3, 1>::overrideGfxCoreHelper();
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 0};
@@ -743,7 +743,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThen
 }
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
-    auto raiiHwHelper = MockHwHelper<FamilyType, 3, 1>::overrideHwHelper();
+    auto raiiGfxCoreHelper = MockGfxCoreHelper<FamilyType, 3, 1>::overrideGfxCoreHelper();
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 2};
@@ -768,13 +768,13 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenRet
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenInitializingCapsThenReturnCorrectFamilies) {
     constexpr int bcsCount = 1;
 
-    using MockHwHelperT = MockHwHelper<FamilyType, 3, bcsCount>;
+    using MockGfxCoreHelperT = MockGfxCoreHelper<FamilyType, 3, bcsCount>;
 
-    auto raiiHwHelper = MockHwHelperT::overrideHwHelper();
-    MockHwHelperT &mockHwHelper = static_cast<MockHwHelperT &>(raiiHwHelper.mockHwHelper);
+    auto raiiGfxCoreHelper = MockGfxCoreHelperT::overrideGfxCoreHelper();
+    MockGfxCoreHelperT &mockGfxCoreHelper = static_cast<MockGfxCoreHelperT &>(raiiGfxCoreHelper.mockGfxCoreHelper);
 
-    mockHwHelper.disableEngineSupportOnSubDevice = 0b10; // subdevice 1
-    mockHwHelper.disabledSubDeviceEngineType = aub_stream::EngineType::ENGINE_BCS;
+    mockGfxCoreHelper.disableEngineSupportOnSubDevice = 0b10; // subdevice 1
+    mockGfxCoreHelper.disabledSubDeviceEngineType = aub_stream::EngineType::ENGINE_BCS;
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;

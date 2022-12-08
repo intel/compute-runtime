@@ -61,9 +61,9 @@ uint32_t MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t
 }
 
 uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInfo) {
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto tileIndex = Math::log2(memoryBank);
-    tileIndex = hwHelper.isBankOverrideRequired(hwInfo) ? 0 : tileIndex;
+    tileIndex = gfxCoreHelper.isBankOverrideRequired(hwInfo) ? 0 : tileIndex;
     if (DebugManager.flags.OverrideDrmRegion.get() != -1) {
         tileIndex = DebugManager.flags.OverrideDrmRegion.get();
     }
@@ -71,8 +71,8 @@ uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInf
 }
 
 MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (!hwHelper.getEnableLocalMemory(hwInfo) || memoryBank == 0) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (!gfxCoreHelper.getEnableLocalMemory(hwInfo) || memoryBank == 0) {
         return systemMemoryRegion.region;
     }
 

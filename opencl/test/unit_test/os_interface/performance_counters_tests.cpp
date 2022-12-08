@@ -214,7 +214,7 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
     void SetUp() override {
         PerformanceCountersMetricsLibraryFixture::setUp();
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                     PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         queue->getGpgpuCommandStreamReceiver().setupContext(*osContext);
     }
@@ -660,5 +660,5 @@ TEST_F(PerformanceCountersMetricsLibraryTest, GivenPerformanceCountersObjectIsNo
 TEST_F(PerformanceCountersTest, givenRenderCoreFamilyWhenGettingGenIdThenMetricsLibraryGenIdentifierAreValid) {
     const auto &hwInfo = device->getHardwareInfo();
     const auto gen = hwInfo.platform.eRenderCoreFamily;
-    EXPECT_NE(ClientGen::Unknown, static_cast<ClientGen>(HwHelper::get(gen).getMetricsLibraryGenId()));
+    EXPECT_NE(ClientGen::Unknown, static_cast<ClientGen>(GfxCoreHelper::get(gen).getMetricsLibraryGenId()));
 }

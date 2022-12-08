@@ -117,7 +117,7 @@ void KernelDataTest::buildAndDecode() {
         auto kernelAllocation = pKernelInfo->getGraphicsAllocation();
         UNRECOVERABLE_IF(kernelAllocation == nullptr);
         auto &device = pContext->getDevice(0)->getDevice();
-        auto &helper = device.getRootDeviceEnvironment().getHelper<CoreHelper>();
+        auto &helper = device.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
         size_t isaPadding = helper.getPaddingForISAAllocation();
         EXPECT_EQ(kernelAllocation->getUnderlyingBufferSize(), kernelHeapSize + isaPadding);
         auto kernelIsa = kernelAllocation->getUnderlyingBuffer();

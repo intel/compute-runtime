@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,8 @@ int HwInfoConfigHw<IGFX_ALDERLAKE_S>::configureHardwareCustom(HardwareInfo *hwIn
 
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= hwHelper.getHwRevIdFromStepping(REVISION_C, *hwInfo));
+    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= gfxCoreHelper.getHwRevIdFromStepping(REVISION_C, *hwInfo));
     return 0;
 }
 

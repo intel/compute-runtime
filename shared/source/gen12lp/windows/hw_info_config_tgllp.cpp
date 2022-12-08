@@ -23,8 +23,8 @@ namespace NEO {
 template <>
 void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
     coherencyFlag = true;
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
+    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
         // stepping A devices - turn off coherency
         coherencyFlag = false;
     }

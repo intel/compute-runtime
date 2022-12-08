@@ -166,10 +166,10 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
                                                                      const DeviceBitfield deviceBitfield) {
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     auto &hwInfo = *(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo());
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (withAubDump) {
-        auto localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfo);
+        auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hwInfo);
         auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName, rootDeviceIndex);
         if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
             fullName.assign(DebugManager.flags.AUBDumpCaptureFileName.get());

@@ -79,7 +79,7 @@ TEST_F(MockOSTimeWinTest, whenCreatingTimerThenResolutionIsSetCorrectly) {
 }
 
 template <typename GfxFamily>
-class TestMockHwHelper : public HwHelperHw<GfxFamily> {
+class TestMockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
   public:
     bool isTimestampShiftRequired() const override {
         return shiftRequired;
@@ -94,7 +94,7 @@ HWTEST_F(MockOSTimeWinTest, whenConvertingTimestampsToCsDomainThenTimestampDataA
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     wddmMock->init();
     auto hwInfo = wddmMock->getRootDeviceEnvironment().getHardwareInfo();
-    RAIIHwHelperFactory<TestMockHwHelper<FamilyType>> hwHelperBackup{hwInfo->platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<TestMockGfxCoreHelper<FamilyType>> gfxCoreHelperBackup{hwInfo->platform.eRenderCoreFamily};
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock));
     uint64_t timestampData = 0x1234;
     uint64_t freqOA = 5;
@@ -124,7 +124,7 @@ HWTEST_F(MockOSTimeWinTest, whenConvertingTimestampsToCsDomainThenTimestampDataA
     timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
 
-    hwHelperBackup.mockHwHelper.shiftRequired = false;
+    gfxCoreHelperBackup.mockGfxCoreHelper.shiftRequired = false;
     freqOA = 1;
     freqCS = 0;
     expectedGpuTicksWhenNotChange = timestampData;

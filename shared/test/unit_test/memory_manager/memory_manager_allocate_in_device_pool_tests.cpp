@@ -260,8 +260,8 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenH
                                          mockDeviceBitfield};
     properties.flags.use32BitFrontWindow = true;
 
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    auto systemMemoryPlacement = hwHelper.useSystemMemoryPlacementForISA(*defaultHwInfo);
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto systemMemoryPlacement = gfxCoreHelper.useSystemMemoryPlacementForISA(*defaultHwInfo);
 
     HeapIndex expectedHeap = HeapIndex::TOTAL_HEAPS;
     HeapIndex baseHeap = HeapIndex::TOTAL_HEAPS;
@@ -489,7 +489,7 @@ TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGetLocalMemoryIsCalledTh
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
 
-    auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+    auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
     uint32_t deviceMask = static_cast<uint32_t>(maxNBitValue(subDevicesCount));
 
     EXPECT_EQ(AubHelper::getPerTileLocalMemorySize(hwInfo) * subDevicesCount, memoryManager.getLocalMemorySize(0u, deviceMask));

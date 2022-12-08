@@ -11,45 +11,45 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 
-using HwHelperTestGen9 = HwHelperTest;
+using GfxCoreHelperTestGen9 = GfxCoreHelperTest;
 
-GEN9TEST_F(HwHelperTestGen9, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
-    auto &helper = getHelper<CoreHelper>();
+GEN9TEST_F(GfxCoreHelperTestGen9, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
+    auto &helper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN9TEST_F(HwHelperTestGen9, givenGen9WhenCallIsPackedSupportedThenReturnFalse) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+GEN9TEST_F(GfxCoreHelperTestGen9, givenGen9WhenCallIsPackedSupportedThenReturnFalse) {
+    auto &helper = GfxCoreHelper::get(renderCoreFamily);
     EXPECT_FALSE(helper.packedFormatsSupported());
 }
 
-GEN9TEST_F(HwHelperTestGen9, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
-    EXPECT_EQ(4u, coreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
+GEN9TEST_F(GfxCoreHelperTestGen9, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(4u, gfxCoreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
 }
 
-GEN9TEST_F(HwHelperTestGen9, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
+GEN9TEST_F(GfxCoreHelperTestGen9, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
-    auto &coreHelper = getHelper<CoreHelper>();
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenDbgCsrLocalTypeIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
+GEN9TEST_F(GfxCoreHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenDbgCsrLocalTypeIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    auto sipType = coreHelper.getSipKernelType(true);
+    auto sipType = gfxCoreHelper.getSipKernelType(true);
     EXPECT_EQ(SipKernelType::DbgCsrLocal, sipType);
 }
 
-GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
+GEN9TEST_F(GfxCoreHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->allEngines.size());
 }
 
-GEN9TEST_F(HwHelperTestGen9, givenGen9WhenCallIsTimestampShiftRequiredThenFalseIsReturned) {
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.isTimestampShiftRequired());
+GEN9TEST_F(GfxCoreHelperTestGen9, givenGen9WhenCallIsTimestampShiftRequiredThenFalseIsReturned) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(gfxCoreHelper.isTimestampShiftRequired());
 }
 
 using MemorySynchronizatiopCommandsTestsGen9 = ::testing::Test;

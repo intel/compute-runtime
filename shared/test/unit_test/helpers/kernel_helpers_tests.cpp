@@ -95,8 +95,8 @@ TEST_F(KernelHelperTest, GivenScratchSizeGreaterThanGlobalSizeWhenCheckingIfTher
     auto globalSize = pDevice->getDeviceInfo().globalMemSize;
     KernelDescriptor::KernelAttributes attributes = {};
     attributes.perThreadScratchSize[0] = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
-    auto &hwHelper = NEO::HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (attributes.perThreadScratchSize[0] > hwHelper.getMaxScratchSize()) {
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (attributes.perThreadScratchSize[0] > gfxCoreHelper.getMaxScratchSize()) {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::INVALID_KERNEL);
     } else {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY);
@@ -107,8 +107,8 @@ TEST_F(KernelHelperTest, GivenScratchPrivateSizeGreaterThanGlobalSizeWhenCheckin
     auto globalSize = pDevice->getDeviceInfo().globalMemSize;
     KernelDescriptor::KernelAttributes attributes = {};
     attributes.perThreadScratchSize[1] = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
-    auto &hwHelper = NEO::HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (attributes.perThreadScratchSize[1] > hwHelper.getMaxScratchSize()) {
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (attributes.perThreadScratchSize[1] > gfxCoreHelper.getMaxScratchSize()) {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::INVALID_KERNEL);
     } else {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY);
@@ -120,8 +120,8 @@ TEST_F(KernelHelperTest, GivenScratchAndPrivateSizeLessThanGlobalSizeWhenCheckin
     KernelDescriptor::KernelAttributes attributes = {};
     auto size = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) - 100;
     attributes.perHwThreadPrivateMemorySize = size;
-    auto &coreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
-    uint32_t maxScratchSize = coreHelper.getMaxScratchSize();
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
     attributes.perThreadScratchSize[0] = (size > maxScratchSize) ? maxScratchSize : size;
     attributes.perThreadScratchSize[1] = (size > maxScratchSize) ? maxScratchSize : size;
     EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::SUCCESS);
@@ -129,8 +129,8 @@ TEST_F(KernelHelperTest, GivenScratchAndPrivateSizeLessThanGlobalSizeWhenCheckin
 
 TEST_F(KernelHelperTest, GivenScratchSizeGreaterThanMaxScratchSizeWhenCheckingIfThereIsEnaughSpaceThenInvalidKernelIsReturned) {
     KernelDescriptor::KernelAttributes attributes = {};
-    auto &coreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
-    uint32_t maxScratchSize = coreHelper.getMaxScratchSize();
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
     attributes.perHwThreadPrivateMemorySize = 0x10;
     attributes.perThreadScratchSize[0] = maxScratchSize + 1;
     attributes.perThreadScratchSize[1] = 0x10;
@@ -139,8 +139,8 @@ TEST_F(KernelHelperTest, GivenScratchSizeGreaterThanMaxScratchSizeWhenCheckingIf
 
 TEST_F(KernelHelperTest, GivenScratchPrivateSizeGreaterThanMaxScratchSizeWhenCheckingIfThereIsEnaughSpaceThenInvalidKernelIsReturned) {
     KernelDescriptor::KernelAttributes attributes = {};
-    auto &coreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
-    uint32_t maxScratchSize = coreHelper.getMaxScratchSize();
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
     attributes.perHwThreadPrivateMemorySize = 0x10;
     attributes.perThreadScratchSize[0] = 0x10;
     attributes.perThreadScratchSize[1] = maxScratchSize + 1;

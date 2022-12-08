@@ -14,7 +14,7 @@
 using namespace NEO;
 
 bool TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
-    auto engines = HwHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);
+    auto engines = GfxCoreHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);
     for (const auto &engine : engines) {
         if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
             return pHardwareInfo->capabilityTable.blitterOperationsSupported;
@@ -24,7 +24,7 @@ bool TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
 }
 
 bool TestChecks::fullySupportsBlitter(const HardwareInfo *pHardwareInfo) {
-    auto engines = HwHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);
+    auto engines = GfxCoreHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);
     for (const auto &engine : engines) {
         if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
             return HwInfoConfig::get(pHardwareInfo->platform.eProductFamily)->isBlitterFullySupported(*pHardwareInfo);

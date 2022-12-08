@@ -13,7 +13,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
+bool GTPinGfxCoreHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
@@ -43,7 +43,7 @@ bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
 }
 
 template <typename GfxFamily>
-void *GTPinHwHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti) {
+void *GTPinGfxCoreHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti) {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     if ((nullptr == pKernel->getSurfaceStateHeap()) || (bti >= pKernel->getNumberOfBindingTableStates())) {

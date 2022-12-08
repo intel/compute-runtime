@@ -127,7 +127,7 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
         auto kernel = dispatchInfo.begin()->getKernel();
         EXPECT_FALSE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
 
-        if (HwHelperHw<FamilyType>::get().isStatelessToStatefulWithOffsetSupported()) {
+        if (GfxCoreHelperHw<FamilyType>::get().isStatelessToStatefulWithOffsetSupported()) {
             EXPECT_TRUE(kernel->allBufferArgsStateful);
         }
 

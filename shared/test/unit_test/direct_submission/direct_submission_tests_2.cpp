@@ -2131,13 +2131,13 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, WhenStoppingRingWithoutSubmissio
 HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenAskingForRelaxedOrderingSupportThenEnable) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
 
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
+    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
 
     {
         DebugManager.flags.DirectSubmissionRelaxedOrdering.set(-1);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
-        EXPECT_EQ(hwHelper.isRelaxedOrderingSupported(), directSubmission.isRelaxedOrderingEnabled());
+        EXPECT_EQ(gfxCoreHelper.isRelaxedOrderingSupported(), directSubmission.isRelaxedOrderingEnabled());
     }
 
     {

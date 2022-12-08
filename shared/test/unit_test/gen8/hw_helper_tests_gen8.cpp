@@ -13,27 +13,27 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 
-using HwHelperTestGen8 = HwHelperTest;
+using GfxCoreHelperTestGen8 = GfxCoreHelperTest;
 
-GEN8TEST_F(HwHelperTestGen8, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
-    auto &helper = getHelper<CoreHelper>();
+GEN8TEST_F(GfxCoreHelperTestGen8, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
+    auto &helper = getHelper<GfxCoreHelper>();
 
     EXPECT_EQ(16u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN8TEST_F(HwHelperTestGen8, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
-    EXPECT_EQ(4u, coreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
+GEN8TEST_F(GfxCoreHelperTestGen8, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(4u, gfxCoreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
 }
 
-GEN8TEST_F(HwHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
+GEN8TEST_F(GfxCoreHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
-    auto &coreHelper = getHelper<CoreHelper>();
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
+GEN8TEST_F(GfxCoreHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->allEngines.size());
 }

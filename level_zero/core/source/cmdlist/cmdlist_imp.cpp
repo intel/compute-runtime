@@ -108,7 +108,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         NEO::CommandStreamReceiver *csr = nullptr;
         auto deviceImp = static_cast<DeviceImp *>(device);
         const auto &hwInfo = device->getHwInfo();
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         if (internalUsage) {
             if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
                 csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
@@ -117,7 +117,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 csr = internalEngine.commandStreamReceiver;
                 auto internalEngineType = internalEngine.getEngineType();
                 auto internalEngineUsage = internalEngine.getEngineUsage();
-                engineGroupType = hwHelper.getEngineGroupType(internalEngineType, internalEngineUsage, hwInfo);
+                engineGroupType = gfxCoreHelper.getEngineGroupType(internalEngineType, internalEngineUsage, hwInfo);
             }
         } else {
             returnValue = device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
@@ -134,7 +134,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
         commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
         if (!internalUsage) {
-            commandList->isFlushTaskSubmissionEnabled = hwHelper.isPlatformFlushTaskEnabled(hwInfo);
+            commandList->isFlushTaskSubmissionEnabled = gfxCoreHelper.isPlatformFlushTaskEnabled(hwInfo);
             if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
                 commandList->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
             }

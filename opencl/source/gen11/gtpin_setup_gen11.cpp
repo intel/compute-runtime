@@ -15,21 +15,21 @@
 
 namespace NEO {
 
-extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
+extern GTPinGfxCoreHelper *gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
 
 typedef Gen11Family Family;
 static const auto gfxFamily = IGFX_GEN11_CORE;
 
 template <>
-uint32_t GTPinHwHelperHw<Family>::getGenVersion() {
+uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() {
     return gtpin::GTPIN_GEN_11;
 }
 
-template class GTPinHwHelperHw<Family>;
+template class GTPinGfxCoreHelperHw<Family>;
 
 struct GTPinEnableGen11 {
     GTPinEnableGen11() {
-        gtpinHwHelperFactory[gfxFamily] = &GTPinHwHelperHw<Family>::get();
+        gtpinGfxCoreHelperFactory[gfxFamily] = &GTPinGfxCoreHelperHw<Family>::get();
     }
 };
 

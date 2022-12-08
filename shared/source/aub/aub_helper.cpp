@@ -46,6 +46,6 @@ uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo) {
     if (DebugManager.flags.HBMSizePerTileInGigabytes.get() > 0) {
         return DebugManager.flags.HBMSizePerTileInGigabytes.get() * MemoryConstants::gigaByte;
     }
-    return getTotalMemBankSize() / HwHelper::getSubDevicesCount(pHwInfo);
+    return getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
 }
 } // namespace NEO

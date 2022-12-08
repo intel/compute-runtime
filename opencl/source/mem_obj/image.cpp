@@ -148,9 +148,9 @@ Image *Image::create(Context *context,
                                                             : imageWidth * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     const auto hostPtrSlicePitch = getHostPtrSlicePitch(*imageDesc, hostPtrRowPitch, imageHeight);
 
-    auto &defaultHwHelper = HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
-    imgInfo.linearStorage = defaultHwHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
-                                                                     memoryProperties.flags.forceLinearStorage);
+    auto &defaultGfxCoreHelper = GfxCoreHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+    imgInfo.linearStorage = defaultGfxCoreHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
+                                                                          memoryProperties.flags.forceLinearStorage);
 
     // if device doesn't support images, it can create only linear images
     if (!context->getDevice(0)->getSharedDeviceInfo().imageSupport && !imgInfo.linearStorage) {
@@ -184,12 +184,12 @@ Image *Image::create(Context *context,
         allocationInfo.zeroCopyAllowed = false;
 
         auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         if (imageFromBuffer) {
             // Image from buffer - we never allocate memory, we use what buffer provides
             setAllocationInfoFromParentBuffer(allocationInfo, hostPtr, hostPtrToSet, parentBuffer, imgInfo, rootDeviceIndex);
-            if (!hwHelper.checkResourceCompatibility(*allocationInfo.memory)) {
+            if (!gfxCoreHelper.checkResourceCompatibility(*allocationInfo.memory)) {
                 cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfos, isParentObject);
                 errcodeRet = CL_INVALID_MEM_OBJECT;
                 return nullptr;
@@ -270,7 +270,7 @@ Image *Image::create(Context *context,
             }
 
             auto allocationInSystemMemory = MemoryPoolHelper::isSystemMemoryPool(allocationInfo.memory->getMemoryPool());
-            bool isCpuTransferPreferred = imgInfo.linearStorage && defaultHwHelper.isCpuImageTransferPreferred(hwInfo);
+            bool isCpuTransferPreferred = imgInfo.linearStorage && defaultGfxCoreHelper.isCpuImageTransferPreferred(hwInfo);
             bool isCpuTransferPreferredInSystemMemory = imgInfo.linearStorage && allocationInSystemMemory;
 
             if (isCpuTransferPreferredInSystemMemory) {
@@ -1208,7 +1208,7 @@ void Image::setAllocationInfoFromImageInfo(CreateMemObj::AllocationInfo &allocat
 }
 
 void Image::providePerformanceHintForCreateImage(Image *image, const HardwareInfo &hwInfo, CreateMemObj::AllocationInfo &allocationInfo, Context *context) {
-    if (HwHelper::compressedImagesSupported(hwInfo)) {
+    if (GfxCoreHelper::compressedImagesSupported(hwInfo)) {
         if (allocationInfo.memory->isCompressionEnabled()) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_COMPRESSED, image);
         } else {

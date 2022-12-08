@@ -71,7 +71,7 @@ BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenD
 
     MockDevice device;
     EXPECT_EQ(0u, PreambleHelper<Gen8Family>::getAdditionalCommandsSize(device));
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<Gen8Family>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, GfxCoreHelperHw<Gen8Family>::get().getDefaultThreadArbitrationPolicy());
 }
 
 BDWTEST_F(ThreadArbitrationGen8, whenGetSupportThreadArbitrationPoliciesIsCalledThenEmptyVectorIsReturned) {

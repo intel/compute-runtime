@@ -102,7 +102,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        hwInfo);
 
     auto slmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(
-        HwHelperHw<Family>::get().computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
+        GfxCoreHelperHw<Family>::get().computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
 
     if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
         slmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(DebugManager.flags.OverrideSlmAllocationSize.get());

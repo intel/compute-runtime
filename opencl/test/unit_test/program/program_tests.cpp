@@ -493,7 +493,7 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     auto graphicsAllocation = kernelInfo->getGraphicsAllocation();
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
-    auto &helper = pDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &helper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.KernelHeapSize + isaPadding);
 
@@ -2135,7 +2135,7 @@ HWTEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimiz
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
 
-    if (HwHelperHw<FamilyType>::get().isStatelessToStatefulWithOffsetSupported()) {
+    if (GfxCoreHelperHw<FamilyType>::get().isStatelessToStatefulWithOffsetSupported()) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));
     } else {
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));

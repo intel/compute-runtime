@@ -141,14 +141,14 @@ cl_int Kernel::initialize() {
     reconfigureKernel();
     auto &hwInfo = pClDevice->getHardwareInfo();
     auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
-    auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     const auto &implicitArgs = kernelDescriptor.payloadMappings.implicitArgs;
     const auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
     auto maxSimdSize = kernelInfo.getMaxSimdSize();
     const auto &heapInfo = kernelInfo.heapInfo;
 
-    if (maxSimdSize != 1 && maxSimdSize < coreHelper.getMinimalSIMDSize()) {
+    if (maxSimdSize != 1 && maxSimdSize < gfxCoreHelper.getMinimalSIMDSize()) {
         return CL_INVALID_KERNEL;
     }
 
@@ -244,7 +244,7 @@ cl_int Kernel::initialize() {
 
     auto &threadArbitrationPolicy = const_cast<ThreadArbitrationPolicy &>(kernelInfo.kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
     if (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
-        threadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(coreHelper.getDefaultThreadArbitrationPolicy());
+        threadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(gfxCoreHelper.getDefaultThreadArbitrationPolicy());
     }
     if (false == kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress) {
         threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
@@ -252,7 +252,7 @@ cl_int Kernel::initialize() {
 
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
-    auxTranslationRequired = !program->getIsBuiltIn() && HwHelper::compressedBuffersSupported(hwInfo) && clGfxCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
+    auxTranslationRequired = !program->getIsBuiltIn() && GfxCoreHelper::compressedBuffersSupported(hwInfo) && clGfxCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
 
     if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
         auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
@@ -555,7 +555,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     cl_ulong privateMemSize;
     size_t maxWorkgroupSize;
     const auto &hwInfo = clDevice.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &clGfxCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
@@ -586,7 +586,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
 
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
         preferredWorkGroupSizeMultiple = kernelInfo.getMaxSimdSize();
-        if (hwHelper.isFusedEuDispatchEnabled(hwInfo, kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
+        if (gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
             preferredWorkGroupSizeMultiple *= 2;
         }
         srcSize = sizeof(preferredWorkGroupSizeMultiple);
@@ -740,7 +740,7 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
 
     auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
     bool status = false;
-    auto &helper = clDevice.getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &helper = clDevice.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
 
     if (currentAllocationSize >= newKernelHeapSize + isaPadding) {
@@ -1089,7 +1089,7 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
 
 uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const {
     auto &hardwareInfo = getHardwareInfo();
-    auto &helper = this->getDevice().getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &helper = this->getDevice().getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 
     auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                      commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
@@ -2030,7 +2030,7 @@ bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
 }
 
 void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
-    if (false == HwHelper::cacheFlushAfterWalkerSupported(getHardwareInfo())) {
+    if (false == GfxCoreHelper::cacheFlushAfterWalkerSupported(getHardwareInfo())) {
         return;
     }
     for (GraphicsAllocation *alloc : this->kernelArgRequiresCacheFlush) {
@@ -2087,21 +2087,21 @@ uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, c
     kernelStartOffset += getStartOffset();
 
     auto &hardwareInfo = getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-    if (isCssUsed && hwHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
+    if (isCssUsed && gfxCoreHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
         kernelStartOffset += kernelInfo.kernelDescriptor.entryPoints.skipSetFFIDGP;
     }
 
     return kernelStartOffset;
 }
 void *Kernel::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
-    auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
-    auto surfaceStateSize = hwHelper.getRenderSurfaceStateSize();
+    auto &gfxCoreHelper = GfxCoreHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     NEO::BindlessHeapsHelper *bindlessHeapsHelper = getDevice().getDevice().getBindlessHeapsHelper();
     auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
     auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
-    auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
+    auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
     patchWithRequiredSize(patchLocation, sizeof(patchValue), patchValue);
     return ssInHeap.ssPtr;
 }
@@ -2116,10 +2116,10 @@ uint32_t Kernel::getAdditionalKernelExecInfo() const {
 
 bool Kernel::requiresWaDisableRccRhwoOptimization() const {
     auto &hardwareInfo = getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
 
-    if (hwHelper.isWaDisableRccRhwoOptimizationRequired() && isUsingSharedObjArgs()) {
+    if (gfxCoreHelper.isWaDisableRccRhwoOptimizationRequired() && isUsingSharedObjArgs()) {
         for (auto &arg : getKernelArguments()) {
             auto clMemObj = static_cast<cl_mem>(arg.object);
             auto memObj = castToObject<MemObj>(clMemObj);
@@ -2232,7 +2232,7 @@ void Kernel::reconfigureKernel() {
 }
 
 bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
-    if (false == HwHelper::cacheFlushAfterWalkerSupported(commandQueue.getDevice().getHardwareInfo())) {
+    if (false == GfxCoreHelper::cacheFlushAfterWalkerSupported(commandQueue.getDevice().getHardwareInfo())) {
         return false;
     }
 

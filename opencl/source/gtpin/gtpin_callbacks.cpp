@@ -46,7 +46,7 @@ void gtpinNotifyContextCreate(cl_context context) {
         auto pDevice = pContext->getDevice(0);
         UNRECOVERABLE_IF(pDevice == nullptr);
         GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-        GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
+        GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(genFamily);
         gtpinPlatformInfo.gen_version = (gtpin::GTPIN_GEN_VERSION)gtpinHelper.getGenVersion();
         gtpinPlatformInfo.device_id = static_cast<uint32_t>(pDevice->getHardwareInfo().platform.usDeviceID);
         (*GTPinCallbacks.onContextCreate)((context_handle_t)context, &gtpinPlatformInfo, &pIgcInit);
@@ -70,7 +70,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates();
         // Enlarge local copy of SSH by 1 SS
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
-        GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
+        GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(genFamily);
         if (!gtpinHelper.addSurfaceState(pKernel)) {
             // Kernel with no SSH or Kernel EM, not supported
             return;
@@ -144,7 +144,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         if (!resource) {
             return;
         }
-        GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
         if (gtpinHelper.canUseSharedAllocation(device.getHardwareInfo())) {
@@ -211,7 +211,7 @@ void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
                 CommandStreamReceiver *pCommandStreamReceiver = reinterpret_cast<CommandStreamReceiver *>(pCSR);
                 GraphicsAllocation *pGfxAlloc = nullptr;
                 Context &context = static_cast<Kernel *>(pKernel)->getContext();
-                GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+                GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
                 if (gtpinHelper.canUseSharedAllocation(context.getDevice(0)->getHardwareInfo())) {
                     auto allocData = reinterpret_cast<SvmAllocationData *>(kernelExecQueue[n].gtpinResource);
                     pGfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(pCommandStreamReceiver->getRootDeviceIndex());

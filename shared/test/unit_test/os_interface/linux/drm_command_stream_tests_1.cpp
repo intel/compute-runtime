@@ -175,7 +175,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
     mock->storedDrmContextId = expectedDrmContextId;
 
     osContext = std::make_unique<OsContextLinux>(*mock, csr->getRootDeviceIndex(), 1,
-                                                 EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                 EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     osContext->ensureContextInitialized();
     csr->setupContext(*osContext);

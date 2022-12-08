@@ -214,7 +214,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionAndCFEFusedEUDispatchWhen
 
 using ThreadArbitrationGen12Lp = PreambleFixture;
 GEN12LPTEST_F(ThreadArbitrationGen12Lp, whenGetDefaultThreadArbitrationPolicyIsCalledThenCorrectPolicyIsReturned) {
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
 GEN12LPTEST_F(ThreadArbitrationGen12Lp, whenGetSupportThreadArbitrationPoliciesIsCalledThenEmptyVectorIsReturned) {

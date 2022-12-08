@@ -47,7 +47,7 @@ TEST(ClCommandStreamReceiverTest, WhenMakingResidentThenBufferResidencyFlagIsSet
 using ClCommandStreamReceiverTests = Test<DeviceFixture>;
 
 HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndCreateGlobalFenceAllocationIsCalledThenFenceAllocationIsAllocated) {
-    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
@@ -60,7 +60,7 @@ HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenFenceAlloca
 }
 
 HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenGettingFenceAllocationThenCorrectFenceAllocationIsReturned) {
-    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     CommandStreamReceiverHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.setupContext(*pDevice->getDefaultEngine().osContext);

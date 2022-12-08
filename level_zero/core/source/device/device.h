@@ -21,7 +21,7 @@ namespace NEO {
 class CommandStreamReceiver;
 class DebuggerL0;
 class Device;
-class HwHelper;
+class GfxCoreHelper;
 class MemoryManager;
 class SourceLevelDebugger;
 struct DeviceInfo;
@@ -91,7 +91,7 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getMOCS(bool l3enabled, bool l1enabled) = 0;
     virtual uint32_t getMaxNumHwThreads() const = 0;
 
-    virtual NEO::HwHelper &getHwHelper() = 0;
+    virtual NEO::GfxCoreHelper &getGfxCoreHelper() = 0;
     bool isImplicitScalingCapable() const {
         return implicitScalingCapable;
     }

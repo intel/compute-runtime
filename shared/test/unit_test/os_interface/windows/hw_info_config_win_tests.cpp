@@ -46,7 +46,7 @@ HelperType &HwInfoConfigTestWindows::getHelper() const {
 }
 
 template ProductHelper &HwInfoConfigTestWindows::getHelper() const;
-template CoreHelper &HwInfoConfigTestWindows::getHelper() const;
+template GfxCoreHelper &HwInfoConfigTestWindows::getHelper() const;
 
 using ProductHelperTestWindows = HwInfoConfigTestWindows;
 

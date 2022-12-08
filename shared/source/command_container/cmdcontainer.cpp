@@ -77,9 +77,9 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
     const auto &hardwareInfo = device->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     commandStream = std::make_unique<LinearStream>(cmdBufferAllocation->getUnderlyingBuffer(),
-                                                   alignedSize - cmdBufferReservedSize, this, hwHelper.getBatchBufferEndSize());
+                                                   alignedSize - cmdBufferReservedSize, this, gfxCoreHelper.getBatchBufferEndSize());
 
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
@@ -296,10 +296,10 @@ void CommandContainer::allocateNextCommandBuffer() {
 }
 
 void CommandContainer::closeAndAllocateNextCommandBuffer() {
-    auto &hwHelper = NEO::HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    auto bbEndSize = hwHelper.getBatchBufferEndSize();
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+    auto bbEndSize = gfxCoreHelper.getBatchBufferEndSize();
     auto ptr = commandStream->getSpace(0u);
-    memcpy_s(ptr, bbEndSize, hwHelper.getBatchBufferEndReference(), bbEndSize);
+    memcpy_s(ptr, bbEndSize, gfxCoreHelper.getBatchBufferEndReference(), bbEndSize);
     allocateNextCommandBuffer();
     currentLinearStreamStartOffset = 0u;
 }
@@ -383,8 +383,8 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
 void CommandContainer::fillReusableAllocationLists() {
     this->immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
     const auto &hardwareInfo = device->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto amountToFill = hwHelper.getAmountOfAllocationsToFill();
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
     if (amountToFill == 0u) {
         return;
     }

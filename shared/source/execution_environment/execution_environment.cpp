@@ -82,9 +82,9 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
     MemoryManager::maxOsContextCount = 0u;
     for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto &coreHelper = rootDeviceEnvironment->getHelper<CoreHelper>();
-        auto osContextCount = static_cast<uint32_t>(coreHelper.getGpgpuEngineInstances(*hwInfo).size());
-        auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto osContextCount = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo).size());
+        auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         bool hasRootCsr = subDevicesCount > 1;
 
@@ -157,7 +157,7 @@ void ExecutionEnvironment::parseAffinityMask() {
 
         if (rootDeviceIndex < numRootDevices) {
             auto hwInfo = rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-            auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
 
             if (subEntries.size() > 1) {
                 uint32_t subDeviceIndex = StringHelpers::toUint32t(subEntries[1]);

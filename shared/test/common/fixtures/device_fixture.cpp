@@ -46,6 +46,6 @@ HelperType &DeviceFixture::getHelper() const {
 }
 
 template ProductHelper &DeviceFixture::getHelper<ProductHelper>() const;
-template CoreHelper &DeviceFixture::getHelper<CoreHelper>() const;
+template GfxCoreHelper &DeviceFixture::getHelper<GfxCoreHelper>() const;
 
 } // namespace NEO

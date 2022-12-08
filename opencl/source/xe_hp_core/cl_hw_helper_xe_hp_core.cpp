@@ -54,8 +54,8 @@ template <>
 inline bool ClGfxCoreHelperHw<Family>::allowCompressionForContext(const ClDevice &clDevice, const Context &context) const {
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     auto &hwInfo = clDevice.getHardwareInfo();
-    auto &coreHelper = clDevice.getRootDeviceEnvironment().getHelper<CoreHelper>();
-    if (context.containsMultipleSubDevices(rootDeviceIndex) && coreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo)) {
+    auto &gfxCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    if (context.containsMultipleSubDevices(rootDeviceIndex) && gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo)) {
         return false;
     }
     return true;

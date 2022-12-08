@@ -386,7 +386,7 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
         memcpy_s(&(timestampFieldForWriting), sizeof(uint64_t), static_cast<void *>(&timestampFieldToCopy), sizeof(uint64_t));
     };
 
-    if (!NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+    if (!NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
         eventTsSetFunc(contextStartTS, result.context.kernelStart);
         eventTsSetFunc(globalStartTS, result.global.kernelStart);
         eventTsSetFunc(contextEndTS, result.context.kernelEnd);

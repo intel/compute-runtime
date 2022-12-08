@@ -1376,7 +1376,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::FAILED;
 
     auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
-                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                      EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -1407,7 +1407,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::OUT_OF_MEMORY;
 
     auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
-                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                      EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -1441,7 +1441,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenNoAllocsInMemoryOperationH
     };
 
     auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
-                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                      EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -1472,7 +1472,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocsInMemoryOperationHan
     };
 
     auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
-                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                      EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});

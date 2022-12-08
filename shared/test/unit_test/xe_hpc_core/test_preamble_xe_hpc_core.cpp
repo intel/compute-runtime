@@ -71,7 +71,7 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenNotSetDebugFlagWhenPreambleCfeStateIsPr
     uint32_t singleDispatchCcsMode = cfeState->getSingleSliceDispatchCcsMode();
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
-    uint32_t expectedMaxThreads = HwHelper::getMaxThreadsForVfe(*defaultHwInfo);
+    uint32_t expectedMaxThreads = GfxCoreHelper::getMaxThreadsForVfe(*defaultHwInfo);
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, expectedAddress, expectedMaxThreads, emptyProperties, nullptr);

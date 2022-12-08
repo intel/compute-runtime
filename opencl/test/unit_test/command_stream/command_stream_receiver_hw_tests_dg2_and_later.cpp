@@ -93,8 +93,8 @@ HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramExtendedPi
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
     dispatchFlags.usePerDssBackedBuffer = true;
-    auto &hwHelper = NEO::HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    dispatchFlags.threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    dispatchFlags.threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
     commandStreamReceiver.streamProperties.stateComputeMode.setProperties(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
                                                                           dispatchFlags.threadArbitrationPolicy, PreemptionMode::Disabled, *defaultHwInfo);

@@ -160,7 +160,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
 
     auto programmableIDSLMSize =
-        static_cast<SHARED_LOCAL_MEMORY_SIZE>(HwHelperHw<GfxFamily>::get().computeSlmValues(hardwareInfo, slmTotalSize));
+        static_cast<SHARED_LOCAL_MEMORY_SIZE>(GfxCoreHelperHw<GfxFamily>::get().computeSlmValues(hardwareInfo, slmTotalSize));
 
     if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
         programmableIDSLMSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(DebugManager.flags.OverrideSlmAllocationSize.get());

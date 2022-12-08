@@ -190,10 +190,10 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueue
     enqueueKernel<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     validateStateBaseAddress<FamilyType>(ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex, pIOH->getGraphicsAllocation()->isAllocatedInLocalMemoryPool()),
-                                         ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex, !hwHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())),
+                                         ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex, !gfxCoreHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList,
                                          context->getMemoryManager()->peekForce32BitAllocations() ? context->getMemoryManager()->getExternalHeapBaseAddress(ultCsr.rootDeviceIndex, false) : 0llu);
 }
@@ -758,7 +758,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr,
         nullptr);
     pCommandQueue->flush();
-    EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
+    EXPECT_EQ(GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     pCommandQueue->enqueueKernel(
@@ -784,7 +784,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr,
         nullptr);
     pCommandQueue->flush();
-    EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
+    EXPECT_EQ(GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 

@@ -1016,8 +1016,8 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
     uint64_t bindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaBuffer.SurfaceStateBaseAddress;
     uint64_t scratchSpaceBaseAddress = 0;
 
-    auto &hwHelper = NEO::HwHelper::get(connectedDevice->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(connectedDevice->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
+    if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         auto surfaceStateForScratch = ((r0[5] >> 10) << 6);
 
         if (surfaceStateForScratch > 0) {
@@ -1031,10 +1031,10 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
                 return ret;
             }
 
-            auto scratchSpacePTSize = hwHelper.getRenderSurfaceStatePitch(renderSurfaceState.data());
+            auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data());
             auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, threadId);
             auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-            auto scratchAllocationBase = gmmHelper->decanonize(hwHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
+            auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
             if (scratchAllocationBase != 0) {
                 scratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
             }

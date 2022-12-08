@@ -45,7 +45,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), heap, heapSize));
-    auto &helper = device->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &helper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(allocation->getUnderlyingBufferSize(), heapSize + isaPadding);
     device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
@@ -162,7 +162,7 @@ TEST(KernelInfo, givenNumbersOfSamplerWhenCheckSamplerStateCountAndSamplerStateA
     KernelInfo kernel = {};
     uint8_t numSamplers = 5u;
     kernel.kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
-    auto samplerSize = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getSamplerStateSize();
+    auto samplerSize = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getSamplerStateSize();
     EXPECT_EQ(kernel.getSamplerStateArrayCount(), numSamplers);
     EXPECT_EQ(kernel.getSamplerStateArraySize(*defaultHwInfo), static_cast<size_t>(numSamplers * samplerSize));
 }

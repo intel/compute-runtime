@@ -241,8 +241,8 @@ void MetricsLibrary::getSubDeviceClientOptions(
 
 bool MetricsLibrary::createContext() {
     auto &device = metricSource.getDevice();
-    const auto &hwHelper = device.getHwHelper();
-    const auto &asyncComputeEngines = hwHelper.getGpgpuEngineInstances(device.getHwInfo());
+    const auto &gfxCoreHelper = device.getGfxCoreHelper();
+    const auto &asyncComputeEngines = gfxCoreHelper.getGpgpuEngineInstances(device.getHwInfo());
     ContextCreateData_1_0 createData = {};
     ClientOptionsData_1_0 clientOptions[6] = {};
     ClientData_1_0 clientData = {};
@@ -292,8 +292,8 @@ bool MetricsLibrary::createContext() {
 }
 
 ClientGen MetricsLibrary::getGenType(const uint32_t gen) const {
-    auto &hwHelper = NEO::HwHelper::get(static_cast<GFXCORE_FAMILY>(gen));
-    return static_cast<MetricsLibraryApi::ClientGen>(hwHelper.getMetricsLibraryGenId());
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(static_cast<GFXCORE_FAMILY>(gen));
+    return static_cast<MetricsLibraryApi::ClientGen>(gfxCoreHelper.getMetricsLibraryGenId());
 }
 
 uint32_t MetricsLibrary::getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer) {

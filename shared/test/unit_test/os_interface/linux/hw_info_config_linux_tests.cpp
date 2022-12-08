@@ -302,7 +302,7 @@ TEST_F(ProductHelperTestLinux, givenPointerToHwInfoWhenConfigureHwInfoCalledThen
     int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     auto expectedSize = static_cast<size_t>(outHwInfo.gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte);
-    HwHelper::get(outHwInfo.platform.eRenderCoreFamily).adjustPreemptionSurfaceSize(expectedSize);
+    GfxCoreHelper::get(outHwInfo.platform.eRenderCoreFamily).adjustPreemptionSurfaceSize(expectedSize);
     EXPECT_EQ(expectedSize, outHwInfo.capabilityTable.requiredPreemptionSurfaceSize);
 }
 

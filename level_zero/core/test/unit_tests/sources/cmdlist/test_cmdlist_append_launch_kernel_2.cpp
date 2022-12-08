@@ -1358,8 +1358,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
-    auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-    auto defaultThreadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
     auto nonDefaultThreadArbitrationPolicy = defaultThreadArbitrationPolicy + 1;
 
     Mock<::L0::Kernel> kernel;

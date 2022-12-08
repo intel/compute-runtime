@@ -11,31 +11,31 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
-using HwHelperTestRkl = HwHelperTest;
+using GfxCoreHelperTestRkl = GfxCoreHelperTest;
 
-RKLTEST_F(HwHelperTestRkl, givenRklSteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
+RKLTEST_F(GfxCoreHelperTestRkl, givenRklSteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
 
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-RKLTEST_F(HwHelperTestRkl, givenRklSteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
+RKLTEST_F(GfxCoreHelperTestRkl, givenRklSteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
 
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
 
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-RKLTEST_F(HwHelperTestRkl, givenRklWhenRequestedVmeFlagsThenReturnFalse) {
+RKLTEST_F(GfxCoreHelperTestRkl, givenRklWhenRequestedVmeFlagsThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsVme);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsVmeAvcPreemption);

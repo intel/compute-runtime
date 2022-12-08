@@ -13,30 +13,30 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
-using HwHelperTestDg1 = HwHelperTest;
+using GfxCoreHelperTestDg1 = GfxCoreHelperTest;
 
-DG1TEST_F(HwHelperTestDg1, givenDg1SteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
+DG1TEST_F(GfxCoreHelperTestDg1, givenDg1SteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-DG1TEST_F(HwHelperTestDg1, givenDg1SteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
+DG1TEST_F(GfxCoreHelperTestDg1, givenDg1SteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
 
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-DG1TEST_F(HwHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundRequiredThenCorrectValueIsReturned) {
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+DG1TEST_F(GfxCoreHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundRequiredThenCorrectValueIsReturned) {
+    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
     uint32_t steppings[] = {
         REVISION_A0,
@@ -48,33 +48,33 @@ DG1TEST_F(HwHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundReq
 
         switch (stepping) {
         case REVISION_A0:
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
             [[fallthrough]];
         default:
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
         }
     }
 }
 
-DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledThenIsLockableIsSet) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
+DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledThenIsLockableIsSet) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
     AllocationData allocData{};
     allocData.flags.useSystemMemory = true;
     AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
     allocData.storageInfo.isLockable = false;
     allocProperties.flags.shareable = false;
-    hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
     EXPECT_TRUE(allocData.storageInfo.isLockable);
 }
 
-DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledWithShareableSetThenIsLockableIsFalse) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
+DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledWithShareableSetThenIsLockableIsFalse) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
     AllocationData allocData{};
     allocData.flags.useSystemMemory = true;
     AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
     allocData.storageInfo.isLockable = false;
     allocProperties.flags.shareable = true;
-    hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
     EXPECT_FALSE(allocData.storageInfo.isLockable);
 }

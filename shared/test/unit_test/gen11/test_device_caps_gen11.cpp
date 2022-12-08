@@ -42,17 +42,17 @@ GEN11TEST_F(Gen11DeviceCaps, WhenCheckingCompressionThenItIsDisabled) {
 
 GEN11TEST_F(Gen11DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &coreHelper = getHelper<CoreHelper>();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice * 8;
 
-    EXPECT_EQ(expectedValue, coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(expectedValue, gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }
 
 GEN11TEST_F(Gen11DeviceCaps, givenHwInfoWhenRequestedMaxFrontEndThreadsThenReturnValidValue) {
     const auto &hwInfo = pDevice->getHardwareInfo();
 
-    EXPECT_EQ(HwHelper::getMaxThreadsForVfe(hwInfo), pDevice->getDeviceInfo().maxFrontEndThreads);
+    EXPECT_EQ(GfxCoreHelper::getMaxThreadsForVfe(hwInfo), pDevice->getDeviceInfo().maxFrontEndThreads);
 }
 
 GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckSupportCacheFlushAfterWalkerThenFalse) {

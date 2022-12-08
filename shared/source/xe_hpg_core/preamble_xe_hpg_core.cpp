@@ -30,8 +30,8 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
         command->setSingleSliceDispatchCcsMode(DebugManager.flags.CFESingleSliceDispatchCCSMode.get());
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo, streamProperties.frontEndState.disableEUFusion.value == 1)) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (!gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, streamProperties.frontEndState.disableEUFusion.value == 1)) {
         command->setFusedEuDispatch(true);
     }
 

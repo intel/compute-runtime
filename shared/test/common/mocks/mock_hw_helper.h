@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-class MockHwHelperWithFenceAllocation : public HwHelperHw<GfxFamily> {
+class MockGfxCoreHelperWithFenceAllocation : public GfxCoreHelperHw<GfxFamily> {
   public:
     bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override {
         return true;
@@ -20,7 +20,7 @@ class MockHwHelperWithFenceAllocation : public HwHelperHw<GfxFamily> {
 };
 
 template <typename GfxFamily>
-class MockHwHelperWithLocalMemory : public HwHelperHw<GfxFamily> {
+class MockGfxCoreHelperWithLocalMemory : public GfxCoreHelperHw<GfxFamily> {
   public:
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override {
         return true;

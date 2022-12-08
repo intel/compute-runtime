@@ -24,7 +24,7 @@ using namespace NEO;
 
 using ThreadArbitrationXeHPAndLater = PreambleFixture;
 HWTEST2_F(ThreadArbitrationXeHPAndLater, whenGetDefaultThreadArbitrationPolicyIsCalledThenCorrectPolicyIsReturned, IsXeHpOrXeHpgCore) {
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
 using ProgramPipelineXeHPAndLater = PreambleFixture;
@@ -137,7 +137,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenScratchEnabledWh
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
-    uint32_t expectedMaxThreads = HwHelper::getMaxThreadsForVfe(*defaultHwInfo);
+    uint32_t expectedMaxThreads = GfxCoreHelper::getMaxThreadsForVfe(*defaultHwInfo);
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, expectedAddress, expectedMaxThreads, emptyProperties, nullptr);
@@ -171,7 +171,7 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeState
     uint32_t overDispatchControl = static_cast<uint32_t>(cfeState->getOverDispatchControl());
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
-    uint32_t expectedMaxThreads = HwHelper::getMaxThreadsForVfe(*defaultHwInfo);
+    uint32_t expectedMaxThreads = GfxCoreHelper::getMaxThreadsForVfe(*defaultHwInfo);
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, expectedAddress, expectedMaxThreads, emptyProperties, nullptr);

@@ -57,7 +57,7 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, ());
     // Runtime internal methods
     ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());
-    ADDMETHOD_NOBASE_REFRETURN(getHwHelper, NEO::HwHelper &, ());
+    ADDMETHOD_NOBASE_REFRETURN(getGfxCoreHelper, NEO::GfxCoreHelper &, ());
     ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltinFunctionsLib *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(getMaxNumHwThreads, uint32_t, 16u, ());
     ADDMETHOD_NOBASE(activateMetricGroupsDeferred, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));

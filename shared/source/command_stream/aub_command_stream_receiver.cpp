@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     // Generate the full filename
     const auto &gtSystemInfo = hwInfo.gtSystemInfo;
     std::stringstream strfilename;
-    auto subDevicesCount = HwHelper::getSubDevicesCount(&hwInfo);
+    auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     uint32_t subSlicesPerSlice = gtSystemInfo.SubSliceCount / gtSystemInfo.SliceCount;
     strfilename << hwPrefix << "_";
     if (subDevicesCount > 1) {

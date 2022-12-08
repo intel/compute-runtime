@@ -139,10 +139,10 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
     EXPECT_EQ(cmdContainer.getIddBlock(), nullptr);
     EXPECT_EQ(cmdContainer.getNumIddPerBlock(), defaultNumIddsPerBlock);
 
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     EXPECT_EQ(cmdContainer.getInstructionHeapBaseAddress(),
-              pDevice->getMemoryManager()->getInternalHeapBaseAddress(0, !hwHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())));
+              pDevice->getMemoryManager()->getInternalHeapBaseAddress(0, !gfxCoreHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())));
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenHeapNotRequiredThenHeapIsNotInitialized) {
@@ -721,18 +721,18 @@ TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenIn
     auto device0 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
-    auto &hwHelper0 = HwHelper::get(device0->getHardwareInfo().platform.eRenderCoreFamily);
-    auto &hwHelper1 = HwHelper::get(device1->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper0 = GfxCoreHelper::get(device0->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper1 = GfxCoreHelper::get(device1->getHardwareInfo().platform.eRenderCoreFamily);
 
     CommandContainer cmdContainer0;
     cmdContainer0.initialize(device0.get(), nullptr, true);
-    bool useLocalMemory0 = !hwHelper0.useSystemMemoryPlacementForISA(device0->getHardwareInfo());
+    bool useLocalMemory0 = !gfxCoreHelper0.useSystemMemoryPlacementForISA(device0->getHardwareInfo());
     uint64_t baseAddressHeapDevice0 = device0->getMemoryManager()->getInternalHeapBaseAddress(device0->getRootDeviceIndex(), useLocalMemory0);
     EXPECT_EQ(cmdContainer0.getInstructionHeapBaseAddress(), baseAddressHeapDevice0);
 
     CommandContainer cmdContainer1;
     cmdContainer1.initialize(device1.get(), nullptr, true);
-    bool useLocalMemory1 = !hwHelper1.useSystemMemoryPlacementForISA(device0->getHardwareInfo());
+    bool useLocalMemory1 = !gfxCoreHelper1.useSystemMemoryPlacementForISA(device0->getHardwareInfo());
     uint64_t baseAddressHeapDevice1 = device1->getMemoryManager()->getInternalHeapBaseAddress(device1->getRootDeviceIndex(), useLocalMemory1);
     EXPECT_EQ(cmdContainer1.getInstructionHeapBaseAddress(), baseAddressHeapDevice1);
 }
@@ -836,10 +836,10 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBuf
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto ptr = cmdContainer.getCommandStream()->getSpace(0u);
     cmdContainer.closeAndAllocateNextCommandBuffer();
-    EXPECT_EQ(memcmp(ptr, hwHelper.getBatchBufferEndReference(), hwHelper.getBatchBufferEndSize()), 0);
+    EXPECT_EQ(memcmp(ptr, gfxCoreHelper.getBatchBufferEndReference(), gfxCoreHelper.getBatchBufferEndSize()), 0);
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBufferCalledThenNewCmdBufferAllocationCreated) {

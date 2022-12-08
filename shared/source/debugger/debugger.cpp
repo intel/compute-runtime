@@ -22,9 +22,9 @@ std::unique_ptr<Debugger> Debugger::create(const RootDeviceEnvironment &rootDevi
         sourceLevelDebugger.reset(SourceLevelDebugger::create());
     }
     if (sourceLevelDebugger) {
-        auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
-        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == coreHelper.getSipKernelType(true));
+        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == gfxCoreHelper.getSipKernelType(true));
         sourceLevelDebugger->initialize(localMemorySipAvailable);
 
         if (sourceLevelDebugger->isDebuggerActive()) {

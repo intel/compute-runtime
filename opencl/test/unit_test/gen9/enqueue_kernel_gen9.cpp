@@ -35,7 +35,7 @@ GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKe
 
     auto cmd = findMmioCmd<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), DebugControlReg2::address);
     ASSERT_NE(nullptr, cmd);
-    EXPECT_EQ(DebugControlReg2::getRegData(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy()), cmd->getDataDword());
+    EXPECT_EQ(DebugControlReg2::getRegData(GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy()), cmd->getDataDword());
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), DebugControlReg2::address));
 }
 

@@ -173,13 +173,13 @@ HelperType &RootDeviceEnvironment::getHelper() const {
         auto &hwInfoConfig = *HwInfoConfig::get(this->getHardwareInfo()->platform.eProductFamily);
         return hwInfoConfig;
     } else {
-        static_assert(std::is_same_v<HelperType, CoreHelper>, "Only ProductHelper and CoreHelper are supported");
-        auto &hwHelper = HwHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
-        return hwHelper;
+        static_assert(std::is_same_v<HelperType, GfxCoreHelper>, "Only ProductHelper and GfxCoreHelper are supported");
+        auto &gfxCoreHelper = GfxCoreHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
+        return gfxCoreHelper;
     }
 }
 
 template ProductHelper &RootDeviceEnvironment::getHelper() const;
-template CoreHelper &RootDeviceEnvironment::getHelper() const;
+template GfxCoreHelper &RootDeviceEnvironment::getHelper() const;
 
 } // namespace NEO

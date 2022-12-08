@@ -80,7 +80,7 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
 
 StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     const auto platformName = getFamilyNameWithType(hwInfo);
@@ -114,7 +114,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     StackVec<std::string, 3> resourcesToLookup = {};
     resourcesToLookup.push_back(createBuiltinResourceName(platformName, revisionId, addressingMode, builtinName, extension));
 
-    const bool requiresSpecificResource = (BuiltinCode::ECodeType::Binary == type && hwHelper.isRevisionSpecificBinaryBuiltinRequired());
+    const bool requiresSpecificResource = (BuiltinCode::ECodeType::Binary == type && gfxCoreHelper.isRevisionSpecificBinaryBuiltinRequired());
     if (false == requiresSpecificResource) {
         const auto defaultRevisionId = std::to_string(productHelper.getDefaultRevisionId());
         resourcesToLookup.push_back(createBuiltinResourceName(platformName, defaultRevisionId, addressingMode, builtinName, extension));

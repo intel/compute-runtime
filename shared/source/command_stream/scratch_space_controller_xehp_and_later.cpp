@@ -26,8 +26,8 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
                                                                        ExecutionEnvironment &environment,
                                                                        InternalAllocationStorage &allocationStorage)
     : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
-    auto &coreHelper = environment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<CoreHelper>();
-    singleSurfaceStateSize = coreHelper.getRenderSurfaceStateSize();
+    auto &gfxCoreHelper = environment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
+    singleSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     if (DebugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
         privateScratchSpaceSupported = !!DebugManager.flags.EnablePrivateScratchSlot1.get();
     }
@@ -81,14 +81,14 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceState() {
 }
 
 void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) {
-    auto &coreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<CoreHelper>();
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     uint64_t scratchAllocationAddress = 0u;
     if (scratchAllocation) {
         scratchAllocationAddress = scratchAllocation->getGpuAddress();
     }
-    coreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                                       surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
-                                                       perThreadScratchSize, nullptr, false, scratchType, false, true);
+    gfxCoreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
+                                                          surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
+                                                          perThreadScratchSize, nullptr, false, scratchType, false, true);
 
     if (privateScratchSpaceSupported) {
         void *surfaceStateForPrivateScratchAllocation = ptrOffset(surfaceStateForScratchAllocation, singleSurfaceStateSize);
@@ -97,10 +97,10 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceS
         if (privateScratchAllocation) {
             privateScratchAllocationAddress = privateScratchAllocation->getGpuAddress();
         }
-        coreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                                           surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
-                                                           privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
-                                                           scratchType, false, true);
+        gfxCoreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
+                                                              surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
+                                                              privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
+                                                              scratchType, false, true);
     }
 }
 

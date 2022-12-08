@@ -65,7 +65,7 @@ void ClDevice::setupFp64Flags() {
 void ClDevice::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
     auto &productHelper = getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto &coreHelper = getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &gfxCoreHelper = getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
@@ -136,7 +136,7 @@ void ClDevice::initializeCaps() {
 
         auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
                                 ? CommonConstants::maximalSimdSize
-                                : coreHelper.getMinimalSIMDSize();
+                                : gfxCoreHelper.getMinimalSIMDSize();
 
         // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
         deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
@@ -223,7 +223,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_pci_bus_info ";
     }
 
-    deviceExtensions += coreHelper.getExtensions(hwInfo);
+    deviceExtensions += gfxCoreHelper.getExtensions(hwInfo);
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     std::vector<std::string> exposedBuiltinKernelsVector;
@@ -247,7 +247,7 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.deviceType = CL_DEVICE_TYPE_GPU;
     deviceInfo.endianLittle = 1;
-    deviceInfo.hostUnifiedMemory = (false == coreHelper.isLocalMemoryEnabled(hwInfo));
+    deviceInfo.hostUnifiedMemory = (false == gfxCoreHelper.isLocalMemoryEnabled(hwInfo));
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
     deviceInfo.parentDevice = nullptr;
@@ -321,11 +321,11 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.localMemType = CL_LOCAL;
 
-    deviceInfo.image3DMaxWidth = coreHelper.getMax3dImageWidthOrHeight();
-    deviceInfo.image3DMaxHeight = coreHelper.getMax3dImageWidthOrHeight();
+    deviceInfo.image3DMaxWidth = gfxCoreHelper.getMax3dImageWidthOrHeight();
+    deviceInfo.image3DMaxHeight = gfxCoreHelper.getMax3dImageWidthOrHeight();
 
     // cl_khr_image2d_from_buffer
-    deviceInfo.imagePitchAlignment = coreHelper.getPitchAlignmentForImage(this->getRootDeviceEnvironment());
+    deviceInfo.imagePitchAlignment = gfxCoreHelper.getPitchAlignmentForImage(this->getRootDeviceEnvironment());
     deviceInfo.imageBaseAddressAlignment = 4;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
@@ -388,7 +388,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.globalVariablePreferredTotalSize = ocl21FeaturesEnabled ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;
 
     deviceInfo.planarYuvMaxWidth = 16384;
-    deviceInfo.planarYuvMaxHeight = coreHelper.getPlanarYuvMaxHeight();
+    deviceInfo.planarYuvMaxHeight = gfxCoreHelper.getPlanarYuvMaxHeight();
 
     deviceInfo.vmeAvcSupportsTextureSampler = hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler;
     if (hwInfo.capabilityTable.supportsVme) {
@@ -403,7 +403,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    deviceInfo.preferredWorkGroupSizeMultiple = coreHelper.isFusedEuDispatchEnabled(hwInfo, false)
+    deviceInfo.preferredWorkGroupSizeMultiple = gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, false)
                                                     ? CommonConstants::maximalSimdSize * 2
                                                     : CommonConstants::maximalSimdSize;
 

@@ -44,7 +44,7 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIs
     ASSERT_NE(nullptr, systemRoutine);
 
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
-    auto isHexadecimalArrayPreferred = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+    auto isHexadecimalArrayPreferred = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
 
     auto expectedSipAllocation = isHexadecimalArrayPreferred
                                      ? NEO::MockSipData::mockSipKernel->getSipAllocation()
@@ -126,7 +126,7 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandL
     EXPECT_EQ(0u, debugModeRegisterCount);
     EXPECT_EQ(0u, tdDebugControlRegisterCount);
 
-    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipWANeeded(hwInfo)) {
+    if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSipWANeeded(hwInfo)) {
         auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
         ASSERT_EQ(1u, stateSipCmds.size());
 

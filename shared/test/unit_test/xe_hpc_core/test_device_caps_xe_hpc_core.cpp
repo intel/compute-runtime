@@ -38,9 +38,9 @@ XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenRetur
 }
 
 XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
-    const auto &coreHelper = getHelper<CoreHelper>();
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    const auto deviceSubgroups = coreHelper.getDeviceSubGroupSizes();
+    const auto deviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
 
     EXPECT_EQ(2u, deviceSubgroups.size());
     EXPECT_EQ(16u, deviceSubgroups[0]);

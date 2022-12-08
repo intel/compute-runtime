@@ -162,7 +162,7 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
 
     auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     uint32_t maxPacketCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
@@ -170,7 +170,7 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
     }
     uint32_t packetsSize = maxPacketCount *
                            static_cast<uint32_t>(NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize());
-    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, hwHelper.getTimestampPacketAllocatorAlignment()));
+    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
 
@@ -1522,8 +1522,8 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenOverflowingTimeStampDataOnTwoKer
     ze_kernel_timestamp_result_t results;
     event->queryKernelTimestamp(&results);
 
-    auto &hwHelper = HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-    if (hwHelper.useOnlyGlobalTimestamps() == false) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    if (gfxCoreHelper.useOnlyGlobalTimestamps() == false) {
         EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue - 2), results.context.kernelStart);
         EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue + 2), results.context.kernelEnd);
     }
@@ -2006,7 +2006,7 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto &hwHelper = device->getHwHelper();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &hwInfo = device->getHwInfo();
 
     auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -2016,7 +2016,7 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
         packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
 
-    auto expectedAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
+    auto expectedAlignment = static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment());
     auto singlePacketSize = TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
     auto expectedSize = static_cast<uint32_t>(alignUp(packetCount * singlePacketSize, expectedAlignment));
 
@@ -2041,9 +2041,9 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
 }
 
 HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
-    auto &hwHelper = device->getHwHelper();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &hwInfo = device->getHwInfo();
-    auto expectedAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
+    auto expectedAlignment = static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment());
 
     auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
@@ -2428,7 +2428,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
     void testAllDevices() {
         auto &hwInfo = device->getHwInfo();
         auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         ze_event_pool_desc_t eventPoolDesc = {
             ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -2449,7 +2449,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
 
         auto eventSize = eventPool->getEventSize();
-        auto expectedEventSize = static_cast<uint32_t>(alignUp(expectedPoolMaxPackets * hwHelper.getSingleTimestampPacketSize(), hwHelper.getTimestampPacketAllocatorAlignment()));
+        auto expectedEventSize = static_cast<uint32_t>(alignUp(expectedPoolMaxPackets * gfxCoreHelper.getSingleTimestampPacketSize(), gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
         EXPECT_EQ(expectedEventSize, eventSize);
 
         ze_event_desc_t eventDesc = {
@@ -2472,7 +2472,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         auto &hwInfo = device->getHwInfo();
         auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         ze_event_pool_desc_t eventPoolDesc = {
             ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -2504,7 +2504,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
 
         auto eventSize = eventPool->getEventSize();
-        auto expectedEventSize = static_cast<uint32_t>(alignUp(expectedPoolMaxPackets * hwHelper.getSingleTimestampPacketSize(), hwHelper.getTimestampPacketAllocatorAlignment()));
+        auto expectedEventSize = static_cast<uint32_t>(alignUp(expectedPoolMaxPackets * gfxCoreHelper.getSingleTimestampPacketSize(), gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
         EXPECT_EQ(expectedEventSize, eventSize);
 
         ze_event_desc_t eventDesc = {

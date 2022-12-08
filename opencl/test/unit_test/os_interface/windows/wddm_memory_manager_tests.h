@@ -67,7 +67,7 @@ class MockWddmMemoryManagerFixture {
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         osContext->ensureContextInitialized();
 
@@ -120,7 +120,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         ASSERT_NE(nullptr, memoryManager);
         csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       preemptionMode));
         osContext->incRefInternal();
     }

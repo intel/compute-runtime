@@ -159,7 +159,7 @@ GEN11TEST_F(ThreadArbitrationGen11, whenThreadArbitrationPolicyIsProgrammedThenC
 }
 
 GEN11TEST_F(ThreadArbitrationGen11, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, HwHelperHw<Gen11Family>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, GfxCoreHelperHw<Gen11Family>::get().getDefaultThreadArbitrationPolicy());
 }
 
 GEN11TEST_F(ThreadArbitrationGen11, whenGetSupportThreadArbitrationPoliciesIsCalledThenAllPoliciesAreReturned) {

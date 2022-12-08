@@ -179,7 +179,7 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDev
 
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
 
-    if (HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
+    if (GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
         EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
     } else {
         EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
@@ -198,7 +198,7 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDev
 
     const auto deviceFactory = createDevices(pciBusInfo, 2);
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
-    if (HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
+    if (GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
         EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
     } else {
         EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));

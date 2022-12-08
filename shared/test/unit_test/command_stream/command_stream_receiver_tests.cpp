@@ -698,11 +698,11 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckTaskCou
 
 HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckIfEnabledThenCanBeEnabledOnlyWithDirectSubmission) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto &hwHelper = HwHelper::get(csr.peekHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(csr.peekHwInfo().platform.eRenderCoreFamily);
 
     {
         csr.directSubmissionAvailable = true;
-        EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), hwHelper.isUpdateTaskCountFromWaitSupported());
+        EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), gfxCoreHelper.isUpdateTaskCountFromWaitSupported());
     }
 
     {
@@ -719,11 +719,11 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDevic
     SetUp();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    auto &hwHelper = HwHelper::get(csr.peekHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(csr.peekHwInfo().platform.eRenderCoreFamily);
 
     {
         csr.directSubmissionAvailable = true;
-        EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), hwHelper.isUpdateTaskCountFromWaitSupported());
+        EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), gfxCoreHelper.isUpdateTaskCountFromWaitSupported());
     }
 
     {

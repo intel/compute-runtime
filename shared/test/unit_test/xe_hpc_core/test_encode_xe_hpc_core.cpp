@@ -541,8 +541,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
     hwInfo.gtSystemInfo.DualSubSliceCount = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported;
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    const uint32_t threadGroupCount = hwHelper.calculateAvailableThreadCount(hwInfo, numGrf) / 32u;
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf) / 32u;
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(64u);
 
     EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf);
@@ -585,9 +585,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDifferentNumGrfWhenCallingAdju
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     const uint32_t numberOfThreadsInThreadGroup = 1u;
-    const uint32_t threadGroupCount = hwHelper.calculateAvailableThreadCount(hwInfo, GrfConfig::DefaultGrfNumber);
+    const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, GrfConfig::DefaultGrfNumber);
 
     {
         const uint32_t numGrf = GrfConfig::DefaultGrfNumber;

@@ -657,7 +657,7 @@ struct WddmContextSchedulingPriorityTests : public Wddm20WithMockGdiDllTestsWith
         wddm->wddmInterface.reset(wddmMockInterface);
 
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        auto engine = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
 
         auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode);
         engineDescriptor.engineTypeUsage.second = lowPriority ? EngineUsage::LowPriority : EngineUsage::Regular;
@@ -723,7 +723,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenEngineTypeWhenCreatingContextThenPassCorrectNodeOrdinal) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();
-    UINT expected = WddmEngineMapper::engineNodeMap(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first);
+    UINT expected = WddmEngineMapper::engineNodeMap(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first);
     EXPECT_EQ(expected, createContextParams->NodeOrdinal);
 }
 

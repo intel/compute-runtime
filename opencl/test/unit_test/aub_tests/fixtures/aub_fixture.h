@@ -57,13 +57,13 @@ class AUBFixture : public CommandQueueHwFixture {
     void setUp(const HardwareInfo *hardwareInfo) {
         const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *defaultHwInfo;
 
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto engineType = getChosenEngineType(hwInfo);
 
         const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
         std::stringstream strfilename;
         strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
-        strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
+        strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
 
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1u);

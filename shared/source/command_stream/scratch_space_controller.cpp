@@ -19,8 +19,8 @@ ScratchSpaceController::ScratchSpaceController(uint32_t rootDeviceIndex, Executi
     : rootDeviceIndex(rootDeviceIndex), executionEnvironment(environment), csrAllocationStorage(allocationStorage) {
 
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
-    auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
-    computeUnitsUsedForScratch = coreHelper.getComputeUnitsUsedForScratch(rootDeviceEnvironment);
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    computeUnitsUsedForScratch = gfxCoreHelper.getComputeUnitsUsedForScratch(rootDeviceEnvironment);
 }
 
 ScratchSpaceController::~ScratchSpaceController() {

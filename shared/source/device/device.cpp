@@ -77,7 +77,7 @@ SubDevice *Device::createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_s
 
 bool Device::genericSubDevicesAllowed() {
     auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask.getGenericSubDevicesMask();
-    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+    uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
     deviceBitfield = maxNBitValue(subDeviceCount);
     deviceBitfield &= deviceMask;
     numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
@@ -92,7 +92,7 @@ bool Device::engineInstancedSubDevicesAllowed() {
     bool notAllowed = !DebugManager.flags.EngineInstancedSubDevices.get();
     notAllowed |= engineInstanced;
     notAllowed |= (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2);
-    notAllowed |= ((HwHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
+    notAllowed |= ((GfxCoreHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
 
     if (notAllowed) {
         return false;
@@ -140,7 +140,7 @@ bool Device::createEngineInstancedSubDevices() {
 
 bool Device::createGenericSubDevices() {
     UNRECOVERABLE_IF(!subdevices.empty());
-    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+    uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
 
     subdevices.resize(subDeviceCount, nullptr);
 
@@ -214,8 +214,8 @@ bool Device::createDeviceImpl() {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (getDebugger() && hwHelper.disableL3CacheForDebug(hwInfo)) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (getDebugger() && gfxCoreHelper.disableL3CacheForDebug(hwInfo)) {
         getGmmHelper()->forceAllResourcesUncached();
     }
 
@@ -269,7 +269,7 @@ bool Device::createDeviceImpl() {
         uuid.isValid = false;
 
         if (DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
-            if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
+            if (GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
                 uuid.isValid = HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
             }
         }
@@ -289,7 +289,7 @@ bool Device::createEngines() {
     }
 
     auto &hwInfo = getHardwareInfo();
-    auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    auto gpgpuEngines = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
     uint32_t deviceCsrIndex = 0;
     for (auto &engine : gpgpuEngines) {
@@ -302,10 +302,10 @@ bool Device::createEngines() {
 
 void Device::addEngineToEngineGroup(EngineControl &engine) {
     const HardwareInfo &hardwareInfo = this->getHardwareInfo();
-    const HwHelper &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hardwareInfo);
+    const GfxCoreHelper &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hardwareInfo);
 
-    if (!hwHelper.isSubDeviceEngineSupported(hardwareInfo, getDeviceBitfield(), engine.getEngineType())) {
+    if (!gfxCoreHelper.isSubDeviceEngineSupported(hardwareInfo, getDeviceBitfield(), engine.getEngineType())) {
         return;
     }
 
@@ -591,8 +591,8 @@ EngineControl &Device::getNextEngineForCommandQueue() {
     const auto &defaultEngine = this->getDefaultEngine();
 
     const auto &hardwareInfo = this->getHardwareInfo();
-    const auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
+    const auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
 
     const auto defaultEngineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
     auto &engineGroup = this->getRegularEngineGroups()[defaultEngineGroupIndex];
@@ -757,7 +757,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
 
     bool allocFailed = false;
 
-    const auto deviceCount = HwHelper::getSubDevicesCount(executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getHardwareInfo());
+    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getHardwareInfo());
     auto dispatchGlobalsSize = deviceCount * dispatchGlobalsStride;
     auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, deviceCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
 

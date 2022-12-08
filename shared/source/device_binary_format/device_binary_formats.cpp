@@ -30,7 +30,7 @@ TargetDevice targetDeviceFromHwInfo(const HardwareInfo &hwInfo) {
     targetDevice.stepping = hwInfo.platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;
-    targetDevice.minScratchSpaceSize = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getMinimalScratchSpaceSize();
+    targetDevice.minScratchSpaceSize = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getMinimalScratchSpaceSize();
     return targetDevice;
 }
 } // namespace NEO

@@ -70,8 +70,8 @@ void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableE
         minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);
     }
 
-    const auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    if (hwHelper.isFusedEuDispatchEnabled(*hwInfo, disableEUFusion)) {
+    const auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
+    if (gfxCoreHelper.isFusedEuDispatchEnabled(*hwInfo, disableEUFusion)) {
         minWorkGroupSize *= 2;
     }
 }
@@ -96,7 +96,7 @@ size_t KernelInfo::getSamplerStateArrayCount() const {
     return kernelDescriptor.payloadMappings.samplerTable.numSamplers;
 }
 size_t KernelInfo::getSamplerStateArraySize(const HardwareInfo &hwInfo) const {
-    size_t samplerStateArraySize = getSamplerStateArrayCount() * HwHelper::get(hwInfo.platform.eRenderCoreFamily).getSamplerStateSize();
+    size_t samplerStateArraySize = getSamplerStateArrayCount() * GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getSamplerStateSize();
     return samplerStateArraySize;
 }
 

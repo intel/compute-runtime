@@ -10,23 +10,23 @@
 #include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
-extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE];
 
 template <class MockHelper>
-class RAIIHwHelperFactory {
+class RAIIGfxCoreHelperFactory {
   public:
     GFXCORE_FAMILY gfxCoreFamily;
-    HwHelper *hwHelper;
-    MockHelper mockHwHelper;
+    GfxCoreHelper *gfxCoreHelper;
+    MockHelper mockGfxCoreHelper;
 
-    RAIIHwHelperFactory(GFXCORE_FAMILY gfxCoreFamily) {
+    RAIIGfxCoreHelperFactory(GFXCORE_FAMILY gfxCoreFamily) {
         this->gfxCoreFamily = gfxCoreFamily;
-        hwHelper = hwHelperFactory[this->gfxCoreFamily];
-        hwHelperFactory[this->gfxCoreFamily] = &mockHwHelper;
+        gfxCoreHelper = gfxCoreHelperFactory[this->gfxCoreFamily];
+        gfxCoreHelperFactory[this->gfxCoreFamily] = &mockGfxCoreHelper;
     }
 
-    ~RAIIHwHelperFactory() {
-        hwHelperFactory[this->gfxCoreFamily] = hwHelper;
+    ~RAIIGfxCoreHelperFactory() {
+        gfxCoreHelperFactory[this->gfxCoreFamily] = gfxCoreHelper;
     }
 };
 } // namespace NEO

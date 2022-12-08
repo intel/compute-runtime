@@ -11,26 +11,26 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 
-using HwHelperTestGen11 = HwHelperTest;
+using GfxCoreHelperTestGen11 = GfxCoreHelperTest;
 
-GEN11TEST_F(HwHelperTestGen11, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
-    auto &helper = getHelper<CoreHelper>();
+GEN11TEST_F(GfxCoreHelperTestGen11, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
+    auto &helper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN11TEST_F(HwHelperTestGen11, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
-    auto &coreHelper = getHelper<CoreHelper>();
-    EXPECT_EQ(4u, coreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
+GEN11TEST_F(GfxCoreHelperTestGen11, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(4u, gfxCoreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
 }
 
-GEN11TEST_F(HwHelperTestGen11, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
+GEN11TEST_F(GfxCoreHelperTestGen11, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
-    auto &coreHelper = getHelper<CoreHelper>();
-    coreHelper.adjustDefaultEngineType(&hardwareInfo);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN11TEST_F(HwHelperTestGen11, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
+GEN11TEST_F(GfxCoreHelperTestGen11, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->allEngines.size());
 }
@@ -48,6 +48,6 @@ GEN11TEST_F(MemorySynchronizatiopCommandsTestsGen11, WhenProgrammingCacheFlushTh
 }
 
 GEN11TEST_F(MemorySynchronizatiopCommandsTestsGen11, givenGen11WhenCallIsPackedSupportedThenReturnTrue) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &helper = GfxCoreHelper::get(renderCoreFamily);
     EXPECT_TRUE(helper.packedFormatsSupported());
 }

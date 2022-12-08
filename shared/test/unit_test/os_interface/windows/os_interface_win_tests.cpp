@@ -33,7 +33,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     wddm->init();
     EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
     auto osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
-                                                    EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0], preemptionMode));
+                                                    EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0], preemptionMode));
     osContext->ensureContextInitialized();
     EXPECT_EQ(osContext->getWddm(), wddm);
     EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);

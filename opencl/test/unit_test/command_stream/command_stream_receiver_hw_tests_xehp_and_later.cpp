@@ -177,8 +177,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 0x1000;
-    auto &coreHelper = pDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
-    uint32_t computeUnits = coreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment());
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    uint32_t computeUnits = gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment());
     size_t scratchSpaceSize = kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] * computeUnits;
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);

@@ -116,7 +116,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     const auto &caps = device->getDeviceInfo();
     const auto &sharedCaps = device->getSharedDeviceInfo();
     const auto &sysInfo = defaultHwInfo->gtSystemInfo;
-    auto &hwHelper = device->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 
     EXPECT_NE(nullptr, caps.builtInKernels);
 
@@ -189,7 +189,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[0], sharedCaps.maxWorkGroupSize);
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[1], sharedCaps.maxWorkGroupSize);
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[2], sharedCaps.maxWorkGroupSize);
-    EXPECT_EQ(hwHelper.getMaxNumSamplers(), sharedCaps.maxSamplers);
+    EXPECT_EQ(gfxCoreHelper.getMaxNumSamplers(), sharedCaps.maxSamplers);
 
     // Minimum requirements for OpenCL 1.x
     EXPECT_EQ(static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST), CL_FP_ROUND_TO_NEAREST & caps.singleFpConfig);
@@ -213,14 +213,14 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
     EXPECT_EQ(1u, caps.endianLittle);
 
-    auto expectedDeviceSubgroups = hwHelper.getDeviceSubGroupSizes();
+    auto expectedDeviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
     EXPECT_EQ(expectedDeviceSubgroups.size(), sharedCaps.maxSubGroups.size());
 
     for (uint32_t i = 0; i < expectedDeviceSubgroups.size(); i++) {
         EXPECT_EQ(expectedDeviceSubgroups[i], sharedCaps.maxSubGroups[i]);
     }
 
-    auto expectedMaxNumOfSubGroups = device->areOcl21FeaturesEnabled() ? sharedCaps.maxWorkGroupSize / hwHelper.getMinimalSIMDSize() : 0u;
+    auto expectedMaxNumOfSubGroups = device->areOcl21FeaturesEnabled() ? sharedCaps.maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize() : 0u;
     EXPECT_EQ(expectedMaxNumOfSubGroups, caps.maxNumOfSubGroups);
 
     EXPECT_EQ(0u, caps.maxOnDeviceEvents);
@@ -244,7 +244,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(64u, caps.preferredPlatformAtomicAlignment);
     EXPECT_TRUE(caps.nonUniformWorkGroupSupport);
 
-    auto expectedPreferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, false)
+    auto expectedPreferredWorkGroupSizeMultiple = gfxCoreHelper.isFusedEuDispatchEnabled(*defaultHwInfo, false)
                                                       ? CommonConstants::maximalSimdSize * 2
                                                       : CommonConstants::maximalSimdSize;
     EXPECT_EQ(expectedPreferredWorkGroupSizeMultiple, caps.preferredWorkGroupSizeMultiple);
@@ -260,9 +260,9 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
 
-    auto deviceSubgroups = hwHelper.getDeviceSubGroupSizes();
+    auto deviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
 
     EXPECT_EQ(3u, deviceSubgroups.size());
     EXPECT_EQ(8u, deviceSubgroups[0]);
@@ -443,7 +443,7 @@ HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSuppo
     const auto &caps = device->getSharedDeviceInfo();
 
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
-    expectedSize = std::min(expectedSize, HwHelperHw<FamilyType>::get().getMaxMemAllocSize());
+    expectedSize = std::min(expectedSize, GfxCoreHelperHw<FamilyType>::get().getMaxMemAllocSize());
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }
 
@@ -945,8 +945,8 @@ TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDevi
 TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDependsOnLocalMemory) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
-    auto &coreHelper = device->getRootDeviceEnvironment().getHelper<CoreHelper>();
-    auto localMemoryEnabled = coreHelper.isLocalMemoryEnabled(*defaultHwInfo);
+    auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto localMemoryEnabled = gfxCoreHelper.isLocalMemoryEnabled(*defaultHwInfo);
 
     EXPECT_EQ((localMemoryEnabled == false), caps.hostUnifiedMemory);
 }
@@ -1058,7 +1058,7 @@ HWTEST_F(DeviceGetCapsTest, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThe
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
     auto &deviceInfo = device->deviceInfo;
 
-    auto simdSizeUsed = HwHelperHw<FamilyType>::get().getMinimalSIMDSize();
+    auto simdSizeUsed = GfxCoreHelperHw<FamilyType>::get().getMinimalSIMDSize();
 
     auto hwInfoConfig = HwInfoConfig::get(myHwInfo.platform.eProductFamily);
     auto expectedMaxWGS = hwInfoConfig->getMaxThreadsForWorkgroupInDSSOrSS(myHwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice),
@@ -1110,15 +1110,15 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxW
 
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
-    auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(myHwInfo.platform.eRenderCoreFamily);
 
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
-    mySysInfo.ThreadCount = 32 * hwHelper.getMinimalSIMDSize(); // 128 threads per subslice, in simd 8 gives 1024
+    mySysInfo.ThreadCount = 32 * gfxCoreHelper.getMinimalSIMDSize(); // 128 threads per subslice, in simd 8 gives 1024
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(1024u, device->getSharedDeviceInfo().maxWorkGroupSize);
-    EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / hwHelper.getMinimalSIMDSize(), device->getDeviceInfo().maxNumOfSubGroups);
+    EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize(), device->getDeviceInfo().maxNumOfSubGroups);
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThenReturnValuesFromDriverInfo) {
@@ -1196,7 +1196,7 @@ TEST_F(DeviceGetCapsTest, givenPciBusInfoThenPciBusInfoExtensionAvailable) {
 static bool getPlanarYuvHeightCalled = false;
 
 template <typename GfxFamily>
-class MyMockHwHelper : public HwHelperHw<GfxFamily> {
+class MyMockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
   public:
     uint32_t getPlanarYuvMaxHeight() const override {
         getPlanarYuvHeightCalled = true;
@@ -1207,7 +1207,7 @@ class MyMockHwHelper : public HwHelperHw<GfxFamily> {
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIsTakenFromHelper) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    RAIIHwHelperFactory<MyMockHwHelper<FamilyType>> hwHelperBackup{device->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MyMockGfxCoreHelper<FamilyType>> gfxCoreHelperBackup{device->getHardwareInfo().platform.eRenderCoreFamily};
 
     DriverInfoMock *driverInfoMock = new DriverInfoMock();
     device->driverInfo.reset(driverInfoMock);
@@ -1215,7 +1215,7 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIs
     EXPECT_TRUE(getPlanarYuvHeightCalled);
     getPlanarYuvHeightCalled = false;
     const auto &caps = device->getDeviceInfo();
-    EXPECT_EQ(hwHelperBackup.mockHwHelper.dummyPlanarYuvValue, caps.planarYuvMaxHeight);
+    EXPECT_EQ(gfxCoreHelperBackup.mockGfxCoreHelper.dummyPlanarYuvValue, caps.planarYuvMaxHeight);
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenReturnDefaultValues) {
@@ -1424,7 +1424,7 @@ TEST(Device_UseCaps, givenOverrideSlmSizeWhenWhenInitializeDeviceThenSlmSizeInDe
     EXPECT_EQ(newSlmSize, static_cast<uint32_t>(deviceInfoWithForceSlmFlag.localMemSize / KB));
 }
 
-typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
+typedef GfxCoreHelperTest DeviceCapsWithModifiedHwInfoTest;
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
 
@@ -1511,8 +1511,8 @@ HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIs
     mySysInfo.ThreadCount = 16 * 8;
     myPlatform.usRevId = 0x4;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
-    auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);
-    auto minSimd = hwHelper.getMinimalSIMDSize();
+    auto &gfxCoreHelper = GfxCoreHelper::get(myHwInfo.platform.eRenderCoreFamily);
+    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
 
     size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.SubSliceCount) * minSimd;
 
@@ -1531,8 +1531,8 @@ HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIs
     mySysInfo.ThreadCount = 16 * 8;
     myPlatform.usRevId = 0x4;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
-    auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);
-    auto minSimd = hwHelper.getMinimalSIMDSize();
+    auto &gfxCoreHelper = GfxCoreHelper::get(myHwInfo.platform.eRenderCoreFamily);
+    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
 
     size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.DualSubSliceCount) * minSimd;
     EXPECT_EQ(expectedWGSize, device->sharedDeviceInfo.maxWorkGroupSize);

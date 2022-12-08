@@ -55,10 +55,10 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         localHwInfo.capabilityTable.blitterOperationsSupported = !!DebugManager.flags.EnableBlitterOperationsSupport.get();
     }
 
-    auto &hwHelper = HwHelper::get(localHwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(localHwInfo.platform.eRenderCoreFamily);
     auto engineType = getChosenEngineType(localHwInfo);
     auto renderEngine = aub_stream::NUM_ENGINES;
-    for (auto &engine : hwHelper.getGpgpuEngineInstances(localHwInfo)) {
+    for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(localHwInfo)) {
         if (!EngineHelpers::isCcs(engine.first)) {
             renderEngine = engine.first;
             break;
@@ -66,7 +66,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
     ASSERT_NE(aub_stream::NUM_ENGINES, renderEngine);
 
-    auto renderEngineName = hwHelper.getCsTraits(renderEngine).name;
+    auto renderEngineName = gfxCoreHelper.getCsTraits(renderEngine).name;
 
     std::stringstream strfilename;
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();

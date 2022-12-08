@@ -122,7 +122,7 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
 
     void SetUp() override {
         std::tie(KernelFixture::simd, param) = GetParam();
-        if (KernelFixture::simd < HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
+        if (KernelFixture::simd < GfxCoreHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
         ParentClass::setUp();
@@ -313,7 +313,7 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFa
 
     void SetUp() override {
         std::tie(simd, param) = GetParam();
-        if (simd < HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
+        if (simd < GfxCoreHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
         ParentClass::setUp();

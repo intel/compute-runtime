@@ -32,10 +32,10 @@ class OSTime;
 class SipKernel;
 class SWTagsManager;
 class HwInfoConfig;
-class HwHelper;
+class GfxCoreHelper;
 struct HardwareInfo;
 
-using CoreHelper = HwHelper;
+using GfxCoreHelper = GfxCoreHelper;
 using ProductHelper = HwInfoConfig;
 
 struct RootDeviceEnvironment {

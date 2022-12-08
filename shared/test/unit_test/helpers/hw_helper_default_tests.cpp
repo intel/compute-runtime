@@ -10,14 +10,14 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenAskedForHvAlign4RequiredThenReturnTrue) {
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_TRUE(hwHelper.hvAlign4Required());
+HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenAskedForHvAlign4RequiredThenReturnTrue) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    EXPECT_TRUE(gfxCoreHelper.hvAlign4Required());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingBindlessSurfaceExtendedMessageDescriptorValueThenCorrectValueIsReturned) {
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    auto value = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(0x200);
+HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingBindlessSurfaceExtendedMessageDescriptorValueThenCorrectValueIsReturned) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto value = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(0x200);
 
     typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor messageExtDescriptor = {};
     messageExtDescriptor.setBindlessSurfaceOffset(0x200);

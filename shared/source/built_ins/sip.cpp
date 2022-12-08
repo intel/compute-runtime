@@ -73,8 +73,8 @@ const std::vector<char> &SipKernel::getStateSaveAreaHeader() const {
 
 size_t SipKernel::getStateSaveAreaSize(Device *device) const {
     auto &hwInfo = device->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     const auto &stateSaveAreaHeader = getStateSaveAreaHeader();
     if (stateSaveAreaHeader.empty()) {
         return maxDbgSurfaceSize;
@@ -105,8 +105,8 @@ SipKernelType SipKernel::getSipKernelType(Device &device) {
 }
 
 SipKernelType SipKernel::getSipKernelType(Device &device, bool debuggingEnabled) {
-    auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
-    return hwHelper.getSipKernelType(debuggingEnabled);
+    auto &gfxCoreHelper = GfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+    return gfxCoreHelper.getSipKernelType(debuggingEnabled);
 }
 
 bool SipKernel::initBuiltinsSipKernel(SipKernelType type, Device &device) {
@@ -191,9 +191,9 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     uint32_t *sipKernelBinary = nullptr;
     size_t kernelBinarySize = 0u;
     auto &hwInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    hwHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
+    gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
     const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
     AllocationProperties properties = {rootDeviceIndex, kernelBinarySize, allocType, device.getDeviceBitfield()};
     properties.flags.use32BitFrontWindow = false;
@@ -225,7 +225,7 @@ void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, Mem
 void SipKernel::selectSipClassType(std::string &fileName, const HardwareInfo &hwInfo) {
     const std::string unknown("unk");
     if (fileName.compare(unknown) == 0) {
-        SipKernel::classType = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred()
+        SipKernel::classType = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred()
                                    ? SipClassType::HexadecimalHeaderFile
                                    : SipClassType::Builtins;
     } else {

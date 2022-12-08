@@ -6044,10 +6044,10 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
 
         auto &hardwareInfo = device.getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-        auto engineGroupType = hwHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
-                                                           pCommandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+        auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
+                                                                pCommandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+        if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
             retVal = CL_INVALID_COMMAND_QUEUE;
             return retVal;
         }

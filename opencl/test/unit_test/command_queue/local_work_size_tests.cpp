@@ -32,8 +32,8 @@ TEST(localWorkSizeTest, givenDisableEUFusionWhenCreatingWorkSizeInfoThenCorrectM
                         true                 // disableEUFusion
     );
 
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    bool fusedDispatchEnabled = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    bool fusedDispatchEnabled = gfxCoreHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
     auto wgsMultiple = fusedDispatchEnabled ? 2 : 1;
 
     uint32_t maxBarriersPerHSlice = (defaultHwInfo->platform.eRenderCoreFamily >= IGFX_GEN9_CORE) ? 32 : 16;

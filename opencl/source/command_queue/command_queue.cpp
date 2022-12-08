@@ -84,11 +84,11 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
 
     if (device) {
         auto &hwInfo = device->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
         bcsAllowed = hwInfoConfig->isBlitterFullySupported(hwInfo) &&
-                     hwHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
+                     gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
 
         if (bcsAllowed || device->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
@@ -153,9 +153,9 @@ void CommandQueue::initializeGpgpu() const {
         std::lock_guard<std::mutex> lock(mutex);
         if (gpgpuEngine == nullptr) {
             auto &hwInfo = device->getDevice().getHardwareInfo();
-            auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+            auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-            auto engineRoundRobinAvailable = hwHelper.isAssignEngineRoundRobinSupported(hwInfo) &&
+            auto engineRoundRobinAvailable = gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo) &&
                                              this->isAssignEngineRoundRobinEnabled();
 
             if (DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get() != -1) {
@@ -305,12 +305,12 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
 void CommandQueue::constructBcsEngine(bool internalUsage) {
     if (bcsAllowed && !bcsInitialized) {
         auto &hwInfo = device->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
         auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
         auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
         auto bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
-        auto engineUsage = (internalUsage && hwHelper.preferInternalBcsEngine()) ? EngineUsage::Internal : EngineUsage::Regular;
+        auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::Internal : EngineUsage::Regular;
         bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
         bcsEngineTypes.push_back(bcsEngineType);
         bcsInitialized = true;
@@ -856,8 +856,8 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
         return queueFamilyIndex;
     } else {
         const auto &hwInfo = device->getHardwareInfo();
-        const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        const auto engineGroupType = hwHelper.getEngineGroupType(getGpgpuEngine().getEngineType(), getGpgpuEngine().getEngineUsage(), hwInfo);
+        const auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        const auto engineGroupType = gfxCoreHelper.getEngineGroupType(getGpgpuEngine().getEngineType(), getGpgpuEngine().getEngineUsage(), hwInfo);
         const auto familyIndex = device->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
         return static_cast<cl_uint>(familyIndex);
     }
@@ -1096,9 +1096,9 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                 if (nodeOrdinal != -1) {
                     int currentEngineIndex = 0;
                     const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
-                    const HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+                    const GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-                    auto engineGroupType = hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), EngineUsage::Regular, hwInfo);
+                    auto engineGroupType = gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), EngineUsage::Regular, hwInfo);
                     selectedQueueFamilyIndex = static_cast<cl_uint>(getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType));
                     const auto &engines = getDevice().getRegularEngineGroups()[selectedQueueFamilyIndex].engines;
                     for (const auto &engine : engines) {
@@ -1136,8 +1136,8 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
 
 void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
     const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
-    const HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engineType, engineUsage, hwInfo);
+    const GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo);
     const bool isEngineCopyOnly = EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
     if (isEngineCopyOnly) {
@@ -1184,10 +1184,10 @@ void CommandQueue::assignDataToOverwrittenBcsNode(TagNodeBase *node) {
 }
 
 bool CommandQueue::isWaitForTimestampsEnabled() const {
-    const auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = GfxCoreHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
     auto enabled = CommandQueue::isTimestampWaitEnabled();
-    enabled &= hwHelper.isTimestampWaitSupportedForQueues();
+    enabled &= gfxCoreHelper.isTimestampWaitSupportedForQueues();
     enabled &= !hwInfoConfig.isDcFlushAllowed();
 
     switch (DebugManager.flags.EnableTimestampWaitForQueues.get()) {

@@ -63,10 +63,10 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(Progr
 
     // set barrierCount to number of barriers decoded from hasBarriers token
     UNRECOVERABLE_IF(src.targetDevice.coreFamily == IGFX_UNKNOWN_CORE);
-    auto &hwHelper = NEO::HwHelper::get(src.targetDevice.coreFamily);
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(src.targetDevice.coreFamily);
     for (auto &ki : dst.kernelInfos) {
         auto &kd = ki->kernelDescriptor;
-        kd.kernelAttributes.barrierCount = hwHelper.getBarriersCountFromHasBarriers(kd.kernelAttributes.barrierCount);
+        kd.kernelAttributes.barrierCount = gfxCoreHelper.getBarriersCountFromHasBarriers(kd.kernelAttributes.barrierCount);
     }
 
     return DecodeError::Success;

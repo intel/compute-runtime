@@ -19,25 +19,25 @@
 
 #include "hw_cmds_xe_hpg_core_base.h"
 
-using HwHelperTestXeHpgCore = HwHelperTest;
+using GfxCoreHelperTestXeHpgCore = GfxCoreHelperTest;
 using ProductHelperTestXeHpgCore = Test<DeviceFixture>;
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &coreHelper = getHelper<CoreHelper>();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
     for (size_t size : sizesToCheck) {
-        EXPECT_TRUE(coreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+        EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
     }
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBufferIsSuitableThenReturnCorrectValue) {
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBufferIsSuitableThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
-    auto &coreHelper = getHelper<CoreHelper>();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
 
     for (int32_t debugFlag : {-1, 0, 1}) {
@@ -45,9 +45,9 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBufferIsSui
 
         for (size_t size : sizesToCheck) {
             if (debugFlag == 1) {
-                EXPECT_TRUE(coreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+                EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
             } else {
-                EXPECT_FALSE(coreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+                EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
             }
         }
     }
@@ -95,8 +95,8 @@ XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMm
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
 
     for (int type = 0; type < static_cast<int>(AllocationType::COUNT); type++) {
         AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
@@ -104,7 +104,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDat
         allocData.flags.useSystemMemory = true;
         allocData.flags.requiresCpuAccess = false;
 
-        hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+        gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
 
         if (defaultHwInfo->featureTable.flags.ftrLocalMemory &&
             (allocProperties.allocationType == AllocationType::COMMAND_BUFFER ||
@@ -119,26 +119,26 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDat
     }
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
-    EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().alignSlmSize(0));
-    EXPECT_EQ(1024u, HwHelperHw<FamilyType>::get().alignSlmSize(1));
-    EXPECT_EQ(1024u, HwHelperHw<FamilyType>::get().alignSlmSize(1024));
-    EXPECT_EQ(2048u, HwHelperHw<FamilyType>::get().alignSlmSize(1025));
-    EXPECT_EQ(2048u, HwHelperHw<FamilyType>::get().alignSlmSize(2048));
-    EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(2049));
-    EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(4096));
-    EXPECT_EQ(8192u, HwHelperHw<FamilyType>::get().alignSlmSize(4097));
-    EXPECT_EQ(8192u, HwHelperHw<FamilyType>::get().alignSlmSize(8192));
-    EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(8193));
-    EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(16384));
-    EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(16385));
-    EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(32768));
-    EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(32769));
-    EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(65536));
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
+    EXPECT_EQ(0u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(0));
+    EXPECT_EQ(1024u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1));
+    EXPECT_EQ(1024u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1024));
+    EXPECT_EQ(2048u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1025));
+    EXPECT_EQ(2048u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(2048));
+    EXPECT_EQ(4096u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(2049));
+    EXPECT_EQ(4096u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(4096));
+    EXPECT_EQ(8192u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(4097));
+    EXPECT_EQ(8192u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(8192));
+    EXPECT_EQ(16384u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(8193));
+    EXPECT_EQ(16384u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(16384));
+    EXPECT_EQ(32768u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(16385));
+    EXPECT_EQ(32768u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(32768));
+    EXPECT_EQ(65536u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(32769));
+    EXPECT_EQ(65536u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(65536));
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
-    auto &helper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
+    auto &helper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     EXPECT_NE(nullptr, &helper);
 
     auto &configs = helper.getThreadsPerEUConfigs();
@@ -148,13 +148,13 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenGettingThreadsPerEUCon
     EXPECT_EQ(8U, configs[1]);
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, WhenCheckingSipWAThenFalseIsReturned) {
-    EXPECT_FALSE(HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily).isSipWANeeded(pDevice->getHardwareInfo()));
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, WhenCheckingSipWAThenFalseIsReturned) {
+    EXPECT_FALSE(GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily).isSipWANeeded(pDevice->getHardwareInfo()));
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
+    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    EXPECT_FALSE(gfxCoreHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
 }
 
 XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimestampWaitSupportForEventsThenReturnFalse) {
@@ -162,12 +162,12 @@ XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimesta
     EXPECT_FALSE(helper.isTimestampWaitSupportedForEvents());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenCoreHelperWhenCheckTimestampWaitSupportForQueuesThenReturnFalse) {
-    auto &helper = getHelper<CoreHelper>();
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCheckTimestampWaitSupportForQueuesThenReturnFalse) {
+    auto &helper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(helper.isTimestampWaitSupportedForQueues());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
@@ -184,7 +184,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhe
     EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsDisabledThenReturnFalseAndDoNotProgramPipeControl) {
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsDisabledThenReturnFalseAndDoNotProgramPipeControl) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
@@ -200,12 +200,12 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhe
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenXeHpgCoreWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnTrue) {
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.isEngineTypeRemappingToHwSpecificRequired());
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenXeHpgCoreWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnTrue) {
+    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    EXPECT_FALSE(gfxCoreHelper.isEngineTypeRemappingToHwSpecificRequired());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
                   givenDebugFlagAndLocalMemoryIsNotAvailableWhenProgrammingPostSyncPipeControlThenExpectNotAddingWaPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -242,7 +242,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
                   givenDebugFlagAndLocalMemoryIsAvailableWhenProgrammingPostSyncPipeControlThenExpectAddingWaPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -287,11 +287,11 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isLocalMemoryEnabled(*defaultHwInfo)) {
-        EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
+    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    if (gfxCoreHelper.isLocalMemoryEnabled(*defaultHwInfo)) {
+        EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
     } else {
-        EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+        EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
     }
 }

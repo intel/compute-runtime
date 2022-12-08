@@ -298,8 +298,8 @@ Buffer *Buffer::create(Context *context,
 
         auto hwInfo = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
-        bool compressionEnabled = MemObjHelper::isSuitableForCompression(HwHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
-                                                                         HwHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, *hwInfo));
+        bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
+                                                                         GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, *hwInfo));
 
         allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, *context, compressionEnabled,
                                                                                           memoryManager->isLocalMemorySupported(rootDeviceIndex));
@@ -880,7 +880,7 @@ void Buffer::setSurfaceState(const Device *device,
 }
 
 void Buffer::provideCompressionHint(bool compressionEnabled, Context *context, Buffer *buffer) {
-    if (context->isProvidingPerformanceHints() && HwHelper::compressedBuffersSupported(context->getDevice(0)->getHardwareInfo())) {
+    if (context->isProvidingPerformanceHints() && GfxCoreHelper::compressedBuffersSupported(context->getDevice(0)->getHardwareInfo())) {
         if (compressionEnabled) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, BUFFER_IS_COMPRESSED, buffer);
         } else {

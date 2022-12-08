@@ -68,7 +68,7 @@ TEST(ClHelper, whenCallGetStringWithCmdTypeFunctionThenGetProperCmdTypeAsString)
     EXPECT_STREQ("CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR", NEO::cmdTypetoString(CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR).c_str());
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenIsLinearStoragePreferredThenReturnValidValue) {
+HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenReturnValidValue) {
     bool tilingSupported = UnitTestHelper<FamilyType>::tiledImagesSupported;
 
     const uint32_t numImageTypes = 6;
@@ -79,7 +79,7 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenIsLinearStoragePreferredThenReturnValidV
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, 0, 1, nullptr, retVal));
 
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &helper = GfxCoreHelper::get(renderCoreFamily);
 
     for (uint32_t i = 0; i < numImageTypes; i++) {
         imgDesc.image_type = imgTypes[i];

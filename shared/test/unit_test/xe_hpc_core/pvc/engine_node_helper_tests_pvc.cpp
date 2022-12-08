@@ -110,7 +110,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledButDebugVariableSetWhenGetG
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(9u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(9u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -136,7 +136,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledWhenGetGpgpuEnginesCalledTh
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(8u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(8u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -150,29 +150,29 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledWhenGetGpgpuEnginesCalledTh
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispatchSupportedThenTrueIsReturned) {
-    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
-    auto engineGroupType = hwHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
-                                                       pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
-    auto retVal = hwHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
+                                                            pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
+    auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
     EXPECT_TRUE(retVal);
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCCSEngineAndRevisionBWhenCallingIsCooperativeDispatchSupportedThenFalseIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
-    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
 
-    auto engineGroupType = hwHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
-                                                       pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
-    auto retVal = hwHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
+                                                            pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
+    auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
     EXPECT_TRUE(retVal);
 
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
-    retVal = hwHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
+    retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
     EXPECT_FALSE(retVal);
 }
 
@@ -188,7 +188,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenBcsDisabledWhenGetEnginesCalledThenDont
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -227,7 +227,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenOneBcsEnabledWhenGetEnginesCalledThenCr
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -272,7 +272,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenNotAllCopyEnginesWhenSettingEngineTable
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -313,7 +313,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenOneCcsEnabledWhenGetEnginesCalledThenCr
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -360,7 +360,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsAsDefaultEngineWhenGetEnginesCalled
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -410,7 +410,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesA
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -460,7 +460,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesA
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {

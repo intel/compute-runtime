@@ -19,7 +19,7 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
 
         auto &hwInfo = device.getHardwareInfo();
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;
         args.outMemory = surfaceState;
@@ -30,10 +30,10 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
         args.useGlobalAtomics = useGlobalAtomics;
         args.numAvailableDevices = device.getNumGenericSubDevices();
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
-        args.mocs = hwHelper.getMocsIndex(*args.gmmHelper, true, false) << 1;
+        args.mocs = gfxCoreHelper.getMocsIndex(*args.gmmHelper, true, false) << 1;
         args.implicitScaling = implicitScaling;
         args.isDebuggerActive = isDebuggerActive;
 
-        hwHelper.encodeBufferSurfaceState(args);
+        gfxCoreHelper.encodeBufferSurfaceState(args);
     }
 }

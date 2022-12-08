@@ -190,8 +190,8 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, commandList->csr->getCS().getCpuBase(), commandList->csr->getCS().getUsed()));
 
-    const auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    if (hwHelper.isSipWANeeded(hwInfo)) {
+    const auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
 
         auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
 
@@ -536,7 +536,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     EXPECT_EQ(0u, tdDebugControlRegisterCount);
     EXPECT_EQ(0u, globalSipFound);
 
-    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipWANeeded(hwInfo)) {
+    if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSipWANeeded(hwInfo)) {
         auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
 
         if (device->getDevicePreemptionMode() != PreemptionMode::MidThread) {

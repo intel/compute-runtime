@@ -220,10 +220,10 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
 DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
     : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     reset();
-    ioctl_expected.contextCreate = static_cast<int>(NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
+    ioctl_expected.contextCreate = static_cast<int>(NEO::GfxCoreHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
     ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
-    createVirtualMemoryAddressSpace(NEO::HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+    createVirtualMemoryAddressSpace(NEO::GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
     isVmBindAvailable(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
     reset();
 }

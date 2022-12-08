@@ -24,7 +24,7 @@ extern aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOpti
 AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-        auto devicesCount = HwHelper::getSubDevicesCount(hwInfo);
+        auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
         CommandStreamReceiverType type = csrType;
         if (DebugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
@@ -33,7 +33,7 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
 
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
-        auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
         const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
         auto aubStreamProductFamily = productHelper.getAubStreamProductFamily();
@@ -41,7 +41,7 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
         stepping = productHelper.getAubStreamSteppingFromHwRevId(*hwInfo);
 
         auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
-        aub_stream::MMIOList extraMmioList = coreHelper.getExtraMmioList(*hwInfo, *gmmHelper);
+        aub_stream::MMIOList extraMmioList = gfxCoreHelper.getExtraMmioList(*hwInfo, *gmmHelper);
         aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
 
         extraMmioList.insert(extraMmioList.end(), debugMmioList.begin(), debugMmioList.end());

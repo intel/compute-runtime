@@ -61,7 +61,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     DeviceBitfield deviceBitfield(1);
     auto csr = std::make_unique<MockCsr<FamilyType>>(execStamp, *executionEnvironment, 0, deviceBitfield);
     auto hwInfo = *defaultHwInfo;
-    auto engine = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
+    auto engine = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(engine, PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
     csr->setupContext(*osContext);
 
@@ -115,7 +115,7 @@ HWTEST_F(GeneralSurfaceTest, givenGeneralSurfaceWhenMigrationNeededThenMoveToGpu
     DeviceBitfield deviceBitfield(1);
     auto csr = std::make_unique<MockCsr<FamilyType>>(execStamp, *executionEnvironment, 0, deviceBitfield);
     auto hwInfo = *defaultHwInfo;
-    auto engine = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
+    auto engine = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(engine, PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
     csr->setupContext(*osContext);
 
@@ -137,7 +137,7 @@ HWTEST_F(GeneralSurfaceTest, givenGeneralSurfaceWhenMigrationNotNeededThenMoveTo
     DeviceBitfield deviceBitfield(1);
     auto csr = std::make_unique<MockCsr<FamilyType>>(execStamp, *executionEnvironment, 0, deviceBitfield);
     auto hwInfo = *defaultHwInfo;
-    auto engine = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
+    auto engine = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(engine, PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
     csr->setupContext(*osContext);
 

@@ -25,14 +25,14 @@ void AUBCommandStreamFixture::setUp(CommandQueue *pCmdQ) {
     ASSERT_NE(pCmdQ, nullptr);
     auto &device = reinterpret_cast<MockDevice &>(pCmdQ->getDevice());
     const auto &hwInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
     auto engineType = pCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getEngineType();
 
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
+    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
 
     pCommandStreamReceiver = AUBFixture::prepareComputeEngine(device, strfilename.str());
     ASSERT_NE(nullptr, pCommandStreamReceiver);

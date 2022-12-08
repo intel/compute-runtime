@@ -139,7 +139,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(Lin
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
     auto &hwInfo = peekHwInfo();
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
@@ -147,7 +147,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isExtendedWARequired;
 
-    if (isBasicWARequired && debuggingEnabled && !hwHelper.isSipWANeeded(hwInfo)) {
+    if (isBasicWARequired && debuggingEnabled && !gfxCoreHelper.isSipWANeeded(hwInfo)) {
         NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs());
     }
 }

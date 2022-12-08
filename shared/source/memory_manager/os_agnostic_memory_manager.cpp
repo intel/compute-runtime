@@ -109,7 +109,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         }
 
         auto pHwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-        if (HwHelper::get(pHwInfo->platform.eRenderCoreFamily).compressedBuffersSupported(*pHwInfo) &&
+        if (GfxCoreHelper::get(pHwInfo->platform.eRenderCoreFamily).compressedBuffersSupported(*pHwInfo) &&
             allocationData.flags.preferCompressed) {
             auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                                              allocationData.hostPtr,
@@ -158,8 +158,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
     allocationDataAlign.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get();
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
-    allocationDataAlign.alignment = coreHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferCompressed)
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    allocationDataAlign.alignment = gfxCoreHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferCompressed)
                                         ? MemoryConstants::megaByte
                                         : MemoryConstants::pageSize64k;
     auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationDataAlign);

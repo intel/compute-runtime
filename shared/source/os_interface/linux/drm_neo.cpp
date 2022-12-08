@@ -925,9 +925,9 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (DebugManager.flags.ClosEnabled.get() == 0 || hwHelper.getNumCacheRegions() == 0) {
+    if (DebugManager.flags.ClosEnabled.get() == 0 || gfxCoreHelper.getNumCacheRegions() == 0) {
         this->cacheInfo.reset(new CacheInfo(*this, 0, 0, 0));
         return;
     }
@@ -940,7 +940,7 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     constexpr uint16_t maxReservationNumWays = std::min(globalReservationLimit, clientReservationLimit);
     const size_t totalCacheSize = gtSysInfo->L3CacheSizeInKb * MemoryConstants::kiloByte;
     const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
-    const uint32_t maxReservationNumCacheRegions = hwHelper.getNumCacheRegions() - 1;
+    const uint32_t maxReservationNumCacheRegions = gfxCoreHelper.getNumCacheRegions() - 1;
 
     this->cacheInfo.reset(new CacheInfo(*this, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays));
 }
@@ -1335,7 +1335,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         return CommonConstants::unsupportedPatIndex;
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
 
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
     GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, *hwInfo);
@@ -1358,7 +1358,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     }
 
     if (closEnabled) {
-        patIndex = hwHelper.getPatIndex(cacheRegion, cachePolicy);
+        patIndex = gfxCoreHelper.getPatIndex(cacheRegion, cachePolicy);
     }
 
     return patIndex;
@@ -1486,7 +1486,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     auto hwInfo = this->getRootDeviceEnvironment().getHardwareInfo();
     auto memInfo = this->getMemoryInfo();
     if (DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.get() != 0) {
-        if (memInfo && HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo)) {
+        if (memInfo && GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo)) {
             regionInstanceClass = memInfo->getMemoryRegionClassAndInstance(memoryBank, *this->rootDeviceEnvironment.getHardwareInfo());
         }
     }

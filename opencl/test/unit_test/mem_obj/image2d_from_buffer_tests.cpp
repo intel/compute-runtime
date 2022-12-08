@@ -23,7 +23,7 @@
 using namespace NEO;
 
 namespace NEO {
-extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE];
 }
 
 // Tests for cl_khr_image2d_from_buffer
@@ -333,14 +333,14 @@ TEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBuffe
 }
 
 HWTEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBufferSetAndAllocationTypeIsBufferNullptr) {
-    class MockHwHelperHw : public HwHelperHw<FamilyType> {
+    class MockGfxCoreHelperHw : public GfxCoreHelperHw<FamilyType> {
       public:
         bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override {
             return false;
         }
     };
 
-    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperHw>(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+    auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw>(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
 
     cl_int errCode = CL_SUCCESS;
     auto buffer = Buffer::create(&context, 0, 1, nullptr, errCode);

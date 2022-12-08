@@ -21,14 +21,14 @@ TEST(DrmCacheInfoTest, givenCacheRegionsExistsWhenCallingSetUpCacheInfoThenCache
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    auto &hwHelper = HwHelper::get(drm.context.hwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(drm.context.hwInfo->platform.eRenderCoreFamily);
 
     drm.setupCacheInfo(*defaultHwInfo.get());
 
     auto cacheInfo = drm.getCacheInfo();
     EXPECT_NE(nullptr, cacheInfo);
 
-    if (hwHelper.getNumCacheRegions() == 0) {
+    if (gfxCoreHelper.getNumCacheRegions() == 0) {
         EXPECT_EQ(0u, cacheInfo->getMaxReservationCacheSize());
         EXPECT_EQ(0u, cacheInfo->getMaxReservationNumCacheRegions());
         EXPECT_EQ(0u, cacheInfo->getMaxReservationNumWays());
@@ -40,7 +40,7 @@ TEST(DrmCacheInfoTest, givenCacheRegionsExistsWhenCallingSetUpCacheInfoThenCache
         constexpr uint16_t maxReservationNumWays = std::min(globalReservationLimit, clientReservationLimit);
         const size_t totalCacheSize = gtSysInfo->L3CacheSizeInKb * MemoryConstants::kiloByte;
         const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
-        const size_t maxReservationNumCacheRegions = hwHelper.getNumCacheRegions() - 1;
+        const size_t maxReservationNumCacheRegions = gfxCoreHelper.getNumCacheRegions() - 1;
 
         EXPECT_EQ(maxReservationCacheSize, cacheInfo->getMaxReservationCacheSize());
         EXPECT_EQ(maxReservationNumCacheRegions, cacheInfo->getMaxReservationNumCacheRegions());

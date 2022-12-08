@@ -199,7 +199,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         }
     } else if (isMarkerWithProfiling) {
         expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
-        if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+        if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
             expectedSizeCS += 2 * EncodeStoreMMIO<GfxFamily>::size;
         }
     }

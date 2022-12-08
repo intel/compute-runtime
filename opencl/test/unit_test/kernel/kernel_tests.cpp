@@ -317,8 +317,8 @@ TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPreferredWorkGro
     kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
     MockKernel kernel(pProgram, kernelInfo, *pClDevice);
 
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    bool fusedDispatchEnabled = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    bool fusedDispatchEnabled = gfxCoreHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
     auto expectedValue = kernelInfo.getMaxSimdSize() * (fusedDispatchEnabled ? 2 : 1);
 
     cl_kernel_info paramName = CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE;
@@ -345,8 +345,8 @@ TEST_F(KernelTests, GivenCFEFusedEUDispatchEnabledAndRequiredDisabledUEFusionWhe
     kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
     MockKernel kernel(pProgram, kernelInfo, *pClDevice);
 
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    bool fusedDispatchEnabled = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    bool fusedDispatchEnabled = gfxCoreHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
     auto expectedValue = kernelInfo.getMaxSimdSize() * (fusedDispatchEnabled ? 2 : 1);
 
     cl_kernel_info paramName = CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE;
@@ -793,8 +793,8 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
 }
 
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenScratchSizeIsGreaterThanMaxScratchSizeThenReturnInvalidKernel) {
-    auto &hwHelper = NEO::HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    uint32_t maxScratchSize = hwHelper.getMaxScratchSize();
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
 
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
@@ -2353,7 +2353,7 @@ TEST(KernelInfoTest, GivenArgNameWhenGettingArgNumberByNameThenCorrectValueIsRet
     EXPECT_EQ(-1, info.getArgNumByName("arg1"));
 }
 
-TEST(KernelInfoTest, givenHwHelperWhenCreatingKernelAllocationThenCorrectPaddingIsAdded) {
+TEST(KernelInfoTest, givenGfxCoreHelperWhenCreatingKernelAllocationThenCorrectPaddingIsAdded) {
 
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), mockRootDeviceIndex));
     auto context = std::make_unique<MockContext>(clDevice.get());
@@ -2365,7 +2365,7 @@ TEST(KernelInfoTest, givenHwHelperWhenCreatingKernelAllocationThenCorrectPadding
     mockKernel->kernelInfo.createKernelAllocation(clDevice->getDevice(), false);
 
     auto graphicsAllocation = mockKernel->kernelInfo.getGraphicsAllocation();
-    auto &helper = clDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &helper = clDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), mockKernel->kernelInfo.heapInfo.KernelHeapSize + isaPadding);
     clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getGraphicsAllocation());
@@ -2650,7 +2650,7 @@ TEST(KernelTest, whenNullAllocationThenAssignNullPointerToCacheFlushVector) {
 
 TEST(KernelTest, givenKernelCompiledWithSimdSizeLowerThanExpectedWhenInitializingThenReturnError) {
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    auto minSimd = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).getMinimalSIMDSize();
+    auto minSimd = GfxCoreHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).getMinimalSIMDSize();
     MockKernelWithInternals kernel(*device);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 8;
 
@@ -2964,8 +2964,8 @@ TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaul
     MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0], sPatchExecEnv};
 
     auto &mockKernel = *mockKernelWithInternals.mockKernel;
-    auto &hwHelper = HwHelper::get(deviceFactory.rootDevices[0]->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.getDefaultThreadArbitrationPolicy(), mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
+    auto &gfxCoreHelper = GfxCoreHelper::get(deviceFactory.rootDevices[0]->getHardwareInfo().platform.eRenderCoreFamily);
+    EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(), mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
 }
 
 TEST(KernelTest, givenKernelWhenSettingAdditinalKernelExecInfoThenCorrectValueIsSet) {

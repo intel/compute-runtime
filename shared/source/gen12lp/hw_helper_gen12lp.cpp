@@ -20,7 +20,7 @@ using Family = NEO::Gen12LpFamily;
 namespace NEO {
 
 template <>
-inline bool HwHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const {
+inline bool GfxCoreHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const {
     auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
     fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
 
@@ -34,27 +34,27 @@ inline bool HwHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo &hwI
 }
 
 template <>
-size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
+size_t GfxCoreHelperHw<Family>::getMax3dImageWidthOrHeight() const {
     return 2048;
 }
 
 template <>
-bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
     return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>
-bool HwHelperHw<Family>::isWaDisableRccRhwoOptimizationRequired() const {
+bool GfxCoreHelperHw<Family>::isWaDisableRccRhwoOptimizationRequired() const {
     return true;
 }
 
 template <>
-bool HwHelperHw<Family>::isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const {
+bool GfxCoreHelperHw<Family>::isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const {
     return featureTable->flags.ftrGpGpuMidThreadLevelPreempt;
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     /* For ICL+ maxThreadCount equals (EUCount * 8).
      ThreadCount/EUCount=7 is no longer valid, so we have to force 8 in below formula.
      This is required to allocate enough scratch space. */
@@ -63,12 +63,12 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvir
 }
 
 template <>
-bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
     return hwInfo.featureTable.flags.ftrLocalMemory;
 }
 
 template <>
-bool HwHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
@@ -76,12 +76,12 @@ bool HwHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, c
 }
 
 template <>
-bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) {
+bool GfxCoreHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) {
     return !graphicsAllocation.isCompressionEnabled();
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t GfxCoreHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (productHelper.imagePitchAlignmentWARequired(hwInfo)) {
@@ -91,12 +91,12 @@ uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironme
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
+uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen12);
 }
 
 template <>
-const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
 
     EngineInstancesContainer engines;
@@ -119,7 +119,7 @@ const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const
 };
 
 template <>
-EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
+EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     switch (engineType) {
     case aub_stream::ENGINE_RCS:
         return EngineGroupType::RenderCompute;
@@ -133,7 +133,7 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
     extensions += "cl_intel_subgroup_local_block_io ";
 
@@ -161,12 +161,12 @@ void MemorySynchronizationCommands<Family>::setCacheFlushExtraProperties(PipeCon
 }
 
 template <>
-bool HwHelperHw<Family>::useOnlyGlobalTimestamps() const {
+bool GfxCoreHelperHw<Family>::useOnlyGlobalTimestamps() const {
     return true;
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
+uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         if (DebugManager.flags.ForceL1Caching.get() != 1) {
             l1enabled = false;
@@ -193,7 +193,7 @@ bool MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaReq
 }
 
 template <>
-void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
+void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
         if (GraphicsAllocation::isCpuAccessRequired(properties.allocationType)) {
@@ -208,11 +208,11 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
 }
 
 template <>
-bool HwHelperHw<Family>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
+bool GfxCoreHelperHw<Family>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
     return false;
 }
 
-template class HwHelperHw<Family>;
+template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;

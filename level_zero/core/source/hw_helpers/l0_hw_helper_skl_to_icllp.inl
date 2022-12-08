@@ -25,7 +25,7 @@ void L0GfxCoreHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::v
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
-    const uint32_t highestEnabledSlice = NEO::HwHelper::getHighestEnabledSlice(hwInfo);
+    const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
 
     bitmaskSize = std::max(highestEnabledSlice, hwInfo.gtSystemInfo.MaxSlicesSupported) * numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     bitmask = std::make_unique<uint8_t[]>(bitmaskSize);
@@ -49,7 +49,7 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     const uint32_t threadsSizePerSubSlice = numEuPerSubslice * bytesPerEu;
-    const uint32_t highestEnabledSlice = NEO::HwHelper::getHighestEnabledSlice(hwInfo);
+    const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
 
     UNRECOVERABLE_IF(bytesPerEu != 1);
     std::vector<EuThread::ThreadId> threads;

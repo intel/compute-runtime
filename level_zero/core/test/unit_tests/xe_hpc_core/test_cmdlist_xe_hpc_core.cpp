@@ -974,7 +974,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandLis
     auto &hwInfo = device->getHwInfo();
     auto &defaultEngine = neoDevice->getDefaultEngine();
 
-    auto engineGroupType = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily).getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
+    auto engineGroupType = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     ze_command_queue_desc_t queueDesc{};
     queueDesc.ordinal = 0u;

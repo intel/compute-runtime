@@ -82,7 +82,7 @@ void SysmanDeviceImp::updateSubDeviceHandlesLocally() {
 void SysmanDeviceImp::getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice) {
     NEO::Device *neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     onSubdevice = static_cast<ze_bool_t>(false);
-    if (NEO::HwHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) {
+    if (NEO::GfxCoreHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) {
         onSubdevice = static_cast<ze_bool_t>(true);
     }
     if (!neoDevice->isSubDevice()) {                                  // To get physical device or subdeviceIndex Index in case when the device does not support tile architecture is single tile device

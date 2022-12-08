@@ -39,7 +39,7 @@ void Device::initializeCaps() {
     auto addressing32bitAllowed = is64bit;
 
     auto &productHelper = this->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-    auto &coreHelper = this->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
+    auto &gfxCoreHelper = this->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
 
     bool ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
     if (DebugManager.flags.ForceOCLVersion.get() != 0) {
@@ -81,9 +81,9 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
 
-    uint32_t subDeviceCount = coreHelper.getSubDevicesCount(&getHardwareInfo());
+    uint32_t subDeviceCount = gfxCoreHelper.getSubDevicesCount(&getHardwareInfo());
 
-    bool platformImplicitScaling = coreHelper.platformSupportsImplicitScaling(hwInfo);
+    bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(hwInfo);
 
     if (((NEO::ImplicitScalingHelper::isImplicitScalingEnabled(
             getDeviceBitfield(), platformImplicitScaling))) &&
@@ -93,7 +93,7 @@ void Device::initializeCaps() {
 
     if (!areSharedSystemAllocationsAllowed()) {
         deviceInfo.maxMemAllocSize = ApiSpecificConfig::getReducedMaxAllocSize(deviceInfo.maxMemAllocSize);
-        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, coreHelper.getMaxMemAllocSize());
+        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, gfxCoreHelper.getMaxMemAllocSize());
     }
 
     // Some specific driver model configurations may impose additional limitations
@@ -120,7 +120,7 @@ void Device::initializeCaps() {
     deviceInfo.numThreadsPerEU = 0;
     auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
                             ? CommonConstants::maximalSimdSize
-                            : coreHelper.getMinimalSIMDSize();
+                            : gfxCoreHelper.getMinimalSIMDSize();
 
     deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.flags.ftrPooledEuEnabled == 0)
                                           ? (systemInfo.EUCount / systemInfo.SubSliceCount)
@@ -134,7 +134,7 @@ void Device::initializeCaps() {
         deviceInfo.maxNumEUsPerDualSubSlice = deviceInfo.maxNumEUsPerSubSlice;
     }
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
-    deviceInfo.threadsPerEUConfigs = coreHelper.getThreadsPerEUConfigs();
+    deviceInfo.threadsPerEUConfigs = gfxCoreHelper.getThreadsPerEUConfigs();
     auto maxWS = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
 
     maxWS = Math::prevPowerOfTwo(maxWS);
@@ -147,10 +147,10 @@ void Device::initializeCaps() {
     deviceInfo.maxWorkItemSizes[0] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxWorkItemSizes[1] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxWorkItemSizes[2] = deviceInfo.maxWorkGroupSize;
-    deviceInfo.maxSamplers = coreHelper.getMaxNumSamplers();
+    deviceInfo.maxSamplers = gfxCoreHelper.getMaxNumSamplers();
 
-    deviceInfo.computeUnitsUsedForScratch = coreHelper.getComputeUnitsUsedForScratch(this->getRootDeviceEnvironment());
-    deviceInfo.maxFrontEndThreads = coreHelper.getMaxThreadsForVfe(hwInfo);
+    deviceInfo.computeUnitsUsedForScratch = gfxCoreHelper.getComputeUnitsUsedForScratch(this->getRootDeviceEnvironment());
+    deviceInfo.maxFrontEndThreads = gfxCoreHelper.getMaxThreadsForVfe(hwInfo);
 
     deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;
     if (DebugManager.flags.OverrideSlmSize.get() != -1) {
@@ -166,7 +166,7 @@ void Device::initializeCaps() {
     deviceInfo.printfBufferSize = 4 * MB;
     deviceInfo.maxClockFrequency = hwInfo.capabilityTable.maxRenderFrequency;
 
-    deviceInfo.maxSubGroups = coreHelper.getDeviceSubGroupSizes();
+    deviceInfo.maxSubGroups = gfxCoreHelper.getDeviceSubGroupSizes();
 
     deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
 

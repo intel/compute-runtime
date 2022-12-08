@@ -693,8 +693,8 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
         Buffer::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice()),
                        0, 0, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
-    auto compressionSupported = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, hwInfo) &&
-                                HwHelper::compressedBuffersSupported(hwInfo);
+    auto compressionSupported = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, hwInfo) &&
+                                GfxCoreHelper::compressedBuffersSupported(hwInfo);
     if (compressionSupported) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
@@ -722,9 +722,9 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
     bool isCompressed = true;
     if (context->getMemoryManager()) {
         isCompressed = MemObjHelper::isSuitableForCompression(
-                           HwHelper::compressedBuffersSupported(hwInfo),
+                           GfxCoreHelper::compressedBuffersSupported(hwInfo),
                            memoryProperties, *context,
-                           HwHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, hwInfo)) &&
+                           GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, hwInfo)) &&
                        !is32bit && !context->isSharedContext &&
                        (!memoryProperties.flags.useHostPtr || context->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex())) &&
                        !memoryProperties.flags.forceHostMemory;
@@ -768,7 +768,7 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
 
     graphicsAllocation->setDefaultGmm(gmm);
 
-    if (!HwHelperHw<FamilyType>::get().checkResourceCompatibility(*graphicsAllocation)) {
+    if (!GfxCoreHelperHw<FamilyType>::get().checkResourceCompatibility(*graphicsAllocation)) {
         GTEST_SKIP();
     }
 
@@ -802,7 +802,7 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[IMAGE_IS_COMPRESSED], image.get());
     alignedFree(hostPtr);
 
-    if (HwHelper::compressedImagesSupported(hwInfo)) {
+    if (GfxCoreHelper::compressedImagesSupported(hwInfo)) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));
@@ -865,7 +865,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[IMAGE_IS_NOT_COMPRESSED], image.get());
     alignedFree(hostPtr);
 
-    if (HwHelper::compressedImagesSupported(hwInfo)) {
+    if (GfxCoreHelper::compressedImagesSupported(hwInfo)) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));

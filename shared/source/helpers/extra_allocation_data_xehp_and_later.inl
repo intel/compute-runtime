@@ -13,7 +13,7 @@
 namespace NEO {
 
 template <>
-void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
+void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     if (LocalMemoryAccessMode::CpuAccessDisallowed == hwInfoConfig.getLocalMemoryAccessMode(hwInfo)) {

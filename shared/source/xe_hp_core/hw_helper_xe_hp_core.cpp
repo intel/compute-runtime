@@ -22,15 +22,15 @@ using Family = NEO::XeHpFamily;
 
 namespace NEO {
 template <>
-const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
+const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
 
 template <>
-uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
+uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHP);
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
@@ -41,7 +41,7 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvir
 }
 
 template <>
-uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     auto slmValue = std::max(slmSize, 1024u);
@@ -55,13 +55,13 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
 }
 
 template <>
-void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
+void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
 }
 
 template <>
-bool HwHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) const {
 
-    bool forceOverrideMemoryBankIndex = (HwHelper::getSubDevicesCount(&hwInfo) == 4 &&
+    bool forceOverrideMemoryBankIndex = (GfxCoreHelper::getSubDevicesCount(&hwInfo) == 4 &&
                                          isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo));
 
     if (DebugManager.flags.ForceMemoryBankIndexOverride.get() != -1) {
@@ -71,12 +71,12 @@ bool HwHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) cons
 }
 
 template <>
-bool HwHelperHw<Family>::isSipWANeeded(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isSipWANeeded(const HardwareInfo &hwInfo) const {
     return hwInfo.platform.usRevId <= HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo);
 }
 
 template <>
-bool HwHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
@@ -88,12 +88,12 @@ bool HwHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, c
 }
 
 template <>
-const StackVec<uint32_t, 6> HwHelperHw<Family>::getThreadsPerEUConfigs() const {
+const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() const {
     return {4, 8};
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
     extensions += "cl_intel_dot_accumulate ";
     extensions += "cl_intel_subgroup_local_block_io ";
@@ -143,16 +143,16 @@ void MemorySynchronizationCommands<Family>::setCacheFlushExtraProperties(PipeCon
 }
 
 template <>
-bool HwHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
+bool GfxCoreHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
     return false;
 }
 
 template <>
-bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &) const {
+bool GfxCoreHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &) const {
     return true;
 }
 
-template class HwHelperHw<Family>;
+template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;

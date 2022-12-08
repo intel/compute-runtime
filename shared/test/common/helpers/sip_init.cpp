@@ -128,8 +128,8 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version) {
 
 bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
     if (MockSipData::useMockSip) {
-        auto &hwHelper = HwHelper::get(device.getRootDeviceEnvironment().getHardwareInfo()->platform.eRenderCoreFamily);
-        if (hwHelper.isSipKernelAsHexadecimalArrayPreferred()) {
+        auto &gfxCoreHelper = GfxCoreHelper::get(device.getRootDeviceEnvironment().getHardwareInfo()->platform.eRenderCoreFamily);
+        if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
             SipKernel::classType = SipClassType::HexadecimalHeaderFile;
         } else {
             SipKernel::classType = SipClassType::Builtins;

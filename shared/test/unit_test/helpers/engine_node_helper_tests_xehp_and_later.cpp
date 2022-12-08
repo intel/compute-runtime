@@ -73,7 +73,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
     int32_t expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
     for (int32_t i = 0; i <= 20; i++) {
-        while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
+        while (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
             expectedEngineType++;
             if (static_cast<aub_stream::EngineType>(expectedEngineType) > aub_stream::EngineType::ENGINE_BCS8) {
                 expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
@@ -102,9 +102,9 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
     int32_t expectedEngineType = aub_stream::EngineType::ENGINE_BCS;
     for (int32_t i = 0; i <= 20; i++) {
-        while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType == aub_stream::EngineType::ENGINE_BCS
-                                                                                                                                                                                                                         ? 0
-                                                                                                                                                                                                                         : expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
+        while (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType == aub_stream::EngineType::ENGINE_BCS
+                                                                                                                                                                                                                              ? 0
+                                                                                                                                                                                                                              : expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
             if (expectedEngineType == aub_stream::EngineType::ENGINE_BCS) {
                 expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
             } else {
@@ -142,9 +142,9 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
     int32_t expectedEngineType = aub_stream::EngineType::ENGINE_BCS;
     for (int32_t i = 0; i <= 20; i++) {
-        while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType == aub_stream::EngineType::ENGINE_BCS
-                                                                                                                                                                                                                         ? 0
-                                                                                                                                                                                                                         : expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
+        while (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType == aub_stream::EngineType::ENGINE_BCS
+                                                                                                                                                                                                                              ? 0
+                                                                                                                                                                                                                              : expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
             if (expectedEngineType == aub_stream::EngineType::ENGINE_BCS) {
                 expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
             } else {
@@ -181,9 +181,9 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
     int32_t expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
     for (int32_t i = 0; i <= 20; i++) {
-        while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType == aub_stream::EngineType::ENGINE_BCS
-                                                                                                                                                                                                                         ? 0
-                                                                                                                                                                                                                         : expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
+        while (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType == aub_stream::EngineType::ENGINE_BCS
+                                                                                                                                                                                                                              ? 0
+                                                                                                                                                                                                                              : expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
             if (expectedEngineType == aub_stream::EngineType::ENGINE_BCS) {
                 expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
             } else {
@@ -221,9 +221,9 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
     int32_t expectedEngineType = aub_stream::EngineType::ENGINE_BCS3;
     for (int32_t i = 0; i <= 20; i++) {
-        while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType == aub_stream::EngineType::ENGINE_BCS
-                                                                                                                                                                                                                         ? 0
-                                                                                                                                                                                                                         : expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
+        while (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType == aub_stream::EngineType::ENGINE_BCS
+                                                                                                                                                                                                                              ? 0
+                                                                                                                                                                                                                              : expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
             if (expectedEngineType == aub_stream::EngineType::ENGINE_BCS) {
                 expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
             } else {

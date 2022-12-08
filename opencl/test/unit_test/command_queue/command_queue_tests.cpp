@@ -155,9 +155,9 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
 
     {
         DebugManager.flags.EnableTimestampWaitForQueues.set(-1);
-        const auto &hwHelper = HwHelper::get(mockDevice->getHardwareInfo().platform.eRenderCoreFamily);
+        const auto &gfxCoreHelper = GfxCoreHelper::get(mockDevice->getHardwareInfo().platform.eRenderCoreFamily);
         const auto &hwInfoConfig = *HwInfoConfig::get(mockDevice->getHardwareInfo().platform.eProductFamily);
-        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), hwHelper.isTimestampWaitSupportedForQueues() && !hwInfoConfig.isDcFlushAllowed());
+        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), gfxCoreHelper.isTimestampWaitSupportedForQueues() && !hwInfoConfig.isDcFlushAllowed());
     }
 
     {
@@ -321,7 +321,7 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     auto internalUsage = true;
     auto expectedEngineType = EngineHelpers::linkCopyEnginesSupported(hwInfo, device->getDeviceBitfield())
@@ -330,7 +330,7 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
 
     for (auto preferInternalBcsEngine : {0, 1}) {
         DebugManager.flags.PreferInternalBcsEngine.set(preferInternalBcsEngine);
-        auto engineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+        auto engineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
         MockCommandQueue cmdQ(nullptr, device.get(), 0, internalUsage);
         auto &bcsEngine = device->getEngine(expectedEngineType, engineUsage);
 
@@ -956,8 +956,8 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingComma
 
     cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, userPropertiesEngineGroupType, CL_QUEUE_INDEX_INTEL, userPropertiesEngineIndex, 0};
 
-    const HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_NE(hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(forcedEngine), EngineUsage::Regular, *defaultHwInfo),
+    const GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_NE(gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(forcedEngine), EngineUsage::Regular, *defaultHwInfo),
               static_cast<EngineGroupType>(userPropertiesEngineGroupType));
     EXPECT_NE(expectedEngineIndex, userPropertiesEngineIndex);
 
@@ -985,12 +985,12 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
 
     cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0, 0};
 
-    struct FakeHwHelper : HwHelperHw<FamilyType> {
+    struct FakeGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
             return EngineGroupType::RenderCompute;
         }
     };
-    RAIIHwHelperFactory<FakeHwHelper> overrideHwHelper{defaultHwInfo->platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<FakeGfxCoreHelper> overrideGfxCoreHelper{defaultHwInfo->platform.eRenderCoreFamily};
 
     auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS, *defaultHwInfo);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
@@ -1487,8 +1487,8 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
 
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     cmdQ.setupDebugSurface(kernel.get());
 
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
@@ -1508,8 +1508,8 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress);
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    commandStreamReceiver.allocateDebugSurface(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    commandStreamReceiver.allocateDebugSurface(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
     ASSERT_NE(nullptr, debugSurface);
 
@@ -2486,7 +2486,7 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
     }
 
     template <typename GfxFamily, int rcsCount, int ccsCount, int bcsCount>
-    class MockHwHelper : public HwHelperHw<GfxFamily> {
+    class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
       public:
         const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
             EngineInstancesContainer result{};
@@ -2520,14 +2520,14 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
         }
     };
 
-    template <typename GfxFamily, typename HwHelperType>
-    auto overrideHwHelper() {
-        return RAIIHwHelperFactory<HwHelperType>{::defaultHwInfo->platform.eRenderCoreFamily};
+    template <typename GfxFamily, typename GfxCoreHelperType>
+    auto overrideGfxCoreHelper() {
+        return RAIIGfxCoreHelperFactory<GfxCoreHelperType>{::defaultHwInfo->platform.eRenderCoreFamily};
     }
 };
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseCorrectEngine) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
@@ -2558,7 +2558,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
     UltClDeviceFactory deviceFactory{1, 2};
     MockContext context{deviceFactory.rootDevices[0]};
     cl_command_queue_properties properties[5] = {};
@@ -2574,7 +2574,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWh
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -2603,7 +2603,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 0, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 0, 1>>();
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -2628,7 +2628,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenC
     DebugManager.flags.DeferOsContextInitialization.set(1);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
 
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 1, 1, 1>>();
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
@@ -2650,7 +2650,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
     DebugManager.flags.DeferOsContextInitialization.set(1);
 
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 1, 1, 1>>();
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 

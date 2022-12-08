@@ -89,8 +89,8 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
 
-    auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    const bool isaInLocalMemory = !hwHelper.useSystemMemoryPlacementForISA(neoDevice->getHardwareInfo());
+    auto &gfxCoreHelper = GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    const bool isaInLocalMemory = !gfxCoreHelper.useSystemMemoryPlacementForISA(neoDevice->getHardwareInfo());
 
     commandQueue->programStateBaseAddress(0u, true, child, true);
 
@@ -637,8 +637,8 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
         hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
         hwInfo->featureTable.flags.ftrCCSNode = (numCcs > 0);
 
-        auto &coreHelper = rootDeviceEnvironment.getHelper<CoreHelper>();
-        coreHelper.adjustDefaultEngineType(hwInfo);
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        gfxCoreHelper.adjustDefaultEngineType(hwInfo);
 
         if (!multiCcsDevice(*hwInfo, numCcs)) {
             return false;
@@ -652,7 +652,7 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
     }
 
     bool multiCcsDevice(const HardwareInfo &hwInfo, uint32_t expectedNumCcs) {
-        auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+        auto gpgpuEngines = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
         uint32_t numCcs = 0;
 

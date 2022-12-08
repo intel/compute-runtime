@@ -51,7 +51,7 @@
 #include <memory>
 
 namespace NEO {
-extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE];
 } // namespace NEO
 
 namespace L0 {
@@ -1228,10 +1228,10 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     device->getProperties(&deviceProperties);
     EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
 
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     auto expectedSize = this->neoDevice->getDeviceInfo().globalMemSize;
     if (!this->neoDevice->areSharedSystemAllocationsAllowed()) {
-        expectedSize = std::min(expectedSize, hwHelper.getMaxMemAllocSize());
+        expectedSize = std::min(expectedSize, gfxCoreHelper.getMaxMemAllocSize());
     }
     EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
 }
@@ -1275,15 +1275,15 @@ TEST_F(InvalidExtensionTest, givenInvalidExtensionPropertiesDuringDeviceGetPrope
 
 HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalAndDescIndexProperlySet) {
     DebugManagerStateRestore restore;
-    struct MockHwHelper : NEO::HwHelperHw<FamilyType> {
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
             return EngineGroupType::Compute;
         }
     };
     auto hwInfo = *defaultHwInfo.get();
-    MockHwHelper hwHelper{};
-    VariableBackup<HwHelper *> hwHelperFactoryBackup{&NEO::hwHelperFactory[static_cast<size_t>(hwInfo.platform.eRenderCoreFamily)]};
-    hwHelperFactoryBackup = &hwHelper;
+    MockGfxCoreHelper gfxCoreHelper{};
+    VariableBackup<GfxCoreHelper *> gfxCoreHelperFactoryBackup{&NEO::gfxCoreHelperFactory[static_cast<size_t>(hwInfo.platform.eRenderCoreFamily)]};
+    gfxCoreHelperFactoryBackup = &gfxCoreHelper;
 
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS2, hwInfo);
@@ -3572,7 +3572,7 @@ TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesRelea
 }
 
 HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlagsThenCooperativeKernelsAreSupported) {
-    struct MockHwHelper : NEO::HwHelperHw<FamilyType> {
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
         bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const override {
             return isCooperativeDispatchSupportedValue;
         }
@@ -3587,9 +3587,9 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
                                                                                               rootDeviceIndex);
     Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
-    MockHwHelper hwHelper{};
-    VariableBackup<HwHelper *> hwHelperFactoryBackup{&NEO::hwHelperFactory[static_cast<size_t>(hwInfo.platform.eRenderCoreFamily)]};
-    hwHelperFactoryBackup = &hwHelper;
+    MockGfxCoreHelper gfxCoreHelper{};
+    VariableBackup<GfxCoreHelper *> gfxCoreHelperFactoryBackup{&NEO::gfxCoreHelperFactory[static_cast<size_t>(hwInfo.platform.eRenderCoreFamily)]};
+    gfxCoreHelperFactoryBackup = &gfxCoreHelper;
 
     uint32_t count = 0;
     ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
@@ -3597,7 +3597,7 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
 
     NEO::EngineGroupType engineGroupTypes[] = {NEO::EngineGroupType::RenderCompute, NEO::EngineGroupType::Compute};
     for (auto isCooperativeDispatchSupported : ::testing::Bool()) {
-        hwHelper.isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
+        gfxCoreHelper.isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
 
         std::vector<ze_command_queue_group_properties_t> properties(count);
         res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
@@ -3945,7 +3945,7 @@ struct MultiSubDeviceFixture : public DeviceFixture {
 
 using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1, -1>>;
 TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsImplicitScalingCapable) {
-    if (NEO::HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).platformSupportsImplicitScaling(neoDevice->getHardwareInfo())) {
+    if (NEO::GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).platformSupportsImplicitScaling(neoDevice->getHardwareInfo())) {
         EXPECT_TRUE(device->isImplicitScalingCapable());
         EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
     } else {

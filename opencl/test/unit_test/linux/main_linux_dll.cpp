@@ -708,7 +708,7 @@ TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtual
         GTEST_SKIP();
     }
 
-    auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+    auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
         EXPECT_EQ(id + 1, drm->getVirtualMemoryAddressSpace(id));
     }
@@ -726,7 +726,7 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
     if (drm->isVmBindAvailable()) {
         EXPECT_TRUE(drm->isPerContextVMRequired());
 
-        auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+        auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
         for (auto id = 0u; id < numSubDevices; id++) {
             EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(id));
         }
@@ -755,7 +755,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
         GTEST_SKIP();
     }
 
-    auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+    auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
         EXPECT_NE(0u, drm->getVirtualMemoryAddressSpace(id));
     }

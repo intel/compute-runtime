@@ -13,27 +13,27 @@
 #include <algorithm>
 
 namespace NEO {
-HwHelper *hwHelperFactory[IGFX_MAX_CORE] = {};
+GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
-HwHelper &HwHelper::get(GFXCORE_FAMILY gfxCore) {
-    return *hwHelperFactory[gfxCore];
+GfxCoreHelper &GfxCoreHelper::get(GFXCORE_FAMILY gfxCore) {
+    return *gfxCoreHelperFactory[gfxCore];
 }
 
-bool HwHelper::compressedBuffersSupported(const HardwareInfo &hwInfo) {
+bool GfxCoreHelper::compressedBuffersSupported(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
         return !!DebugManager.flags.RenderCompressedBuffersEnabled.get();
     }
     return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
 }
 
-bool HwHelper::compressedImagesSupported(const HardwareInfo &hwInfo) {
+bool GfxCoreHelper::compressedImagesSupported(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
         return !!DebugManager.flags.RenderCompressedImagesEnabled.get();
     }
     return hwInfo.capabilityTable.ftrRenderCompressedImages;
 }
 
-bool HwHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
+bool GfxCoreHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
     int32_t dbgFlag = DebugManager.flags.EnableCacheFlushAfterWalker.get();
     if (dbgFlag == 1) {
         return true;
@@ -43,7 +43,7 @@ bool HwHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
     return hwInfo.capabilityTable.supportCacheFlushAfterWalker;
 }
 
-uint32_t HwHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
+uint32_t GfxCoreHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     auto maxHwThreadsCapable = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
     auto maxHwThreadsReturned = maxHwThreadsCapable;
@@ -56,7 +56,7 @@ uint32_t HwHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
     return maxHwThreadsReturned;
 }
 
-uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
+uint32_t GfxCoreHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
     if (DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
         return DebugManager.flags.CreateMultipleSubDevices.get();
     } else if (pHwInfo->gtSystemInfo.MultiTileArchInfo.IsValid && pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 0u) {
@@ -66,7 +66,7 @@ uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
     }
 }
 
-uint32_t HwHelper::getHighestEnabledSlice(const HardwareInfo &hwInfo) {
+uint32_t GfxCoreHelper::getHighestEnabledSlice(const HardwareInfo &hwInfo) {
     uint32_t highestEnabledSlice = 0;
     if (!hwInfo.gtSystemInfo.IsDynamicallyPopulated) {
         return hwInfo.gtSystemInfo.MaxSlicesSupported;

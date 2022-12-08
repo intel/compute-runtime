@@ -276,15 +276,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTimestampPacketTests, givenInvalidDebugFlagSe
 HWTEST_F(DeviceTimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenGpuAddressIsAligned) {
     auto csr = executionEnvironment->memoryManager->getRegisteredEngines()[0].commandStreamReceiver;
 
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     auto allocator = csr->getTimestampPacketAllocator();
 
     auto tag1 = allocator->getTag();
     auto tag2 = allocator->getTag();
 
-    EXPECT_TRUE(isAligned(tag1->getGpuAddress(), hwHelper.getTimestampPacketAllocatorAlignment()));
-    EXPECT_TRUE(isAligned(tag2->getGpuAddress(), hwHelper.getTimestampPacketAllocatorAlignment()));
+    EXPECT_TRUE(isAligned(tag1->getGpuAddress(), gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
+    EXPECT_TRUE(isAligned(tag2->getGpuAddress(), gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
 }
 
 HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {

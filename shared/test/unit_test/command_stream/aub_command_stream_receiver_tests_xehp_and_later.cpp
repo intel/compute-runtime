@@ -359,7 +359,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAub
     EXPECT_EQ(mmioList[21], MMIOPair(0x0000B134, 0xA0000000));
 }
 
-using XeHPAndLaterAubCommandStreamReceiverTests2 = HwHelperTest;
+using XeHPAndLaterAubCommandStreamReceiverTests2 = GfxCoreHelperTest;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests2, givenLocalMemoryEnabledInCSRWhenGetGTTDataIsCalledThenLocalMemoryIsSet) {
     DebugManagerStateRestore debugRestorer;

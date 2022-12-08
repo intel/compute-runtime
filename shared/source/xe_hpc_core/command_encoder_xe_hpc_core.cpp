@@ -45,8 +45,8 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 
             constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
             constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
-            auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            uint32_t availableThreadCount = hwHelper.calculateAvailableThreadCount(hwInfo, numGrf);
+            auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+            uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf);
             if (ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true)) {
                 const uint32_t tilesCount = device.getNumSubDevices();
                 availableThreadCount *= tilesCount;
@@ -256,7 +256,7 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
 
     const uint32_t threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
     const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
-    const uint32_t workgroupSlmSize = HwHelperHw<Family>::get().alignSlmSize(slmTotalSize);
+    const uint32_t workgroupSlmSize = GfxCoreHelperHw<Family>::get().alignSlmSize(slmTotalSize);
 
     uint32_t slmSize = 0u;
 

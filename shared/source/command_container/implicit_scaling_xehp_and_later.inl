@@ -234,7 +234,7 @@ inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStr
 
 template <typename GfxFamily>
 inline uint32_t ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset() {
-    return static_cast<uint32_t>(HwHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw());
+    return static_cast<uint32_t>(GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw());
 }
 
 template <typename GfxFamily>

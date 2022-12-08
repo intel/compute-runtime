@@ -15,7 +15,7 @@ using namespace NEO;
 
 using ThreadArbitrationXeHpc = ::testing::Test;
 HWTEST2_F(ThreadArbitrationXeHpc, givenXeHpcWhenCallgetDefaultThreadArbitrationPolicyThenAgeBasedisReturned, IsXeHpcCore) {
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
 using XeHpcComputeModeRequirements = ComputeModeRequirements;
@@ -28,8 +28,8 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyW
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
-    auto &hwHelper = NEO::HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    auto newEuThreadSchedulingMode = hwHelper.getDefaultThreadArbitrationPolicy();
+    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+    auto newEuThreadSchedulingMode = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
     auto expectedEuThreadSchedulingMode = static_cast<EU_THREAD_SCHEDULING_MODE_OVERRIDE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;

@@ -49,8 +49,8 @@ uint32_t KernelHelper::getMaxWorkGroupCount(uint32_t simd, uint32_t availableThr
 }
 
 KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device) {
-    auto &coreHelper = device->getRootDeviceEnvironment().getHelper<NEO::CoreHelper>();
-    uint32_t maxScratchSize = coreHelper.getMaxScratchSize();
+    auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
     if ((attributes.perThreadScratchSize[0] > maxScratchSize) || (attributes.perThreadScratchSize[1] > maxScratchSize)) {
         return KernelHelper::ErrorCode::INVALID_KERNEL;
     }

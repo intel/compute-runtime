@@ -21,10 +21,10 @@ using Family = NEO::XeHpgCoreFamily;
 
 namespace NEO {
 template <>
-const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
+const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
 
 template <>
-inline bool HwHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const {
+inline bool GfxCoreHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const {
     auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
     fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
 
@@ -38,12 +38,12 @@ inline bool HwHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo &hwI
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
+uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHPG);
 }
 
 template <>
-void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
+void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
     if (!pHwInfo->featureTable.flags.ftrCCSNode) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     }
@@ -53,12 +53,12 @@ void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <>
-bool HwHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const {
+bool GfxCoreHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const {
     return !hwInfo.workaroundTable.flags.waAuxTable64KGranular && isCompressionEnabled;
 }
 
 template <>
-void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
+void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
     if (useL1Cache) {
         surfaceState->setL1CachePolicyL1CacheControl(Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB);
         if (DebugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get() != -1) {
@@ -68,7 +68,7 @@ void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::REND
 }
 
 template <>
-bool HwHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) const {
 
     bool forceOverrideMemoryBankIndex = false;
 
@@ -91,12 +91,12 @@ void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirec
 }
 
 template <>
-const StackVec<uint32_t, 6> HwHelperHw<Family>::getThreadsPerEUConfigs() const {
+const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() const {
     return {4, 8};
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
     extensions += "cl_intel_create_buffer_with_properties ";
     extensions += "cl_intel_dot_accumulate ";
@@ -112,7 +112,7 @@ std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const 
 }
 
 template <>
-bool HwHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
@@ -125,7 +125,7 @@ bool HwHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, c
 }
 
 template <>
-uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     auto slmValue = std::max(slmSize, 1024u);
@@ -138,19 +138,19 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
 }
 
 template <>
-bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo) const {
     return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>
-bool HwHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
     return this->isLocalMemoryEnabled(hwInfo);
 }
 
-template class HwHelperHw<Family>;
+template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;

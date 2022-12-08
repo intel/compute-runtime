@@ -549,11 +549,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenGpuHangOnFlushBcsTaskAndLo
     auto deviceBitfield = blitDevice->getDeviceBitfield();
 
     const auto &hwInfo = testedDevice->getDevice().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     auto internalUsage = true;
     auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, internalUsage);
-    auto bcsEngineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+    auto bcsEngineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
     auto bcsEngine = blitDevice->tryGetEngine(bcsEngineType, bcsEngineUsage);
     ASSERT_NE(nullptr, bcsEngine);
 

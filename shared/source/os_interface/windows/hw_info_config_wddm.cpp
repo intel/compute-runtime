@@ -19,12 +19,12 @@
 namespace NEO {
 
 int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
-    auto &coreHelper = rootDeviceEnvironemnt.getHelper<CoreHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironemnt.getHelper<GfxCoreHelper>();
     auto &productHelper = rootDeviceEnvironemnt.getHelper<ProductHelper>();
     auto compilerProductHelper = CompilerProductHelper::get(outHwInfo->platform.eProductFamily);
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.flags.ftrSVM;
 
-    coreHelper.adjustDefaultEngineType(outHwInfo);
+    gfxCoreHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     productHelper.setCapabilityCoherencyFlag(*outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
@@ -39,7 +39,7 @@ int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo
         outHwInfo->gtSystemInfo.CsrSizeInMb = static_cast<uint32_t>(DebugManager.flags.OverridePreemptionSurfaceSizeInMb.get());
     }
     outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
-    coreHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
+    gfxCoreHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);

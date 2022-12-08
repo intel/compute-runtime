@@ -66,7 +66,7 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
-    auto isHexadecimalArrayPreferred = NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+    auto isHexadecimalArrayPreferred = NEO::GfxCoreHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
     if (!isHexadecimalArrayPreferred) {
         auto mockBuiltIns = new NEO::MockBuiltins();
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);

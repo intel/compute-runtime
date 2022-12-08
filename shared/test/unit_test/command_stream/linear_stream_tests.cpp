@@ -170,10 +170,10 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
-    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
+    stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
     stream->getSpace(dummyCommandSize);
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
@@ -183,10 +183,10 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
-    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
+    stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
     auto oldBuffer = stream->getCpuBase();
     stream->getSpace(dummyCommandSize);
     auto newBuffer = stream->getCpuBase();
@@ -197,10 +197,10 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
-    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
+    stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
     auto ptr = stream->getSpace(dummyCommandSize);
     auto buffer = stream->getCpuBase();
     EXPECT_EQ(buffer, ptr);
@@ -210,10 +210,10 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
-    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize);
+    stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize);
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
     stream->getSpace(dummyCommandSize);
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
@@ -223,11 +223,11 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
-    stream->sizeUsed = stream->getMaxAvailableSpace() - hwHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
+    stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
     auto ptr = stream->getSpace(0u);
     stream->getSpace(dummyCommandSize);
-    EXPECT_EQ(memcmp(ptr, hwHelper.getBatchBufferEndReference(), hwHelper.getBatchBufferEndSize()), 0);
+    EXPECT_EQ(memcmp(ptr, gfxCoreHelper.getBatchBufferEndReference(), gfxCoreHelper.getBatchBufferEndSize()), 0);
 }

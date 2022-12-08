@@ -419,13 +419,13 @@ TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageI
     REQUIRE_IMAGES_OR_SKIP(pContext);
 
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr);
-    auto &coreHelper = pDevice->getRootDeviceEnvironment().getHelper<CoreHelper>();
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 
     imageDesc.mem_object = buffer;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 17;
     imageDesc.image_height = 17;
-    imageDesc.image_row_pitch = coreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()) * 17;
+    imageDesc.image_row_pitch = gfxCoreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()) * 17;
 
     auto image = clCreateImage(
         pContext,

@@ -73,7 +73,7 @@ GEN9TEST_F(Gen9L3Config, GivenSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
 
 using ThreadArbitration = PreambleFixture;
 GEN9TEST_F(ThreadArbitration, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
 GEN9TEST_F(ThreadArbitration, whenGetSupportedThreadArbitrationPoliciesIsCalledThenAgeBasedAndRoundRobinAreReturned) {

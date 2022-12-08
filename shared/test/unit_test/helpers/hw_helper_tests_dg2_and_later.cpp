@@ -16,13 +16,13 @@
 
 using namespace NEO;
 
-using HwHelperDg2AndLaterTest = ::testing::Test;
+using GfxCoreHelperDg2AndLaterTest = ::testing::Test;
 
-HWTEST2_F(HwHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
+    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(GfxCoreHelperHw<FamilyType>::get());
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = true;
@@ -30,14 +30,14 @@ HWTEST2_F(HwHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CachePolicy
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceState.getL1CachePolicyL1CacheControl());
 }
 
-HWTEST2_F(HwHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStateForScratchSpaceWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStateForScratchSpaceWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restore;
     DebugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.set(1);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
+    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(GfxCoreHelperHw<FamilyType>::get());
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = true;
@@ -45,11 +45,11 @@ HWTEST2_F(HwHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStateForS
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_UC, surfaceState.getL1CachePolicyL1CacheControl());
 }
 
-HWTEST2_F(HwHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsNotSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsNotSet, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    auto &helper = reinterpret_cast<HwHelperHw<FamilyType> &>(HwHelperHw<FamilyType>::get());
+    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(GfxCoreHelperHw<FamilyType>::get());
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = false;
     helper.setL1CachePolicy(useL1Cache, &surfaceState, defaultHwInfo.get());
@@ -188,15 +188,15 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugDisableCacheFlushWhenProg
     EXPECT_FALSE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
-HWTEST2_F(HwHelperDg2AndLaterTest, givenXeHPGAndLaterPlatformWhenCheckingIfUnTypedDataPortCacheFlushRequiredThenReturnTrue, IsAtLeastXeHpgCore) {
-    auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(hwHelper.unTypedDataPortCacheFlushRequired());
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenXeHPGAndLaterPlatformWhenCheckingIfUnTypedDataPortCacheFlushRequiredThenReturnTrue, IsAtLeastXeHpgCore) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+    EXPECT_TRUE(gfxCoreHelper.unTypedDataPortCacheFlushRequired());
 }
 
-HWTEST2_F(HwHelperDg2AndLaterTest, givenHwHelperWhenCheckIsUpdateTaskCountFromWaitSupportedThenReturnsTrue, IsAtLeastXeHpgCore) {
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckIsUpdateTaskCountFromWaitSupportedThenReturnsTrue, IsAtLeastXeHpgCore) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
-    EXPECT_TRUE(hwHelper.isUpdateTaskCountFromWaitSupported());
+    EXPECT_TRUE(gfxCoreHelper.isUpdateTaskCountFromWaitSupported());
 }
 
 using HwInfoConfigTestDg2AndLater = ::testing::Test;

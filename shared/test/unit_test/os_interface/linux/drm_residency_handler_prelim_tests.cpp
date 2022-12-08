@@ -876,10 +876,10 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
-    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 
-    bool closSupported = (hwHelper.getNumCacheRegions() > 0);
+    bool closSupported = (gfxCoreHelper.getNumCacheRegions() > 0);
     bool patIndexProgrammingSupported = hwInfoConfig->isVmBindPatIndexProgrammingSupported();
 
     uint64_t gpuAddress = 0x123000;
@@ -935,9 +935,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
     auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
-    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
-    bool closSupported = (hwHelper.getNumCacheRegions() > 0);
+    bool closSupported = (gfxCoreHelper.getNumCacheRegions() > 0);
     bool patIndexProgrammingSupported = hwInfoConfig->isVmBindPatIndexProgrammingSupported();
     if (!closSupported || !patIndexProgrammingSupported) {
         GTEST_SKIP();
@@ -996,9 +996,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 
     auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
-    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
 
-    if (hwHelper.getNumCacheRegions() == 0) {
+    if (gfxCoreHelper.getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
 
@@ -1022,9 +1022,9 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
 
     mock->cacheInfo.reset(new CacheInfo(*mock, 64 * MemoryConstants::kiloByte, 2, 32));
 
-    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
 
-    if (hwHelper.getNumCacheRegions() == 0) {
+    if (gfxCoreHelper.getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
 
@@ -1036,7 +1036,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
         mock->context.receivedVmBindPatIndex.reset();
         operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
 
-        auto patIndex = hwHelper.getPatIndex(cacheRegion, CachePolicy::WriteBack);
+        auto patIndex = gfxCoreHelper.getPatIndex(cacheRegion, CachePolicy::WriteBack);
 
         EXPECT_EQ(patIndex, mock->context.receivedVmBindPatIndex.value());
 
@@ -1050,26 +1050,26 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
 }
 
 TEST(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue) {
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
-    if (hwHelper.getNumCacheRegions() == 0) {
-        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
-        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
+    if (gfxCoreHelper.getNumCacheRegions() == 0) {
+        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
+        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
     } else {
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
-        EXPECT_EQ(1u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteCombined));
-        EXPECT_EQ(2u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteThrough));
-        EXPECT_EQ(3u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
+        EXPECT_EQ(1u, gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteCombined));
+        EXPECT_EQ(2u, gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteThrough));
+        EXPECT_EQ(3u, gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
 
-        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::Uncached));
-        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteCombined));
-        EXPECT_EQ(4u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteThrough));
-        EXPECT_EQ(5u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteBack));
+        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::Region1, CachePolicy::Uncached));
+        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteCombined));
+        EXPECT_EQ(4u, gfxCoreHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteThrough));
+        EXPECT_EQ(5u, gfxCoreHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteBack));
 
-        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::Uncached));
-        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteCombined));
-        EXPECT_EQ(6u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteThrough));
-        EXPECT_EQ(7u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteBack));
+        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::Region2, CachePolicy::Uncached));
+        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteCombined));
+        EXPECT_EQ(6u, gfxCoreHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteThrough));
+        EXPECT_EQ(7u, gfxCoreHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteBack));
     }
 }
 
@@ -1077,26 +1077,26 @@ TEST(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForPatInd
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceAllResourcesUncached.set(1);
 
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
-    if (hwHelper.getNumCacheRegions() == 0) {
-        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
-        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
+    if (gfxCoreHelper.getNumCacheRegions() == 0) {
+        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
+        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
     } else {
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteCombined));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteThrough));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteCombined));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteThrough));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
 
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::Uncached));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteCombined));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteThrough));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteBack));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Region1, CachePolicy::Uncached));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteCombined));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteThrough));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteBack));
 
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::Uncached));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteCombined));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteThrough));
-        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteBack));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Region2, CachePolicy::Uncached));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteCombined));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteThrough));
+        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteBack));
     }
 }
 

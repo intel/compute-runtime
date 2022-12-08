@@ -84,7 +84,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        kernelDescriptor.kernelAttributes.barrierCount,
                                                        hwInfo);
     auto slmSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
-        HwHelperHw<Family>::get().computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
+        GfxCoreHelperHw<Family>::get().computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
     idd.setSharedLocalMemorySize(slmSize);
 
     uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;

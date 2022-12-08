@@ -26,7 +26,7 @@
 #include <memory>
 using namespace NEO;
 
-using CommandStreamSimulatedTests = HwHelperTest;
+using CommandStreamSimulatedTests = GfxCoreHelperTest;
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageInfoNonZeroWhenMemoryBankIsQueriedThenBankForAllocationDeviceIsReturned) {
     ExecutionEnvironment executionEnvironment;

@@ -11,10 +11,10 @@
 
 using namespace NEO;
 
-using HwHelperDg2OrBelowTests = ::testing::Test;
+using GfxCoreHelperDg2OrBelowTests = ::testing::Test;
 
 using isDG2OrBelow = IsAtMostProduct<IGFX_DG2>;
-HWTEST2_F(HwHelperDg2OrBelowTests, WhenGettingIsKmdMigrationSupportedThenFalseIsReturned, isDG2OrBelow) {
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.isKmdMigrationSupported(*defaultHwInfo));
+HWTEST2_F(GfxCoreHelperDg2OrBelowTests, WhenGettingIsKmdMigrationSupportedThenFalseIsReturned, isDG2OrBelow) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(gfxCoreHelper.isKmdMigrationSupported(*defaultHwInfo));
 }

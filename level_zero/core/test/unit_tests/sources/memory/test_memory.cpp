@@ -341,7 +341,7 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
     auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    auto &hwHelper = NEO::HwHelperHw<FamilyType>::get();
+    auto &gfxCoreHelper = NEO::GfxCoreHelperHw<FamilyType>::get();
 
     // Default path
     {
@@ -366,7 +366,7 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
 
         auto allocation = allocDeviceMem(2048);
 
-        EXPECT_EQ(hwHelper.isBufferSizeSuitableForCompression(2048, hwInfo), allocation->isCompressionEnabled());
+        EXPECT_EQ(gfxCoreHelper.isBufferSizeSuitableForCompression(2048, hwInfo), allocation->isCompressionEnabled());
 
         context->freeMem(ptr);
 
@@ -453,7 +453,7 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
 
         auto allocation = allocDeviceMem(1);
 
-        if (!hwHelper.isBufferSizeSuitableForCompression(1, hwInfo)) {
+        if (!gfxCoreHelper.isBufferSizeSuitableForCompression(1, hwInfo)) {
             EXPECT_FALSE(allocation->isCompressionEnabled());
         }
 

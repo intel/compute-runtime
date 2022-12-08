@@ -388,7 +388,7 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
 
             MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &device);
 
-            bool compressionEnabled = MemObjHelper::isSuitableForCompression(HwHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
+            bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
 
             MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
                 memoryProperties, context, compressionEnabled, false);
@@ -451,7 +451,7 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
                         MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel,
                                                                                                              0, &device);
 
-                        bool compressionEnabled = MemObjHelper::isSuitableForCompression(HwHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
+                        bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
                         MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
                             memoryProperties, context, compressionEnabled, false);
 

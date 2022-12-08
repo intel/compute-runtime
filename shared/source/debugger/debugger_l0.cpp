@@ -76,7 +76,7 @@ void DebuggerL0::initialize() {
 
     {
         auto &hwInfo = device->getHardwareInfo();
-        auto &coreHelper = device->getRootDeviceEnvironment().getHelper<CoreHelper>();
+        auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
         NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize64k,
                                              NEO::AllocationType::DEBUG_MODULE_AREA,
                                              false,
@@ -100,7 +100,7 @@ void DebuggerL0::initialize() {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));
-        if (coreHelper.disableL3CacheForDebug(hwInfo)) {
+        if (gfxCoreHelper.disableL3CacheForDebug(hwInfo)) {
             device->getGmmHelper()->forceAllResourcesUncached();
         }
 

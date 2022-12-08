@@ -705,7 +705,7 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
+    if (GfxCoreHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
         EXPECT_FALSE(buffer->isMemObjZeroCopy());
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, allocation->isCompressionEnabled());
@@ -723,7 +723,7 @@ TEST_F(CompressedBuffersTests, givenBufferCompressedAllocationWhenSharedContextI
 
     buffer.reset(Buffer::create(context.get(), CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
+    if (GfxCoreHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
     } else {
@@ -745,7 +745,7 @@ TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelect
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
+    if (GfxCoreHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
     } else {
@@ -803,7 +803,7 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenCopyFromHo
 
     buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, bufferSize, hostPtr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
+    if (GfxCoreHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
         EXPECT_TRUE(graphicsAllocation->isCompressionEnabled());
         EXPECT_EQ(1u, mockCmdQ->writeBufferCounter);
         EXPECT_TRUE(mockCmdQ->writeBufferBlocking);
@@ -843,7 +843,7 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenNonCompressedBufferWhenCopyFro
 }
 
 TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenWriteBufferFailsThenReturnErrorCode) {
-    if (is32bit || !HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
+    if (is32bit || !GfxCoreHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
         return;
     }
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;

@@ -22,10 +22,10 @@ using Family = NEO::XeHpcCoreFamily;
 namespace NEO {
 
 template <>
-const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
+const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
 
 template <>
-uint8_t HwHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
+uint8_t GfxCoreHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
     static constexpr uint8_t possibleBarriersCounts[] = {
         0u,  // 0
         1u,  // 1
@@ -40,7 +40,7 @@ uint8_t HwHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers)
 }
 
 template <>
-const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
@@ -88,7 +88,7 @@ const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const
 };
 
 template <>
-EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
+EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     if (engineType == aub_stream::ENGINE_CCCS) {
         return EngineGroupType::RenderCompute;
     }
@@ -108,29 +108,29 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 }
 
 template <>
-void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
+void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
     if (!pHwInfo->featureTable.flags.ftrCCSNode) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCCS;
     }
 }
 
 template <>
-bool HwHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
+bool GfxCoreHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
     return true;
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
+uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHPC);
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMinimalSIMDSize() {
+uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() {
     return 16u;
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
+uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
     }
@@ -138,17 +138,17 @@ uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3ena
 }
 
 template <>
-const StackVec<size_t, 3> HwHelperHw<Family>::getDeviceSubGroupSizes() const {
+const StackVec<size_t, 3> GfxCoreHelperHw<Family>::getDeviceSubGroupSizes() const {
     return {16, 32};
 }
 
 template <>
-const StackVec<uint32_t, 6> HwHelperHw<Family>::getThreadsPerEUConfigs() const {
+const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() const {
     return {4, 8};
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMaxNumSamplers() const {
+uint32_t GfxCoreHelperHw<Family>::getMaxNumSamplers() const {
     return 0;
 }
 
@@ -210,7 +210,7 @@ size_t MemorySynchronizationCommands<Family>::getSizeForAdditonalSynchronization
 }
 
 template <>
-void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
+void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
     if (useL1Cache) {
         surfaceState->setL1CachePolicyL1CacheControl(Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB);
         if (DebugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get() != -1) {
@@ -220,7 +220,7 @@ void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::REND
 }
 
 template <>
-void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
+void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
     if (properties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER || properties.allocationType == AllocationType::COMMAND_BUFFER) {
         allocationData.flags.useSystemMemory = false;
     }
@@ -260,7 +260,7 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getNumCacheRegions() const {
+uint32_t GfxCoreHelperHw<Family>::getNumCacheRegions() const {
     constexpr uint32_t numSharedCacheRegions = 1;
     constexpr uint32_t numReservedCacheRegions = 2;
     constexpr uint32_t numTotalCacheRegions = numSharedCacheRegions + numReservedCacheRegions;
@@ -268,7 +268,7 @@ uint32_t HwHelperHw<Family>::getNumCacheRegions() const {
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
 
     extensions += "cl_intel_create_buffer_with_properties ";
@@ -283,7 +283,7 @@ std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
     const uint32_t alignedSlmSizes[] = {
         0u,
         1u * KB,
@@ -310,7 +310,7 @@ uint32_t HwHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
     if (slmSize == 0u) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
@@ -352,17 +352,17 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
 }
 
 template <>
-int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::RoundRobinAfterDependency;
 }
 
 template <>
-bool HwHelperHw<Family>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
     return HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported();
 }
 
 template <>
-bool HwHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
+bool GfxCoreHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
     constexpr uint64_t tile1Bitfield = 0b10;
 
     bool affectedEngine = (deviceBitfield.to_ulong() == tile1Bitfield) &&
@@ -374,7 +374,7 @@ bool HwHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
@@ -387,22 +387,22 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvir
 }
 
 template <>
-bool HwHelperHw<Family>::isRevisionSpecificBinaryBuiltinRequired() const {
+bool GfxCoreHelperHw<Family>::isRevisionSpecificBinaryBuiltinRequired() const {
     return true;
 }
 
 template <>
-size_t HwHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
+size_t GfxCoreHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
     return 0x2800000;
 }
 
 template <>
-bool HwHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
+bool GfxCoreHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
     return true;
 }
 
 template <>
-uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
+uint64_t GfxCoreHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     /*
     PAT Index  CLOS   MemType
     SHARED
@@ -428,7 +428,7 @@ uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy ca
 }
 
 template <>
-bool HwHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
@@ -436,7 +436,7 @@ bool HwHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo)
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getAmountOfAllocationsToFill() const {
+uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
     if (DebugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
         return DebugManager.flags.SetAmountOfReusableAllocations.get();
     }
@@ -444,7 +444,7 @@ uint32_t HwHelperHw<Family>::getAmountOfAllocationsToFill() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isRelaxedOrderingSupported() const {
+bool GfxCoreHelperHw<Family>::isRelaxedOrderingSupported() const {
     return true;
 }
 
@@ -453,7 +453,7 @@ bool HwHelperHw<Family>::isRelaxedOrderingSupported() const {
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"
 
 namespace NEO {
-template class HwHelperHw<Family>;
+template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;

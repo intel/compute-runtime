@@ -11,7 +11,7 @@
 namespace NEO {
 
 template <>
-bool HwHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
     if ((DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
         (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
         (DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
@@ -21,19 +21,19 @@ bool HwHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) c
 }
 
 template <>
-bool HwHelperHw<Family>::isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const {
     return !hwInfo.capabilityTable.supportsImages;
 }
 
 template <>
-bool HwHelperHw<Family>::isRcsAvailable(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isRcsAvailable(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
     return (defaultEngine == aub_stream::EngineType::ENGINE_RCS) ||
            (defaultEngine == aub_stream::EngineType::ENGINE_CCCS) || hwInfo.featureTable.flags.ftrRcsNode;
 }
 
 template <>
-bool HwHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const {
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
         if (engineGroupType == EngineGroupType::RenderCompute) {
@@ -48,8 +48,8 @@ bool HwHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType en
 }
 
 template <>
-uint32_t HwHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                                     const HardwareInfo &hwInfo, bool isEngineInstanced) const {
+uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
+                                                          const HardwareInfo &hwInfo, bool isEngineInstanced) const {
     if ((DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.get()) ||
         (DebugManager.flags.OverrideMaxWorkGroupCount.get() != -1)) {
         return maxWorkGroupCount;
@@ -70,12 +70,12 @@ uint32_t HwHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount,
 }
 
 template <>
-bool HwHelperHw<Family>::isEngineTypeRemappingToHwSpecificRequired() const {
+bool GfxCoreHelperHw<Family>::isEngineTypeRemappingToHwSpecificRequired() const {
     return true;
 }
 
 template <>
-size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
+size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
     if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
         return 0xE00 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
     }
@@ -83,7 +83,7 @@ size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) {
+uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) {
     auto maxThreadsPerEuCount = 1024u / grfCount;
     return maxThreadsPerEuCount * hwInfo.gtSystemInfo.EUCount;
 }

@@ -18,7 +18,7 @@ namespace NEO {
 class Image;
 struct KernelInfo;
 struct SurfaceFormatInfo;
-class HwHelper;
+class GfxCoreHelper;
 
 using ImageCreateFunc = Image *(*)(Context *context,
                                    const MemoryProperties &memoryProperties,

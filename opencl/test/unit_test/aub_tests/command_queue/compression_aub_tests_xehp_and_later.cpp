@@ -37,11 +37,11 @@ struct CompressionXeHPAndLater : public AUBFixture,
         DebugManager.flags.EnableLocalMemory.set(useLocalMemory);
         DebugManager.flags.NodeOrdinal.set(GetParam());
 
-        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
         auto expectedEngine = static_cast<aub_stream::EngineType>(GetParam());
         bool engineSupported = false;
-        for (auto &engine : hwHelper.getGpgpuEngineInstances(*defaultHwInfo)) {
+        for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)) {
             if (engine.first == expectedEngine) {
                 engineSupported = true;
                 break;

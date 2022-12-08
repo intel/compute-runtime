@@ -158,7 +158,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     const HardwareInfo *hwInfo = defaultHwInfo.get();
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
-    auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+    auto enableLocalMemory = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
     executionEnvironment->initializeMemoryManager();
     EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported(device->getRootDeviceIndex()));
 }
@@ -439,9 +439,9 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
 
         for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
             auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-            auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-            auto osContextCount = hwHelper.getGpgpuEngineInstances(*hwInfo).size();
-            auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+            auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
+            auto osContextCount = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo).size();
+            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
             bool hasRootCsr = subDevicesCount > 1;
             auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
 
