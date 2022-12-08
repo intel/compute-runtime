@@ -533,6 +533,11 @@ bool HwInfoConfigHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(co
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isMidThreadPreemptionDisallowedForRayTracingKernels() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) {
     propertiesSupport.coherencyRequired = getScmPropertyCoherencyRequiredSupport();
     propertiesSupport.threadArbitrationPolicy = isThreadArbitrationPolicyReportedWithScm();

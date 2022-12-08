@@ -79,10 +79,13 @@ PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hw
 
 PreemptionFlags PreemptionHelper::createPreemptionLevelFlags(Device &device, const KernelDescriptor *kernelDescriptor) {
     PreemptionFlags flags = {};
+    auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
     if (kernelDescriptor) {
         flags.flags.disabledMidThreadPreemptionKernel = kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption;
         flags.flags.vmeKernel = kernelDescriptor->kernelAttributes.flags.usesVme;
         flags.flags.usesFencesForReadWriteImages = kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages;
+
+        flags.flags.disabledMidThreadPreemptionKernel |= kernelDescriptor->kernelAttributes.flags.hasRTCalls && productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();
     }
     flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
     flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl;

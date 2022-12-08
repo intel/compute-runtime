@@ -7,10 +7,12 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/helpers/raii_hw_info_config.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -397,5 +399,45 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, WhenProgrammingPreemptionT
         EXPECT_TRUE(itorMediaVFEMode == itorPreemptionMode);
 
         alignedFree(buffer);
+    }
+}
+
+HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingWhenGettingPreemptionFlagsThenMidThreadPreemptionIsNotDisabled) {
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    KernelDescriptor kernelDescriptor{};
+
+    kernelDescriptor.kernelAttributes.flags.hasRTCalls = true;
+
+    auto flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
+    EXPECT_FALSE(flags.flags.disabledMidThreadPreemptionKernel);
+}
+
+class MockHwInfoConfigForRtKernels : public HwInfoConfigHw<IGFX_UNKNOWN> {
+  public:
+    bool isMidThreadPreemptionDisallowedForRayTracingKernels() const override {
+        return !midThreadPreemptionAllowedForRayTracing;
+    }
+    bool midThreadPreemptionAllowedForRayTracing = true;
+};
+
+HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingWhenGettingPreemptionFlagsThenMidThreadPreemptionIsEnabledBasedOnProductHelperCapability) {
+    RAIIHwInfoConfigFactory<MockHwInfoConfigForRtKernels> hwInfoConfigBackup{defaultHwInfo->platform.eProductFamily};
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    KernelDescriptor kernelDescriptor{};
+
+    kernelDescriptor.kernelAttributes.flags.hasRTCalls = true;
+    auto &productHelper = static_cast<MockHwInfoConfigForRtKernels &>(device->getRootDeviceEnvironment().getHelper<ProductHelper>());
+    {
+        productHelper.midThreadPreemptionAllowedForRayTracing = true;
+        auto flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
+        EXPECT_FALSE(flags.flags.disabledMidThreadPreemptionKernel);
+    }
+    {
+        productHelper.midThreadPreemptionAllowedForRayTracing = false;
+        auto flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
+        EXPECT_TRUE(flags.flags.disabledMidThreadPreemptionKernel);
     }
 }

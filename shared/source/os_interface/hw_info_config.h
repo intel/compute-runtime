@@ -148,6 +148,7 @@ class HwInfoConfig {
     virtual bool isPlatformQuerySupported() const = 0;
     virtual bool isNonBlockingGpuSubmissionSupported() const = 0;
     virtual bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const = 0;
+    virtual bool isMidThreadPreemptionDisallowedForRayTracingKernels() const = 0;
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
@@ -291,6 +292,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isPlatformQuerySupported() const override;
     bool isNonBlockingGpuSubmissionSupported() const override;
     bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const override;
+    bool isMidThreadPreemptionDisallowedForRayTracingKernels() const override;
 
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;

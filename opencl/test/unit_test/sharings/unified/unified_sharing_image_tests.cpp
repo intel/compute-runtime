@@ -6,11 +6,11 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/test/common/helpers/raii_hw_info_config.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/unified/unified_image.h"
-#include "opencl/test/unit_test/os_interface/raii_hw_info_config.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_mocks.h"
 
