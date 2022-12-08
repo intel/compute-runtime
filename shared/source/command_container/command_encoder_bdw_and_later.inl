@@ -109,6 +109,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     uint32_t samplerCount = 0;
 
     if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
+        if (!ApiSpecificConfig::getBindlessConfiguration()) {
+            auto heap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+            auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor);
+            if (heap->getAvailableSpace() <= dshSizeRequired) {
+                heap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, heap->getMaxAvailableSpace(), 0);
+                UNRECOVERABLE_IF(!heap);
+            }
+        }
+
         auto heap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
         UNRECOVERABLE_IF(!heap);
 

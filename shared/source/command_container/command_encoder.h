@@ -128,7 +128,7 @@ struct EncodeDispatchKernel {
 
     static constexpr bool shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent);
 
-    static size_t getSizeRequiredDsh(const KernelInfo &kernelInfo);
+    static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor);
     static size_t getSizeRequiredSsh(const KernelInfo &kernelInfo);
     inline static uint32_t additionalSizeRequiredDsh();
 };

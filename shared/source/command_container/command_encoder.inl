@@ -722,17 +722,17 @@ template <typename Family>
 constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent) { return false; }
 
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelInfo &kernelInfo) {
+size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor) {
     using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);
-    const auto numSamplers = kernelInfo.kernelDescriptor.payloadMappings.samplerTable.numSamplers;
+    const auto numSamplers = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
     const auto additionalDshSize = additionalSizeRequiredDsh();
     if (numSamplers == 0U) {
         return alignUp(additionalDshSize, EncodeStates<Family>::alignInterfaceDescriptorData);
     }
 
-    size_t size = kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset -
-                  kernelInfo.kernelDescriptor.payloadMappings.samplerTable.borderColor;
+    size_t size = kernelDescriptor.payloadMappings.samplerTable.tableOffset -
+                  kernelDescriptor.payloadMappings.samplerTable.borderColor;
     size = alignUp(size, EncodeStates<Family>::alignIndirectStatePointer);
 
     size += numSamplers * samplerStateSize;
