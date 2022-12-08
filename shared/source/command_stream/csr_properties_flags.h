@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 namespace NEO {
 
 namespace AdditionalKernelExecInfo {
-constexpr uint32_t DisableOverdispatch = 0u;
-constexpr uint32_t NotSet = 1u;
-constexpr uint32_t NotApplicable = 2u;
+inline constexpr uint32_t DisableOverdispatch = 0u;
+inline constexpr uint32_t NotSet = 1u;
+inline constexpr uint32_t NotApplicable = 2u;
 } // namespace AdditionalKernelExecInfo
 
 } // namespace NEO

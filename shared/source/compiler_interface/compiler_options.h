@@ -15,39 +15,39 @@
 
 namespace NEO {
 namespace CompilerOptions {
-constexpr ConstStringRef greaterThan4gbBuffersRequired = "-cl-intel-greater-than-4GB-buffer-required";
-constexpr ConstStringRef hasBufferOffsetArg = "-cl-intel-has-buffer-offset-arg";
-constexpr ConstStringRef kernelDebugEnable = "-cl-kernel-debug-enable";
-constexpr ConstStringRef arch32bit = "-m32";
-constexpr ConstStringRef arch64bit = "-m64";
-constexpr ConstStringRef debugKernelEnable = "-cl-kernel-debug-enable";
-constexpr ConstStringRef optDisable = "-cl-opt-disable";
-constexpr ConstStringRef argInfo = "-cl-kernel-arg-info";
-constexpr ConstStringRef gtpinRera = "-cl-intel-gtpin-rera";
-constexpr ConstStringRef finiteMathOnly = "-cl-finite-math-only";
-constexpr ConstStringRef fastRelaxedMath = "-cl-fast-relaxed-math";
-constexpr ConstStringRef preserveVec3Type = "-fpreserve-vec3-type";
-constexpr ConstStringRef createLibrary = "-create-library";
-constexpr ConstStringRef generateDebugInfo = "-g";
-constexpr ConstStringRef generateSourcePath = "-s";
-constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
-constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
-constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
-constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
-constexpr ConstStringRef allowZebin = "-cl-intel-allow-zebin";
-constexpr ConstStringRef disableZebin = "-cl-intel-disable-zebin";
-constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
-constexpr ConstStringRef optLevel = "-ze-opt-level=O";
-constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
-constexpr ConstStringRef noRecompiledFromIr = "-Wno-recompiled-from-ir";
-constexpr ConstStringRef defaultGrf = "-cl-intel-128-GRF-per-thread";
-constexpr ConstStringRef largeGrf = "-cl-intel-256-GRF-per-thread";
-constexpr ConstStringRef autoGrf = "-cl-intel-enable-auto-large-GRF-mode";
-constexpr ConstStringRef numThreadsPerEu = "-cl-intel-reqd-eu-thread-count";
-constexpr ConstStringRef useCMCompiler = "-cmc";
+inline constexpr ConstStringRef greaterThan4gbBuffersRequired = "-cl-intel-greater-than-4GB-buffer-required";
+inline constexpr ConstStringRef hasBufferOffsetArg = "-cl-intel-has-buffer-offset-arg";
+inline constexpr ConstStringRef kernelDebugEnable = "-cl-kernel-debug-enable";
+inline constexpr ConstStringRef arch32bit = "-m32";
+inline constexpr ConstStringRef arch64bit = "-m64";
+inline constexpr ConstStringRef debugKernelEnable = "-cl-kernel-debug-enable";
+inline constexpr ConstStringRef optDisable = "-cl-opt-disable";
+inline constexpr ConstStringRef argInfo = "-cl-kernel-arg-info";
+inline constexpr ConstStringRef gtpinRera = "-cl-intel-gtpin-rera";
+inline constexpr ConstStringRef finiteMathOnly = "-cl-finite-math-only";
+inline constexpr ConstStringRef fastRelaxedMath = "-cl-fast-relaxed-math";
+inline constexpr ConstStringRef preserveVec3Type = "-fpreserve-vec3-type";
+inline constexpr ConstStringRef createLibrary = "-create-library";
+inline constexpr ConstStringRef generateDebugInfo = "-g";
+inline constexpr ConstStringRef generateSourcePath = "-s";
+inline constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
+inline constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
+inline constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
+inline constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
+inline constexpr ConstStringRef allowZebin = "-cl-intel-allow-zebin";
+inline constexpr ConstStringRef disableZebin = "-cl-intel-disable-zebin";
+inline constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
+inline constexpr ConstStringRef optLevel = "-ze-opt-level=O";
+inline constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
+inline constexpr ConstStringRef noRecompiledFromIr = "-Wno-recompiled-from-ir";
+inline constexpr ConstStringRef defaultGrf = "-cl-intel-128-GRF-per-thread";
+inline constexpr ConstStringRef largeGrf = "-cl-intel-256-GRF-per-thread";
+inline constexpr ConstStringRef autoGrf = "-cl-intel-enable-auto-large-GRF-mode";
+inline constexpr ConstStringRef numThreadsPerEu = "-cl-intel-reqd-eu-thread-count";
+inline constexpr ConstStringRef useCMCompiler = "-cmc";
 
-constexpr size_t nullterminateSize = 1U;
-constexpr size_t spaceSeparatorSize = 1U;
+inline constexpr size_t nullterminateSize = 1U;
+inline constexpr size_t spaceSeparatorSize = 1U;
 
 template <size_t Length>
 constexpr size_t length(const char (&array)[Length]) {

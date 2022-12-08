@@ -11,7 +11,7 @@
 
 namespace NEO {
 namespace Queries {
-constexpr ConstStringRef queryNeoRevision = "NEO_REVISION";
-constexpr ConstStringRef queryOCLDriverVersion = "OCL_DRIVER_VERSION";
+inline constexpr ConstStringRef queryNeoRevision = "NEO_REVISION";
+inline constexpr ConstStringRef queryOCLDriverVersion = "OCL_DRIVER_VERSION";
 }; // namespace Queries
 } // namespace NEO

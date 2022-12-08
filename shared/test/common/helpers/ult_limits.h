@@ -9,5 +9,5 @@
 #include <cstdint>
 
 namespace NEO {
-constexpr uint32_t maxRootDeviceCount = 3u;
+inline constexpr uint32_t maxRootDeviceCount = 3u;
 } // namespace NEO

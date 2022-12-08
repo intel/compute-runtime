@@ -12,8 +12,8 @@
 namespace NEO {
 namespace Ar {
 
-constexpr ConstStringRef arMagic = "!<arch>\n";
-constexpr ConstStringRef arFileEntryTrailingMagic = "\x60\x0A";
+inline constexpr ConstStringRef arMagic = "!<arch>\n";
+inline constexpr ConstStringRef arFileEntryTrailingMagic = "\x60\x0A";
 
 struct ArFileEntryHeader {
     char identifier[16] = {'/', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
@@ -27,9 +27,9 @@ struct ArFileEntryHeader {
 static_assert(60U == sizeof(ArFileEntryHeader), "");
 
 namespace SpecialFileNames {
-constexpr ConstStringRef longFileNamesFile = "//";
-constexpr char longFileNamePrefix = '/';
-constexpr char fileNameTerminator = '/';
+inline constexpr ConstStringRef longFileNamesFile = "//";
+inline constexpr char longFileNamePrefix = '/';
+inline constexpr char fileNameTerminator = '/';
 } // namespace SpecialFileNames
 
 } // namespace Ar

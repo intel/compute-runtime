@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace NEO {
 struct HardwareInfo;
 
 namespace Extensions {
-constexpr const char *const sharingFormatQuery = "cl_intel_sharing_format_query ";
+inline constexpr const char *const sharingFormatQuery = "cl_intel_sharing_format_query ";
 }
 extern const char *deviceExtensionsList;
 

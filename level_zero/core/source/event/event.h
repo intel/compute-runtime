@@ -30,8 +30,8 @@ struct DriverHandleImp;
 struct Device;
 
 namespace EventPacketsCount {
-constexpr uint32_t maxKernelSplit = 3;
-constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketSizeControl::preferredPacketCount;
+inline constexpr uint32_t maxKernelSplit = 3;
+inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketSizeControl::preferredPacketCount;
 } // namespace EventPacketsCount
 
 struct Event : _ze_event_handle_t {

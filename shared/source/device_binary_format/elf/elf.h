@@ -137,7 +137,7 @@ enum SYMBOL_TABLE_BIND : uint32_t {
     STB_GLOBAL = 1
 };
 
-constexpr const char elfMagic[4] = {0x7f, 'E', 'L', 'F'};
+inline constexpr const char elfMagic[4] = {0x7f, 'E', 'L', 'F'};
 
 struct ElfFileHeaderIdentity {
     ElfFileHeaderIdentity(ELF_IDENTIFIER_CLASS classBits)
@@ -563,38 +563,38 @@ static_assert(sizeof(ElfRela<EI_CLASS_32>) == 0xC, "");
 static_assert(sizeof(ElfRela<EI_CLASS_64>) == 0x18, "");
 
 namespace SpecialSectionNames {
-constexpr ConstStringRef bss = ".bss";                    // uninitialized memory
-constexpr ConstStringRef comment = ".comment";            // version control information
-constexpr ConstStringRef data = ".data";                  // initialized memory
-constexpr ConstStringRef data1 = ".data1";                // initialized memory
-constexpr ConstStringRef debug = ".debug";                // debug symbols
-constexpr ConstStringRef debugInfo = ".debug_info";       // debug info
-constexpr ConstStringRef dynamic = ".dynamic";            // dynamic linking information
-constexpr ConstStringRef dynstr = ".dynstr";              // strings for dynamic linking
-constexpr ConstStringRef dynsym = ".dynsym";              // dynamic linking symbol table
-constexpr ConstStringRef fini = ".fini";                  // executable instructions of program termination
-constexpr ConstStringRef finiArray = ".fini_array";       // function pointers of termination array
-constexpr ConstStringRef got = ".got";                    // global offset table
-constexpr ConstStringRef hash = ".hash";                  // symnol hash table
-constexpr ConstStringRef init = ".init";                  // executable instructions of program initializaion
-constexpr ConstStringRef initArray = ".init_array";       // function pointers of initialization array
-constexpr ConstStringRef interp = ".interp";              // path name of program interpreter
-constexpr ConstStringRef line = ".line";                  // line number info for symbolic debugging
-constexpr ConstStringRef note = ".note";                  // note section
-constexpr ConstStringRef plt = ".plt";                    // procedure linkage table
-constexpr ConstStringRef preinitArray = ".preinit_array"; // function pointers of pre-initialization array
-constexpr ConstStringRef relPrefix = ".rel";              // prefix of .relNAME - relocations for NAME section
-constexpr ConstStringRef relaPrefix = ".rela";            // prefix of .relaNAME - rela relocations for NAME section
-constexpr ConstStringRef rodata = ".rodata";              // read-only data
-constexpr ConstStringRef rodata1 = ".rodata1";            // read-only data
-constexpr ConstStringRef shStrTab = ".shstrtab";          // section names (strings)
-constexpr ConstStringRef strtab = ".strtab";              // strings
-constexpr ConstStringRef symtab = ".symtab";              // symbol table
-constexpr ConstStringRef symtabShndx = ".symtab_shndx";   // special symbol table section index array
-constexpr ConstStringRef tbss = ".tbss";                  // uninitialized thread-local data
-constexpr ConstStringRef tadata = ".tdata";               // initialided thread-local data
-constexpr ConstStringRef tdata1 = ".tdata1";              // initialided thread-local data
-constexpr ConstStringRef text = ".text";                  // executable instructions
+inline constexpr ConstStringRef bss = ".bss";                    // uninitialized memory
+inline constexpr ConstStringRef comment = ".comment";            // version control information
+inline constexpr ConstStringRef data = ".data";                  // initialized memory
+inline constexpr ConstStringRef data1 = ".data1";                // initialized memory
+inline constexpr ConstStringRef debug = ".debug";                // debug symbols
+inline constexpr ConstStringRef debugInfo = ".debug_info";       // debug info
+inline constexpr ConstStringRef dynamic = ".dynamic";            // dynamic linking information
+inline constexpr ConstStringRef dynstr = ".dynstr";              // strings for dynamic linking
+inline constexpr ConstStringRef dynsym = ".dynsym";              // dynamic linking symbol table
+inline constexpr ConstStringRef fini = ".fini";                  // executable instructions of program termination
+inline constexpr ConstStringRef finiArray = ".fini_array";       // function pointers of termination array
+inline constexpr ConstStringRef got = ".got";                    // global offset table
+inline constexpr ConstStringRef hash = ".hash";                  // symnol hash table
+inline constexpr ConstStringRef init = ".init";                  // executable instructions of program initializaion
+inline constexpr ConstStringRef initArray = ".init_array";       // function pointers of initialization array
+inline constexpr ConstStringRef interp = ".interp";              // path name of program interpreter
+inline constexpr ConstStringRef line = ".line";                  // line number info for symbolic debugging
+inline constexpr ConstStringRef note = ".note";                  // note section
+inline constexpr ConstStringRef plt = ".plt";                    // procedure linkage table
+inline constexpr ConstStringRef preinitArray = ".preinit_array"; // function pointers of pre-initialization array
+inline constexpr ConstStringRef relPrefix = ".rel";              // prefix of .relNAME - relocations for NAME section
+inline constexpr ConstStringRef relaPrefix = ".rela";            // prefix of .relaNAME - rela relocations for NAME section
+inline constexpr ConstStringRef rodata = ".rodata";              // read-only data
+inline constexpr ConstStringRef rodata1 = ".rodata1";            // read-only data
+inline constexpr ConstStringRef shStrTab = ".shstrtab";          // section names (strings)
+inline constexpr ConstStringRef strtab = ".strtab";              // strings
+inline constexpr ConstStringRef symtab = ".symtab";              // symbol table
+inline constexpr ConstStringRef symtabShndx = ".symtab_shndx";   // special symbol table section index array
+inline constexpr ConstStringRef tbss = ".tbss";                  // uninitialized thread-local data
+inline constexpr ConstStringRef tadata = ".tdata";               // initialided thread-local data
+inline constexpr ConstStringRef tdata1 = ".tdata1";              // initialided thread-local data
+inline constexpr ConstStringRef text = ".text";                  // executable instructions
 } // namespace SpecialSectionNames
 
 } // namespace Elf

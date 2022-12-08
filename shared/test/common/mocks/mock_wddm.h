@@ -23,7 +23,7 @@
 namespace NEO {
 class GraphicsAllocation;
 
-constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
+inline constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
 
 class WddmMock : public Wddm {
   public:

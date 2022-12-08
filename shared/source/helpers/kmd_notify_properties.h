@@ -32,8 +32,8 @@ struct KmdNotifyProperties {
 };
 
 namespace KmdNotifyConstants {
-constexpr int64_t timeoutInMicrosecondsForDisconnectedAcLine = 10000;
-constexpr uint32_t minimumTaskCountDiffToCheckAcLine = 10;
+inline constexpr int64_t timeoutInMicrosecondsForDisconnectedAcLine = 10000;
+inline constexpr uint32_t minimumTaskCountDiffToCheckAcLine = 10;
 } // namespace KmdNotifyConstants
 
 class KmdNotifyHelper {

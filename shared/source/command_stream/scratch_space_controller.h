@@ -23,7 +23,7 @@ class OsContext;
 class CommandStreamReceiver;
 
 namespace ScratchSpaceConstants {
-constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
+inline constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
 }
 
 using ResidencyContainer = std::vector<GraphicsAllocation *>;

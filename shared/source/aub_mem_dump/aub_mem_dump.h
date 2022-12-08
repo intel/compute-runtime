@@ -19,7 +19,7 @@ class AubHelper;
 namespace AubMemDump {
 #include "aub_services.h"
 
-constexpr uint32_t rcsRegisterBase = 0x2000;
+inline constexpr uint32_t rcsRegisterBase = 0x2000;
 
 #ifndef BIT
 #define BIT(x) (((uint64_t)1) << (x))

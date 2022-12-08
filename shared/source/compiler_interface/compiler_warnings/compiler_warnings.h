@@ -12,7 +12,7 @@
 namespace NEO {
 namespace CompilerWarnings {
 
-constexpr ConstStringRef recompiledFromIr = "warning: module got recompiled from IR because provided native binary is incompatible with underlying device and/or driver [-Wrecompiled-from-ir]";
+inline constexpr ConstStringRef recompiledFromIr = "warning: module got recompiled from IR because provided native binary is incompatible with underlying device and/or driver [-Wrecompiled-from-ir]";
 
 } // namespace CompilerWarnings
 } // namespace NEO

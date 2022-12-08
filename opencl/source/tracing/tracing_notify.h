@@ -50,10 +50,10 @@ typedef enum _tracing_notify_state_t {
     TRACING_NOTIFY_STATE_EXIT_CALLED = 2,
 } tracing_notify_state_t;
 
-constexpr size_t TRACING_MAX_HANDLE_COUNT = 16;
+inline constexpr size_t TRACING_MAX_HANDLE_COUNT = 16;
 
-constexpr uint32_t TRACING_STATE_ENABLED_BIT = 0x80000000u;
-constexpr uint32_t TRACING_STATE_LOCKED_BIT = 0x40000000u;
+inline constexpr uint32_t TRACING_STATE_ENABLED_BIT = 0x80000000u;
+inline constexpr uint32_t TRACING_STATE_LOCKED_BIT = 0x40000000u;
 
 extern std::atomic<uint32_t> tracingState;
 extern TracingHandle *tracingHandle[TRACING_MAX_HANDLE_COUNT];

@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-constexpr size_t defaultHeapSize = 64 * KB;
+inline constexpr size_t defaultHeapSize = 64 * KB;
 
 inline size_t getDefaultHeapSize() {
     auto defaultSize = defaultHeapSize;

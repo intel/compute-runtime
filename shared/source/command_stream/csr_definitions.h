@@ -29,23 +29,23 @@ namespace CSRequirements {
 // then command buffer is aligned to cacheline that can take up to 63 bytes
 // to be sure everything fits minimal size is at 2 x cacheline.
 
-constexpr auto minCommandQueueCommandStreamSize = 2 * MemoryConstants::cacheLineSize;
-constexpr auto csOverfetchSize = MemoryConstants::pageSize;
+inline constexpr auto minCommandQueueCommandStreamSize = 2 * MemoryConstants::cacheLineSize;
+inline constexpr auto csOverfetchSize = MemoryConstants::pageSize;
 } // namespace CSRequirements
 
 namespace TimeoutControls {
-constexpr int64_t maxTimeout = std::numeric_limits<int64_t>::max();
+inline constexpr int64_t maxTimeout = std::numeric_limits<int64_t>::max();
 }
 
 namespace QueueSliceCount {
-constexpr uint64_t defaultSliceCount = 0;
+inline constexpr uint64_t defaultSliceCount = 0;
 }
 
 namespace L3CachingSettings {
-constexpr uint32_t l3CacheOn = 0u;
-constexpr uint32_t l3CacheOff = 1u;
-constexpr uint32_t l3AndL1On = 2u;
-constexpr uint32_t NotApplicable = 3u;
+inline constexpr uint32_t l3CacheOn = 0u;
+inline constexpr uint32_t l3CacheOff = 1u;
+inline constexpr uint32_t l3AndL1On = 2u;
+inline constexpr uint32_t NotApplicable = 3u;
 } // namespace L3CachingSettings
 
 struct DispatchBcsFlags {

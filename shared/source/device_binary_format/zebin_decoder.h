@@ -18,7 +18,7 @@
 
 namespace NEO {
 
-constexpr NEO::Elf::ZebinKernelMetadata::Types::Version zeInfoDecoderVersion{1, 26};
+inline constexpr NEO::Elf::ZebinKernelMetadata::Types::Version zeInfoDecoderVersion{1, 26};
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits = Elf::EI_CLASS_64>
 struct ZebinSections {

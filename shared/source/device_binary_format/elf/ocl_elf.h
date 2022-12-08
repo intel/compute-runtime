@@ -49,13 +49,13 @@ static_assert(static_cast<uint32_t>(SHT_OPENCL_SOURCE) == static_cast<uint32_t>(
 static_assert(static_cast<uint32_t>(SHT_OPENCL_SPIRV_SC_VALUES) == static_cast<uint32_t>(SHT_OPENCL_RESERVED_END), "");
 
 namespace SectionNamesOpenCl {
-constexpr ConstStringRef buildOptions = "BuildOptions";
-constexpr ConstStringRef spirvObject = "SPIRV Object";
-constexpr ConstStringRef llvmObject = "Intel(R) OpenCL LLVM Object";
-constexpr ConstStringRef deviceDebug = "Intel(R) OpenCL Device Debug";
-constexpr ConstStringRef deviceBinary = "Intel(R) OpenCL Device Binary";
-constexpr ConstStringRef spirvSpecConstIds = "SPIRV Specialization Constants Ids";
-constexpr ConstStringRef spirvSpecConstValues = "SPIRV Specialization Constants Values";
+inline constexpr ConstStringRef buildOptions = "BuildOptions";
+inline constexpr ConstStringRef spirvObject = "SPIRV Object";
+inline constexpr ConstStringRef llvmObject = "Intel(R) OpenCL LLVM Object";
+inline constexpr ConstStringRef deviceDebug = "Intel(R) OpenCL Device Debug";
+inline constexpr ConstStringRef deviceBinary = "Intel(R) OpenCL Device Binary";
+inline constexpr ConstStringRef spirvSpecConstIds = "SPIRV Specialization Constants Ids";
+inline constexpr ConstStringRef spirvSpecConstValues = "SPIRV Specialization Constants Values";
 } // namespace SectionNamesOpenCl
 
 } // namespace Elf

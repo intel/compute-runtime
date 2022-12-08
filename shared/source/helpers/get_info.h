@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 namespace GetInfo {
 
-constexpr size_t invalidSourceSize = std::numeric_limits<size_t>::max();
+inline constexpr size_t invalidSourceSize = std::numeric_limits<size_t>::max();
 
 inline GetInfoStatus getInfo(void *destParamValue, size_t destParamValueSize,
                              const void *srcParamValue, size_t srcParamValueSize) {

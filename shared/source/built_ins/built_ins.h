@@ -25,14 +25,14 @@ class Device;
 class SipKernel;
 class MemoryManager;
 
-constexpr ConstStringRef mediaKernelsBuildOptionsList[] = {
+inline constexpr ConstStringRef mediaKernelsBuildOptionsList[] = {
     "-D cl_intel_device_side_advanced_vme_enable",
     "-D cl_intel_device_side_avc_vme_enable",
     "-D cl_intel_device_side_vme_enable",
     "-D cl_intel_media_block_io",
     CompilerOptions::fastRelaxedMath};
 
-constexpr CompilerOptions::ConstConcatenation<> mediaKernelsBuildOptions{mediaKernelsBuildOptionsList};
+inline constexpr CompilerOptions::ConstConcatenation<> mediaKernelsBuildOptions{mediaKernelsBuildOptionsList};
 
 struct BuiltinCode {
     enum class ECodeType {

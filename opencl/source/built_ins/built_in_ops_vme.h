@@ -13,8 +13,8 @@ namespace EBuiltInOps {
 
 using Type = uint32_t;
 
-constexpr Type VmeBlockMotionEstimateIntel{MaxCoreValue + 1};
-constexpr Type VmeBlockAdvancedMotionEstimateCheckIntel{MaxCoreValue + 2};
-constexpr Type VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel{MaxCoreValue + 3};
+inline constexpr Type VmeBlockMotionEstimateIntel{MaxCoreValue + 1};
+inline constexpr Type VmeBlockAdvancedMotionEstimateCheckIntel{MaxCoreValue + 2};
+inline constexpr Type VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel{MaxCoreValue + 3};
 } // namespace EBuiltInOps
 } // namespace NEO

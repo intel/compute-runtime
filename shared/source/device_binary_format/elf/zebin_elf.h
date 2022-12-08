@@ -43,28 +43,28 @@ enum RELOC_TYPE_ZEBIN : uint32_t {
 };
 
 namespace SectionsNamesZebin {
-constexpr ConstStringRef textPrefix = ".text.";
-constexpr ConstStringRef functions = ".text.Intel_Symbol_Table_Void_Program";
-constexpr ConstStringRef dataConst = ".data.const";
-constexpr ConstStringRef dataGlobalConst = ".data.global_const";
-constexpr ConstStringRef dataGlobal = ".data.global";
-constexpr ConstStringRef dataConstString = ".data.const.string";
-constexpr ConstStringRef symtab = ".symtab";
-constexpr ConstStringRef relTablePrefix = ".rel.";
-constexpr ConstStringRef relaTablePrefix = ".rela.";
-constexpr ConstStringRef spv = ".spv";
-constexpr ConstStringRef debugPrefix = ".debug_";
-constexpr ConstStringRef debugInfo = ".debug_info";
-constexpr ConstStringRef debugAbbrev = ".debug_abbrev";
-constexpr ConstStringRef zeInfo = ".ze_info";
-constexpr ConstStringRef gtpinInfo = ".gtpin_info";
-constexpr ConstStringRef noteIntelGT = ".note.intelgt.compat";
-constexpr ConstStringRef buildOptions = ".misc.buildOptions";
-constexpr ConstStringRef vIsaAsmPrefix = ".visaasm.";
-constexpr ConstStringRef externalFunctions = "Intel_Symbol_Table_Void_Program";
+inline constexpr ConstStringRef textPrefix = ".text.";
+inline constexpr ConstStringRef functions = ".text.Intel_Symbol_Table_Void_Program";
+inline constexpr ConstStringRef dataConst = ".data.const";
+inline constexpr ConstStringRef dataGlobalConst = ".data.global_const";
+inline constexpr ConstStringRef dataGlobal = ".data.global";
+inline constexpr ConstStringRef dataConstString = ".data.const.string";
+inline constexpr ConstStringRef symtab = ".symtab";
+inline constexpr ConstStringRef relTablePrefix = ".rel.";
+inline constexpr ConstStringRef relaTablePrefix = ".rela.";
+inline constexpr ConstStringRef spv = ".spv";
+inline constexpr ConstStringRef debugPrefix = ".debug_";
+inline constexpr ConstStringRef debugInfo = ".debug_info";
+inline constexpr ConstStringRef debugAbbrev = ".debug_abbrev";
+inline constexpr ConstStringRef zeInfo = ".ze_info";
+inline constexpr ConstStringRef gtpinInfo = ".gtpin_info";
+inline constexpr ConstStringRef noteIntelGT = ".note.intelgt.compat";
+inline constexpr ConstStringRef buildOptions = ".misc.buildOptions";
+inline constexpr ConstStringRef vIsaAsmPrefix = ".visaasm.";
+inline constexpr ConstStringRef externalFunctions = "Intel_Symbol_Table_Void_Program";
 } // namespace SectionsNamesZebin
 
-constexpr ConstStringRef IntelGtNoteOwnerName = "IntelGT";
+inline constexpr ConstStringRef IntelGtNoteOwnerName = "IntelGT";
 enum IntelGTSectionType : uint32_t {
     ProductFamily = 1,
     GfxCore = 2,
@@ -117,270 +117,270 @@ static_assert(sizeof(ZebinTargetFlags) == sizeof(uint32_t), "");
 
 namespace ZebinKernelMetadata {
 namespace Tags {
-constexpr ConstStringRef kernels("kernels");
-constexpr ConstStringRef version("version");
-constexpr ConstStringRef globalHostAccessTable("global_host_access_table");
-constexpr ConstStringRef functions("functions");
-constexpr ConstStringRef kernelMiscInfo("kernels_misc_info");
+inline constexpr ConstStringRef kernels("kernels");
+inline constexpr ConstStringRef version("version");
+inline constexpr ConstStringRef globalHostAccessTable("global_host_access_table");
+inline constexpr ConstStringRef functions("functions");
+inline constexpr ConstStringRef kernelMiscInfo("kernels_misc_info");
 
 namespace Kernel {
-constexpr ConstStringRef attributes("user_attributes");
-constexpr ConstStringRef name("name");
-constexpr ConstStringRef executionEnv("execution_env");
-constexpr ConstStringRef debugEnv("debug_env");
-constexpr ConstStringRef payloadArguments("payload_arguments");
-constexpr ConstStringRef bindingTableIndices("binding_table_indices");
-constexpr ConstStringRef perThreadPayloadArguments("per_thread_payload_arguments");
-constexpr ConstStringRef perThreadMemoryBuffers("per_thread_memory_buffers");
-constexpr ConstStringRef experimentalProperties("experimental_properties");
-constexpr ConstStringRef inlineSamplers("inline_samplers");
+inline constexpr ConstStringRef attributes("user_attributes");
+inline constexpr ConstStringRef name("name");
+inline constexpr ConstStringRef executionEnv("execution_env");
+inline constexpr ConstStringRef debugEnv("debug_env");
+inline constexpr ConstStringRef payloadArguments("payload_arguments");
+inline constexpr ConstStringRef bindingTableIndices("binding_table_indices");
+inline constexpr ConstStringRef perThreadPayloadArguments("per_thread_payload_arguments");
+inline constexpr ConstStringRef perThreadMemoryBuffers("per_thread_memory_buffers");
+inline constexpr ConstStringRef experimentalProperties("experimental_properties");
+inline constexpr ConstStringRef inlineSamplers("inline_samplers");
 
 namespace ExecutionEnv {
-constexpr ConstStringRef barrierCount("barrier_count");
-constexpr ConstStringRef disableMidThreadPreemption("disable_mid_thread_preemption");
-constexpr ConstStringRef euThreadCount("eu_thread_count");
-constexpr ConstStringRef grfCount("grf_count");
-constexpr ConstStringRef has4gbBuffers("has_4gb_buffers");
-constexpr ConstStringRef hasDpas("has_dpas");
-constexpr ConstStringRef hasFenceForImageAccess("has_fence_for_image_access");
-constexpr ConstStringRef hasGlobalAtomics("has_global_atomics");
-constexpr ConstStringRef hasMultiScratchSpaces("has_multi_scratch_spaces");
-constexpr ConstStringRef hasNoStatelessWrite("has_no_stateless_write");
-constexpr ConstStringRef hasStackCalls("has_stack_calls");
-constexpr ConstStringRef hwPreemptionMode("hw_preemption_mode");
-constexpr ConstStringRef inlineDataPayloadSize("inline_data_payload_size");
-constexpr ConstStringRef offsetToSkipPerThreadDataLoad("offset_to_skip_per_thread_data_load");
-constexpr ConstStringRef offsetToSkipSetFfidGp("offset_to_skip_set_ffid_gp");
-constexpr ConstStringRef requiredSubGroupSize("required_sub_group_size");
-constexpr ConstStringRef requiredWorkGroupSize("required_work_group_size");
-constexpr ConstStringRef requireDisableEUFusion("require_disable_eufusion");
-constexpr ConstStringRef simdSize("simd_size");
-constexpr ConstStringRef slmSize("slm_size");
-constexpr ConstStringRef subgroupIndependentForwardProgress("subgroup_independent_forward_progress");
-constexpr ConstStringRef workGroupWalkOrderDimensions("work_group_walk_order_dimensions");
-constexpr ConstStringRef threadSchedulingMode("thread_scheduling_mode");
+inline constexpr ConstStringRef barrierCount("barrier_count");
+inline constexpr ConstStringRef disableMidThreadPreemption("disable_mid_thread_preemption");
+inline constexpr ConstStringRef euThreadCount("eu_thread_count");
+inline constexpr ConstStringRef grfCount("grf_count");
+inline constexpr ConstStringRef has4gbBuffers("has_4gb_buffers");
+inline constexpr ConstStringRef hasDpas("has_dpas");
+inline constexpr ConstStringRef hasFenceForImageAccess("has_fence_for_image_access");
+inline constexpr ConstStringRef hasGlobalAtomics("has_global_atomics");
+inline constexpr ConstStringRef hasMultiScratchSpaces("has_multi_scratch_spaces");
+inline constexpr ConstStringRef hasNoStatelessWrite("has_no_stateless_write");
+inline constexpr ConstStringRef hasStackCalls("has_stack_calls");
+inline constexpr ConstStringRef hwPreemptionMode("hw_preemption_mode");
+inline constexpr ConstStringRef inlineDataPayloadSize("inline_data_payload_size");
+inline constexpr ConstStringRef offsetToSkipPerThreadDataLoad("offset_to_skip_per_thread_data_load");
+inline constexpr ConstStringRef offsetToSkipSetFfidGp("offset_to_skip_set_ffid_gp");
+inline constexpr ConstStringRef requiredSubGroupSize("required_sub_group_size");
+inline constexpr ConstStringRef requiredWorkGroupSize("required_work_group_size");
+inline constexpr ConstStringRef requireDisableEUFusion("require_disable_eufusion");
+inline constexpr ConstStringRef simdSize("simd_size");
+inline constexpr ConstStringRef slmSize("slm_size");
+inline constexpr ConstStringRef subgroupIndependentForwardProgress("subgroup_independent_forward_progress");
+inline constexpr ConstStringRef workGroupWalkOrderDimensions("work_group_walk_order_dimensions");
+inline constexpr ConstStringRef threadSchedulingMode("thread_scheduling_mode");
 namespace ThreadSchedulingMode {
-constexpr ConstStringRef ageBased("age_based");
-constexpr ConstStringRef roundRobin("round_robin");
-constexpr ConstStringRef roundRobinStall("round_robin_stall");
+inline constexpr ConstStringRef ageBased("age_based");
+inline constexpr ConstStringRef roundRobin("round_robin");
+inline constexpr ConstStringRef roundRobinStall("round_robin_stall");
 } // namespace ThreadSchedulingMode
-constexpr ConstStringRef indirectStatelessCount("indirect_stateless_count");
+inline constexpr ConstStringRef indirectStatelessCount("indirect_stateless_count");
 } // namespace ExecutionEnv
 
 namespace Attributes {
-constexpr ConstStringRef intelReqdSubgroupSize("intel_reqd_sub_group_size");
-constexpr ConstStringRef intelReqdWorkgroupWalkOrder("intel_reqd_workgroup_walk_order");
-constexpr ConstStringRef reqdWorkgroupSize("reqd_work_group_size");
-constexpr ConstStringRef invalidKernel("invalid_kernel");
-constexpr ConstStringRef vecTypeHint("vec_type_hint");
-constexpr ConstStringRef workgroupSizeHint("work_group_size_hint");
-constexpr ConstStringRef hintSuffix("_hint");
+inline constexpr ConstStringRef intelReqdSubgroupSize("intel_reqd_sub_group_size");
+inline constexpr ConstStringRef intelReqdWorkgroupWalkOrder("intel_reqd_workgroup_walk_order");
+inline constexpr ConstStringRef reqdWorkgroupSize("reqd_work_group_size");
+inline constexpr ConstStringRef invalidKernel("invalid_kernel");
+inline constexpr ConstStringRef vecTypeHint("vec_type_hint");
+inline constexpr ConstStringRef workgroupSizeHint("work_group_size_hint");
+inline constexpr ConstStringRef hintSuffix("_hint");
 } // namespace Attributes
 
 namespace DebugEnv {
-constexpr ConstStringRef debugSurfaceBTI("sip_surface_bti");
+inline constexpr ConstStringRef debugSurfaceBTI("sip_surface_bti");
 } // namespace DebugEnv
 
 namespace PayloadArgument {
-constexpr ConstStringRef argType("arg_type");
-constexpr ConstStringRef argIndex("arg_index");
-constexpr ConstStringRef offset("offset");
-constexpr ConstStringRef size("size");
-constexpr ConstStringRef addrmode("addrmode");
-constexpr ConstStringRef addrspace("addrspace");
-constexpr ConstStringRef accessType("access_type");
-constexpr ConstStringRef samplerIndex("sampler_index");
-constexpr ConstStringRef sourceOffset("source_offset");
-constexpr ConstStringRef slmArgAlignment("slm_alignment");
-constexpr ConstStringRef imageType("image_type");
-constexpr ConstStringRef imageTransformable("image_transformable");
-constexpr ConstStringRef samplerType("sampler_type");
-constexpr ConstStringRef addrMode("sampler_desc_addrmode");
-constexpr ConstStringRef filterMode("sampler_desc_filtermode");
-constexpr ConstStringRef normalized("sampler_desc_normalized");
-constexpr ConstStringRef isPipe("is_pipe");
-constexpr ConstStringRef isPtr("is_ptr");
+inline constexpr ConstStringRef argType("arg_type");
+inline constexpr ConstStringRef argIndex("arg_index");
+inline constexpr ConstStringRef offset("offset");
+inline constexpr ConstStringRef size("size");
+inline constexpr ConstStringRef addrmode("addrmode");
+inline constexpr ConstStringRef addrspace("addrspace");
+inline constexpr ConstStringRef accessType("access_type");
+inline constexpr ConstStringRef samplerIndex("sampler_index");
+inline constexpr ConstStringRef sourceOffset("source_offset");
+inline constexpr ConstStringRef slmArgAlignment("slm_alignment");
+inline constexpr ConstStringRef imageType("image_type");
+inline constexpr ConstStringRef imageTransformable("image_transformable");
+inline constexpr ConstStringRef samplerType("sampler_type");
+inline constexpr ConstStringRef addrMode("sampler_desc_addrmode");
+inline constexpr ConstStringRef filterMode("sampler_desc_filtermode");
+inline constexpr ConstStringRef normalized("sampler_desc_normalized");
+inline constexpr ConstStringRef isPipe("is_pipe");
+inline constexpr ConstStringRef isPtr("is_ptr");
 
 namespace ArgType {
-constexpr ConstStringRef localSize("local_size");
-constexpr ConstStringRef groupCount("group_count");
-constexpr ConstStringRef globalIdOffset("global_id_offset");
-constexpr ConstStringRef globalSize("global_size");
-constexpr ConstStringRef enqueuedLocalSize("enqueued_local_size");
-constexpr ConstStringRef privateBaseStateless("private_base_stateless");
-constexpr ConstStringRef argByvalue("arg_byvalue");
-constexpr ConstStringRef argBypointer("arg_bypointer");
-constexpr ConstStringRef bufferAddress("buffer_address");
-constexpr ConstStringRef bufferOffset("buffer_offset");
-constexpr ConstStringRef printfBuffer("printf_buffer");
-constexpr ConstStringRef workDimensions("work_dimensions");
-constexpr ConstStringRef implicitArgBuffer("implicit_arg_buffer");
-constexpr ConstStringRef syncBuffer("sync_buffer");
-constexpr ConstStringRef rtGlobalBuffer("rt_global_buffer");
+inline constexpr ConstStringRef localSize("local_size");
+inline constexpr ConstStringRef groupCount("group_count");
+inline constexpr ConstStringRef globalIdOffset("global_id_offset");
+inline constexpr ConstStringRef globalSize("global_size");
+inline constexpr ConstStringRef enqueuedLocalSize("enqueued_local_size");
+inline constexpr ConstStringRef privateBaseStateless("private_base_stateless");
+inline constexpr ConstStringRef argByvalue("arg_byvalue");
+inline constexpr ConstStringRef argBypointer("arg_bypointer");
+inline constexpr ConstStringRef bufferAddress("buffer_address");
+inline constexpr ConstStringRef bufferOffset("buffer_offset");
+inline constexpr ConstStringRef printfBuffer("printf_buffer");
+inline constexpr ConstStringRef workDimensions("work_dimensions");
+inline constexpr ConstStringRef implicitArgBuffer("implicit_arg_buffer");
+inline constexpr ConstStringRef syncBuffer("sync_buffer");
+inline constexpr ConstStringRef rtGlobalBuffer("rt_global_buffer");
 
 namespace Image {
-constexpr ConstStringRef width("image_width");
-constexpr ConstStringRef height("image_height");
-constexpr ConstStringRef depth("image_depth");
-constexpr ConstStringRef channelDataType("image_channel_data_type");
-constexpr ConstStringRef channelOrder("image_channel_order");
-constexpr ConstStringRef arraySize("image_array_size");
-constexpr ConstStringRef numSamples("image_num_samples");
-constexpr ConstStringRef numMipLevels("image_num_mip_levels");
-constexpr ConstStringRef flatBaseOffset("flat_image_baseoffset");
-constexpr ConstStringRef flatWidth("flat_image_width");
-constexpr ConstStringRef flatHeight("flat_image_height");
-constexpr ConstStringRef flatPitch("flat_image_pitch");
+inline constexpr ConstStringRef width("image_width");
+inline constexpr ConstStringRef height("image_height");
+inline constexpr ConstStringRef depth("image_depth");
+inline constexpr ConstStringRef channelDataType("image_channel_data_type");
+inline constexpr ConstStringRef channelOrder("image_channel_order");
+inline constexpr ConstStringRef arraySize("image_array_size");
+inline constexpr ConstStringRef numSamples("image_num_samples");
+inline constexpr ConstStringRef numMipLevels("image_num_mip_levels");
+inline constexpr ConstStringRef flatBaseOffset("flat_image_baseoffset");
+inline constexpr ConstStringRef flatWidth("flat_image_width");
+inline constexpr ConstStringRef flatHeight("flat_image_height");
+inline constexpr ConstStringRef flatPitch("flat_image_pitch");
 } // namespace Image
 namespace Sampler {
-constexpr ConstStringRef snapWa("sampler_snap_wa");
-constexpr ConstStringRef normCoords("sampler_normalized");
-constexpr ConstStringRef addrMode("sampler_address");
+inline constexpr ConstStringRef snapWa("sampler_snap_wa");
+inline constexpr ConstStringRef normCoords("sampler_normalized");
+inline constexpr ConstStringRef addrMode("sampler_address");
 namespace Vme {
-constexpr ConstStringRef blockType("vme_mb_block_type");
-constexpr ConstStringRef subpixelMode("vme_subpixel_mode");
-constexpr ConstStringRef sadAdjustMode("vme_sad_adjust_mode");
-constexpr ConstStringRef searchPathType("vme_search_path_type");
+inline constexpr ConstStringRef blockType("vme_mb_block_type");
+inline constexpr ConstStringRef subpixelMode("vme_subpixel_mode");
+inline constexpr ConstStringRef sadAdjustMode("vme_sad_adjust_mode");
+inline constexpr ConstStringRef searchPathType("vme_search_path_type");
 } // namespace Vme
 } // namespace Sampler
 } // namespace ArgType
 namespace ImageType {
-constexpr ConstStringRef imageTypeBuffer("image_buffer");
-constexpr ConstStringRef imageType1D("image_1d");
-constexpr ConstStringRef imageType1DArray("image_1d_array");
-constexpr ConstStringRef imageType2D("image_2d");
-constexpr ConstStringRef imageType2DArray("image_2d_array");
-constexpr ConstStringRef imageType3D("image_3d");
-constexpr ConstStringRef imageTypeCube("image_cube_array");
-constexpr ConstStringRef imageTypeCubeArray("image_buffer");
-constexpr ConstStringRef imageType2DDepth("image_2d_depth");
-constexpr ConstStringRef imageType2DArrayDepth("image_2d_array_depth");
-constexpr ConstStringRef imageType2DMSAA("image_2d_msaa");
-constexpr ConstStringRef imageType2DMSAADepth("image_2d_msaa_depth");
-constexpr ConstStringRef imageType2DArrayMSAA("image_2d_array_msaa");
-constexpr ConstStringRef imageType2DArrayMSAADepth("image_2d_array_msaa_depth");
-constexpr ConstStringRef imageType2DMedia("image_2d_media");
-constexpr ConstStringRef imageType2DMediaBlock("image_2d_media_block");
+inline constexpr ConstStringRef imageTypeBuffer("image_buffer");
+inline constexpr ConstStringRef imageType1D("image_1d");
+inline constexpr ConstStringRef imageType1DArray("image_1d_array");
+inline constexpr ConstStringRef imageType2D("image_2d");
+inline constexpr ConstStringRef imageType2DArray("image_2d_array");
+inline constexpr ConstStringRef imageType3D("image_3d");
+inline constexpr ConstStringRef imageTypeCube("image_cube_array");
+inline constexpr ConstStringRef imageTypeCubeArray("image_buffer");
+inline constexpr ConstStringRef imageType2DDepth("image_2d_depth");
+inline constexpr ConstStringRef imageType2DArrayDepth("image_2d_array_depth");
+inline constexpr ConstStringRef imageType2DMSAA("image_2d_msaa");
+inline constexpr ConstStringRef imageType2DMSAADepth("image_2d_msaa_depth");
+inline constexpr ConstStringRef imageType2DArrayMSAA("image_2d_array_msaa");
+inline constexpr ConstStringRef imageType2DArrayMSAADepth("image_2d_array_msaa_depth");
+inline constexpr ConstStringRef imageType2DMedia("image_2d_media");
+inline constexpr ConstStringRef imageType2DMediaBlock("image_2d_media_block");
 } // namespace ImageType
 
 namespace SamplerType {
-constexpr ConstStringRef samplerTypeTexture("texture");
-constexpr ConstStringRef samplerType8x8("sample_8x8");
-constexpr ConstStringRef samplerType2DConsolve8x8("sample_8x8_2dconvolve");
-constexpr ConstStringRef samplerTypeErode8x8("sample_8x8_erode");
-constexpr ConstStringRef samplerTypeDilate8x8("sample_8x8_dilate");
-constexpr ConstStringRef samplerTypeMinMaxFilter8x8("sample_8x8_minmaxfilter");
-constexpr ConstStringRef samplerTypeCentroid8x8("sample_8x8_centroid");
-constexpr ConstStringRef samplerTypeBoolCentroid8x8("sample_8x8_bool_centroid");
-constexpr ConstStringRef samplerTypeBoolSum8x8("sample_8x8_bool_sum");
-constexpr ConstStringRef samplerTypeVD("vd");
-constexpr ConstStringRef samplerTypeVE("ve");
-constexpr ConstStringRef samplerTypeVME("vme");
+inline constexpr ConstStringRef samplerTypeTexture("texture");
+inline constexpr ConstStringRef samplerType8x8("sample_8x8");
+inline constexpr ConstStringRef samplerType2DConsolve8x8("sample_8x8_2dconvolve");
+inline constexpr ConstStringRef samplerTypeErode8x8("sample_8x8_erode");
+inline constexpr ConstStringRef samplerTypeDilate8x8("sample_8x8_dilate");
+inline constexpr ConstStringRef samplerTypeMinMaxFilter8x8("sample_8x8_minmaxfilter");
+inline constexpr ConstStringRef samplerTypeCentroid8x8("sample_8x8_centroid");
+inline constexpr ConstStringRef samplerTypeBoolCentroid8x8("sample_8x8_bool_centroid");
+inline constexpr ConstStringRef samplerTypeBoolSum8x8("sample_8x8_bool_sum");
+inline constexpr ConstStringRef samplerTypeVD("vd");
+inline constexpr ConstStringRef samplerTypeVE("ve");
+inline constexpr ConstStringRef samplerTypeVME("vme");
 } // namespace SamplerType
 
 namespace MemoryAddressingMode {
-constexpr ConstStringRef stateless("stateless");
-constexpr ConstStringRef stateful("stateful");
-constexpr ConstStringRef bindless("bindless");
-constexpr ConstStringRef sharedLocalMemory("slm");
+inline constexpr ConstStringRef stateless("stateless");
+inline constexpr ConstStringRef stateful("stateful");
+inline constexpr ConstStringRef bindless("bindless");
+inline constexpr ConstStringRef sharedLocalMemory("slm");
 } // namespace MemoryAddressingMode
 
 namespace AddrSpace {
-constexpr ConstStringRef global("global");
-constexpr ConstStringRef local("local");
-constexpr ConstStringRef constant("constant");
-constexpr ConstStringRef image("image");
-constexpr ConstStringRef sampler("sampler");
+inline constexpr ConstStringRef global("global");
+inline constexpr ConstStringRef local("local");
+inline constexpr ConstStringRef constant("constant");
+inline constexpr ConstStringRef image("image");
+inline constexpr ConstStringRef sampler("sampler");
 } // namespace AddrSpace
 
 namespace AccessType {
-constexpr ConstStringRef readonly("readonly");
-constexpr ConstStringRef writeonly("writeonly");
-constexpr ConstStringRef readwrite("readwrite");
+inline constexpr ConstStringRef readonly("readonly");
+inline constexpr ConstStringRef writeonly("writeonly");
+inline constexpr ConstStringRef readwrite("readwrite");
 } // namespace AccessType
 } // namespace PayloadArgument
 
 namespace BindingTableIndex {
-constexpr ConstStringRef btiValue("bti_value");
-constexpr ConstStringRef argIndex("arg_index");
+inline constexpr ConstStringRef btiValue("bti_value");
+inline constexpr ConstStringRef argIndex("arg_index");
 } // namespace BindingTableIndex
 
 namespace PerThreadPayloadArgument {
-constexpr ConstStringRef argType("arg_type");
-constexpr ConstStringRef offset("offset");
-constexpr ConstStringRef size("size");
+inline constexpr ConstStringRef argType("arg_type");
+inline constexpr ConstStringRef offset("offset");
+inline constexpr ConstStringRef size("size");
 namespace ArgType {
-constexpr ConstStringRef packedLocalIds("packed_local_ids");
-constexpr ConstStringRef localId("local_id");
+inline constexpr ConstStringRef packedLocalIds("packed_local_ids");
+inline constexpr ConstStringRef localId("local_id");
 } // namespace ArgType
 } // namespace PerThreadPayloadArgument
 
 namespace PerThreadMemoryBuffer {
-constexpr ConstStringRef allocationType("type");
-constexpr ConstStringRef memoryUsage("usage");
-constexpr ConstStringRef size("size");
-constexpr ConstStringRef isSimtThread("is_simt_thread");
-constexpr ConstStringRef slot("slot");
+inline constexpr ConstStringRef allocationType("type");
+inline constexpr ConstStringRef memoryUsage("usage");
+inline constexpr ConstStringRef size("size");
+inline constexpr ConstStringRef isSimtThread("is_simt_thread");
+inline constexpr ConstStringRef slot("slot");
 namespace AllocationType {
-constexpr ConstStringRef global("global");
-constexpr ConstStringRef scratch("scratch");
-constexpr ConstStringRef slm("slm");
+inline constexpr ConstStringRef global("global");
+inline constexpr ConstStringRef scratch("scratch");
+inline constexpr ConstStringRef slm("slm");
 } // namespace AllocationType
 namespace MemoryUsage {
-constexpr ConstStringRef privateSpace("private_space");
-constexpr ConstStringRef spillFillSpace("spill_fill_space");
-constexpr ConstStringRef singleSpace("single_space");
+inline constexpr ConstStringRef privateSpace("private_space");
+inline constexpr ConstStringRef spillFillSpace("spill_fill_space");
+inline constexpr ConstStringRef singleSpace("single_space");
 } // namespace MemoryUsage
 } // namespace PerThreadMemoryBuffer
 namespace ExperimentalProperties {
-constexpr ConstStringRef hasNonKernelArgLoad("has_non_kernel_arg_load");
-constexpr ConstStringRef hasNonKernelArgStore("has_non_kernel_arg_store");
-constexpr ConstStringRef hasNonKernelArgAtomic("has_non_kernel_arg_atomic");
+inline constexpr ConstStringRef hasNonKernelArgLoad("has_non_kernel_arg_load");
+inline constexpr ConstStringRef hasNonKernelArgStore("has_non_kernel_arg_store");
+inline constexpr ConstStringRef hasNonKernelArgAtomic("has_non_kernel_arg_atomic");
 } // namespace ExperimentalProperties
 
 namespace InlineSamplers {
-constexpr ConstStringRef samplerIndex("sampler_index");
-constexpr ConstStringRef addrMode("addrmode");
-constexpr ConstStringRef filterMode("filtermode");
-constexpr ConstStringRef normalized("normalized");
+inline constexpr ConstStringRef samplerIndex("sampler_index");
+inline constexpr ConstStringRef addrMode("addrmode");
+inline constexpr ConstStringRef filterMode("filtermode");
+inline constexpr ConstStringRef normalized("normalized");
 
 namespace AddrMode {
-constexpr ConstStringRef none("none");
-constexpr ConstStringRef repeat("repeat");
-constexpr ConstStringRef clamp_edge("clamp_edge");
-constexpr ConstStringRef clamp_border("clamp_border");
-constexpr ConstStringRef mirror("mirror");
+inline constexpr ConstStringRef none("none");
+inline constexpr ConstStringRef repeat("repeat");
+inline constexpr ConstStringRef clamp_edge("clamp_edge");
+inline constexpr ConstStringRef clamp_border("clamp_border");
+inline constexpr ConstStringRef mirror("mirror");
 } // namespace AddrMode
 
 namespace FilterMode {
-constexpr ConstStringRef nearest("nearest");
-constexpr ConstStringRef linear("linear");
+inline constexpr ConstStringRef nearest("nearest");
+inline constexpr ConstStringRef linear("linear");
 } // namespace FilterMode
 
 } // namespace InlineSamplers
 } // namespace Kernel
 
 namespace GlobalHostAccessTable {
-constexpr ConstStringRef deviceName("device_name");
-constexpr ConstStringRef hostName("host_name");
+inline constexpr ConstStringRef deviceName("device_name");
+inline constexpr ConstStringRef hostName("host_name");
 } // namespace GlobalHostAccessTable
 
 namespace Function {
-constexpr ConstStringRef name("name");
-constexpr ConstStringRef executionEnv("execution_env");
+inline constexpr ConstStringRef name("name");
+inline constexpr ConstStringRef executionEnv("execution_env");
 using namespace Kernel::ExecutionEnv;
 } // namespace Function
 
 namespace KernelMiscInfo {
-constexpr ConstStringRef name("name");
-constexpr ConstStringRef argsInfo("args_info");
+inline constexpr ConstStringRef name("name");
+inline constexpr ConstStringRef argsInfo("args_info");
 namespace ArgsInfo {
-constexpr ConstStringRef index("index");
-constexpr ConstStringRef name("name");
-constexpr ConstStringRef addressQualifier("address_qualifier");
-constexpr ConstStringRef accessQualifier("access_qualifier");
-constexpr ConstStringRef typeName("type_name");
-constexpr ConstStringRef typeQualifiers("type_qualifiers");
+inline constexpr ConstStringRef index("index");
+inline constexpr ConstStringRef name("name");
+inline constexpr ConstStringRef addressQualifier("address_qualifier");
+inline constexpr ConstStringRef accessQualifier("access_qualifier");
+inline constexpr ConstStringRef typeName("type_name");
+inline constexpr ConstStringRef typeQualifiers("type_qualifiers");
 } // namespace ArgsInfo
 } // namespace KernelMiscInfo
 
@@ -433,34 +433,34 @@ using ThreadSchedulingModeT = ThreadSchedulingMode;
 using IndirectStatelessCountT = int32_t;
 
 namespace Defaults {
-constexpr BarrierCountT barrierCount = 0;
-constexpr DisableMidThreadPreemptionT disableMidThreadPreemption = false;
-constexpr EuThreadCountT euThreadCount = 0;
-constexpr Has4GBBuffersT has4GBBuffers = false;
-constexpr HasDpasT hasDpas = false;
-constexpr HasFenceForImageAccessT hasFenceForImageAccess = false;
-constexpr HasGlobalAtomicsT hasGlobalAtomics = false;
-constexpr HasMultiScratchSpacesT hasMultiScratchSpaces = false;
-constexpr HasNonKernelArgAtomicT hasNonKernelArgAtomic = false;
-constexpr HasNonKernelArgLoadT hasNonKernelArgLoad = false;
-constexpr HasNonKernelArgStoreT hasNonKernelArgStore = false;
-constexpr HasNoStatelessWriteT hasNoStatelessWrite = false;
-constexpr HasStackCallsT hasStackCalls = false;
-constexpr HwPreemptionModeT hwPreemptionMode = -1;
-constexpr InlineDataPayloadSizeT inlineDataPayloadSize = 0;
-constexpr OffsetToSkipPerThreadDataLoadT offsetToSkipPerThreadDataLoad = 0;
-constexpr OffsetToSkipSetFfidGpT offsetToSkipSetFfidGp = 0;
-constexpr RequiredSubGroupSizeT requiredSubGroupSize = 0;
-constexpr RequiredWorkGroupSizeT requiredWorkGroupSize = {0, 0, 0};
-constexpr RequireDisableEUFusionT requireDisableEUFusion = false;
-constexpr SlmSizeT slmSize = 0;
-constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = false;
-constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
-constexpr ThreadSchedulingModeT threadSchedulingMode = ThreadSchedulingModeUnknown;
-constexpr IndirectStatelessCountT indirectStatelessCount = 0;
+inline constexpr BarrierCountT barrierCount = 0;
+inline constexpr DisableMidThreadPreemptionT disableMidThreadPreemption = false;
+inline constexpr EuThreadCountT euThreadCount = 0;
+inline constexpr Has4GBBuffersT has4GBBuffers = false;
+inline constexpr HasDpasT hasDpas = false;
+inline constexpr HasFenceForImageAccessT hasFenceForImageAccess = false;
+inline constexpr HasGlobalAtomicsT hasGlobalAtomics = false;
+inline constexpr HasMultiScratchSpacesT hasMultiScratchSpaces = false;
+inline constexpr HasNonKernelArgAtomicT hasNonKernelArgAtomic = false;
+inline constexpr HasNonKernelArgLoadT hasNonKernelArgLoad = false;
+inline constexpr HasNonKernelArgStoreT hasNonKernelArgStore = false;
+inline constexpr HasNoStatelessWriteT hasNoStatelessWrite = false;
+inline constexpr HasStackCallsT hasStackCalls = false;
+inline constexpr HwPreemptionModeT hwPreemptionMode = -1;
+inline constexpr InlineDataPayloadSizeT inlineDataPayloadSize = 0;
+inline constexpr OffsetToSkipPerThreadDataLoadT offsetToSkipPerThreadDataLoad = 0;
+inline constexpr OffsetToSkipSetFfidGpT offsetToSkipSetFfidGp = 0;
+inline constexpr RequiredSubGroupSizeT requiredSubGroupSize = 0;
+inline constexpr RequiredWorkGroupSizeT requiredWorkGroupSize = {0, 0, 0};
+inline constexpr RequireDisableEUFusionT requireDisableEUFusion = false;
+inline constexpr SlmSizeT slmSize = 0;
+inline constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = false;
+inline constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
+inline constexpr ThreadSchedulingModeT threadSchedulingMode = ThreadSchedulingModeUnknown;
+inline constexpr IndirectStatelessCountT indirectStatelessCount = 0;
 } // namespace Defaults
 
-constexpr ConstStringRef required[] = {
+inline constexpr ConstStringRef required[] = {
     Tags::Kernel::ExecutionEnv::grfCount,
     Tags::Kernel::ExecutionEnv::simdSize};
 
@@ -508,10 +508,10 @@ using WorkgroupSizeHint = std::array<int32_t, 3>;
 using VecTypeHintT = ConstStringRef;
 
 namespace Defaults {
-constexpr IntelReqdSubgroupSizeT intelReqdSubgroupSize = 0;
-constexpr IntelReqdWorkgroupWalkOrder intelReqdWorkgroupWalkOrder = {0, 0, 0};
-constexpr ReqdWorkgroupSizeT reqdWorkgroupSize = {0, 0, 0};
-constexpr WorkgroupSizeHint workgroupSizeHint = {0, 0, 0};
+inline constexpr IntelReqdSubgroupSizeT intelReqdSubgroupSize = 0;
+inline constexpr IntelReqdWorkgroupWalkOrder intelReqdWorkgroupWalkOrder = {0, 0, 0};
+inline constexpr ReqdWorkgroupSizeT reqdWorkgroupSize = {0, 0, 0};
+inline constexpr WorkgroupSizeHint workgroupSizeHint = {0, 0, 0};
 } // namespace Defaults
 
 struct AttributesBaseT {
@@ -529,7 +529,7 @@ namespace DebugEnv {
 using DebugSurfaceBTIT = int32_t;
 
 namespace Defaults {
-constexpr DebugSurfaceBTIT debugSurfaceBTI = -1;
+inline constexpr DebugSurfaceBTIT debugSurfaceBTI = -1;
 } // namespace Defaults
 
 struct DebugEnvBaseT {
@@ -674,10 +674,10 @@ using SlmAlignmentT = uint8_t;
 using SamplerIndexT = int32_t;
 
 namespace Defaults {
-constexpr ArgIndexT argIndex = -1;
-constexpr SlmAlignmentT slmArgAlignment = 16U;
-constexpr SamplerIndexT samplerIndex = -1;
-constexpr SourceOffseT sourceOffset = -1;
+inline constexpr ArgIndexT argIndex = -1;
+inline constexpr SlmAlignmentT slmArgAlignment = 16U;
+inline constexpr SamplerIndexT samplerIndex = -1;
+inline constexpr SourceOffseT sourceOffset = -1;
 } // namespace Defaults
 
 struct PayloadArgumentBaseT {
@@ -733,8 +733,8 @@ using IsSimtThreadT = bool;
 using Slot = int32_t;
 
 namespace Defaults {
-constexpr IsSimtThreadT isSimtThread = false;
-constexpr Slot slot = 0U;
+inline constexpr IsSimtThreadT isSimtThread = false;
+inline constexpr Slot slot = 0U;
 } // namespace Defaults
 
 struct PerThreadMemoryBufferBaseT {
@@ -770,10 +770,10 @@ using FilterModeT = FilterMode;
 using NormalizedT = bool;
 
 namespace Defaults {
-constexpr SamplerIndexT samplerIndex = -1;
-constexpr AddrModeT addrMode = AddrMode::Unknown;
-constexpr FilterModeT filterMode = FilterMode::Unknown;
-constexpr NormalizedT normalized = false;
+inline constexpr SamplerIndexT samplerIndex = -1;
+inline constexpr AddrModeT addrMode = AddrMode::Unknown;
+inline constexpr FilterModeT filterMode = FilterMode::Unknown;
+inline constexpr NormalizedT normalized = false;
 }; // namespace Defaults
 
 struct InlineSamplerBaseT {

@@ -91,8 +91,8 @@ struct MatchCmd {
     bool matchesAny = false;
 };
 
-constexpr int32_t AnyNumber = -1;
-constexpr int32_t AtLeastOne = -2;
+inline constexpr int32_t AnyNumber = -1;
+inline constexpr int32_t AtLeastOne = -2;
 inline std::string countToString(int32_t count) {
     if (count == AnyNumber) {
         return "AnyNumber";

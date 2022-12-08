@@ -15,9 +15,9 @@
 
 namespace NEO {
 
-constexpr ConstStringRef llvmBcMagic = "BC\xc0\xde";
-constexpr ConstStringRef spirvMagic = "\x07\x23\x02\x03";
-constexpr ConstStringRef spirvMagicInv = "\x03\x02\x23\x07";
+inline constexpr ConstStringRef llvmBcMagic = "BC\xc0\xde";
+inline constexpr ConstStringRef spirvMagic = "\x07\x23\x02\x03";
+inline constexpr ConstStringRef spirvMagicInv = "\x03\x02\x23\x07";
 
 inline bool hasSameMagic(ConstStringRef expectedMagic, ArrayRef<const uint8_t> binary) {
     auto binaryMagicLen = std::min(expectedMagic.size(), binary.size());

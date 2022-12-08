@@ -19,7 +19,7 @@ namespace L0 {
 
 struct EventPool;
 struct Event;
-constexpr size_t maxImmediateCommandSize = 4 * MemoryConstants::kiloByte;
+inline constexpr size_t maxImmediateCommandSize = 4 * MemoryConstants::kiloByte;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFamily> {

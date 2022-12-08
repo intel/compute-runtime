@@ -17,15 +17,15 @@ void printOclocCmdLine(const std::vector<std::string> &args);
 void printHelp(OclocArgHelper *helper);
 
 namespace CommandNames {
-constexpr NEO::ConstStringRef compile = "compile";
-constexpr NEO::ConstStringRef link = "link";
-constexpr NEO::ConstStringRef disassemble = "disasm";
-constexpr NEO::ConstStringRef assemble = "asm";
-constexpr NEO::ConstStringRef multi = "multi";
-constexpr NEO::ConstStringRef validate = "validate";
-constexpr NEO::ConstStringRef query = "query";
-constexpr NEO::ConstStringRef ids = "ids";
-constexpr NEO::ConstStringRef concat = "concat";
+inline constexpr NEO::ConstStringRef compile = "compile";
+inline constexpr NEO::ConstStringRef link = "link";
+inline constexpr NEO::ConstStringRef disassemble = "disasm";
+inline constexpr NEO::ConstStringRef assemble = "asm";
+inline constexpr NEO::ConstStringRef multi = "multi";
+inline constexpr NEO::ConstStringRef validate = "validate";
+inline constexpr NEO::ConstStringRef query = "query";
+inline constexpr NEO::ConstStringRef ids = "ids";
+inline constexpr NEO::ConstStringRef concat = "concat";
 } // namespace CommandNames
 namespace Commands {
 int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args);

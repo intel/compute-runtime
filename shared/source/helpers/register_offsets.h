@@ -8,42 +8,42 @@
 #pragma once
 #include <stdint.h>
 
-constexpr uint32_t L3SQC_BIT_LQSC_RO_PERF_DIS = 0x08000000;
-constexpr uint32_t L3SQC_REG4 = 0xB118;
+inline constexpr uint32_t L3SQC_BIT_LQSC_RO_PERF_DIS = 0x08000000;
+inline constexpr uint32_t L3SQC_REG4 = 0xB118;
 
-constexpr uint32_t GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER = 0xFFFFFFFF;
-constexpr uint32_t GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER = 0x00000000;
+inline constexpr uint32_t GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER = 0xFFFFFFFF;
+inline constexpr uint32_t GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER = 0x00000000;
 
 //Threads Dimension X/Y/Z
-constexpr uint32_t GPUGPU_DISPATCHDIMX = 0x2500;
-constexpr uint32_t GPUGPU_DISPATCHDIMY = 0x2504;
-constexpr uint32_t GPUGPU_DISPATCHDIMZ = 0x2508;
+inline constexpr uint32_t GPUGPU_DISPATCHDIMX = 0x2500;
+inline constexpr uint32_t GPUGPU_DISPATCHDIMY = 0x2504;
+inline constexpr uint32_t GPUGPU_DISPATCHDIMZ = 0x2508;
 
-constexpr uint32_t GPUGPU_DISPATCHDIM[3] = {GPUGPU_DISPATCHDIMX, GPUGPU_DISPATCHDIMY, GPUGPU_DISPATCHDIMZ};
+inline constexpr uint32_t GPUGPU_DISPATCHDIM[3] = {GPUGPU_DISPATCHDIMX, GPUGPU_DISPATCHDIMY, GPUGPU_DISPATCHDIMZ};
 
-constexpr uint32_t CS_GPR_R0 = 0x2600;
-constexpr uint32_t CS_GPR_R1 = 0x2608;
-constexpr uint32_t CS_GPR_R2 = 0x2610;
-constexpr uint32_t CS_GPR_R3 = 0x2618;
-constexpr uint32_t CS_GPR_R4 = 0x2620;
-constexpr uint32_t CS_GPR_R5 = 0x2628;
-constexpr uint32_t CS_GPR_R6 = 0x2630;
-constexpr uint32_t CS_GPR_R7 = 0x2638;
-constexpr uint32_t CS_GPR_R8 = 0x2640;
-constexpr uint32_t CS_GPR_R9 = 0x2648;
-constexpr uint32_t CS_GPR_R10 = 0x2650;
-constexpr uint32_t CS_GPR_R11 = 0x2658;
-constexpr uint32_t CS_GPR_R12 = 0x2660;
-constexpr uint32_t CS_GPR_R13 = 0x2668;
-constexpr uint32_t CS_GPR_R14 = 0x2670;
-constexpr uint32_t CS_GPR_R15 = 0x2678;
+inline constexpr uint32_t CS_GPR_R0 = 0x2600;
+inline constexpr uint32_t CS_GPR_R1 = 0x2608;
+inline constexpr uint32_t CS_GPR_R2 = 0x2610;
+inline constexpr uint32_t CS_GPR_R3 = 0x2618;
+inline constexpr uint32_t CS_GPR_R4 = 0x2620;
+inline constexpr uint32_t CS_GPR_R5 = 0x2628;
+inline constexpr uint32_t CS_GPR_R6 = 0x2630;
+inline constexpr uint32_t CS_GPR_R7 = 0x2638;
+inline constexpr uint32_t CS_GPR_R8 = 0x2640;
+inline constexpr uint32_t CS_GPR_R9 = 0x2648;
+inline constexpr uint32_t CS_GPR_R10 = 0x2650;
+inline constexpr uint32_t CS_GPR_R11 = 0x2658;
+inline constexpr uint32_t CS_GPR_R12 = 0x2660;
+inline constexpr uint32_t CS_GPR_R13 = 0x2668;
+inline constexpr uint32_t CS_GPR_R14 = 0x2670;
+inline constexpr uint32_t CS_GPR_R15 = 0x2678;
 
-constexpr uint32_t CS_PREDICATE_RESULT = 0x2418;
-constexpr uint32_t CS_PREDICATE_RESULT_2 = 0x23BC;
+inline constexpr uint32_t CS_PREDICATE_RESULT = 0x2418;
+inline constexpr uint32_t CS_PREDICATE_RESULT_2 = 0x23BC;
 
-constexpr uint32_t SEMA_WAIT_POLL = 0x0224c;
+inline constexpr uint32_t SEMA_WAIT_POLL = 0x0224c;
 //Alu opcodes
-constexpr uint32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
+inline constexpr uint32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 
 enum class AluRegisters : uint32_t {
     OPCODE_NONE = 0x000,
@@ -86,7 +86,7 @@ enum class AluRegisters : uint32_t {
     R_CF = 0x33
 };
 
-constexpr uint32_t GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW = 0x23A8;
+inline constexpr uint32_t GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW = 0x23A8;
 
-constexpr uint32_t REG_GLOBAL_TIMESTAMP_LDW = 0x2358;
-constexpr uint32_t REG_GLOBAL_TIMESTAMP_UN = 0x235c;
+inline constexpr uint32_t REG_GLOBAL_TIMESTAMP_LDW = 0x2358;
+inline constexpr uint32_t REG_GLOBAL_TIMESTAMP_UN = 0x235c;

@@ -45,8 +45,8 @@ enum class DirectSubmissionSfenceMode : int32_t {
 };
 
 namespace UllsDefaults {
-constexpr bool defaultDisableCacheFlush = true;
-constexpr bool defaultDisableMonitorFence = false;
+inline constexpr bool defaultDisableCacheFlush = true;
+inline constexpr bool defaultDisableMonitorFence = false;
 } // namespace UllsDefaults
 
 struct BatchBuffer;
