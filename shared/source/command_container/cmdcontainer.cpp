@@ -410,7 +410,9 @@ void CommandContainer::fillReusableAllocationLists() {
                                                              heapSize,
                                                              alignedSize,
                                                              device->getRootDeviceIndex());
-            this->immediateCmdListCsr->makeResident(*heapToReuse);
+            if (heapToReuse != nullptr) {
+                this->immediateCmdListCsr->makeResident(*heapToReuse);
+            }
             this->heapHelper->storeHeapAllocation(heapToReuse);
         }
     }
