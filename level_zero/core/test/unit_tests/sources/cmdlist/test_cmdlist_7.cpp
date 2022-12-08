@@ -2199,7 +2199,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnE
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     auto eventHandle = event->toHandle();
-    cmdList.appendWaitOnEvents(1, &eventHandle);
+    cmdList.appendWaitOnEvents(1, &eventHandle, false);
 
     EXPECT_TRUE(cmdList.dependenciesPresent);
 

@@ -612,7 +612,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    result = commandList->appendWaitOnEvents(1, &hEventHandle);
+    result = commandList->appendWaitOnEvents(1, &hEventHandle, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
