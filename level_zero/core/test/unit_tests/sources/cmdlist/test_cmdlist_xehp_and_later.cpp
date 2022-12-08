@@ -1096,7 +1096,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
                     gpuAddress += event->getContextEndOffset();
                 }
 
-                for (uint32_t i = usePacketSignalStoreDataImm + extraCleanupStoreDataImm; i < itorStoreDataImm.size(); i++) {
+                for (uint32_t i = usePacketSignalStoreDataImm; i < itorStoreDataImm.size() - extraCleanupStoreDataImm; i++) {
                     auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
                     EXPECT_EQ(gpuAddress, cmd->getAddress());
                     EXPECT_FALSE(cmd->getStoreQword());

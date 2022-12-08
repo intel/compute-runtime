@@ -429,6 +429,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
             baseAddr += event->getSinglePacketSize();
         }
 
+        if ((this->signalAllEventPackets) && (packetsToReset < event->getMaxPacketsCount())) {
+            setRemainingEventPackets(event, Event::STATE_CLEARED);
+        }
+
         if (appendPipeControlWithPostSync) {
             NEO::PipeControlArgs args;
             args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
@@ -444,10 +448,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         if (this->partitionCount > 1) {
             appendMultiTileBarrier(*neoDevice);
         }
-    }
-
-    if ((this->signalAllEventPackets) && (packetsToReset < event->getMaxPacketsCount())) {
-        setRemainingEventPackets(event, Event::STATE_CLEARED);
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
