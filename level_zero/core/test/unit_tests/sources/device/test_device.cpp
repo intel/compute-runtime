@@ -1986,6 +1986,14 @@ TEST_F(DeviceHas64BitAtomicTest, givenDeviceWithSupportForInteger64BitAtomicsThe
 
 struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
     MockMemoryManagerMultiDevice(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
+
+    bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override {
+        if (DebugManager.flags.UseKmdMigration.get() != -1) {
+            return DebugManager.flags.UseKmdMigration.get();
+        }
+
+        return false;
+    }
 };
 
 template <int32_t enablePartitionWalker>
@@ -2357,12 +2365,64 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropert
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities =
+        ZE_MEMORY_ACCESS_CAP_FLAG_RW;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PWithoutRecoverablePageFaultsThenSupportIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableRecoverablePageFaults.set(0);
+    DebugManager.flags.UseKmdMigration.set(1);
+
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities =
+        ZE_MEMORY_ACCESS_CAP_FLAG_RW;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PWithoutKmdMigrationThenSupportIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableRecoverablePageFaults.set(1);
+    DebugManager.flags.UseKmdMigration.set(0);
+
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities =
+        ZE_MEMORY_ACCESS_CAP_FLAG_RW;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndConcurrentAccessSupportThenSupportIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableRecoverablePageFaults.set(1);
+    DebugManager.flags.UseKmdMigration.set(1);
+
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities =
         ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT;
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
 using MemoryAccessPropertieP2PAccess1Atomic1 = MultipleDevicesP2PFixture<1, 1, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic1, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndAtomicAccessSupportThenSupportIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableRecoverablePageFaults.set(1);
+    DebugManager.flags.UseKmdMigration.set(1);
+
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
     auto result = device->getMemoryAccessProperties(&properties);

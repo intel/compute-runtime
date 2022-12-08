@@ -615,9 +615,15 @@ ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_propert
 
     pMemAccessProperties->sharedCrossDeviceAllocCapabilities = {};
     if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported) {
-        pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT;
-        if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
-            pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC;
+        pMemAccessProperties->sharedCrossDeviceAllocCapabilities = ZE_MEMORY_ACCESS_CAP_FLAG_RW;
+
+        auto memoryManager = this->getDriverHandle()->getMemoryManager();
+        if (memoryManager->isKmdMigrationAvailable(this->getRootDeviceIndex()) &&
+            NEO::DebugManager.flags.EnableRecoverablePageFaults.get() == 1) {
+            pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT;
+            if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
+                pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC;
+            }
         }
     }
 
