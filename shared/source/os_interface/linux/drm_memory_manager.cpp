@@ -683,7 +683,11 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle,
     return bo;
 }
 
-GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles,
+                                                                                        AllocationProperties &properties,
+                                                                                        bool requireSpecificBitness,
+                                                                                        bool isHostIpcAllocation,
+                                                                                        bool reuseSharedAllocation) {
     BufferObjects bos;
     std::vector<size_t> sizes;
     size_t totalSize = 0;
@@ -715,7 +719,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         }
 
         auto boHandle = openFd.handle;
-        auto bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+        BufferObject *bo = nullptr;
+        if (reuseSharedAllocation) {
+            bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+        }
 
         if (bo == nullptr) {
             areBosSharedObjects = false;
@@ -787,7 +794,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
                                                                                bool isHostIpcAllocation,
                                                                                bool reuseSharedAllocation) {
     if (isHostIpcAllocation) {
-        return createUSMHostAllocationFromSharedHandle(handle, properties, false);
+        return createUSMHostAllocationFromSharedHandle(handle, properties, false, reuseSharedAllocation);
     }
 
     std::unique_lock<std::mutex> lock(mtx);
@@ -993,7 +1000,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         if (ret < 0) {
             return nullptr;
         }
-        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, true);
+        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, true, true);
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
     }
@@ -1952,7 +1959,10 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     return allocation.release();
 }
 
-DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr) {
+DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle,
+                                                                         const AllocationProperties &properties,
+                                                                         bool hasMappedPtr,
+                                                                         bool reuseSharedAllocation) {
     PrimeHandle openFd{};
     openFd.fileDescriptor = handle;
 
@@ -1990,7 +2000,10 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     }
 
     auto boHandle = openFd.handle;
-    auto bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+    BufferObject *bo = nullptr;
+    if (reuseSharedAllocation) {
+        bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+    }
 
     if (bo == nullptr) {
         void *cpuPointer = nullptr;
