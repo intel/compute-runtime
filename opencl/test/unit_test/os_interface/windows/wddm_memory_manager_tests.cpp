@@ -347,7 +347,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSharedHandleWhenCreateGraphicsAllocatio
 
     AllocationProperties properties(0, false, 0, AllocationType::SHARED_BUFFER, false, false, 0);
     std::vector<osHandle> handles{handle};
-    auto allocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    auto allocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true);
     EXPECT_EQ(nullptr, allocation);
 }
 

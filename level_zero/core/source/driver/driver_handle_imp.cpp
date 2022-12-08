@@ -513,6 +513,7 @@ void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_fla
         this->getMemoryManager()->createGraphicsAllocationFromMultipleSharedHandles(handles,
                                                                                     unifiedMemoryProperties,
                                                                                     false,
+                                                                                    false,
                                                                                     false);
     if (alloc == nullptr) {
         return nullptr;
