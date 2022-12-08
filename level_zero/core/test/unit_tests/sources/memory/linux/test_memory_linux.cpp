@@ -130,7 +130,8 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
     NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles,
                                                                                AllocationProperties &properties,
                                                                                bool requireSpecificBitness,
-                                                                               bool isHostIpcAllocation) override {
+                                                                               bool isHostIpcAllocation,
+                                                                               bool reuseSharedAllocation) override {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
@@ -558,7 +559,8 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
     NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles,
                                                                                AllocationProperties &properties,
                                                                                bool requireSpecificBitness,
-                                                                               bool isHostIpcAllocation) override {
+                                                                               bool isHostIpcAllocation,
+                                                                               bool reuseSharedAllocation) override {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }

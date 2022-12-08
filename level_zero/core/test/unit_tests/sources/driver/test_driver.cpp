@@ -219,7 +219,7 @@ HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHa
                                        device->getNEODevice()->getDeviceBitfield()};
     bool requireSpecificBitness{};
     bool isHostIpcAllocation{};
-    auto ptr = execEnv->memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, requireSpecificBitness, isHostIpcAllocation);
+    auto ptr = execEnv->memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, requireSpecificBitness, isHostIpcAllocation, true);
     EXPECT_EQ(nullptr, ptr);
 }
 

@@ -587,7 +587,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     AllocationProperties properties(0, false, 4096u, AllocationType::SHARED_BUFFER, false, {});
 
     std::vector<osHandle> handles{ALLOCATION_HANDLE};
-    auto graphicsAllocation = mm.createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true);
     ASSERT_EQ(nullptr, graphicsAllocation);
 }
 

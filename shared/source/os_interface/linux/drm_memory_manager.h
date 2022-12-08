@@ -36,7 +36,7 @@ class DrmMemoryManager : public MemoryManager {
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override;
     void handleFenceCompletion(GraphicsAllocation *allocation) override;
     GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override;
-    GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override;
+    GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override;
     void closeSharedHandle(GraphicsAllocation *gfxAllocation) override;
 
@@ -81,7 +81,7 @@ class DrmMemoryManager : public MemoryManager {
 
     static std::unique_ptr<MemoryManager> create(ExecutionEnvironment &executionEnvironment);
 
-    DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr);
+    DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr, bool reuseSharedAllocation);
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override;
