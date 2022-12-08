@@ -821,11 +821,11 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
             if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES) {
                 ze_device_luid_ext_properties_t *deviceLuidProperties =
                     reinterpret_cast<ze_device_luid_ext_properties_t *>(extendedProperties);
+                deviceLuidProperties->nodeMask = queryDeviceNodeMask();
                 ze_result_t result = queryDeviceLuid(deviceLuidProperties);
                 if (result != ZE_RESULT_SUCCESS) {
                     return result;
                 }
-                deviceLuidProperties->nodeMask = 1;
             }
         }
     }

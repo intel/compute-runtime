@@ -350,7 +350,7 @@ bool validDriverStorePath(OsEnvironmentWin &osEnvironment, D3DKMT_HANDLE adapter
     return isCompatibleDriverStore(std::move(deviceRegistryPath));
 }
 
-std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid) {
+std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinal) {
     D3DKMT_OPENADAPTERFROMLUID openAdapterData = {};
     openAdapterData.AdapterLuid = adapterLuid;
     auto status = osEnvironment.gdi->openAdapterFromLuid(&openAdapterData);
@@ -380,8 +380,8 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     if (0 == queryAdapterType.RenderSupported) {
         return nullptr;
     }
-
-    return std::make_unique<HwDeviceIdWddm>(openAdapterData.hAdapter, adapterLuid, &osEnvironment, std::move(umKmDataTranslator));
+    uint32_t adapterNodeMask = 1 << adapterNodeOrdinal;
+    return std::make_unique<HwDeviceIdWddm>(openAdapterData.hAdapter, adapterLuid, adapterNodeMask, &osEnvironment, std::move(umKmDataTranslator));
 }
 
 std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironment &executionEnvironment) {
@@ -431,7 +431,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
                 continue;
             }
 
-            auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterDesc.luid);
+            auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterDesc.luid, i);
             if (hwDeviceId) {
                 hwDeviceIds.push_back(std::unique_ptr<HwDeviceId>(hwDeviceId.release()));
             }

@@ -203,7 +203,7 @@ struct WddmLinuxTest : public ::testing::Test {
     void SetUp() override {
         osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
         osEnvironment->gdi->closeAdapter = closeAdapterMock;
-        auto hwDeviceIdIn = std::make_unique<WddmLinuxMockHwDeviceIdWddm>(NULL_HANDLE, LUID{}, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>());
+        auto hwDeviceIdIn = std::make_unique<WddmLinuxMockHwDeviceIdWddm>(NULL_HANDLE, LUID{}, 1u, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>());
         this->hwDeviceId = hwDeviceIdIn.get();
         auto &rootDeviceEnvironment = *mockExecEnv.rootDeviceEnvironments[0];
         auto wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), rootDeviceEnvironment);
@@ -685,7 +685,7 @@ TEST(OSTimeWinLinuxTests, givenOSInterfaceWhenGetCpuGpuTimeThenGetCpuTimeFromOsT
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
     NEO::MockExecutionEnvironment mockExecEnv;
     NEO::MockRootDeviceEnvironment mockRootDeviceEnvironment{mockExecEnv};
-    hwDeviceIdIn.reset(new NEO::HwDeviceIdWddm(NULL_HANDLE, LUID{}, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>()));
+    hwDeviceIdIn.reset(new NEO::HwDeviceIdWddm(NULL_HANDLE, LUID{}, 1u, osEnvironment.get(), std::make_unique<NEO::UmKmDataTranslator>()));
 
     std::unique_ptr<NEO::OSInterface> osInterface(new NEO::OSInterface());
 

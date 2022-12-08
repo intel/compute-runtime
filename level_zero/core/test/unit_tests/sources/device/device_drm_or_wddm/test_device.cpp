@@ -37,7 +37,7 @@ struct CloseAdapterMock {
 
 struct MockHwDeviceIdWddm : public HwDeviceIdWddm {
     using HwDeviceIdWddm::osEnvironment;
-    MockHwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator) : HwDeviceIdWddm(adapterIn, adapterLuidIn, osEnvironmentIn, std::move(umKmDataTranslator)) {}
+    MockHwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, uint32_t adapterNodeOrdinalIn, OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator) : HwDeviceIdWddm(adapterIn, adapterLuidIn, adapterNodeOrdinalIn, osEnvironmentIn, std::move(umKmDataTranslator)) {}
 };
 
 class MockDriverModelWDDMLUID : public NEO::Wddm {
@@ -56,7 +56,7 @@ class MockDriverModelWDDMLUID : public NEO::Wddm {
         return true;
     }
 
-    MockDriverModelWDDMLUID(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::make_unique<MockHwDeviceIdWddm>(ADAPTER_HANDLE_WDDM_FAKE, LUID{0x12, 0x1234}, rootDeviceEnvironment.executionEnvironment.osEnvironment.get(), std::make_unique<UmKmDataTranslator>()), rootDeviceEnvironment) {
+    MockDriverModelWDDMLUID(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::make_unique<MockHwDeviceIdWddm>(ADAPTER_HANDLE_WDDM_FAKE, LUID{0x12, 0x1234}, 1u, rootDeviceEnvironment.executionEnvironment.osEnvironment.get(), std::make_unique<UmKmDataTranslator>()), rootDeviceEnvironment) {
         if (!rootDeviceEnvironment.executionEnvironment.osEnvironment.get()) {
             rootDeviceEnvironment.executionEnvironment.osEnvironment = std::make_unique<OsEnvironmentWin>();
         }
@@ -73,6 +73,16 @@ class MockOsContextWin : public OsContextWin {
 };
 
 using LuidDeviceTest = Test<DeviceFixture>;
+
+TEST_F(LuidDeviceTest, givenOsContextWinAndGetDeviceNodeMaskThenNodeMaskIsAtLeast1) {
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
+    auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
+    OsContextWin osContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
+    EXPECT_GE(osContext.getDeviceNodeMask(), 1u);
+    delete luidMock;
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
+}
 
 TEST_F(LuidDeviceTest, givenOsContextWinAndGetLUIDArrayThenLUIDisValid) {
     DebugManager.flags.EnableL0ReadLUIDExtension.set(true);

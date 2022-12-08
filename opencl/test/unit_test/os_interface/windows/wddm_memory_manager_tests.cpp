@@ -725,6 +725,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     translator->isEnabled = true;
     std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceId = std::make_unique<NEO::HwDeviceIdWddm>(wddm->hwDeviceId->getAdapter(),
                                                                                             wddm->hwDeviceId->getAdapterLuid(),
+                                                                                            1u,
                                                                                             executionEnvironment->osEnvironment.get(),
                                                                                             std::move(translator));
     wddm->hwDeviceId.reset(hwDeviceId.release());

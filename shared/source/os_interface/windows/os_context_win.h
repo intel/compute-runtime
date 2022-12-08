@@ -36,6 +36,7 @@ class OsContextWin : public OsContext {
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;
     void getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize);
+    uint32_t getDeviceNodeMask();
 
   protected:
     void initializeContext() override;

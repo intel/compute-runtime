@@ -29,7 +29,7 @@ namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
 }
 extern uint32_t numRootDevicesToEnum;
-std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid);
+std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinalIn);
 } // namespace NEO
 
 using namespace NEO;
@@ -1490,7 +1490,7 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenAdapterIsClosed) {
 
     D3DKMT_HANDLE adapter = 0x1234;
     {
-        HwDeviceIdWddm hwDeviceId{adapter, {}, osEnv.get(), std::make_unique<UmKmDataTranslator>()};
+        HwDeviceIdWddm hwDeviceId{adapter, {}, 1u, osEnv.get(), std::make_unique<UmKmDataTranslator>()};
     }
     EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
     EXPECT_EQ(adapter, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
@@ -1706,7 +1706,7 @@ TEST(VerifyAdapterType, whenAdapterDoesntSupportRenderThenDontCreateHwDeviceId) 
     osEnv->gdi.reset(gdi.release());
 
     LUID shadowAdapterLuid = {0xdd, 0xdd};
-    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, shadowAdapterLuid);
+    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, shadowAdapterLuid, 1u);
     EXPECT_EQ(nullptr, hwDeviceId.get());
 }
 
@@ -1716,7 +1716,7 @@ TEST(VerifyAdapterType, whenAdapterSupportsRenderThenCreateHwDeviceId) {
     osEnv->gdi.reset(gdi.release());
 
     LUID adapterLuid = {0x12, 0x1234};
-    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, adapterLuid);
+    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, adapterLuid, 1u);
     EXPECT_NE(nullptr, hwDeviceId.get());
 }
 

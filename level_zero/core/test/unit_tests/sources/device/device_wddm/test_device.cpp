@@ -54,7 +54,7 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid);
+std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinal);
 } // namespace NEO
 
 namespace L0 {
@@ -86,7 +86,7 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureThenLuidAndNodeMaskSetF
     auto osInterface = new OSInterface();
     luidMock = new WddmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     LUID adapterLuid = {0x12, 0x1234};
-    luidMock->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid);
+    luidMock->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 1u);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(luidMock));
     luidMock->init();

@@ -24,5 +24,11 @@ ze_result_t DeviceImp::queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLu
     std::copy_n(luidData.begin(), ZE_MAX_DEVICE_LUID_SIZE_EXT, std::begin(deviceLuidProperties->luid.id));
     return ZE_RESULT_SUCCESS;
 }
+uint32_t DeviceImp::queryDeviceNodeMask() {
+    NEO::Device *activeDevice = getActiveDevice();
+    NEO::CommandStreamReceiver *csr = activeDevice->getDefaultEngine().commandStreamReceiver;
+    NEO::OsContextWin *context = static_cast<NEO::OsContextWin *>(&csr->getOsContext());
+    return context->getDeviceNodeMask();
+}
 
 } // namespace L0

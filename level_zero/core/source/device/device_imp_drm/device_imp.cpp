@@ -12,5 +12,8 @@ namespace L0 {
 ze_result_t DeviceImp::queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
+uint32_t DeviceImp::queryDeviceNodeMask() {
+    return 1;
+}
 
 } // namespace L0

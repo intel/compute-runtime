@@ -21,13 +21,16 @@ class HwDeviceIdWddm : public HwDeviceId {
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::WDDM;
 
-    HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator);
+    HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, uint32_t adapterNodeMaskIn, OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator);
     Gdi *getGdi() const;
     constexpr D3DKMT_HANDLE getAdapter() const {
         return adapter;
     }
     constexpr LUID getAdapterLuid() const {
         return adapterLuid;
+    }
+    constexpr uint32_t getAdapterNodeMask() const {
+        return adapterNodeMask;
     }
     ~HwDeviceIdWddm() override;
 
@@ -37,6 +40,7 @@ class HwDeviceIdWddm : public HwDeviceId {
 
   protected:
     const LUID adapterLuid;
+    const uint32_t adapterNodeMask;
     std::unique_ptr<UmKmDataTranslator> umKmDataTranslator;
     OsEnvironment *osEnvironment;
     const D3DKMT_HANDLE adapter;

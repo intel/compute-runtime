@@ -32,5 +32,17 @@ ze_result_t DeviceImp::queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLu
     }
     return ZE_RESULT_ERROR_UNINITIALIZED;
 }
+uint32_t DeviceImp::queryDeviceNodeMask() {
+    NEO::Device *activeDevice = getActiveDevice();
+    if (activeDevice->getRootDeviceEnvironment().osInterface) {
+        NEO::DriverModelType driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
+        if (driverType == NEO::DriverModelType::WDDM) {
+            NEO::CommandStreamReceiver *csr = activeDevice->getDefaultEngine().commandStreamReceiver;
+            NEO::OsContextWin *context = static_cast<NEO::OsContextWin *>(&csr->getOsContext());
+            return context->getDeviceNodeMask();
+        }
+    }
+    return 1;
+}
 
 } // namespace L0

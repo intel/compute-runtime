@@ -69,6 +69,12 @@ void OsContextWin::getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arr
     }
 };
 
+uint32_t OsContextWin::getDeviceNodeMask() {
+    auto *wddm = this->getWddm();
+    auto *hwDeviceID = wddm->getHwDeviceId();
+    return hwDeviceID->getAdapterNodeMask();
+}
+
 OsContextWin::~OsContextWin() {
     if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
         wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);

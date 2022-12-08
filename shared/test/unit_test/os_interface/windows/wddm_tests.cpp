@@ -13,7 +13,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
-std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid);
+std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t nodeMask);
 
 using WddmTests = WddmTestWithMockGdiDll;
 
@@ -105,7 +105,7 @@ TEST(WddmPciSpeedInfoTest, WhenGetPciSpeedInfoIsCalledThenUnknownIsReturned) {
 }
 
 TEST_F(WddmTests, whenGetAdapterLuidThenLuidIsReturned) {
-    HwDeviceIdWddm *hwDeviceId = new HwDeviceIdWddm(0, {0, 0}, executionEnvironment->osEnvironment.get(), nullptr);
+    HwDeviceIdWddm *hwDeviceId = new HwDeviceIdWddm(0, {0, 0}, 1u, executionEnvironment->osEnvironment.get(), nullptr);
     wddm->hwDeviceId.reset(hwDeviceId);
 
     auto luid = wddm->getAdapterLuid();

@@ -144,6 +144,7 @@ struct DeviceImp : public Device {
     ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
     ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
     uint32_t getEventMaxPacketCount() const override;
+    uint32_t queryDeviceNodeMask();
 
   protected:
     void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);
