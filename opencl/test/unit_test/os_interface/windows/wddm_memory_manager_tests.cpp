@@ -1104,8 +1104,7 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
     }
     MockWddmAllocation alloc(rootDeviceEnvironment->getGmmHelper()), allocOffseted(rootDeviceEnvironment->getGmmHelper());
     // three pages
-    void *ptr = alignedMalloc(4 * 4096, 4096);
-    ASSERT_NE(nullptr, ptr);
+    void *ptr = reinterpret_cast<void *>(0x200000);
 
     size_t baseOffset = 1024;
     // misaligned buffer spanning across 3 pages
@@ -1150,8 +1149,6 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
 
     fragment4 = hostPtrManager->getFragment({ptr, rootDeviceIndex});
     EXPECT_EQ(nullptr, fragment4);
-
-    alignedFree(ptr);
 }
 
 TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulatedCorrectly) {
