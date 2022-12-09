@@ -76,7 +76,7 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
 
 void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
     if (heapType == IndirectHeap::Type::SURFACE_STATE) {
-        auto &gfxCoreHelper = GfxCoreHelper::get(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
         auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
         indirectHeap->getSpace(surfaceStateSize);
     }

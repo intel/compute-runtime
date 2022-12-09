@@ -80,7 +80,7 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
 
 StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     const auto platformName = getFamilyNameWithType(hwInfo);

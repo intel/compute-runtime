@@ -20,8 +20,7 @@ namespace NEO {
 std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device) {
     auto counter = std::make_unique<PerformanceCountersLinux>();
     auto drm = device->getOSTime()->getOSInterface()->getDriverModel()->as<Drm>();
-    auto gen = device->getHardwareInfo().platform.eRenderCoreFamily;
-    auto &gfxCoreHelper = GfxCoreHelper::get(gen);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     UNRECOVERABLE_IF(counter == nullptr);
 
     if (!device->isSubDevice()) {

@@ -165,8 +165,9 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
                                                                      uint32_t rootDeviceIndex,
                                                                      const DeviceBitfield deviceBitfield) {
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
-    auto &hwInfo = *(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo());
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (withAubDump) {
         auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hwInfo);
@@ -174,11 +175,11 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
             fullName.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
         }
-        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+        rootDeviceEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
         csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(baseName, executionEnvironment, rootDeviceIndex, deviceBitfield);
 
-        auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
+        auto aubCenter = rootDeviceEnvironment.aubCenter.get();
         UNRECOVERABLE_IF(nullptr == aubCenter);
 
         auto subCaptureCommon = aubCenter->getSubCaptureCommon();

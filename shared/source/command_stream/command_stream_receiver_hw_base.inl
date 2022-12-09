@@ -60,7 +60,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     : CommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
 
     const auto &hwInfo = peekHwInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getGfxCoreHelper();
     localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hwInfo);
 
     resetKmdNotifyHelper(new KmdNotifyHelper(&hwInfo.capabilityTable.kmdNotifyProperties));
@@ -292,7 +292,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     const auto &hwInfo = peekHwInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getGfxCoreHelper();
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageReqiuresRecyclingTag) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
@@ -1082,7 +1082,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
         streamProperties.frontEndState.setProperties(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), hwInfo);
 
-        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
         PreambleHelper<GfxFamily>::programVfeState(
@@ -1394,7 +1394,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBu
 
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
-    auto &gfxCoreHelper = GfxCoreHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getGfxCoreHelper();
     auto enabled = gfxCoreHelper.isUpdateTaskCountFromWaitSupported();
     enabled &= this->isAnyDirectSubmissionEnabled();
 
@@ -1514,7 +1514,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
 template <typename GfxFamily>
 TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
-        auto &gfxCoreHelper = GfxCoreHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = getGfxCoreHelper();
         const RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
 
         timestampPacketAllocator = gfxCoreHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());

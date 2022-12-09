@@ -139,7 +139,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(Lin
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
     auto &hwInfo = peekHwInfo();
-    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getGfxCoreHelper();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;

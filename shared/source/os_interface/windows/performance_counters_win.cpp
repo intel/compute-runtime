@@ -20,8 +20,7 @@ namespace NEO {
 std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device) {
     auto counter = std::make_unique<PerformanceCountersWin>();
     auto wddm = device->getOSTime()->getOSInterface()->getDriverModel()->as<Wddm>();
-    auto gen = device->getHardwareInfo().platform.eRenderCoreFamily;
-    auto &gfxCoreHelper = GfxCoreHelper::get(gen);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     UNRECOVERABLE_IF(counter == nullptr);
 
     counter->clientData.Windows.Adapter = reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getAdapter()));

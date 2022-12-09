@@ -18,7 +18,7 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
     bool debuggingEnabled = device.getDebugger() != nullptr;
 
     if (debuggingEnabled) {
-        GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         auto sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
 
         if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
@@ -75,7 +75,7 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
     auto &hwInfo = device.getHardwareInfo();
 
     if (debuggingEnabled) {
-        GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
 
         if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
             size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);

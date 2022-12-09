@@ -83,7 +83,7 @@ size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) {
+uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
     auto maxThreadsPerEuCount = 1024u / grfCount;
     return maxThreadsPerEuCount * hwInfo.gtSystemInfo.EUCount;
 }

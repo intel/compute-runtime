@@ -77,7 +77,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
     const auto &hardwareInfo = device->getHardwareInfo();
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     commandStream = std::make_unique<LinearStream>(cmdBufferAllocation->getUnderlyingBuffer(),
                                                    alignedSize - cmdBufferReservedSize, this, gfxCoreHelper.getBatchBufferEndSize());
 
@@ -296,7 +296,7 @@ void CommandContainer::allocateNextCommandBuffer() {
 }
 
 void CommandContainer::closeAndAllocateNextCommandBuffer() {
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto bbEndSize = gfxCoreHelper.getBatchBufferEndSize();
     auto ptr = commandStream->getSpace(0u);
     memcpy_s(ptr, bbEndSize, gfxCoreHelper.getBatchBufferEndReference(), bbEndSize);
@@ -383,7 +383,7 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
 void CommandContainer::fillReusableAllocationLists() {
     this->immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
     const auto &hardwareInfo = device->getHardwareInfo();
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
     if (amountToFill == 0u) {
         return;

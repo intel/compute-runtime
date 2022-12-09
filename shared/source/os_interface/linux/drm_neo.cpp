@@ -925,7 +925,7 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
     if (DebugManager.flags.ClosEnabled.get() == 0 || gfxCoreHelper.getNumCacheRegions() == 0) {
         this->cacheInfo.reset(new CacheInfo(*this, 0, 0, 0));
@@ -1335,7 +1335,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         return CommonConstants::unsupportedPatIndex;
     }
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
     GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, *hwInfo);
@@ -1486,7 +1486,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     auto hwInfo = this->getRootDeviceEnvironment().getHardwareInfo();
     auto memInfo = this->getMemoryInfo();
     if (DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.get() != 0) {
-        if (memInfo && GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo)) {
+        if (memInfo && rootDeviceEnvironment.getHelper<GfxCoreHelper>().getEnableLocalMemory(*hwInfo)) {
             regionInstanceClass = memInfo->getMemoryRegionClassAndInstance(memoryBank, *this->rootDeviceEnvironment.getHardwareInfo());
         }
     }

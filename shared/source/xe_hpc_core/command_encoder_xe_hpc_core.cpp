@@ -45,7 +45,7 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 
             constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
             constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
-            auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+            auto &gfxCoreHelper = device.getGfxCoreHelper();
             uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf);
             if (ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true)) {
                 const uint32_t tilesCount = device.getNumSubDevices();

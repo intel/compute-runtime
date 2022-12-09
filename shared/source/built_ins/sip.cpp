@@ -73,7 +73,7 @@ const std::vector<char> &SipKernel::getStateSaveAreaHeader() const {
 
 size_t SipKernel::getStateSaveAreaSize(Device *device) const {
     auto &hwInfo = device->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     const auto &stateSaveAreaHeader = getStateSaveAreaHeader();
     if (stateSaveAreaHeader.empty()) {
@@ -105,7 +105,7 @@ SipKernelType SipKernel::getSipKernelType(Device &device) {
 }
 
 SipKernelType SipKernel::getSipKernelType(Device &device, bool debuggingEnabled) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
     return gfxCoreHelper.getSipKernelType(debuggingEnabled);
 }
 
@@ -191,7 +191,7 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     uint32_t *sipKernelBinary = nullptr;
     size_t kernelBinarySize = 0u;
     auto &hwInfo = device.getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
 
     gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
     const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
