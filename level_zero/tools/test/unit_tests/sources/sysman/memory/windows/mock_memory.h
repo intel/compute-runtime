@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,7 @@ struct Mock<MemoryKmdSysManager> : public MemoryKmdSysManager {
     uint32_t mockMemoryCurrentBandwidthRead = 561321;
     uint32_t mockMemoryCurrentBandwidthWrite = 664521;
     uint32_t mockMemoryDomains = 1;
+    uint32_t mockMemoryCurrentTotalAllocableMem = 4294813695;
 
     void getMemoryProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -118,6 +119,12 @@ struct Mock<MemoryKmdSysManager> : public MemoryKmdSysManager {
         case KmdSysman::Requests::Memory::CurrentBandwidthWrite: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockMemoryCurrentBandwidthWrite;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Memory::CurrentTotalAllocableMem: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockMemoryCurrentTotalAllocableMem;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -223,7 +223,7 @@ ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::MemoryComponent;
-    request.requestId = KmdSysman::Requests::Memory::PhysicalSize;
+    request.requestId = KmdSysman::Requests::Memory::CurrentTotalAllocableMem;
 
     status = pKmdSysManager->requestSingle(request, response);
 

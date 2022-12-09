@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace ult {
 constexpr uint32_t memoryHandleComponentCount = 1u;
 class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
   protected:
-    Mock<MemoryKmdSysManager> *pKmdSysManager = nullptr;
+    std::unique_ptr<Mock<MemoryKmdSysManager>> pKmdSysManager;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -25,18 +25,12 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
 
-        pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
+        pKmdSysManager.reset(new Mock<MemoryKmdSysManager>);
 
-        pMemoryManager = new ::testing::NiceMock<MockMemoryManagerSysman>(*neoDevice->getExecutionEnvironment());
-
-        pMemoryManager->localMemorySupported[0] = false;
-
-        device->getDriverHandle()->setMemoryManager(pMemoryManager);
-
-        pKmdSysManager = new Mock<MemoryKmdSysManager>;
+        pKmdSysManager->allowSetCalls = true;
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
-        pWddmSysmanImp->pKmdSysManager = pKmdSysManager;
+        pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
         for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
             delete handle;
@@ -60,17 +54,8 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
-        SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
-        if (pKmdSysManager != nullptr) {
-            delete pKmdSysManager;
-            pKmdSysManager = nullptr;
-        }
-        if (pMemoryManager != nullptr) {
-            delete pMemoryManager;
-            pMemoryManager = nullptr;
-        }
+        SysmanDeviceFixture::TearDown();
     }
 
     void setLocalSupportedAndReinit(bool supported) {
@@ -101,7 +86,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     }
 
     MockMemoryManagerSysman *pMemoryManager = nullptr;
-    MemoryManager *pMemoryManagerOld;
 };
 
 TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
@@ -181,6 +165,21 @@ TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingStat
         EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
         EXPECT_GT(state.size, 0u);
         EXPECT_GT(state.free, 0u);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingStateThenCallSucceedsAndProperSizeIsReturned) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    pKmdSysManager->mockMemoryCurrentTotalAllocableMem = 4294813695;
+
+    for (auto handle : handles) {
+        zes_mem_state_t state;
+
+        ze_result_t result = zesMemoryGetState(handle, &state);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
+        EXPECT_EQ(state.size, pKmdSysManager->mockMemoryCurrentTotalAllocableMem);
     }
 }
 
