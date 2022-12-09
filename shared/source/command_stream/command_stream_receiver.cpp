@@ -71,7 +71,8 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
     const auto &hwInfo = peekHwInfo();
     uint32_t subDeviceCount = static_cast<uint32_t>(deviceBitfield.count());
-    bool platformImplicitScaling = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).platformSupportsImplicitScaling(hwInfo);
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(hwInfo);
     if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling) &&
         subDeviceCount > 1 &&
         DebugManager.flags.EnableStaticPartitioning.get() != 0) {
@@ -241,7 +242,8 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
 }
 
 void CommandStreamReceiver::fillReusableAllocationsList() {
-    auto amountToFill = GfxCoreHelper::get(peekHwInfo().platform.eRenderCoreFamily).getAmountOfAllocationsToFill();
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
     for (auto i = 0u; i < amountToFill; i++) {
         const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER,
                                                                      isMultiOsContextCapable(), false, deviceBitfield};
@@ -743,9 +745,8 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
 }
 
 bool CommandStreamReceiver::createGlobalFenceAllocation() {
-    auto &rootDevicEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
-    auto &gfxCoreHelper = rootDevicEnvironment.getHelper<GfxCoreHelper>();
-    auto &hwInfo = *rootDevicEnvironment.getHardwareInfo();
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto &hwInfo = peekHwInfo();
     if (!gfxCoreHelper.isFenceAllocationRequired(hwInfo)) {
         return true;
     }
@@ -757,13 +758,14 @@ bool CommandStreamReceiver::createGlobalFenceAllocation() {
 
 bool CommandStreamReceiver::createPreemptionAllocation() {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto &gfxCoreHelper = getGfxCoreHelper();
     size_t preemptionSurfaceSize = hwInfo->capabilityTable.requiredPreemptionSurfaceSize;
     if (DebugManager.flags.OverrideCsrAllocationSize.get() > 0) {
         preemptionSurfaceSize = DebugManager.flags.OverrideCsrAllocationSize.get();
     }
     AllocationProperties properties{rootDeviceIndex, true, preemptionSurfaceSize, AllocationType::PREEMPTION, isMultiOsContextCapable(), false, deviceBitfield};
     properties.flags.uncacheable = hwInfo->workaroundTable.flags.waCSRUncachable;
-    properties.alignment = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getPreemptionAllocationAlignment();
+    properties.alignment = gfxCoreHelper.getPreemptionAllocationAlignment();
     this->preemptionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     return this->preemptionAllocation != nullptr;
 }
@@ -911,6 +913,10 @@ const HardwareInfo &CommandStreamReceiver::peekHwInfo() const {
 
 const RootDeviceEnvironment &CommandStreamReceiver::peekRootDeviceEnvironment() const {
     return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+}
+
+const GfxCoreHelper &CommandStreamReceiver::getGfxCoreHelper() const {
+    return peekRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 }
 
 TaskCountType CommandStreamReceiver::getCompletionValue(const GraphicsAllocation &gfxAllocation) {

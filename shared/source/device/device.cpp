@@ -214,7 +214,7 @@ bool Device::createDeviceImpl() {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
     }
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getGfxCoreHelper();
     if (getDebugger() && gfxCoreHelper.disableL3CacheForDebug(hwInfo)) {
         getGmmHelper()->forceAllResourcesUncached();
     }
@@ -269,7 +269,7 @@ bool Device::createDeviceImpl() {
         uuid.isValid = false;
 
         if (DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
-            if (GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
+            if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
                 uuid.isValid = HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
             }
         }
@@ -289,7 +289,8 @@ bool Device::createEngines() {
     }
 
     auto &hwInfo = getHardwareInfo();
-    auto gpgpuEngines = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
 
     uint32_t deviceCsrIndex = 0;
     for (auto &engine : gpgpuEngines) {
@@ -302,7 +303,7 @@ bool Device::createEngines() {
 
 void Device::addEngineToEngineGroup(EngineControl &engine) {
     const HardwareInfo &hardwareInfo = this->getHardwareInfo();
-    const GfxCoreHelper &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getGfxCoreHelper();
     const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hardwareInfo);
 
     if (!gfxCoreHelper.isSubDeviceEngineSupported(hardwareInfo, getDeviceBitfield(), engine.getEngineType())) {
@@ -591,7 +592,7 @@ EngineControl &Device::getNextEngineForCommandQueue() {
     const auto &defaultEngine = this->getDefaultEngine();
 
     const auto &hardwareInfo = this->getHardwareInfo();
-    const auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = getGfxCoreHelper();
     const auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
 
     const auto defaultEngineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
@@ -744,6 +745,10 @@ void Device::getAdapterMask(uint32_t &nodeMask) {
     if (verifyAdapterLuid()) {
         nodeMask = 1;
     }
+}
+
+const GfxCoreHelper &Device::getGfxCoreHelper() const {
+    return getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 }
 
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {

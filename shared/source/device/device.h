@@ -23,6 +23,7 @@ class OSTime;
 class SourceLevelDebugger;
 class SubDevice;
 struct PhysicalDevicePciBusInfo;
+class GfxCoreHelper;
 
 struct SelectorCopyEngine : NonCopyableOrMovableClass {
     std::atomic<bool> isMainUsed = false;
@@ -144,6 +145,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void getAdapterLuid(std::array<uint8_t, HwInfoConfig::luidSize> &luid);
     MOCKABLE_VIRTUAL bool verifyAdapterLuid();
     void getAdapterMask(uint32_t &nodeMask);
+    const GfxCoreHelper &getGfxCoreHelper() const;
 
     std::atomic<uint32_t> debugExecutionCounter = 0;
 
