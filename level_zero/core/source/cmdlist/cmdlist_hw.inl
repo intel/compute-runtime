@@ -406,9 +406,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
         args.commandWithPostSync = true;
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
-                                                          baseAddr,
-                                                          Event::STATE_CLEARED, args, hwInfo);
+        for (uint32_t i = 0u; i < packetsToReset; i++) {
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
+                                                              baseAddr,
+                                                              Event::STATE_CLEARED, args, hwInfo);
+            baseAddr += event->getSinglePacketSize();
+        }
+        if ((this->signalAllEventPackets) && (packetsToReset < event->getMaxPacketsCount())) {
+            setRemainingEventPackets(event, Event::STATE_CLEARED);
+        }
     } else {
         bool applyScope = event->signalScope;
         uint32_t packetsToResetUsingSdi = packetsToReset;
