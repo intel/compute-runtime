@@ -426,7 +426,7 @@ int main(int argc, char *argv[]) {
     bool useSyncQueue = isSyncQueueEnabled(argc, argv);
     bool commandListShared = isCommandListShared(argc, argv);
     bool commandListCoexist = isParamEnabled(argc, argv, "-o", "--coexists");
-    bool eventPoolShared = isParamEnabled(argc, argv, "-p", "--poolshared");
+    bool eventPoolShared = !isParamEnabled(argc, argv, "-n", "--nopoolshared");
     if (eventPoolShared) {
         std::cerr << "Event pool shared between tests" << std::endl;
     }
