@@ -66,7 +66,6 @@ class Buffer : public MemObj {
     constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
     constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x02;
     bool forceDisallowCPUCopy = false;
-    bool isSubBufferFromPool = false;
 
     ~Buffer() override;
 

@@ -172,11 +172,21 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_OFFSET:
+        if (nullptr != this->associatedMemObject) {
+            if (this->getContext()->getBufferPoolAllocator().isPoolBuffer(this->associatedMemObject)) {
+                offset = 0;
+            } else {
+                offset -= this->associatedMemObject->getOffset();
+            }
+        }
         srcParamSize = sizeof(offset);
         srcParam = &offset;
         break;
 
     case CL_MEM_ASSOCIATED_MEMOBJECT:
+        if (this->getContext()->getBufferPoolAllocator().isPoolBuffer(this->associatedMemObject)) {
+            clAssociatedMemObject = nullptr;
+        }
         srcParamSize = sizeof(clAssociatedMemObject);
         srcParam = &clAssociatedMemObject;
         break;

@@ -618,20 +618,12 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
                                 const cl_buffer_region *region,
                                 cl_int &errcodeRet) {
     DEBUG_BREAK_IF(nullptr == createFunction);
-    if (this->context->getBufferPoolAllocator().isPoolBuffer(associatedMemObject)) {
-        Buffer *poolBuffer = static_cast<Buffer *>(associatedMemObject);
-        auto regionWithAdditionalOffset = *region;
-        regionWithAdditionalOffset.origin += this->offset;
-        auto buffer = poolBuffer->createSubBuffer(flags, flagsIntel, &regionWithAdditionalOffset, errcodeRet);
-        buffer->isSubBufferFromPool = true;
-        return buffer;
-    }
     MemoryProperties memoryProperties =
         ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &this->context->getDevice(0)->getDevice());
 
     auto copyMultiGraphicsAllocation = MultiGraphicsAllocation{this->multiGraphicsAllocation};
     auto buffer = createFunction(this->context, memoryProperties, flags, 0, region->size,
-                                 ptrOffset(this->memoryStorage, region->origin),
+                                 this->memoryStorage ? ptrOffset(this->memoryStorage, region->origin) : nullptr,
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
                                  std::move(copyMultiGraphicsAllocation),
                                  this->isZeroCopy, this->isHostPtrSVM, false);
@@ -641,7 +633,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     }
 
     buffer->associatedMemObject = this;
-    buffer->offset = region->origin;
+    buffer->offset = region->origin + this->offset;
     buffer->setParentSharingHandler(this->getSharingHandler());
     this->incRefInternal();
 

@@ -13,7 +13,7 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 using namespace NEO;
 namespace Ult {
 using PoolAllocator = Context::BufferPoolAllocator;
@@ -21,6 +21,7 @@ using MockBufferPoolAllocator = MockContext::MockBufferPoolAllocator;
 
 template <int32_t poolBufferFlag = -1, bool failMainStorageAllocation = false, bool runSetup = true>
 class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
+  public:
     void SetUp() override {
         if constexpr (runSetup) {
             this->setUpImpl();
@@ -37,7 +38,6 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         this->mockMemoryManager->failInDevicePoolWithError = shouldFail;
     }
 
-  public:
     std::unique_ptr<UltClDeviceFactory> deviceFactory;
     MockClDevice *device;
     std::unique_ptr<MockContext> context;
@@ -64,6 +64,36 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         this->setAllocationToFail(false);
         this->poolAllocator = static_cast<MockBufferPoolAllocator *>(&context->smallBufferPoolAllocator);
     }
+};
+
+class aggregatedSmallBuffersKernelTest : public AggregatedSmallBuffersTestTemplate<1, false, true> {
+  public:
+    void SetUp() override {
+        AggregatedSmallBuffersTestTemplate::SetUp();
+
+        pKernelInfo = std::make_unique<MockKernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
+        constexpr uint32_t sizeOfPointer = sizeof(void *);
+        pKernelInfo->addArgBuffer(0, 0x10, sizeOfPointer);
+        pProgram.reset(new MockProgram(context.get(), false, toClDeviceVector(*device)));
+
+        retVal = CL_INVALID_VALUE;
+        pMultiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(pProgram.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, device->getRootDeviceIndex()), &retVal));
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(device->getRootDeviceIndex()));
+        ASSERT_NE(pKernel, nullptr);
+        ASSERT_EQ(retVal, CL_SUCCESS);
+
+        pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
+        pKernelArg = (void **)(pKernel->getCrossThreadData() + pKernelInfo->argAsPtr(0).stateless);
+    };
+
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
+    std::unique_ptr<MockProgram> pProgram;
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel;
+    MockKernel *pKernel = nullptr;
+    char pCrossThreadData[64];
+    void **pKernelArg = nullptr;
 };
 
 using aggregatedSmallBuffersDefaultTest = AggregatedSmallBuffersTestTemplate<-1>;
@@ -244,6 +274,29 @@ TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
     }
 }
 
+TEST_F(aggregatedSmallBuffersKernelTest, givenBufferFromPoolWhenOffsetSubbufferIsPassedToSetKernelArgThenCorrectGpuVAIsPatched) {
+    std::unique_ptr<Buffer> unusedBuffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
+    ASSERT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(buffer, nullptr);
+    ASSERT_GT(buffer->getOffset(), 0u);
+    cl_buffer_region region;
+    region.origin = 0xc0;
+    region.size = 32;
+    cl_int error = 0;
+    std::unique_ptr<Buffer> subBuffer(buffer->createSubBuffer(buffer->getFlags(), buffer->getFlagsIntel(), &region, error));
+    ASSERT_NE(subBuffer, nullptr);
+    EXPECT_EQ(ptrOffset(buffer->getCpuAddress(), region.origin), subBuffer->getCpuAddress());
+
+    const auto graphicsAllocation = subBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(graphicsAllocation, nullptr);
+    const auto gpuAddress = graphicsAllocation->getGpuAddress();
+    EXPECT_EQ(ptrOffset(gpuAddress, buffer->getOffset() + region.origin), subBuffer->getBufferAddress(device->getRootDeviceIndex()));
+
+    subBuffer->setArgStateless(pKernelArg, pKernelInfo->argAsPtr(0).pointerSize, device->getRootDeviceIndex(), false);
+    EXPECT_EQ(reinterpret_cast<void *>(gpuAddress + region.origin + buffer->getOffset()), *pKernelArg);
+}
+
 using aggregatedSmallBuffersEnabledTestFailPoolInit = AggregatedSmallBuffersTestTemplate<1, true>;
 
 TEST_F(aggregatedSmallBuffersEnabledTestFailPoolInit, givenAggregatedSmallBuffersEnabledAndSizeEqualToThresholdWhenBufferCreateCalledButPoolCreateFailedThenDoNotUsePool) {
@@ -279,6 +332,7 @@ class AggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
         clContext = clCreateContext(nullptr, 1, devices, nullptr, nullptr, &retVal);
         ASSERT_EQ(retVal, CL_SUCCESS);
         context = castToObject<Context>(clContext);
+        poolAllocator = static_cast<MockBufferPoolAllocator *>(&context->getBufferPoolAllocator());
     }
 
   public:
@@ -290,6 +344,7 @@ class AggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
     void *hostPtr{nullptr};
     cl_context clContext{nullptr};
     Context *context{nullptr};
+    MockBufferPoolAllocator *poolAllocator{nullptr};
 
     DebugManagerStateRestore restore;
 };
@@ -336,6 +391,73 @@ TEST_F(aggregatedSmallBuffersEnabledApiTest, givenSmallBufferWhenCreatingBufferT
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(context->getRefInternalCount(), contextRefCountBefore);
+
+    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+}
+
+TEST_F(aggregatedSmallBuffersEnabledApiTest, givenSmallBufferWhenCreatingBufferWithNullPropertiesThenUsePool) {
+    auto contextRefCountBefore = context->getRefInternalCount();
+    cl_mem smallBuffer = clCreateBufferWithProperties(clContext, nullptr, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(smallBuffer, nullptr);
+
+    MockBuffer *asBuffer = static_cast<MockBuffer *>(smallBuffer);
+    EXPECT_TRUE(asBuffer->isSubBuffer());
+    Buffer *parentBuffer = static_cast<Buffer *>(asBuffer->associatedMemObject);
+    EXPECT_EQ(2, parentBuffer->getRefInternalCount());
+    MockBufferPoolAllocator *mockBufferPoolAllocator = static_cast<MockBufferPoolAllocator *>(&context->getBufferPoolAllocator());
+    EXPECT_EQ(parentBuffer, mockBufferPoolAllocator->mainStorage);
+
+    retVal = clReleaseMemObject(smallBuffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    EXPECT_EQ(context->getRefInternalCount(), contextRefCountBefore);
+
+    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+}
+
+TEST_F(aggregatedSmallBuffersEnabledApiTest, givenSmallBufferWhenCreatingBufferWithEmptyPropertiesThenUsePool) {
+    auto contextRefCountBefore = context->getRefInternalCount();
+    cl_mem_properties memProperties{};
+    cl_mem smallBuffer = clCreateBufferWithProperties(clContext, &memProperties, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(smallBuffer, nullptr);
+
+    MockBuffer *asBuffer = static_cast<MockBuffer *>(smallBuffer);
+    EXPECT_TRUE(asBuffer->isSubBuffer());
+    Buffer *parentBuffer = static_cast<Buffer *>(asBuffer->associatedMemObject);
+    EXPECT_EQ(2, parentBuffer->getRefInternalCount());
+    MockBufferPoolAllocator *mockBufferPoolAllocator = static_cast<MockBufferPoolAllocator *>(&context->getBufferPoolAllocator());
+    EXPECT_EQ(parentBuffer, mockBufferPoolAllocator->mainStorage);
+
+    retVal = clReleaseMemObject(smallBuffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    EXPECT_EQ(context->getRefInternalCount(), contextRefCountBefore);
+
+    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+}
+
+TEST_F(aggregatedSmallBuffersEnabledApiTest, givenBufferFromPoolWhenGetMemObjInfoCalledThenReturnValuesLikeForNormalBuffer) {
+    cl_mem buffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(buffer, nullptr);
+
+    MockBuffer *asBuffer = static_cast<MockBuffer *>(buffer);
+    EXPECT_TRUE(asBuffer->isSubBuffer());
+
+    cl_mem associatedMemObj = nullptr;
+    retVal = clGetMemObjectInfo(buffer, CL_MEM_ASSOCIATED_MEMOBJECT, sizeof(cl_mem), &associatedMemObj, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(associatedMemObj, nullptr);
+
+    size_t offset = 1u;
+    retVal = clGetMemObjectInfo(buffer, CL_MEM_OFFSET, sizeof(size_t), &offset, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(offset, 0u);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
 }
@@ -407,6 +529,7 @@ TEST_F(aggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubB
     ASSERT_NE(buffer, nullptr);
     MockBuffer *mockBuffer = static_cast<MockBuffer *>(buffer);
     EXPECT_GT(mockBuffer->offset, 0u);
+    EXPECT_EQ(ptrOffset(poolAllocator->mainStorage->getCpuAddress(), mockBuffer->getOffset()), mockBuffer->getCpuAddress());
 
     cl_buffer_region region{};
     region.size = 1;
@@ -415,9 +538,8 @@ TEST_F(aggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubB
     EXPECT_EQ(retVal, CL_SUCCESS);
     ASSERT_NE(subBuffer, nullptr);
     MockBuffer *mockSubBuffer = static_cast<MockBuffer *>(subBuffer);
-    EXPECT_EQ(mockSubBuffer->offset, mockBuffer->offset + region.origin);
-    MockBufferPoolAllocator *mockBufferPoolAllocator = static_cast<MockBufferPoolAllocator *>(&context->getBufferPoolAllocator());
-    EXPECT_EQ(mockSubBuffer->associatedMemObject, mockBufferPoolAllocator->mainStorage);
+    EXPECT_EQ(mockSubBuffer->associatedMemObject, buffer);
+    EXPECT_EQ(ptrOffset(mockBuffer->getCpuAddress(), region.origin), mockSubBuffer->getCpuAddress());
 
     retVal = clReleaseMemObject(subBuffer);
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -426,6 +548,39 @@ TEST_F(aggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubB
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     retVal = clReleaseMemObject(notUsedBuffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+}
+
+TEST_F(aggregatedSmallBuffersSubBufferApiTest, givenSubBufferFromBufferPoolWhenGetMemObjInfoCalledThenReturnValuesLikeForNormalSubBuffer) {
+    cl_mem buffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(buffer, nullptr);
+    MockBuffer *mockBuffer = static_cast<MockBuffer *>(buffer);
+    ASSERT_TRUE(context->getBufferPoolAllocator().isPoolBuffer(mockBuffer->associatedMemObject));
+
+    cl_buffer_region region{};
+    region.size = 1;
+    region.origin = size / 2;
+    cl_mem subBuffer = clCreateSubBuffer(buffer, flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(subBuffer, nullptr);
+
+    cl_mem associatedMemObj = nullptr;
+    retVal = clGetMemObjectInfo(subBuffer, CL_MEM_ASSOCIATED_MEMOBJECT, sizeof(cl_mem), &associatedMemObj, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(associatedMemObj, buffer);
+
+    size_t offset = 0u;
+    retVal = clGetMemObjectInfo(subBuffer, CL_MEM_OFFSET, sizeof(size_t), &offset, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(offset, region.origin);
+
+    retVal = clReleaseMemObject(subBuffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);

@@ -176,6 +176,25 @@ TEST_F(SubBufferTest, GivenBufferWithMemoryStorageAndNullHostPtrWhenSubBufferIsC
     buffer->release();
 }
 
+TEST_F(SubBufferTest, givenBufferWithNullMemoryStorageWhenSubBufferIsCreatedThenMemoryStorageIsNotOffseted) {
+    cl_buffer_region region = {1, 1};
+    cl_int retVal = 0;
+
+    MockBuffer *mockBuffer = static_cast<MockBuffer *>(buffer);
+    void *savedMemoryStorage = mockBuffer->memoryStorage;
+    mockBuffer->memoryStorage = nullptr;
+
+    auto subBuffer = buffer->createSubBuffer(0, 0, &region, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, subBuffer);
+
+    MockBuffer *mockSubBuffer = static_cast<MockBuffer *>(subBuffer);
+    EXPECT_EQ(nullptr, mockSubBuffer->memoryStorage);
+
+    mockBuffer->memoryStorage = savedMemoryStorage;
+    delete subBuffer;
+}
+
 TEST_F(SubBufferTest, givenBufferWithHostPtrWhenSubbufferGetsMapPtrThenExpectBufferHostPtr) {
     cl_buffer_region region = {0, 16};
 

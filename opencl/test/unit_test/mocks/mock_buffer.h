@@ -51,6 +51,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using MemObj::context;
     using MemObj::isZeroCopy;
     using MemObj::memObjectType;
+    using MemObj::memoryStorage;
     using MockBufferStorage::device;
 
     void setAllocationType(uint32_t rootDeviceIndex, bool compressed) {
