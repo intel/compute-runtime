@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -259,12 +258,6 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
             if (allocationFromCache) {
                 return allocationFromCache;
             }
-        }
-        size_t h2DThreshold = 0;
-        size_t d2HThreshold = 0;
-        GfxCoreHelper::getCpuCopyThresholds(h2DThreshold, d2HThreshold);
-        if (size <= std::max(h2DThreshold, d2HThreshold)) {
-            unifiedMemoryProperties.makeDeviceBufferLockable = 1;
         }
     } else if (memoryProperties.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
         unifiedMemoryProperties.flags.isUSMHostAllocation = true;

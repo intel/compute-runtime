@@ -623,9 +623,14 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(N
         return true;
     }
 
-    size_t h2DThreshold = 0;
-    size_t d2HThreshold = 0;
-    NEO::GfxCoreHelper::getCpuCopyThresholds(h2DThreshold, d2HThreshold);
+    size_t h2DThreshold = 2 * MemoryConstants::megaByte;
+    size_t d2HThreshold = 1 * MemoryConstants::kiloByte;
+    if (NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
+        h2DThreshold = NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
+    }
+    if (NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
+        d2HThreshold = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
+    }
     if (NEO::GfxCoreHelper::get(this->device->getHwInfo().platform.eRenderCoreFamily).copyThroughLockedPtrEnabled(this->device->getHwInfo())) {
         return (!srcFound && isSuitableUSMDeviceAlloc(dstAlloc, dstFound) && size <= h2DThreshold) ||
                (!dstFound && isSuitableUSMDeviceAlloc(srcAlloc, srcFound) && size <= d2HThreshold);
@@ -636,8 +641,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(N
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc, bool allocFound) {
     return allocFound && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) &&
-           alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->storageInfo.getNumBanks() == 1 &&
-           alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->storageInfo.isLockable;
+           alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->storageInfo.getNumBanks() == 1;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

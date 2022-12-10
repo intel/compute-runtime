@@ -171,8 +171,6 @@ class GfxCoreHelper {
     virtual bool isTimestampShiftRequired() const = 0;
     virtual bool isRelaxedOrderingSupported() const = 0;
 
-    static void getCpuCopyThresholds(size_t &h2DThreshold, size_t &d2HThreshold);
-
   protected:
     GfxCoreHelper() = default;
 };
