@@ -1508,7 +1508,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
             zes_ras_config_t setConfig = {};
             setConfig.totalThreshold = 0;
             memset(setConfig.detailedThresholds.category, 0, sizeof(setConfig.detailedThresholds.category));
-            setConfig.detailedThresholds.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS] = 11;
+            setConfig.detailedThresholds.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS] = 11;
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasSetConfig(handle, &setConfig));
         }
     }

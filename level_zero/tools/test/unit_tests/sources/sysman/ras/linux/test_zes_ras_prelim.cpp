@@ -184,20 +184,20 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtThenSuc
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
         if (correctable == true) {
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableCacheErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socCorrectableFabricSs0_0Count + initialCorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
             correctable = false;
         } else {
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalEuErrorCount + fatalTlb + initialUncorrectableCacheErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalTlb + initialUncorrectableCacheErrors);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCount + initialEngineReset);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttention + initialProgrammingErrors);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], initialUncorrectableComputeErrors);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiEastCount + socNonFatalPsfCsc0Count + initialUncorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], fatalEuErrorCount + initialUncorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiEastCount + socFatalPsfCsc0Count + initialUncorrectableNonComputeErrors);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], driverMigration + driverGgtt + driverRps + initialUncorrectableDriverErrors);
         }
@@ -221,20 +221,20 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtAfterCl
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, clear, &state));
         if (correctable == true) {
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableCacheErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socCorrectableFabricSs0_0Count + initialCorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
             correctable = false;
         } else {
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalEuErrorCount + fatalTlb + initialUncorrectableCacheErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalTlb + initialUncorrectableCacheErrors);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCount + initialEngineReset);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttention + initialProgrammingErrors);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], initialUncorrectableComputeErrors);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiEastCount + socNonFatalPsfCsc0Count + initialUncorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], fatalEuErrorCount + initialUncorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiEastCount + socFatalPsfCsc0Count + initialUncorrectableNonComputeErrors);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], driverMigration + driverGgtt + driverRps + initialUncorrectableDriverErrors);
         }
@@ -643,40 +643,39 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGeStateF
     pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCountForSubDevice);
     uint32_t handleIndex = 0u;
-
     for (auto handle : handles) {
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
         if (handleIndex == 0u) {
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], correctableGrfErrorCountTile0 + correctableEuErrorCountTile0 + initialCorrectableCacheErrors); // No. of correctable error type for subdevice 0
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], 0u); // No. of correctable error type for subdevice 0
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socCorrectableHbmSs0_1CountTile0 + initialCorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
         } else if (handleIndex == 1u) {
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalEuErrorCountTile0 + initialUncorrectableCacheErrors); // No. of uncorrectable error type for subdevice 0
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCountTile0 + initialEngineReset);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttentionTile0 + initialProgrammingErrors);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], fatalFpuTile0 + FatalL3FabricTile0 + initialUncorrectableComputeErrors);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socNonFatalPsfCsc0CountTile0 + socFatalHbmSs1_15CountTile0 + initialUncorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalTlb + initialUncorrectableCacheErrors); // No. of uncorrectable error type for subdevice 0
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCount + initialEngineReset);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttention + initialProgrammingErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], fatalEuErrorCount + initialUncorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiEastCount + socFatalPsfCsc0Count + initialUncorrectableNonComputeErrors);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], driverMigration + driverGgtt + driverRps + initialUncorrectableDriverErrors);
         } else if (handleIndex == 2u) {
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], correctableSamplerErrorCountTile1 + correctableGucErrorCountTile1 + initialCorrectableCacheErrorsTile1); // No. of correctable error type for subdevice 1
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], 0u); // No. of correctable error type for subdevice 1
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socCorrectableFabricSs1_0CountTile1 + initialCorrectableNonComputeErrorsTile1);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], correctableGucErrorCountTile1 + correctableSamplerErrorCountTile1 + initialCorrectableComputeErrorsTile1);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
         } else if (handleIndex == 3u) {
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalGucErrorCountTile1 + fatalIdiParityErrorCountTile1 + initialUncorrectableCacheErrorsTile1); // No. of uncorrectable error type for subdevice 1
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalIdiParityErrorCountTile1 + initialUncorrectableCacheErrorsTile1); // No. of uncorrectable error type for subdevice 1
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCountTile1 + initialEngineResetTile1);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttentionTile1 + initialProgrammingErrorsTile1);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
-            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiWestCountTile1 + socNonFatalPunitCountTile1 + initialUncorrectableNonComputeErrorsTile1);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], fatalGucErrorCountTile1 + initialUncorrectableComputeErrorsTile1);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiWestCountTile1 + socFatalPunitTile1 + initialUncorrectableNonComputeErrorsTile1);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
             EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], driverMigration + driverEngineOther + initialUncorrectableDriverErrorsTile1);
         }

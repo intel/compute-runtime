@@ -26,6 +26,7 @@ constexpr uint64_t correctableGrfErrorCount = 100u;
 constexpr uint64_t correctableEuErrorCount = 75u;
 constexpr uint64_t fatalEuErrorCount = 50u;
 constexpr uint64_t fatalTlb = 3u;
+constexpr uint64_t socFatalPsfCsc0Count = 5u;
 constexpr uint64_t fatalEngineResetCount = 45u;
 constexpr uint64_t correctableGrfErrorCountTile0 = 90u;
 constexpr uint64_t correctableEuErrorCountTile0 = 70u;
@@ -36,15 +37,9 @@ constexpr uint64_t fatalGucErrorCountTile1 = 40u;
 constexpr uint64_t fatalIdiParityErrorCountTile1 = 60u;
 constexpr uint64_t correctableGucErrorCountTile1 = 25u;
 constexpr uint64_t fatalEngineResetCountTile1 = 85u;
-constexpr uint64_t socCorrectableFabricSs0_0Count = 2u;
 constexpr uint64_t socFatalMdfiEastCount = 3u;
-constexpr uint64_t socNonFatalPsfCsc0Count = 5u;
-constexpr uint64_t socCorrectableHbmSs0_1CountTile0 = 6u;
-constexpr uint64_t socNonFatalPsfCsc0CountTile0 = 6u;
-constexpr uint64_t socFatalHbmSs1_15CountTile0 = 7u;
-constexpr uint64_t socCorrectableFabricSs1_0CountTile1 = 8u;
-constexpr uint64_t socNonFatalPunitCountTile1 = 9u;
 constexpr uint64_t socFatalMdfiWestCountTile1 = 0u;
+constexpr uint64_t socFatalPunitTile1 = 3u;
 constexpr uint64_t fatalFpuTile0 = 1u;
 constexpr uint64_t FatalL3FabricTile0 = 4u;
 constexpr uint64_t euAttention = 10u;
@@ -54,20 +49,19 @@ constexpr uint64_t driverMigration = 2u;
 constexpr uint64_t driverGgtt = 1u;
 constexpr uint64_t driverRps = 2u;
 constexpr uint64_t driverEngineOther = 3u;
-constexpr uint64_t initialCorrectableCacheErrors = 6u;
-constexpr uint64_t initialUncorrectableCacheErrors = 7u;
+constexpr uint64_t initialUncorrectableCacheErrors = 2u;
 constexpr uint64_t initialEngineReset = 2u;
 constexpr uint64_t initialProgrammingErrors = 7u;
-constexpr uint64_t initialCorrectableNonComputeErrors = 6u;
-constexpr uint64_t initialUncorrectableNonComputeErrors = 13u;
-constexpr uint64_t initialUncorrectableComputeErrors = 5u;
+constexpr uint64_t initialUncorrectableNonComputeErrors = 8u;
+constexpr uint64_t initialUncorrectableComputeErrors = 10u;
+constexpr uint64_t initialCorrectableComputeErrors = 6u;
 constexpr uint64_t initialUncorrectableDriverErrors = 5u;
-constexpr uint64_t initialCorrectableCacheErrorsTile1 = 5u;
-constexpr uint64_t initialUncorrectableCacheErrorsTile1 = 7u;
+constexpr uint64_t initialUncorrectableCacheErrorsTile1 = 1u;
 constexpr uint64_t initialEngineResetTile1 = 4u;
 constexpr uint64_t initialProgrammingErrorsTile1 = 5u;
-constexpr uint64_t initialCorrectableNonComputeErrorsTile1 = 4u;
+constexpr uint64_t initialCorrectableComputeErrorsTile1 = 5u;
 constexpr uint64_t initialUncorrectableNonComputeErrorsTile1 = 5u;
+constexpr uint64_t initialUncorrectableComputeErrorsTile1 = 6u;
 constexpr uint64_t initialUncorrectableDriverErrorsTile1 = 4u;
 constexpr uint64_t timeStamp = 1000u;
 constexpr uint32_t pmuDriverType = 16u;
@@ -114,10 +108,8 @@ struct Mock<MockPmuInterfaceImpForRas> : public MockPmuInterfaceImpForRas {
     int mockedPmuReadForCorrectableAndSuccessReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
         memset(data, 0, sizeOfdata);
         data[1] = timeStamp;
-        data[2] = socCorrectableFabricSs0_0Count;
-        data[3] = 0;
-        data[4] = correctableGrfErrorCount;
-        data[5] = correctableEuErrorCount;
+        data[2] = correctableGrfErrorCount;
+        data[3] = correctableEuErrorCount;
         return 0;
     }
 
@@ -131,48 +123,43 @@ struct Mock<MockPmuInterfaceImpForRas> : public MockPmuInterfaceImpForRas {
         data[6] = driverRps;
         data[7] = 0;
         data[8] = 0;
-        data[9] = socFatalMdfiEastCount;
-        data[10] = socNonFatalPsfCsc0Count;
-        data[11] = 0;
-        data[12] = fatalEuErrorCount;
-        data[13] = fatalTlb;
+        data[9] = fatalEuErrorCount;
+        data[10] = socFatalMdfiEastCount;
+        data[11] = socFatalPsfCsc0Count;
+        data[12] = fatalTlb;
         return 0;
     }
 
     int mockedPmuReadForCorrectableTile0AndSuccessReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
         memset(data, 0, sizeOfdata);
         data[1] = timeStamp;
-        data[2] = 0;
-        data[3] = socCorrectableHbmSs0_1CountTile0;
-        data[4] = correctableGrfErrorCountTile0;
-        data[5] = correctableEuErrorCountTile0;
+        data[2] = correctableGrfErrorCount;
+        data[3] = correctableEuErrorCount;
         return 0;
     }
 
     int mockedPmuReadForUncorrectableTile0AndSuccessReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
         memset(data, 0, sizeOfdata);
         data[1] = timeStamp;
-        data[2] = fatalEngineResetCountTile0;
-        data[3] = euAttentionTile0;
+        data[2] = fatalEngineResetCount;
+        data[3] = euAttention;
         data[4] = driverMigration;
         data[5] = driverGgtt;
         data[6] = driverRps;
-        data[7] = fatalFpuTile0;
-        data[8] = FatalL3FabricTile0;
-        data[9] = socFatalHbmSs1_15CountTile0;
-        data[10] = 0;
-        data[11] = socNonFatalPsfCsc0CountTile0;
-        data[12] = fatalEuErrorCountTile0;
-        data[13] = 0;
+        data[7] = 0;
+        data[8] = 0;
+        data[9] = fatalEuErrorCount;
+        data[10] = socFatalMdfiEastCount;
+        data[11] = socFatalPsfCsc0Count;
+        data[12] = fatalTlb;
         return 0;
     }
 
     int mockedPmuReadForCorrectableTile1AndSuccessReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
         memset(data, 0, sizeOfdata);
         data[1] = timeStamp;
-        data[2] = socCorrectableFabricSs1_0CountTile1;
-        data[3] = correctableGucErrorCountTile1;
-        data[4] = correctableSamplerErrorCountTile1;
+        data[2] = correctableGucErrorCountTile1;
+        data[3] = correctableSamplerErrorCountTile1;
         return 0;
     }
 
@@ -183,9 +170,9 @@ struct Mock<MockPmuInterfaceImpForRas> : public MockPmuInterfaceImpForRas {
         data[3] = euAttentionTile1;
         data[4] = driverMigration;
         data[5] = driverEngineOther;
-        data[6] = socFatalMdfiWestCountTile1;
-        data[7] = socNonFatalPunitCountTile1;
-        data[8] = fatalGucErrorCountTile1;
+        data[6] = fatalGucErrorCountTile1;
+        data[7] = socFatalMdfiWestCountTile1;
+        data[8] = socFatalPunitTile1;
         data[9] = fatalIdiParityErrorCountTile1;
         return 0;
     }
@@ -325,25 +312,13 @@ struct Mock<RasSysfsAccess> : public RasSysfsAccess {
         } else if (file.compare("gt/gt1/error_counter/eu_attention") == 0) {
             val = 5u;
             return ZE_RESULT_SUCCESS;
-        } else if (file.compare("gt/gt0/error_counter/soc_correctable_fabric_ss0_0") == 0) {
-            val = 1u;
-            return ZE_RESULT_SUCCESS;
         } else if (file.compare("gt/gt0/error_counter/soc_fatal_mdfi_east") == 0) {
             val = 5u;
             return ZE_RESULT_SUCCESS;
-        } else if (file.compare("gt/gt0/error_counter/soc_nonfatal_psf_csc_0") == 0) {
+        } else if (file.compare("gt/gt0/error_counter/soc_fatal_psf_csc_0") == 0) {
             val = 3u;
             return ZE_RESULT_SUCCESS;
-        } else if (file.compare("gt/gt0/error_counter/soc_correctable_hbm_ss0_1") == 0) {
-            val = 5u;
-            return ZE_RESULT_SUCCESS;
-        } else if (file.compare("gt/gt0/error_counter/soc_fatal_hbm_ss1_15") == 0) {
-            val = 5u;
-            return ZE_RESULT_SUCCESS;
-        } else if (file.compare("gt/gt1/error_counter/soc_correctable_fabric_ss1_0") == 0) {
-            val = 4u;
-            return ZE_RESULT_SUCCESS;
-        } else if (file.compare("gt/gt1/error_counter/soc_nonfatal_punit") == 0) {
+        } else if (file.compare("gt/gt1/error_counter/soc_fatal_punit") == 0) {
             val = 3u;
             return ZE_RESULT_SUCCESS;
         } else if (file.compare("gt/gt1/error_counter/soc_fatal_mdfi_west") == 0) {
@@ -410,11 +385,8 @@ struct Mock<RasFsAccess> : public RasFsAccess {
             events.push_back("bcs0-busy");
             events.push_back("error--correctable-eu-grf");
             events.push_back("error--correctable-eu-ic");
-            events.push_back("error--soc-correctable-fabric-ss0-0");
-            events.push_back("error--soc-correctable-hbm-ss0-1");
-            events.push_back("error--soc-fatal-hbm-ss1-15");
             events.push_back("error--soc-fatal-mdfi-east");
-            events.push_back("error--soc-nonfatal-psf-csc-0");
+            events.push_back("error--soc-fatal-psf-csc-0");
             events.push_back("error--fatal-eu-ic");
             events.push_back("error--fatal-tlb");
             events.push_back("error--engine-reset");
@@ -443,12 +415,10 @@ struct Mock<RasFsAccess> : public RasFsAccess {
         if (directory.compare(eventsDir) == 0) {
             events.push_back("bcs0-busy");
             events.push_back("error-gt0--correctable-eu-grf");
+            events.push_back("error-gt0--correctable-eu-grf");
             events.push_back("error-gt0--correctable-eu-ic");
-            events.push_back("error-gt0--soc-correctable-hbm-ss0-1");
-            events.push_back("error-gt0--soc-correctable-fabric-ss0-0");
-            events.push_back("error-gt0--soc-nonfatal-psf-csc-0");
-            events.push_back("error-gt0--soc-fatal-hbm-ss1-15");
             events.push_back("error-gt0--soc-fatal-mdfi-east");
+            events.push_back("error-gt0--soc-fatal-psf-csc-0");
             events.push_back("error-gt0--fatal-eu-ic");
             events.push_back("error-gt0--fatal-tlb");
             events.push_back("error-gt0--engine-reset");
@@ -459,9 +429,8 @@ struct Mock<RasFsAccess> : public RasFsAccess {
             events.push_back("error-gt0--driver-ggtt");
             events.push_back("error-gt0--driver-rps");
             events.push_back("error-gt1--correctable-sampler");
-            events.push_back("error-gt1--soc-correctable-fabric-ss1-0");
-            events.push_back("error-gt1--soc-nonfatal-punit");
             events.push_back("error-gt1--soc-fatal-mdfi-west");
+            events.push_back("error-gt1--soc-fatal-punit");
             events.push_back("error-gt1--fatal-guc");
             events.push_back("error-gt1--fatal-idi-parity");
             events.push_back("error-gt1--correctable-guc");
