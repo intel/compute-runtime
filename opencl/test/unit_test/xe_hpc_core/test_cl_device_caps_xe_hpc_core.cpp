@@ -12,6 +12,8 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 
+#include "hw_cmds_xe_hpc_core_base.h"
+
 using namespace NEO;
 
 using XeHpcCoreClDeviceCaps = Test<ClDeviceFixture>;
