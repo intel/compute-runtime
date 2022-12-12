@@ -89,7 +89,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
         if (csrType > 0) {
-            auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo->platform.eRenderCoreFamily);
+            auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
             auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hardwareInfo);
             rootDeviceEnvironment.initGmm();
             rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(csrType));

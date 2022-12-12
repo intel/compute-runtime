@@ -177,7 +177,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
     if (!hwInfo.capabilityTable.blitterOperationsSupported) {
         return BlitOperationResult::Unsupported;
     }
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
 
     UNRECOVERABLE_IF(memoryBanks.none());
 

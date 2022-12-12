@@ -108,10 +108,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
             memoryAllocation->storageInfo = allocationData.storageInfo;
         }
 
-        auto pHwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-        if (GfxCoreHelper::get(pHwInfo->platform.eRenderCoreFamily).compressedBuffersSupported(*pHwInfo) &&
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+        auto pHwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        if (gfxCoreHelper.compressedBuffersSupported(*pHwInfo) &&
             allocationData.flags.preferCompressed) {
-            auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
+            auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(),
                                              allocationData.hostPtr,
                                              sizeAligned,
                                              alignment,

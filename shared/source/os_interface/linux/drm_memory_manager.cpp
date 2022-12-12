@@ -220,7 +220,7 @@ void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t
 
 bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
 
     auto useKmdMigration = gfxCoreHelper.isKmdMigrationSupported(*hwInfo);
 

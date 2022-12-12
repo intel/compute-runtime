@@ -55,7 +55,8 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     }
 
     auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-    auto localMemoryEnabled = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+    auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+    auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hwInfo);
 
     this->dispatchMode = localMemoryEnabled ? DispatchMode::BatchedDispatch : DispatchMode::ImmediateDispatch;
 

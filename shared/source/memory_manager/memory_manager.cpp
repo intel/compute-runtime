@@ -49,10 +49,12 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     isaInLocalMemory.resize(rootEnvCount);
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
         internalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
         externalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
-        this->localMemorySupported.push_back(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo));
+        this->localMemorySupported.push_back(gfxCoreHelper.getEnableLocalMemory(*hwInfo));
         this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages && !!DebugManager.flags.Enable64kbpages.get());
 
         gfxPartitions.push_back(std::make_unique<GfxPartition>(reservedCpuAddressRange));

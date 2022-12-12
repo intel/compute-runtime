@@ -168,7 +168,8 @@ bool isBcsEnabled(const HardwareInfo &hwInfo, aub_stream::EngineType engineType)
 }
 
 bool linkCopyEnginesSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield) {
-    const aub_stream::EngineType engine1 = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, aub_stream::ENGINE_BCS1)
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const aub_stream::EngineType engine1 = gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, deviceBitfield, aub_stream::ENGINE_BCS1)
                                                ? aub_stream::ENGINE_BCS1
                                                : aub_stream::ENGINE_BCS4;
     const aub_stream::EngineType engine2 = aub_stream::ENGINE_BCS2;
@@ -177,6 +178,7 @@ bool linkCopyEnginesSupported(const HardwareInfo &hwInfo, const DeviceBitfield &
 }
 
 aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, std::atomic<uint32_t> &selectorCopyEngine) {
+    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto enableCmdQRoundRobindBcsEngineAssign = false;
 
     if (DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get() != -1) {
@@ -216,14 +218,14 @@ aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const De
                 engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + selectEngineValue);
             }
 
-        } while (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, engineType) || !hwInfo.featureTable.ftrBcsInfo.test(engineType == aub_stream::EngineType::ENGINE_BCS
-                                                                                                                                                                                   ? 0
-                                                                                                                                                                                   : engineType - aub_stream::EngineType::ENGINE_BCS1 + 1));
+        } while (!gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, deviceBitfield, engineType) || !hwInfo.featureTable.ftrBcsInfo.test(engineType == aub_stream::EngineType::ENGINE_BCS
+                                                                                                                                           ? 0
+                                                                                                                                           : engineType - aub_stream::EngineType::ENGINE_BCS1 + 1));
 
         return engineType;
     }
 
-    const aub_stream::EngineType engine1 = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, aub_stream::ENGINE_BCS1)
+    const aub_stream::EngineType engine1 = gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, deviceBitfield, aub_stream::ENGINE_BCS1)
                                                ? aub_stream::ENGINE_BCS1
                                                : aub_stream::ENGINE_BCS4;
     const aub_stream::EngineType engine2 = aub_stream::ENGINE_BCS2;
