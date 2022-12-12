@@ -55,6 +55,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(cons
     recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
     AllocationProperties adjustedProperties(properties);
     adjustedProperties.size = redundancyRatio * properties.size;
+    adjustedProperties.rootDeviceIndex = properties.rootDeviceIndex;
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties(adjustedProperties);
 }
 

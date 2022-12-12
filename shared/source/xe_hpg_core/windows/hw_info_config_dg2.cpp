@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,11 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     disableRcsExposure(hwInfo);
 
     return 0;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isMultiContextResourceDeferDeletionSupported() const {
+    return true;
 }
 
 template class ProductHelperHw<gfxProduct>;

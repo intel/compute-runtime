@@ -16,6 +16,11 @@ class MockDeferrableDeletion : public DeferrableDeletion {
     bool apply() override;
 
     ~MockDeferrableDeletion() override;
+
+    void setTrialTimes(int times) { trialTimes = times; }
     int applyCalled = 0;
+
+  private:
+    int trialTimes = 1;
 };
 } // namespace NEO

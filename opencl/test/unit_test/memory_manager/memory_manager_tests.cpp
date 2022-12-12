@@ -2200,41 +2200,6 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultDeviceWhenC
     // no need to call freeGraphicsAllocation
 }
 
-HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByManyOsContextsWhenCheckingUsageBeforeDestroyThenMultiContextDestructorIsUsedForWaitingForAllOsContexts) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
-    executionEnvironment->memoryManager.reset(memoryManager);
-    auto multiContextDestructor = new MockDeferredDeleter();
-    multiContextDestructor->expectDrainBlockingValue(false);
-    memoryManager->multiContextResourceDestructor.reset(multiContextDestructor);
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
-
-    auto &lowPriorityEngine = device->getEngine(device->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::LowPriority);
-
-    auto nonDefaultOsContext = lowPriorityEngine.osContext;
-    auto nonDefaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(lowPriorityEngine.commandStreamReceiver);
-    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
-    auto defaultOsContext = device->getDefaultEngine().osContext;
-
-    EXPECT_FALSE(defaultOsContext->isLowPriority());
-    EXPECT_TRUE(nonDefaultOsContext->isLowPriority());
-
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    nonDefaultCsr->taskCount = *nonDefaultCsr->getTagAddress();
-    nonDefaultCsr->latestFlushedTaskCount = *nonDefaultCsr->getTagAddress();
-    graphicsAllocation->updateTaskCount(*nonDefaultCsr->getTagAddress(), nonDefaultOsContext->getContextId());
-    graphicsAllocation->updateTaskCount(0, defaultOsContext->getContextId()); // used and ready
-
-    EXPECT_TRUE(graphicsAllocation->isUsedByManyOsContexts());
-
-    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-    EXPECT_EQ(1, multiContextDestructor->deferDeletionCalled);
-    EXPECT_TRUE(nonDefaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_TRUE(defaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-}
-
 TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocationIsCreatedThenGpuAddressHasCorrectValue) {
     uintptr_t address = 0xf0000000;
     void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);

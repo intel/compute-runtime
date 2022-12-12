@@ -24,6 +24,8 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     void drain(bool blocking) override;
 
+    void clearQueueTillFirstFailure() override;
+
     bool areElementsReleased() override;
 
     bool shouldStop() override;
@@ -60,6 +62,8 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     std::atomic<int> clearCalled;
 
+    std::atomic<int> clearCalledWithBreakTillFailure;
+
     int deferDeletionCalled = 0;
     bool stopAfter3loopsInRun = false;
 
@@ -69,10 +73,16 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     void expectDrainBlockingValue(bool value);
 
+    void expectClearQueueTillFirstFailure();
+
     bool expectedDrainValue = false;
 
     bool expectDrainCalled = false;
 
-    void clearQueue() override;
+    bool expectClearQueueTillFirstFailureCalled = false;
+
+    int clearQueueTillFirstFailureCalled = 0;
+
+    void clearQueue(bool breakOnFailure) override;
 };
 } // namespace NEO

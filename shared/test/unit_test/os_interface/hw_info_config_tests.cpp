@@ -665,3 +665,7 @@ HWTEST_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPip
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsMultiContextResourceDeferDeletionSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isMultiContextResourceDeferDeletionSupported());
+}

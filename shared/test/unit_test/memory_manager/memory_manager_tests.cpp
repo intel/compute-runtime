@@ -1,15 +1,19 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_deferred_deleter.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -120,4 +124,47 @@ TEST(MemoryManagerTest, givenFailureOnRegisterLocalMemoryAllocationWhenAllocatin
     MockMemoryManager memoryManager(true, true);
     memoryManager.registerLocalMemAllocResult = MemoryManager::AllocationStatus::Error;
     EXPECT_EQ(nullptr, memoryManager.allocateGraphicsMemoryWithProperties(properties));
+}
+
+using MemoryhManagerMultiContextResourceTests = ::testing::Test;
+HWTEST_F(MemoryhManagerMultiContextResourceTests, givenAllocationUsedByManyOsContextsWhenCheckingUsageBeforeDestroyThenMultiContextDestructorIsUsedForWaitingForAllOsContexts) {
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), true, 2);
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto multiContextDestructor = new MockDeferredDeleter();
+
+    memoryManager->multiContextResourceDestructor.reset(multiContextDestructor);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+
+    auto &lowPriorityEngine = device->getEngine(device->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::LowPriority);
+
+    auto nonDefaultOsContext = lowPriorityEngine.osContext;
+    auto nonDefaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(lowPriorityEngine.commandStreamReceiver);
+    auto defaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
+    auto defaultOsContext = device->getDefaultEngine().osContext;
+
+    EXPECT_FALSE(defaultOsContext->isLowPriority());
+    EXPECT_TRUE(nonDefaultOsContext->isLowPriority());
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    auto &productHelper = device->getProductHelper();
+    if (productHelper.isMultiContextResourceDeferDeletionSupported()) {
+        multiContextDestructor->expectClearQueueTillFirstFailure();
+    } else {
+        multiContextDestructor->expectDrainBlockingValue(false);
+    }
+
+    nonDefaultCsr->taskCount = *nonDefaultCsr->getTagAddress();
+    nonDefaultCsr->latestFlushedTaskCount = *nonDefaultCsr->getTagAddress();
+    graphicsAllocation->updateTaskCount(*nonDefaultCsr->getTagAddress(), nonDefaultOsContext->getContextId());
+    graphicsAllocation->updateTaskCount(0, defaultOsContext->getContextId()); // used and ready
+
+    EXPECT_TRUE(graphicsAllocation->isUsedByManyOsContexts());
+
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
+    EXPECT_EQ(1, multiContextDestructor->deferDeletionCalled);
+    EXPECT_TRUE(nonDefaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(defaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 }

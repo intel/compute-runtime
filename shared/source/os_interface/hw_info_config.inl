@@ -709,4 +709,9 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(AllocationType allocation
     return patIndex;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isMultiContextResourceDeferDeletionSupported() const {
+    return false;
+}
+
 } // namespace NEO

@@ -10,9 +10,9 @@
 namespace NEO {
 bool MockDeferrableDeletion::apply() {
     applyCalled++;
-    return true;
+    return (applyCalled < trialTimes) ? false : true;
 }
 MockDeferrableDeletion::~MockDeferrableDeletion() {
-    EXPECT_EQ(1, applyCalled);
+    EXPECT_EQ(trialTimes, applyCalled);
 }
 } // namespace NEO
