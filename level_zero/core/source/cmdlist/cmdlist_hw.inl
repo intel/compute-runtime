@@ -1832,12 +1832,18 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
             args.commandWithPostSync = true;
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), baseAddr, Event::STATE_SIGNALED,
                                                               args, hwInfo);
+            if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
+                setRemainingEventPackets(event, Event::STATE_SIGNALED);
+            }
         } else {
             NEO::PipeControlArgs args;
             args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
             if (this->partitionCount > 1) {
                 args.workloadPartitionOffset = true;
                 event->setPacketsInUse(this->partitionCount);
+            }
+            if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
+                setRemainingEventPackets(event, Event::STATE_SIGNALED);
             }
             NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandContainer.getCommandStream(),
@@ -1846,9 +1852,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
                 Event::STATE_SIGNALED,
                 hwInfo,
                 args);
-        }
-        if (this->signalAllEventPackets) {
-            setRemainingEventPackets(event, Event::STATE_SIGNALED);
         }
     }
 }
@@ -1866,6 +1869,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
         NEO::MiFlushArgs args;
         const auto &hwInfo = this->device->getHwInfo();
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, hwInfo);
+        if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
+            setRemainingEventPackets(event, Event::STATE_SIGNALED);
+        }
     }
     appendWriteKernelTimestamp(event, beforeWalker, false, false);
 }
@@ -2199,6 +2205,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             bool workloadPartition = setupTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, beforeWalker, true, workloadPartition);
         } else {
+            if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
+                setRemainingEventPackets(event, Event::STATE_SIGNALED);
+            }
+
             const auto &hwInfo = this->device->getHwInfo();
             NEO::PipeControlArgs args;
             args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
@@ -2211,9 +2221,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, false, hwInfo);
             bool workloadPartition = isTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, beforeWalker, true, workloadPartition);
-            if (this->signalAllEventPackets) {
-                setRemainingEventPackets(event, Event::STATE_SIGNALED);
-            }
         }
     }
 }
