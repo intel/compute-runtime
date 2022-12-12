@@ -2007,6 +2007,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         args.commandWithPostSync = true;
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset),
                                                           Event::STATE_SIGNALED, args, hwInfo);
+
+        if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
+            setRemainingEventPackets(event, Event::STATE_SIGNALED);
+        }
     } else {
         NEO::PipeControlArgs args;
         bool applyScope = !!event->signalScope;
@@ -2015,6 +2019,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
             event->setPacketsInUse(this->partitionCount);
             args.workloadPartitionOffset = true;
         }
+
+        if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
+            setRemainingEventPackets(event, Event::STATE_SIGNALED);
+        }
+
         if (applyScope || event->isEventTimestampFlagSet()) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandContainer.getCommandStream(),
@@ -2032,10 +2041,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
                 false,
                 args.workloadPartitionOffset);
         }
-    }
-
-    if (this->signalAllEventPackets) {
-        setRemainingEventPackets(event, Event::STATE_SIGNALED);
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
