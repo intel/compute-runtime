@@ -258,7 +258,7 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
     if (gfxAllocation->isUsed()) {
         if (gfxAllocation->isUsedByManyOsContexts()) {
             multiContextResourceDestructor->deferDeletion(new DeferrableAllocationDeletion{*this, *gfxAllocation});
-            multiContextResourceDestructor->drain(false);
+            multiContextResourceDestructor->clearQueueTillFirstFailure();
             return;
         }
         for (auto &engine : getRegisteredEngines()) {

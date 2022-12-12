@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ void *DeferredDeleter::run(void *arg) {
         }
         lock.unlock();
         // Delete items placed into deferred delete queue
-        self->clearQueue();
+        self->clearQueue(false);
         lock.lock();
         // Check whether working thread should be stopped
     } while (!self->shouldStop());
@@ -105,21 +105,33 @@ void *DeferredDeleter::run(void *arg) {
 }
 
 void DeferredDeleter::drain(bool blocking) {
-    clearQueue();
+    clearQueue(false);
     if (blocking) {
         while (!areElementsReleased())
             ;
     }
 }
 
-void DeferredDeleter::clearQueue() {
+void DeferredDeleter::clearQueueTillFirstFailure() {
+    if (numClients > 0) {
+        return;
+    }
+    clearQueue(true);
+}
+
+void DeferredDeleter::clearQueue(bool breakOnFailure) {
     do {
         auto deletion = queue.removeFrontOne();
         if (deletion) {
             if (deletion->apply()) {
                 elementsToRelease--;
             } else {
-                queue.pushTailOne(*deletion.release());
+                if (breakOnFailure) {
+                    queue.pushFrontOne(*deletion.release());
+                    break;
+                } else {
+                    queue.pushTailOne(*deletion.release());
+                }
             }
         }
     } while (!queue.peekIsEmpty());
