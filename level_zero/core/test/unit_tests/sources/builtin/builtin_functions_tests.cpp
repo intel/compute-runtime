@@ -13,17 +13,15 @@
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/source/kernel/kernel.h"
-#include "level_zero/core/source/module/module.h"
-#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "gtest/gtest.h"
 
 namespace L0 {
 namespace ult {
-template <bool useImagesBuiltins, bool isStateless>
 class BuiltinFunctionsLibFixture : public DeviceFixture {
   public:
     struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
@@ -32,44 +30,16 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
         using BuiltinFunctionsLibImpl::imageBuiltins;
         MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {}
         std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
-            ze_result_t res;
-            std::unique_ptr<Module> module;
-            ze_module_handle_t moduleHandle;
-            ze_module_desc_t moduleDesc = {};
-            moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-            moduleDesc.pInputModule = nullptr;
-            moduleDesc.inputSize = 0u;
-            res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
-            UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
+            std::unique_ptr<Kernel> mockKernel(new Mock<::L0::Kernel>());
+            std::unique_ptr<Module> mockModule(new Mock<Module>(device, nullptr));
 
-            module.reset(Module::fromHandle(moduleHandle));
-
-            std::unique_ptr<Kernel> kernel;
-            ze_kernel_handle_t kernelHandle;
-            ze_kernel_desc_t kernelDesc = {};
-            kernelDesc.pKernelName = builtInName;
-            res = module->createKernel(&kernelDesc, &kernelHandle);
-            DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);
-
-            kernel.reset(Kernel::fromHandle(kernelHandle));
-
-            return std::unique_ptr<BuiltinData>(new MockBuiltinData{std::move(module), std::move(kernel)});
+            return std::unique_ptr<BuiltinData>(new BuiltinData{std::move(mockModule), std::move(mockKernel)});
         }
     };
-    struct MockBuiltinData : BuiltinFunctionsLibImpl::BuiltinData {
-        using BuiltinFunctionsLibImpl::BuiltinData::func;
-        using BuiltinFunctionsLibImpl::BuiltinData::module;
-        MockBuiltinData(std::unique_ptr<L0::Module> &&mod, std::unique_ptr<L0::Kernel> &&ker) {
-            module = std::move(mod);
-            func = std::move(ker);
-        }
-        ~MockBuiltinData() override {
-            module.release();
-        }
-    };
+
     void setUp() {
         DeviceFixture::setUp();
-        mockDevicePtr = std::unique_ptr<MockDeviceForSpv<useImagesBuiltins, isStateless>>(new MockDeviceForSpv<useImagesBuiltins, isStateless>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
+        mockDevicePtr = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
         mockBuiltinFunctionsLibImpl.reset(new MockBuiltinFunctionsLibImpl(mockDevicePtr.get(), neoDevice->getBuiltIns()));
     }
     void tearDown() {
@@ -78,47 +48,40 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
     }
 
     std::unique_ptr<MockBuiltinFunctionsLibImpl> mockBuiltinFunctionsLibImpl;
-    std::unique_ptr<MockDeviceForSpv<useImagesBuiltins, isStateless>> mockDevicePtr;
+    std::unique_ptr<MockDeviceForSpv<false, false>> mockDevicePtr;
 };
 
-template <bool useImagesBuiltins, bool isStateless>
-using TestBuiltinFunctionsLibImpl = Test<BuiltinFunctionsLibFixture<useImagesBuiltins, isStateless>>;
+using TestBuiltinFunctionsLibImpl = Test<BuiltinFunctionsLibFixture>;
 
-class TestBuiltinFunctionsLibImplDefault : public TestBuiltinFunctionsLibImpl<false, false> {};
-class TestBuiltinFunctionsLibImplStateless : public TestBuiltinFunctionsLibImpl<false, true> {};
-class TestBuiltinFunctionsLibImplImages : public TestBuiltinFunctionsLibImpl<true, false> {};
-
-HWTEST_F(TestBuiltinFunctionsLibImplImages, givenImageSupportThenEachBuiltinImageFunctionsIsLoadedOnlyOnce) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenImageSupportThenEachBuiltinImageFunctionsIsLoadedOnlyOnce) {
     L0::Kernel *initializedImageBuiltins[static_cast<uint32_t>(ImageBuiltin::COUNT)];
 
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
     }
-    if (mockDevicePtr->getHwInfo().capabilityTable.supportsImages) {
-        for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
-            EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
-            EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
-            initializedImageBuiltins[builtId] = mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]->func.get();
-        }
 
-        for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
-            EXPECT_EQ(initializedImageBuiltins[builtId],
-                      mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
-        }
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
+        EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
+        EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
+        initializedImageBuiltins[builtId] = mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]->func.get();
+    }
+
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
+        EXPECT_EQ(initializedImageBuiltins[builtId],
+                  mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
     }
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImplImages, givenImageSupportAndWrongIdWhenCallingBuiltinImageFunctionThenExceptionIsThrown) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenImageSupportAndWrongIdWhenCallingBuiltinImageFunctionThenExceptionIsThrown) {
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
     }
-    if (mockDevicePtr->getHwInfo().capabilityTable.supportsImages) {
-        uint32_t builtId = static_cast<uint32_t>(ImageBuiltin::COUNT) + 1;
-        EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinImageKernel(static_cast<L0::ImageBuiltin>(builtId)), std::exception);
-    }
+
+    uint32_t builtId = static_cast<uint32_t>(ImageBuiltin::COUNT) + 1;
+    EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinImageKernel(static_cast<L0::ImageBuiltin>(builtId)), std::exception);
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCallsToGetFunctionThenEachBuiltinFunctionsIsLoadedOnlyOnce) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenCallsToGetFunctionThenEachBuiltinFunctionsIsLoadedOnlyOnce) {
     L0::Kernel *initializedBuiltins[static_cast<uint32_t>(Builtin::COUNT)];
 
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
@@ -137,26 +100,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCallsToGetFunctionThenEachBuil
     }
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImplStateless, givenCallsToGetFunctionThenEachBuiltinFunctionsIsLoadedOnlyOnce) {
-    L0::Kernel *initializedBuiltins[static_cast<uint32_t>(Builtin::COUNT)];
-
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
-    }
-
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->getFunction(static_cast<L0::Builtin>(builtId)));
-        EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
-        initializedBuiltins[builtId] = mockBuiltinFunctionsLibImpl->builtins[builtId]->func.get();
-    }
-
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        EXPECT_EQ(initializedBuiltins[builtId],
-                  mockBuiltinFunctionsLibImpl->getFunction(static_cast<L0::Builtin>(builtId)));
-    }
-}
-
-HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCallToBuiltinFunctionWithWrongIdThenExceptionIsThrown) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenCallToBuiltinFunctionWithWrongIdThenExceptionIsThrown) {
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
     }
@@ -164,27 +108,17 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCallToBuiltinFunctionWithWrong
     EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinKernel(static_cast<L0::Builtin>(builtId)), std::exception);
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImplStateless, givenCallToStatelessBuiltinFunctionWithWrongIdThenExceptionIsThrown) {
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
-    }
-    uint32_t builtId = static_cast<uint32_t>(Builtin::COUNT) + 1;
-    EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinKernel(static_cast<L0::Builtin>(builtId)), std::exception);
-}
-
-HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterfaceSpirv());
     std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, false, &returnValue));
 
-    if (device->getHwInfo().capabilityTable.supportsImages) {
-        for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
-            EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
-        }
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
+        EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
     }
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCompilerInterfaceWhenCreateDeviceThenBuiltinsFunctionsAreLoaded) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceThenBuiltinsFunctionsAreLoaded) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterfaceSpirv());
     std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, false, &returnValue));
@@ -194,7 +128,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenCompilerInterfaceWhenCreateDev
     }
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenIntermediateCodeForBuiltinsIsRequested) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenIntermediateCodeForBuiltinsIsRequested) {
     struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
         struct MockModuleForRebuildBuiltins : public ModuleImp {
             MockModuleForRebuildBuiltins(Device *device) : ModuleImp(device, nullptr, ModuleType::Builtin) {}
@@ -238,7 +172,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenRebuildPrecompiledKernelsDebug
     EXPECT_TRUE(testDevice.createModuleCalled);
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenNotToRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenNativeCodeForBuiltinsIsRequested) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenNotToRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenNativeCodeForBuiltinsIsRequested) {
     struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
         MockDeviceForRebuildBuilins(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             driverHandle = device->getDriverHandle();
@@ -271,7 +205,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenNotToRebuildPrecompiledKernels
     EXPECT_TRUE(testDevice.createModuleCalled);
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImplDefault, GivenBuiltinsWhenInitializingFunctionsThenModulesWithProperTypeAreCreated) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, GivenBuiltinsWhenInitializingFunctionsThenModulesWithProperTypeAreCreated) {
     struct MockDeviceWithBuilins : public Mock<DeviceImp> {
         MockDeviceWithBuilins(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             driverHandle = device->getDriverHandle();
