@@ -296,10 +296,13 @@ Buffer *Buffer::create(Context *context,
         allocationInfos[rootDeviceIndex] = {};
         auto &allocationInfo = allocationInfos[rootDeviceIndex];
 
-        auto hwInfo = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
         bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
-                                                                         GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, *hwInfo));
+                                                                         gfxCoreHelper.isBufferSizeSuitableForCompression(size, *hwInfo));
 
         allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, *context, compressionEnabled,
                                                                                           memoryManager->isLocalMemorySupported(rootDeviceIndex));

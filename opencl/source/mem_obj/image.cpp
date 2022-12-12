@@ -148,7 +148,7 @@ Image *Image::create(Context *context,
                                                             : imageWidth * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     const auto hostPtrSlicePitch = getHostPtrSlicePitch(*imageDesc, hostPtrRowPitch, imageHeight);
 
-    auto &defaultGfxCoreHelper = GfxCoreHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &defaultGfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
     imgInfo.linearStorage = defaultGfxCoreHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
                                                                           memoryProperties.flags.forceLinearStorage);
 
@@ -183,8 +183,9 @@ Image *Image::create(Context *context,
         auto &allocationInfo = allocationInfos[rootDeviceIndex];
         allocationInfo.zeroCopyAllowed = false;
 
-        auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &rootDeviceEnvironment = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex];
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
         if (imageFromBuffer) {
             // Image from buffer - we never allocate memory, we use what buffer provides

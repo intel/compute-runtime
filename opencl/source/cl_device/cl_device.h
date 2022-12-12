@@ -37,6 +37,7 @@ struct EngineControl;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
 struct SelectorCopyEngine;
+class GfxCoreHelper;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -125,6 +126,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     MOCKABLE_VIRTUAL cl_command_queue_capabilities_intel getQueueFamilyCapabilities(EngineGroupType type);
     void getQueueFamilyName(char *outputName, EngineGroupType type);
     Platform *getPlatform() const;
+    const GfxCoreHelper &getGfxCoreHelper() const;
 
   protected:
     void initializeCaps();

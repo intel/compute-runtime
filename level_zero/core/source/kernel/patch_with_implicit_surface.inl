@@ -18,8 +18,7 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
         auto addressToPatch = allocation.getGpuAddress();
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
 
-        auto &hwInfo = device.getHardwareInfo();
-        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;
         args.outMemory = surfaceState;

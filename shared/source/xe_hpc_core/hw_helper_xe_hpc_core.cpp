@@ -115,7 +115,7 @@ void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
+bool GfxCoreHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
     return true;
 }
 
@@ -125,7 +125,7 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() {
+uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
     return 16u;
 }
 

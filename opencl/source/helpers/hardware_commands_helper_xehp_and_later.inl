@@ -137,8 +137,7 @@ template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, [[maybe_unused]] uint64_t postSyncAddress) {
     // 1. make sure previous kernel finished
     PipeControlArgs args;
-    auto &hardwareInfo = commandQueue.getDevice().getHardwareInfo();
-    args.unTypedDataPortCacheFlush = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily).unTypedDataPortCacheFlushRequired();
+    args.unTypedDataPortCacheFlush = commandQueue.getDevice().getGfxCoreHelper().unTypedDataPortCacheFlushRequired();
 
     MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
 
@@ -158,6 +157,7 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
                 postSyncAddressToFlush = postSyncAddress;
             }
 
+            auto &hardwareInfo = commandQueue.getDevice().getHardwareInfo();
             flushGpuCache<GfxFamily>(commandStream, range, postSyncAddressToFlush, hardwareInfo);
         }
     }

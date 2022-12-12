@@ -267,7 +267,7 @@ cl_ulong Event::getDelta(cl_ulong startTime,
 void Event::calculateSubmitTimestampData() {
     if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         auto &device = cmdQueue->getDevice();
-        auto &gfxCoreHelper = GfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         double resolution = device.getDeviceInfo().profilingTimerResolution;
 
         int64_t timerDiff = queueTimeStamp.CPUTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, resolution);
@@ -286,7 +286,7 @@ uint64_t Event::getTimeInNSFromTimestampData(const TimeStampData &timestamp) con
 
     if (cmdQueue && DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         auto &device = cmdQueue->getDevice();
-        auto &gfxCoreHelper = GfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         double resolution = device.getDeviceInfo().profilingTimerResolution;
 
         return gfxCoreHelper.getGpuTimeStampInNS(timestamp.GPUTimeStamp, resolution);
@@ -324,7 +324,7 @@ bool Event::calcProfilingData() {
             calculateProfilingDataInternal(globalStartTS, globalEndTS, &globalEndTS, globalStartTS);
 
         } else if (timeStampNode) {
-            if (GfxCoreHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+            if (this->cmdQueue->getDevice().getGfxCoreHelper().useOnlyGlobalTimestamps()) {
                 calculateProfilingDataInternal(
                     timeStampNode->getGlobalStartValue(0),
                     timeStampNode->getGlobalEndValue(0),
@@ -350,7 +350,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     uint64_t cpuCompleteDuration = 0;
 
     auto &device = this->cmdQueue->getDevice();
-    auto &gfxCoreHelper = GfxCoreHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto frequency = device.getDeviceInfo().profilingTimerResolution;
     auto gpuQueueTimeStamp = gfxCoreHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, frequency);
 

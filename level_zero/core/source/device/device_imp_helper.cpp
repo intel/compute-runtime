@@ -12,7 +12,7 @@
 
 namespace L0 {
 
-void DeviceImp::processAdditionalKernelProperties(NEO::GfxCoreHelper &gfxCoreHelper, ze_device_module_properties_t *pKernelProperties) {
+void DeviceImp::processAdditionalKernelProperties(const NEO::GfxCoreHelper &gfxCoreHelper, ze_device_module_properties_t *pKernelProperties) {
 }
 
 DeviceImp::CmdListCreateFunPtrT DeviceImp::getCmdListCreateFunc(const ze_command_list_desc_t *desc) {

@@ -6044,7 +6044,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
 
         auto &hardwareInfo = device.getHardwareInfo();
-        auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
                                                                 pCommandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
         if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {

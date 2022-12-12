@@ -278,13 +278,15 @@ TEST_F(KernelImp, GivenNumChannelsZeroWhenSettingGroupSizeThenLocalIdsNotGenerat
 }
 
 HWTEST_F(KernelImp, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenIsDebuggerActiveIsSetCorrectly) {
+    static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
+    static size_t encodeBufferSurfaceStateCalled{};
+    savedSurfaceStateArgs = {};
+    encodeBufferSurfaceStateCalled = {};
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
-        void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override {
+        void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override {
             savedSurfaceStateArgs = args;
             ++encodeBufferSurfaceStateCalled;
         }
-        EncodeSurfaceStateArgs savedSurfaceStateArgs;
-        size_t encodeBufferSurfaceStateCalled{0};
     };
     MockGfxCoreHelper gfxCoreHelper{};
     auto hwInfo = *defaultHwInfo.get();
@@ -299,13 +301,13 @@ HWTEST_F(KernelImp, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenI
     uintptr_t ptrToPatchInCrossThreadData = 0;
     NEO::MockGraphicsAllocation globalBuffer;
     ArgDescPointer ptr;
-    ASSERT_EQ(gfxCoreHelper.encodeBufferSurfaceStateCalled, 0u);
+    ASSERT_EQ(encodeBufferSurfaceStateCalled, 0u);
     {
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  ptrToPatchInCrossThreadData,
                                  globalBuffer, ptr,
                                  *neoDevice, false, false);
-        EXPECT_EQ(gfxCoreHelper.encodeBufferSurfaceStateCalled, 0u);
+        EXPECT_EQ(encodeBufferSurfaceStateCalled, 0u);
     }
     {
         ptr.bindful = 1;
@@ -313,8 +315,8 @@ HWTEST_F(KernelImp, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenI
                                  ptrToPatchInCrossThreadData,
                                  globalBuffer, ptr,
                                  *neoDevice, false, false);
-        ASSERT_EQ(gfxCoreHelper.encodeBufferSurfaceStateCalled, 1u);
-        EXPECT_FALSE(gfxCoreHelper.savedSurfaceStateArgs.isDebuggerActive);
+        ASSERT_EQ(encodeBufferSurfaceStateCalled, 1u);
+        EXPECT_FALSE(savedSurfaceStateArgs.isDebuggerActive);
     }
     {
         neoDevice->setDebuggerActive(true);
@@ -322,8 +324,8 @@ HWTEST_F(KernelImp, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenI
                                  ptrToPatchInCrossThreadData,
                                  globalBuffer, ptr,
                                  *neoDevice, false, false);
-        ASSERT_EQ(gfxCoreHelper.encodeBufferSurfaceStateCalled, 2u);
-        EXPECT_TRUE(gfxCoreHelper.savedSurfaceStateArgs.isDebuggerActive);
+        ASSERT_EQ(encodeBufferSurfaceStateCalled, 2u);
+        EXPECT_TRUE(savedSurfaceStateArgs.isDebuggerActive);
     }
     {
         neoDevice->setDebuggerActive(false);
@@ -333,8 +335,8 @@ HWTEST_F(KernelImp, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenI
                                  ptrToPatchInCrossThreadData,
                                  globalBuffer, ptr,
                                  *neoDevice, false, false);
-        ASSERT_EQ(gfxCoreHelper.encodeBufferSurfaceStateCalled, 3u);
-        EXPECT_TRUE(gfxCoreHelper.savedSurfaceStateArgs.isDebuggerActive);
+        ASSERT_EQ(encodeBufferSurfaceStateCalled, 3u);
+        EXPECT_TRUE(savedSurfaceStateArgs.isDebuggerActive);
     }
 }
 

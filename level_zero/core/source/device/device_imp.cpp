@@ -223,7 +223,7 @@ void DeviceImp::adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index) {
     auto nodeOrdinal = NEO::DebugManager.flags.NodeOrdinal.get();
     if (nodeOrdinal != -1) {
         const NEO::HardwareInfo &hwInfo = neoDevice->getHardwareInfo();
-        const NEO::GfxCoreHelper &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        const NEO::GfxCoreHelper &gfxCoreHelper = neoDevice->getGfxCoreHelper();
         auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
 
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), NEO::EngineUsage::Regular, hwInfo);
@@ -643,7 +643,7 @@ static constexpr ze_device_fp_flags_t defaultFpFlags = static_cast<ze_device_fp_
 ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKernelProperties) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
 
     std::string ilVersion = deviceInfo.ilVersion;
     size_t majorVersionPos = ilVersion.find('_');
@@ -741,7 +741,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
 ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) {
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
 
     pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
 
@@ -1045,9 +1045,8 @@ uint32_t DeviceImp::getMOCS(bool l3enabled, bool l1enabled) {
     return getGfxCoreHelper().getMocsIndex(*getNEODevice()->getGmmHelper(), l3enabled, l1enabled) << 1;
 }
 
-NEO::GfxCoreHelper &DeviceImp::getGfxCoreHelper() {
-    const auto &hardwareInfo = neoDevice->getHardwareInfo();
-    return NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+const NEO::GfxCoreHelper &DeviceImp::getGfxCoreHelper() {
+    return this->neoDevice->getGfxCoreHelper();
 }
 
 NEO::OSInterface &DeviceImp::getOsInterface() { return *neoDevice->getRootDeviceEnvironment().osInterface; }

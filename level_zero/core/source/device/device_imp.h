@@ -70,7 +70,7 @@ struct DeviceImp : public Device {
     void *getExecEnvironment() override;
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;
     uint32_t getMOCS(bool l3enabled, bool l1enabled) override;
-    NEO::GfxCoreHelper &getGfxCoreHelper() override;
+    const NEO::GfxCoreHelper &getGfxCoreHelper() override;
     const NEO::HardwareInfo &getHwInfo() const override;
     NEO::OSInterface &getOsInterface() override;
     uint32_t getPlatformInfo() const override;
@@ -90,7 +90,7 @@ struct DeviceImp : public Device {
     const NEO::DeviceInfo &getDeviceInfo() const override;
 
     void activateMetricGroups() override;
-    void processAdditionalKernelProperties(NEO::GfxCoreHelper &gfxCoreHelper, ze_device_module_properties_t *pKernelProperties);
+    void processAdditionalKernelProperties(const NEO::GfxCoreHelper &gfxCoreHelper, ze_device_module_properties_t *pKernelProperties);
     NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }
     void setDebugSurface(NEO::GraphicsAllocation *debugSurface) { this->debugSurface = debugSurface; };
     ~DeviceImp() override;

@@ -168,6 +168,7 @@ template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, bool isMarkerWithProfiling, bool eventsInWaitlist) {
     size_t expectedSizeCS = 0;
     auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
+    auto &gfxCoreHelper = commandQueue.getDevice().getGfxCoreHelper();
     auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
 
     if (blitEnqueue) {
@@ -199,7 +200,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         }
     } else if (isMarkerWithProfiling) {
         expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
-        if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+        if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
             expectedSizeCS += 2 * EncodeStoreMMIO<GfxFamily>::size;
         }
     }

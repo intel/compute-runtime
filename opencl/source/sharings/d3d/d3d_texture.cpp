@@ -107,14 +107,16 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
-    auto hwInfo = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     const ClSurfaceFormatInfo *clSurfaceFormat = nullptr;
     if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
         clSurfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     } else {
-        clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
+        clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     }
 
@@ -197,10 +199,12 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 
     updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::NO_PLANE, 0u);
 
-    auto hwInfo = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
-    auto *clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
+    auto *clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
     imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
 
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;

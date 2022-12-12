@@ -555,7 +555,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     cl_ulong privateMemSize;
     size_t maxWorkgroupSize;
     const auto &hwInfo = clDevice.getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = clDevice.getGfxCoreHelper();
     auto &clGfxCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
@@ -2087,7 +2087,7 @@ uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, c
     kernelStartOffset += getStartOffset();
 
     auto &hardwareInfo = getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
 
     if (isCssUsed && gfxCoreHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
         kernelStartOffset += kernelInfo.kernelDescriptor.entryPoints.skipSetFFIDGP;
@@ -2096,7 +2096,7 @@ uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, c
     return kernelStartOffset;
 }
 void *Kernel::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     NEO::BindlessHeapsHelper *bindlessHeapsHelper = getDevice().getDevice().getBindlessHeapsHelper();
     auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
@@ -2115,8 +2115,7 @@ uint32_t Kernel::getAdditionalKernelExecInfo() const {
 }
 
 bool Kernel::requiresWaDisableRccRhwoOptimization() const {
-    auto &hardwareInfo = getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
 
     if (gfxCoreHelper.isWaDisableRccRhwoOptimizationRequired() && isUsingSharedObjArgs()) {

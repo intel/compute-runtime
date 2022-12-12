@@ -95,7 +95,7 @@ class GfxCoreHelper {
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
-    virtual bool isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) = 0;
+    virtual bool isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const = 0;
     virtual uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const = 0;
     virtual uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
@@ -103,7 +103,7 @@ class GfxCoreHelper {
 
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const = 0;
-    virtual uint32_t getMinimalSIMDSize() = 0;
+    virtual uint32_t getMinimalSIMDSize() const = 0;
     virtual bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const = 0;
@@ -156,7 +156,7 @@ class GfxCoreHelper {
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual bool isStatelessToStatefulWithOffsetSupported() const = 0;
-    virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) = 0;
+    virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
     virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
@@ -271,7 +271,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const override;
 
-    bool isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) override;
+    bool isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const override;
 
     uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const override;
 
@@ -295,7 +295,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const override;
 
-    uint32_t getMinimalSIMDSize() override;
+    uint32_t getMinimalSIMDSize() const override;
 
     uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const override;
 
@@ -373,7 +373,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint64_t getMaxMemAllocSize() const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     bool isStatelessToStatefulWithOffsetSupported() const override;
-    void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override;
+    void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isRevisionSpecificBinaryBuiltinRequired() const override;
     bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;

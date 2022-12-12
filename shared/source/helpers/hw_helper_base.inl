@@ -410,7 +410,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
+bool GfxCoreHelperHw<GfxFamily>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
     if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isSharedContext || isImage1d) {
         return true;
     }
@@ -470,7 +470,7 @@ bool GfxCoreHelperHw<GfxFamily>::isWaDisableRccRhwoOptimizationRequired() const 
 }
 
 template <typename GfxFamily>
-inline uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalSIMDSize() {
+inline uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalSIMDSize() const {
     return 8u;
 }
 
@@ -666,7 +666,7 @@ void GfxCoreHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize) co
 }
 
 template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) {
+void GfxCoreHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const {
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
 

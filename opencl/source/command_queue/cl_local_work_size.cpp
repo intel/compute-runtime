@@ -26,7 +26,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
     if (kernel != nullptr) {
         auto &device = dispatchInfo.getClDevice();
         const auto &hwInfo = device.getHardwareInfo();
-        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
             if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers && !wsInfo.imgUsed && gfxCoreHelper.preferSmallWorkgroupSizeForKernel(kernel->getKernelInfo().heapInfo.KernelUnpaddedSize, hwInfo) &&

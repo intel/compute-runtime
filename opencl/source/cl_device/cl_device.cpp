@@ -268,5 +268,8 @@ bool ClDevice::isPciBusInfoValid() const {
     return deviceInfo.pciBusInfo.pci_domain != PhysicalDevicePciBusInfo::invalidValue && deviceInfo.pciBusInfo.pci_bus != PhysicalDevicePciBusInfo::invalidValue &&
            deviceInfo.pciBusInfo.pci_device != PhysicalDevicePciBusInfo::invalidValue && deviceInfo.pciBusInfo.pci_function != PhysicalDevicePciBusInfo::invalidValue;
 }
+const GfxCoreHelper &ClDevice::getGfxCoreHelper() const {
+    return device.getGfxCoreHelper();
+}
 
 } // namespace NEO
