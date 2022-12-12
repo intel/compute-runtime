@@ -745,6 +745,9 @@ bool DebugSessionImp::isForceExceptionOrForceExternalHaltOnlyExceptionReason(uin
 
 void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport) {
 
+    if (newlyStoppedThreads.empty()) {
+        return;
+    }
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
     auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
 
