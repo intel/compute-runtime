@@ -46,7 +46,7 @@ Context::Context(
 Context::~Context() {
     gtpinNotifyContextDestroy((cl_context)this);
 
-    if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled()) {
+    if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled(this)) {
         smallBufferPoolAllocator.releaseSmallBufferPool();
     }
 
@@ -471,7 +471,20 @@ Platform *Context::getPlatformFromProperties(const cl_context_properties *proper
 }
 
 bool Context::isSingleDeviceContext() {
-    return devices[0]->getNumGenericSubDevices() == 0 && getNumDevices() == 1;
+    return getNumDevices() == 1 && devices[0]->getNumGenericSubDevices() == 0;
+}
+
+bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *context) const {
+    if (DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {
+        return !!DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get();
+    }
+    bool enabled = false;
+    if (context->isSingleDeviceContext()) {
+        auto &hwInfo = context->getDevices()[0]->getHardwareInfo();
+        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        enabled = productHelper.isBufferPoolAllocatorSupported();
+    }
+    return enabled;
 }
 
 void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {
@@ -501,10 +514,9 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
                                                              void *hostPtr,
                                                              cl_int &errcodeRet) {
     errcodeRet = CL_MEM_OBJECT_ALLOCATION_FAILURE;
-    if (this->isAggregatedSmallBuffersEnabled() &&
+    if (this->mainStorage &&
         this->isSizeWithinThreshold(size) &&
-        this->flagsAllowBufferFromPool(flags, flagsIntel) &&
-        this->mainStorage) {
+        this->flagsAllowBufferFromPool(flags, flagsIntel)) {
         auto lock = std::unique_lock<std::mutex>(this->mutex);
         cl_buffer_region bufferRegion{};
         bufferRegion.origin = static_cast<size_t>(this->chunkAllocator->allocate(size));

@@ -8,6 +8,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
@@ -29,7 +30,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
     }
 
     void TearDown() override {
-        if (this->context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled()) {
+        if (this->context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get())) {
             this->context->getBufferPoolAllocator().releaseSmallBufferPool();
         }
     }
@@ -98,14 +99,14 @@ class AggregatedSmallBuffersKernelTest : public AggregatedSmallBuffersTestTempla
 
 using AggregatedSmallBuffersDefaultTest = AggregatedSmallBuffersTestTemplate<-1>;
 
-TEST_F(AggregatedSmallBuffersDefaultTest, givenAggregatedSmallBuffersDefaultWhenCheckIfEnabledThenReturnFalse) {
-    EXPECT_FALSE(poolAllocator->isAggregatedSmallBuffersEnabled());
+HWTEST_F(AggregatedSmallBuffersDefaultTest, givenAggregatedSmallBuffersDefaultWhenCheckIfEnabledThenReturnFalse) {
+    EXPECT_FALSE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
 }
 
 using AggregatedSmallBuffersDisabledTest = AggregatedSmallBuffersTestTemplate<0>;
 
 TEST_F(AggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWhenBufferCreateCalledThenDoNotUsePool) {
-    ASSERT_FALSE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_FALSE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_EQ(poolAllocator->mainStorage, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
     EXPECT_NE(buffer, nullptr);
@@ -117,14 +118,14 @@ TEST_F(AggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWh
 using AggregatedSmallBuffersEnabledTest = AggregatedSmallBuffersTestTemplate<1>;
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenAllocatingMainStorageThenMakeDeviceBufferLockable) {
-    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_NE(poolAllocator->mainStorage, nullptr);
     ASSERT_NE(mockMemoryManager->lastAllocationProperties, nullptr);
     EXPECT_TRUE(mockMemoryManager->lastAllocationProperties->makeDeviceBufferLockable);
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLargerThanThresholdWhenBufferCreateCalledThenDoNotUsePool) {
-    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_NE(poolAllocator->mainStorage, nullptr);
     size = PoolAllocator::smallBufferThreshold + 1;
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
@@ -135,7 +136,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeEqualToThresholdWhenBufferCreateCalledThenUsePool) {
-    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_NE(poolAllocator->mainStorage, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
 
@@ -155,7 +156,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenClReleaseMemObjectCalledThenWaitForEnginesCompletionCalled) {
-    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_NE(poolAllocator->mainStorage, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
 
@@ -196,7 +197,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenCopyHostPointerWhenCreatingBuffer
     unsigned char dataToCopy[PoolAllocator::smallBufferThreshold];
     hostPtr = dataToCopy;
 
-    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_NE(poolAllocator->mainStorage, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
     if (commandQueue->writeBufferCounter == 0) {
@@ -212,7 +213,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenCopyHostPointerWhenCreatingBuffer
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeEqualToThresholdWhenBufferCreateCalledMultipleTimesThenUsePool) {
-    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_NE(poolAllocator->mainStorage, nullptr);
 
     constexpr auto buffersToCreate = PoolAllocator::aggregatedSmallBuffersPoolSize / PoolAllocator::smallBufferThreshold;
@@ -300,7 +301,7 @@ TEST_F(AggregatedSmallBuffersKernelTest, givenBufferFromPoolWhenOffsetSubbufferI
 using AggregatedSmallBuffersEnabledTestFailPoolInit = AggregatedSmallBuffersTestTemplate<1, true>;
 
 TEST_F(AggregatedSmallBuffersEnabledTestFailPoolInit, givenAggregatedSmallBuffersEnabledAndSizeEqualToThresholdWhenBufferCreateCalledButPoolCreateFailedThenDoNotUsePool) {
-    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_EQ(poolAllocator->mainStorage, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
 
@@ -315,7 +316,7 @@ TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffe
     testing::internal::CaptureStdout();
     DebugManager.flags.PrintDriverDiagnostics.set(1);
     setUpImpl();
-    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     ASSERT_NE(poolAllocator->mainStorage, nullptr);
     ASSERT_NE(context->driverDiagnostics, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
@@ -349,8 +350,8 @@ class AggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
     DebugManagerStateRestore restore;
 };
 
-using AggregatedSmallBuffersDefaultApiTest = AggregatedSmallBuffersApiTestTemplate<-1>;
-TEST_F(AggregatedSmallBuffersDefaultApiTest, givenNoBufferCreatedWhenReleasingContextThenDoNotLeakMemory) {
+using AggregatedSmallBuffersDisabledApiTest = AggregatedSmallBuffersApiTestTemplate<0>;
+TEST_F(AggregatedSmallBuffersDisabledApiTest, givenNoBufferCreatedWhenReleasingContextThenDoNotLeakMemory) {
     EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
 }
 

@@ -60,13 +60,8 @@ class Context : public BaseObject<_cl_context> {
         void tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size);
         void releaseSmallBufferPool();
 
-        inline bool isAggregatedSmallBuffersEnabled() const {
-            constexpr bool enable = false;
-            if (DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {
-                return !!DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get();
-            }
-            return enable;
-        }
+        bool isAggregatedSmallBuffersEnabled(Context *context) const;
+
         void initAggregatedSmallBuffers(Context *context);
 
         bool isPoolBuffer(const MemObj *buffer) const;
@@ -101,7 +96,7 @@ class Context : public BaseObject<_cl_context> {
             pContext = nullptr;
         } else {
             auto &bufferPoolAllocator = pContext->getBufferPoolAllocator();
-            if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled()) {
+            if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled(pContext)) {
                 bufferPoolAllocator.initAggregatedSmallBuffers(pContext);
             }
         }

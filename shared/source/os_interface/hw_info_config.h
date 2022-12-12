@@ -149,6 +149,7 @@ class ProductHelper {
     virtual bool isNonBlockingGpuSubmissionSupported() const = 0;
     virtual bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const = 0;
     virtual bool isMidThreadPreemptionDisallowedForRayTracingKernels() const = 0;
+    virtual bool isBufferPoolAllocatorSupported() const = 0;
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
@@ -293,6 +294,7 @@ class ProductHelperHw : public ProductHelper {
     bool isNonBlockingGpuSubmissionSupported() const override;
     bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const override;
     bool isMidThreadPreemptionDisallowedForRayTracingKernels() const override;
+    bool isBufferPoolAllocatorSupported() const override;
 
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;

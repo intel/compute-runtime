@@ -538,6 +538,11 @@ bool ProductHelperHw<gfxProduct>::isMidThreadPreemptionDisallowedForRayTracingKe
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const {
     propertiesSupport.coherencyRequired = getScmPropertyCoherencyRequiredSupport();
     propertiesSupport.threadArbitrationPolicy = isThreadArbitrationPolicyReportedWithScm();

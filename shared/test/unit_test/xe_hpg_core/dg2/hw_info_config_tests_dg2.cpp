@@ -555,18 +555,24 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingEvictIfNecessaryFla
 
 DG2TEST_F(ProductHelperTestDg2, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
     // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(hwInfo, false));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(hwInfo, true));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(*defaultHwInfo, false));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(*defaultHwInfo, true));
 
     DebugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(hwInfo, false));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(hwInfo, true));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(*defaultHwInfo, false));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(*defaultHwInfo, true));
 
     DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(hwInfo, false));
-    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(hwInfo, true));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(*defaultHwInfo, false));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(*defaultHwInfo, true));
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+
+    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }

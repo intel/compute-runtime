@@ -677,3 +677,8 @@ HWTEST_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPip
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
+}

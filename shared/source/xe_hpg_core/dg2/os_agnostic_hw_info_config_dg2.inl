@@ -218,6 +218,11 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return false;
+}
+
+template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Dg2;
 };
