@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 
 * [Introduction](#Introduction)
 * [Availability](#Availability)
+* [Optimizations](#Optimizations)
 * [Debug Keys](#Debug-Keys)
-* [Limitations](#Limitations)
+* [Notes](#Notes)
 * [References](#References)
 
 # Introduction
@@ -100,6 +101,10 @@ For more code samples, please refer [compute-benchmarks](https://github.com/inte
 
 * `EnableFlushTaskSubmission=0/1` : Force enable/disable support for using optimizations in non-pipelined state filtering for immediate command lists. Defaults to 1.
 * `EnableImmediateCmdListHeapSharing=0/1` : Force enable/disable support for using CSR heap resources for immediate command list. Defaults to 1 from Xe_HPG/Xe_HPC onwards. When enabled, all immediate command lists created against same ordinal share GPU heaps instead of allocating separate heaps for each command list.
+
+# Notes
+
+* When using L0 Metrics in Query mode to capture execution metrics of an immediate command list, the time elapsed between zetCommandListAppendMetricQueryBegin and zetCommandListAppendMetricQueryEnd points may include time elapsed in the host as well.
 
 # References
 
