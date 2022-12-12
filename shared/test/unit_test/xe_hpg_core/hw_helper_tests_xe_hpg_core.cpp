@@ -287,11 +287,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
 }
 
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse) {
     const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    if (gfxCoreHelper.isLocalMemoryEnabled(*defaultHwInfo)) {
-        EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
-    } else {
-        EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
-    }
+    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
 }
