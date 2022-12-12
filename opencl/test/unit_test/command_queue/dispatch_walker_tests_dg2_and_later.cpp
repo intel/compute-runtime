@@ -80,7 +80,8 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, whenProgramComputeWalkerThenApplyL3WAFo
     auto hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     {
         hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
@@ -106,7 +107,8 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramCompute
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
     auto hwInfo = *defaultHwInfo;
 
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     for (auto forceL3PrefetchForComputeWalker : {false, true}) {
         DebugManager.flags.ForceL3PrefetchForComputeWalker.set(forceL3PrefetchForComputeWalker);
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);

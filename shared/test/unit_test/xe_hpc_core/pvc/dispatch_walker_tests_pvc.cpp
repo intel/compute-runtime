@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -37,7 +38,8 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
     auto &postSyncData = walkerCmd.getPostSync();
     auto hwInfo = *defaultHwInfo;
 
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     for (auto &testInput : testInputs) {
         for (auto &deviceId : pvcXlDeviceIds) {
             hwInfo.platform.usDeviceID = deviceId;
@@ -58,7 +60,8 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcSupportsSystemMemoryFenceWhenNoSystemF
     auto hwInfo = *defaultHwInfo;
     hwInfo.platform.usRevId = 0x3;
 
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, false};
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, false, kernelDescriptor};
     for (auto &deviceId : pvcXlDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 

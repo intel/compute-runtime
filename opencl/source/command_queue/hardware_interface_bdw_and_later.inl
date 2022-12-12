@@ -98,7 +98,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                            false, false, 0u);
 
-    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false};
+    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false, kernel.getKernelInfo().kernelDescriptor};
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd, encodeWalkerArgs);
     *walkerCmdBuf = walkerCmd;
 }

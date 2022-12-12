@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -24,7 +25,8 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
     auto hwInfo = *defaultHwInfo;
 
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     {
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
         EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());

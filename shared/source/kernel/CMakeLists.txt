@@ -17,6 +17,7 @@ set(NEO_CORE_KERNEL
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor_from_patchtokens.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor_from_patchtokens.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}kernel_descriptor_from_patchtokens_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_execution_type.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/local_ids_cache.cpp

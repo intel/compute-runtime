@@ -206,7 +206,7 @@ struct KernelDescriptor {
                 bool useStackCalls : 1;
                 bool hasRTCalls : 1;
                 bool isInvalid : 1;
-                bool reserved : 1;
+                bool hasSample : 1;
             };
             std::array<bool, 3> packed;
         } flags = {};

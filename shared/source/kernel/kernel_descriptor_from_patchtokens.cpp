@@ -65,6 +65,8 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
     dst.kernelAttributes.flags.hasRTCalls = (0 != execEnv.HasRTCalls);
 
     dst.kernelMetadata.compiledSubGroupsNumber = execEnv.CompiledSubGroupsNumber;
+
+    populateKernelDescriptorExtra(dst, execEnv);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchSamplerStateArray &token) {

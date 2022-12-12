@@ -33,6 +33,7 @@ class Gmm;
 struct HardwareInfo;
 struct KernelInfo;
 struct StateComputeModeProperties;
+struct KernelDescriptor;
 
 struct EncodeDispatchKernelArgs {
     uint64_t eventAddress = 0ull;
@@ -69,8 +70,11 @@ enum class CompareOperation : uint32_t {
 };
 
 struct EncodeWalkerArgs {
+    EncodeWalkerArgs() = delete;
+
     KernelExecutionType kernelExecutionType = KernelExecutionType::Default;
     bool requiredSystemFence = false;
+    const KernelDescriptor &kernelDescriptor;
 };
 
 template <typename GfxFamily>

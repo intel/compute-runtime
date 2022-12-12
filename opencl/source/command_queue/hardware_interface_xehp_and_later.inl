@@ -118,7 +118,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
     }
     bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
-    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence};
+    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor};
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
