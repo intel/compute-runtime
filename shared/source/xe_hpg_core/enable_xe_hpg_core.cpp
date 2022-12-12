@@ -6,10 +6,6 @@
  */
 
 #include "shared/source/helpers/cache_policy_dg2_and_later.inl"
-#include "shared/source/helpers/compiler_aot_config_bdw_and_later.inl"
-#include "shared/source/helpers/compiler_hw_info_config_base.inl"
-#include "shared/source/helpers/compiler_hw_info_config_bdw_and_later.inl"
-#include "shared/source/helpers/compiler_hw_info_config_before_xe_hpc.inl"
 #include "shared/source/helpers/enable_product.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpg_core/hw_cmds.h"
@@ -28,6 +24,6 @@ uint32_t L1CachePolicyHelper<IGFX_DG2>::getDefaultL1CachePolicy(bool isDebuggerA
 
 template struct L1CachePolicyHelper<IGFX_DG2>;
 static EnableGfxProductHw<IGFX_DG2> enableGfxProductHwDG2;
-static EnableCompilerProductHelper<IGFX_DG2> enableCompilerProductHelperDG2;
+
 #endif
 } // namespace NEO

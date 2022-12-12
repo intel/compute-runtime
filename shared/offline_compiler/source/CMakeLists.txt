@@ -153,7 +153,8 @@ macro(macro_for_each_platform)
     foreach(BRANCH ${BRANCH_DIR_LIST})
       foreach(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
                 ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
-                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}/compiler_hw_info_config_${PLATFORM_IT_LOWER}.inl
+                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}compiler_hw_info_config_${PLATFORM_IT_LOWER}.inl
+                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}enable_compiler_product_helper_${PLATFORM_IT_LOWER}.cpp
         )
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
