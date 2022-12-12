@@ -95,9 +95,9 @@ class MockOclocFclFacade : public OclocFclFacade {
         }
     }
 
-    void populateFclInterface(IGC::PlatformTagOCL &handle, const PLATFORM &platform) override {
+    void populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo) override {
         ++populateFclInterfaceCalledCount;
-        OclocFclFacade::populateFclInterface(handle, platform);
+        OclocFclFacade::populateFclInterface(handle, hwInfo);
     }
 };
 

@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
+#include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
@@ -396,8 +397,8 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
             DEBUG_BREAK_IF(true); // could not acquire handles to platform descriptor
             return nullptr;
         }
-        const HardwareInfo *hwInfo = &device.getHardwareInfo();
-        IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
+        const auto &hwInfo = device.getHardwareInfo();
+        populateIgcPlatform(*igcPlatform, hwInfo);
     }
     fclDeviceContexts[&device] = std::move(newDeviceCtx);
 
@@ -436,7 +437,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
 
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
+    populateIgcPlatform(*igcPlatform, *hwInfo);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
 
     igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(CompilerProductHelper::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));

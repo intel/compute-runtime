@@ -50,7 +50,7 @@ class OclocFclFacade {
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> createFclDeviceContext() const;
     MOCKABLE_VIRTUAL bool shouldPopulateFclInterface() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getPlatformHandle() const;
-    MOCKABLE_VIRTUAL void populateFclInterface(IGC::PlatformTagOCL &handle, const PLATFORM &platform);
+    MOCKABLE_VIRTUAL void populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo);
 
     OclocArgHelper *argHelper{};
     std::unique_ptr<OsLibrary> fclLib{};

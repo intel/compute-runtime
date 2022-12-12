@@ -148,22 +148,26 @@ Platform<0>::~Platform() {}
 template <typename... ArgsT>
 Platform<0>::Platform(ArgsT &&...args) {}
 
-#define DEFINE_GET_SET_PREFIX(INTERFACE, VERSION, NAME, TYPE, PREFIX)                       \
+#define DEFINE_GET_SET(INTERFACE, VERSION, NAME, TYPE)                                      \
     TYPE CIF_GET_INTERFACE_CLASS(INTERFACE, VERSION)::Get##NAME() const { return (TYPE)0; } \
     void CIF_GET_INTERFACE_CLASS(INTERFACE, VERSION)::Set##NAME(TYPE v) {}
 
-DEFINE_GET_SET_PREFIX(Platform, 1, ProductFamily, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, PCHProductFamily, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, DisplayCoreFamily, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, RenderCoreFamily, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, PlatformType, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, DeviceID, unsigned short, us);
-DEFINE_GET_SET_PREFIX(Platform, 1, RevId, unsigned short, us);
-DEFINE_GET_SET_PREFIX(Platform, 1, DeviceID_PCH, unsigned short, us);
-DEFINE_GET_SET_PREFIX(Platform, 1, RevId_PCH, unsigned short, us);
-DEFINE_GET_SET_PREFIX(Platform, 1, GTType, TypeErasedEnum, e);
+DEFINE_GET_SET(Platform, 1, ProductFamily, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, PCHProductFamily, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, DisplayCoreFamily, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, RenderCoreFamily, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, PlatformType, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, DeviceID, unsigned short);
+DEFINE_GET_SET(Platform, 1, RevId, unsigned short);
+DEFINE_GET_SET(Platform, 1, DeviceID_PCH, unsigned short);
+DEFINE_GET_SET(Platform, 1, RevId_PCH, unsigned short);
+DEFINE_GET_SET(Platform, 1, GTType, TypeErasedEnum);
 
-#undef DEFINE_GET_SET_PREFIX
+DEFINE_GET_SET(Platform, 2, RenderBlockID, unsigned int);
+DEFINE_GET_SET(Platform, 2, MediaBlockID, unsigned int);
+DEFINE_GET_SET(Platform, 2, DisplayBlockID, unsigned int);
+
+#undef DEFINE_GET_SET
 
 // GtSystemInfo stubs
 GTSystemInfo<0>::~GTSystemInfo() {}
