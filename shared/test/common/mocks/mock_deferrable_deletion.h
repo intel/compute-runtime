@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,11 @@ class MockDeferrableDeletion : public DeferrableDeletion {
     bool apply() override;
 
     ~MockDeferrableDeletion() override;
+
+    void setTrialTimes(int times) { trialTimes = times; }
     int applyCalled = 0;
+
+  private:
+    int trialTimes = 1;
 };
 } // namespace NEO

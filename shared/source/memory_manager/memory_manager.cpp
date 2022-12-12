@@ -261,7 +261,7 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
     if (gfxAllocation->isUsed()) {
         if (gfxAllocation->isUsedByManyOsContexts()) {
             multiContextResourceDestructor->deferDeletion(new DeferrableAllocationDeletion{*this, *gfxAllocation});
-            multiContextResourceDestructor->drain(false);
+            multiContextResourceDestructor->clearQueueTillFirstFailure();
             return;
         }
         for (auto &engine : getRegisteredEngines()) {
@@ -961,6 +961,10 @@ OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, Devi
         defaultContext = registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext;
     }
     return defaultContext;
+}
+
+void MemoryManager::commonCleanup() {
+    multiContextResourceDestructor->drain(true);
 }
 
 bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize) {

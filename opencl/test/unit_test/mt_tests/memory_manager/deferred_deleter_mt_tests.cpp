@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -223,4 +223,21 @@ TEST_F(DeferredDeleterTest, givenDeferredDeleterWhenNonBlockingDrainIsCalledThen
     deleter->drain(false);
     EXPECT_EQ(0, deleter->areElementsReleasedCalled);
     EXPECT_EQ(1, deleter->drainCalled);
+}
+
+TEST_F(DeferredDeleterTest, GivenAsyncThreadStartedThenCallClearQueueTillFirstFailure) {
+    deleter->DeferredDeleter::addClient();
+
+    waitForAsyncThread();
+
+    auto deletion = createDeletion();
+    deleter->DeferredDeleter::deferDeletion(deletion);
+    deleter->clearQueueTillFirstFailure();
+    EXPECT_TRUE(deleter->isThreadRunning());
+    EXPECT_TRUE(deleter->isWorking());
+    EXPECT_EQ(0, deleter->clearCalledWithBreakTillFailure);
+    deleter->allowEarlyStopThread();
+    deleter->DeferredDeleter::removeClient();
+
+    EXPECT_TRUE(deleter->isQueueEmpty());
 }

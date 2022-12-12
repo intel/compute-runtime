@@ -154,6 +154,7 @@ void DrmMemoryManager::releaseBufferObject(uint32_t rootDeviceIndex) {
 }
 
 void DrmMemoryManager::commonCleanup() {
+    MemoryManager::commonCleanup();
     if (gemCloseWorker) {
         gemCloseWorker->close(true);
     }
