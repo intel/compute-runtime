@@ -287,11 +287,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
+XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse) {
     const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isLocalMemoryEnabled(*defaultHwInfo)) {
-        EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
-    } else {
-        EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
-    }
+    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
 }

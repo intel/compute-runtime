@@ -147,7 +147,7 @@ bool HwHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo)
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
-    return this->isLocalMemoryEnabled(hwInfo);
+    return false;
 }
 
 template class HwHelperHw<Family>;
