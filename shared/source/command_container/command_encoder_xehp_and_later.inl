@@ -76,9 +76,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData,
                                              sizePerThreadData, hwInfo);
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfoConfig.updateIddCommand(&idd, kernelDescriptor.kernelAttributes.numGrfRequired,
-                                  kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    productHelper.updateIddCommand(&idd, kernelDescriptor.kernelAttributes.numGrfRequired,
+                                   kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
     bool localIdsGenerationByRuntime = args.dispatchInterface->requiresGenerationOfLocalIdsByRuntime();
     auto requiredWorkgroupOrder = args.dispatchInterface->getRequiredWorkgroupOrder();
@@ -551,10 +551,10 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
 template <typename Family>
 size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container, bool isRcs) {
     auto &hwInfo = device.getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     size_t size = sizeof(typename Family::STATE_BASE_ADDRESS);
-    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+    if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
         size += sizeof(typename Family::STATE_BASE_ADDRESS);
     }
 
@@ -712,8 +712,8 @@ inline size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, 
 template <typename Family>
 inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
                                                                             const HardwareInfo &hwInfo, bool isRcs) {
-    auto &hwInfoConfig = (*HwInfoConfig::get(hwInfo.platform.eProductFamily));
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    auto &productHelper = (*ProductHelper::get(hwInfo.platform.eProductFamily));
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     if (isExtendedWARequired) {
         args.textureCacheInvalidationEnable = true;

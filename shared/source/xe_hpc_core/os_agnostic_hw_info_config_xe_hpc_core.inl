@@ -7,32 +7,32 @@
 
 namespace NEO {
 template <>
-std::string HwInfoConfigHw<gfxProduct>::getDeviceMemoryName() const {
+std::string ProductHelperHw<gfxProduct>::getDeviceMemoryName() const {
     return "HBM";
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isDcFlushAllowed() const {
+bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
+bool ProductHelperHw<gfxProduct>::isFlushTaskAllowed() const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
+bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return true;
 }
 
 template <>
-std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     auto isBasicWARequired = false;
     auto isExtendedWARequired = false;
 
@@ -44,7 +44,7 @@ std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelin
 }
 
 template <>
-void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
+void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
     using SAMPLER_STATE = typename XeHpcCoreFamily::SAMPLER_STATE;
 
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
@@ -54,14 +54,14 @@ void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwar
 }
 
 template <>
-void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
+void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
     *fp16 = (FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE | FP_ATOMIC_EXT_FLAG_GLOBAL_ADD | FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
     *fp32 = (FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE | FP_ATOMIC_EXT_FLAG_GLOBAL_ADD | FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
     *fp64 = (FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE | FP_ATOMIC_EXT_FLAG_GLOBAL_ADD | FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {
+bool ProductHelperHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {
     return false;
 }
 } // namespace NEO

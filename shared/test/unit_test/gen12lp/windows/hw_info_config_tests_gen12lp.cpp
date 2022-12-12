@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using Gen12lpProductHelperWindows = HwInfoConfigTestWindows;
+using Gen12lpProductHelperWindows = ProductHelperTestWindows;
 
 GEN12LPTEST_F(Gen12lpProductHelperWindows, givenE2ECSetByKmdWhenConfiguringHwThenAdjustInternalImageFlag) {
     FeatureTable &localFeatureTable = outHwInfo.featureTable;

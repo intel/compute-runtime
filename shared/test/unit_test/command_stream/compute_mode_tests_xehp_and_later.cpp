@@ -23,8 +23,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutShare
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     setUpImpl<FamilyType>();
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -54,8 +54,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     overrideComputeModeRequest<FamilyType>(false, false, true);
@@ -95,8 +95,8 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCompute
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -145,8 +145,8 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeMod
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
@@ -343,8 +343,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhe
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 128u);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdSize = sizeof(STATE_COMPUTE_MODE);
@@ -368,8 +368,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeCh
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -430,8 +430,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
@@ -464,8 +464,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);

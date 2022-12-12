@@ -85,9 +85,9 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
     if (device) {
         auto &hwInfo = device->getHardwareInfo();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
 
-        bcsAllowed = hwInfoConfig->isBlitterFullySupported(hwInfo) &&
+        bcsAllowed = productHelper->isBlitterFullySupported(hwInfo) &&
                      gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
 
         if (bcsAllowed || device->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
@@ -181,7 +181,7 @@ void CommandQueue::initializeGpgpu() const {
 
 void CommandQueue::initializeGpgpuInternals() const {
     auto &hwInfo = device->getDevice().getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     if (device->getDevice().getDebugger() && !this->gpgpuEngine->commandStreamReceiver->getDebugSurfaceAllocation()) {
         auto maxDbgSurfaceSize = NEO::SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaSize(&device->getDevice());
@@ -190,7 +190,7 @@ void CommandQueue::initializeGpgpuInternals() const {
 
         auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
         if (stateSaveAreaHeader.size() > 0) {
-            NEO::MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
+            NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
                                                                   device->getDevice(), debugSurface, 0, stateSaveAreaHeader.data(),
                                                                   stateSaveAreaHeader.size());
         }
@@ -919,8 +919,8 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
                                         cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
 
     const auto &hwInfo = device->getHardwareInfo();
-    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (CL_COMMAND_READ_BUFFER == commandType && hwInfoConfig->isCpuCopyNecessary(ptr, buffer->getMemoryManager())) {
+    const auto &productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (CL_COMMAND_READ_BUFFER == commandType && productHelper->isCpuCopyNecessary(ptr, buffer->getMemoryManager())) {
         return true;
     }
 
@@ -1019,8 +1019,8 @@ bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
 
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {
     const auto &hwInfo = device->getHardwareInfo();
-    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto blitEnqueueImageAllowed = hwInfoConfig->isBlitterForImagesSupported();
+    const auto &productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto blitEnqueueImageAllowed = productHelper->isBlitterForImagesSupported();
 
     if (DebugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
         blitEnqueueImageAllowed = DebugManager.flags.EnableBlitterForEnqueueImageOperations.get();
@@ -1033,7 +1033,7 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
         auto isTile64 = defaultGmm->gmmResourceInfo->getResourceFlags()->Info.Tile64;
         auto imageType = image.getImageDesc().image_type;
         if (isTile64 && (imageType == CL_MEM_OBJECT_IMAGE3D)) {
-            blitEnqueueImageAllowed &= hwInfoConfig->isTile64With3DSurfaceOnBCSSupported(hwInfo);
+            blitEnqueueImageAllowed &= productHelper->isTile64With3DSurfaceOnBCSSupported(hwInfo);
         }
     }
 
@@ -1185,10 +1185,10 @@ void CommandQueue::assignDataToOverwrittenBcsNode(TagNodeBase *node) {
 
 bool CommandQueue::isWaitForTimestampsEnabled() const {
     const auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
-    const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(getDevice().getHardwareInfo().platform.eProductFamily);
     auto enabled = CommandQueue::isTimestampWaitEnabled();
     enabled &= gfxCoreHelper.isTimestampWaitSupportedForQueues();
-    enabled &= !hwInfoConfig.isDcFlushAllowed();
+    enabled &= !productHelper.isDcFlushAllowed();
 
     switch (DebugManager.flags.EnableTimestampWaitForQueues.get()) {
     case 0:

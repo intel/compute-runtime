@@ -133,15 +133,15 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCo
         bool isRcsAvailableValue = true;
     };
 
-    MockHwInfoConfigHw<productFamily> hwInfoConfig;
+    MockProductHelperHw<productFamily> productHelper;
     auto hwInfo = *::defaultHwInfo;
-    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    hwInfoConfigFactoryBackup = &hwInfoConfig;
+    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    productHelperFactoryBackup = &productHelper;
 
     MockGfxCoreHelper gfxCoreHelper{};
 
     for (auto isCooperativeEngineSupported : ::testing::Bool()) {
-        hwInfoConfig.isCooperativeEngineSupportedValue = isCooperativeEngineSupported;
+        productHelper.isCooperativeEngineSupportedValue = isCooperativeEngineSupported;
         for (auto isRcsAvailable : ::testing::Bool()) {
             gfxCoreHelper.isRcsAvailableValue = isRcsAvailable;
             for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute,
@@ -200,11 +200,11 @@ HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWh
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto &revision : revisions) {
-        auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        auto hwRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
         if (hwRevId == CommonConstants::invalidStepping) {
             continue;
         }
@@ -222,7 +222,7 @@ HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWh
             }
         }
         EXPECT_EQ(2u, ccsCount);
-        if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
+        if (productHelper.isCooperativeEngineSupported(hwInfo)) {
             EXPECT_EQ(ccsCount, cooperativeCcsCount);
         } else {
             EXPECT_EQ(0u, cooperativeCcsCount);

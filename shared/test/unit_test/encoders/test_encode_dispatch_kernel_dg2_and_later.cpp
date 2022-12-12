@@ -95,7 +95,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesAndSettin
     const std::array<REVID, 5> revs{REVISION_A0, REVISION_B, REVISION_C, REVISION_D, REVISION_K};
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     for (auto rev : revs) {
-        hwInfo.platform.usRevId = HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
+        hwInfo.platform.usRevId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
         if ((hwInfo.platform.eProductFamily == IGFX_DG2) && (rev == REVISION_A0)) {
             verifyPreferredSlmValues<FamilyType>(valuesToTestForDg2AStep, hwInfo);
         } else {

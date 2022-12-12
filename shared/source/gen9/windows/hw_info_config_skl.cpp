@@ -16,4 +16,4 @@ constexpr static auto gfxProduct = IGFX_SKYLAKE;
 
 #include "shared/source/gen9/skl/os_agnostic_hw_info_config_skl.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

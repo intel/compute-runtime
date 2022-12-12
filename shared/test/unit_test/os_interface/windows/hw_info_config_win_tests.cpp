@@ -18,15 +18,15 @@
 
 namespace NEO {
 
-HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
+ProductHelperTestWindows::ProductHelperTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
 }
 
-HwInfoConfigTestWindows::~HwInfoConfigTestWindows() = default;
+ProductHelperTestWindows::~ProductHelperTestWindows() = default;
 
-void HwInfoConfigTestWindows::SetUp() {
-    HwInfoConfigTest::SetUp();
+void ProductHelperTestWindows::SetUp() {
+    ProductHelperTest::SetUp();
 
     osInterface.reset(new OSInterface());
 
@@ -35,20 +35,20 @@ void HwInfoConfigTestWindows::SetUp() {
     outHwInfo = *rootDeviceEnvironment->getHardwareInfo();
 }
 
-void HwInfoConfigTestWindows::TearDown() {
-    HwInfoConfigTest::TearDown();
+void ProductHelperTestWindows::TearDown() {
+    ProductHelperTest::TearDown();
 }
 
 template <typename HelperType>
-HelperType &HwInfoConfigTestWindows::getHelper() const {
+HelperType &ProductHelperTestWindows::getHelper() const {
     auto &helper = rootDeviceEnvironment->getHelper<HelperType>();
     return helper;
 }
 
-template ProductHelper &HwInfoConfigTestWindows::getHelper() const;
-template GfxCoreHelper &HwInfoConfigTestWindows::getHelper() const;
+template ProductHelper &ProductHelperTestWindows::getHelper() const;
+template GfxCoreHelper &ProductHelperTestWindows::getHelper() const;
 
-using ProductHelperTestWindows = HwInfoConfigTestWindows;
+using ProductHelperTestWindows = ProductHelperTestWindows;
 
 TEST_F(ProductHelperTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenReturnSuccess) {
 

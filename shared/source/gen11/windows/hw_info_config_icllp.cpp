@@ -16,4 +16,4 @@ constexpr static auto gfxProduct = IGFX_ICELAKE_LP;
 
 #include "shared/source/gen11/icllp/os_agnostic_hw_info_config_icllp.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

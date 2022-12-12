@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_XE_HP_SDV> enableXEHP;
+static EnableProductProductHelper<IGFX_XE_HP_SDV> enableXEHP;
 
 } // namespace NEO

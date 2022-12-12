@@ -19,12 +19,12 @@ XE_HP_CORE_TEST_F(GfxCoreHelperXeHpCoreTest, givenSteppingAorBWhenCheckingSipWAT
     auto productFamily = defaultHwInfo->platform.eProductFamily;
 
     auto &helper = GfxCoreHelper::get(renderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
     EXPECT_TRUE(helper.isSipWANeeded(hwInfo));
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_TRUE(helper.isSipWANeeded(hwInfo));
 }
 
@@ -34,8 +34,8 @@ XE_HP_CORE_TEST_F(GfxCoreHelperXeHpCoreTest, givenSteppingCWhenCheckingSipWAThen
     auto productFamily = defaultHwInfo->platform.eProductFamily;
 
     auto &helper = GfxCoreHelper::get(renderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_C, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_C, hwInfo);
     EXPECT_FALSE(helper.isSipWANeeded(hwInfo));
 }

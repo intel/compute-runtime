@@ -28,10 +28,10 @@ XEHPTEST_F(PreemptionXeHPTest, givenRevisionA0toBWhenProgrammingSipThenGlobalSip
     using STATE_SIP = XeHpFamily::STATE_SIP;
     HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    std::array<uint32_t, 2> revisions = {hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
-                                         hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
+    std::array<uint32_t, 2> revisions = {productHelper.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
+                                         productHelper.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
 
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;
@@ -68,10 +68,10 @@ XEHPTEST_F(PreemptionXeHPTest, givenRevisionA0toBWhenProgrammingSipEndWaThenGlob
     using STATE_SIP = XeHpFamily::STATE_SIP;
     HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    std::array<uint32_t, 2> revisions = {hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
-                                         hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
+    std::array<uint32_t, 2> revisions = {productHelper.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
+                                         productHelper.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
 
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;

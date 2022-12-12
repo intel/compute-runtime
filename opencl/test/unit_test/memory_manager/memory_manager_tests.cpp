@@ -3028,7 +3028,7 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
     bool mapped = memoryManager->mapAuxGpuVA(&allocation);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getHardwareInfo();
 
-    EXPECT_EQ(HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo), mapped);
+    EXPECT_EQ(ProductHelper::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo), mapped);
 }
 
 TEST(MemoryManagerTest, givenDebugModuleAreaAllocationTypeWhenCallingGetAllocationDataThenUse32BitFrontWindowsIsSet) {

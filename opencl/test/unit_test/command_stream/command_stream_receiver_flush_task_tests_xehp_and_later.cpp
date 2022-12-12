@@ -220,10 +220,10 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedP
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
 
     hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
     auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();

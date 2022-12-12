@@ -356,8 +356,8 @@ void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDi
 template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(bool isFlushPreferred, const HardwareInfo &hwInfo) {
     if (isFlushPreferred) {
-        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        return hwInfoConfig.isDcFlushAllowed();
+        const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        return productHelper.isDcFlushAllowed();
     }
     return false;
 }
@@ -450,9 +450,9 @@ inline bool GfxCoreHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(const 
 
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const {
-    const auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto lowestHwRevIdWithBug = hwInfoConfig->getHwRevIdFromStepping(lowestSteppingWithBug, hwInfo);
-    auto hwRevIdWithFix = hwInfoConfig->getHwRevIdFromStepping(steppingWithFix, hwInfo);
+    const auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto lowestHwRevIdWithBug = productHelper->getHwRevIdFromStepping(lowestSteppingWithBug, hwInfo);
+    auto hwRevIdWithFix = productHelper->getHwRevIdFromStepping(steppingWithFix, hwInfo);
     if ((lowestHwRevIdWithBug == CommonConstants::invalidStepping) || (hwRevIdWithFix == CommonConstants::invalidStepping)) {
         return false;
     }
@@ -692,8 +692,8 @@ const void *GfxCoreHelperHw<GfxFamily>::getBatchBufferEndReference() const {
 }
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isPlatformFlushTaskEnabled(const HardwareInfo &hwInfo) const {
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return hwInfoConfig.isFlushTaskAllowed();
+    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    return productHelper.isFlushTaskAllowed();
 }
 
 template <typename GfxFamily>

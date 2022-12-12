@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-using LkfProductHelper = HwInfoConfigTest;
+using LkfProductHelper = ProductHelperTest;
 
 LKFTEST_F(LkfProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 

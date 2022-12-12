@@ -12,9 +12,9 @@
 
 using namespace NEO;
 
-struct AdlsProductHelperLinux : HwInfoConfigTestLinux {
+struct AdlsProductHelperLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
 
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));

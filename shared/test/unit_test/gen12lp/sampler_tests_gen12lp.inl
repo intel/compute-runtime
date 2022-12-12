@@ -22,7 +22,7 @@ HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndAppen
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
+    ProductHelper::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
@@ -33,7 +33,7 @@ HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenForcingLowQualityFilteringAnd
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
+    ProductHelper::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }
 

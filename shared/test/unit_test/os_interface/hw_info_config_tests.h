@@ -11,20 +11,20 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
-class HwInfoConfig;
+class ProductHelper;
 class ExecutionEnvironment;
 } // namespace NEO
 
 using namespace NEO;
 
-struct HwInfoConfigTest : public ::testing::Test {
-    HwInfoConfigTest();
-    ~HwInfoConfigTest() override;
+struct ProductHelperTest : public ::testing::Test {
+    ProductHelperTest();
+    ~ProductHelperTest() override;
     void SetUp() override;
 
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     HardwareInfo pInHwInfo{};
     HardwareInfo outHwInfo{};
-    HwInfoConfig *productHelper = nullptr;
+    ProductHelper *productHelper = nullptr;
     PLATFORM *testPlatform = nullptr;
 };

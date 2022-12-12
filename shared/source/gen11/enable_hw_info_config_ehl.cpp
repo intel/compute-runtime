@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_ELKHARTLAKE> enableEHL;
+static EnableProductProductHelper<IGFX_ELKHARTLAKE> enableEHL;
 
 } // namespace NEO

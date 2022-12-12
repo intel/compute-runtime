@@ -20,85 +20,85 @@
 
 using namespace NEO;
 
-struct ProductHelperTestLinux : HwInfoConfigTestLinux {
+struct MockProductHelperTestLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
 
         testPlatform->eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
-        hwInfoConfigFactoryBackup = &productHelper;
+        productHelperFactoryBackup = &productHelper;
     }
 
     void TearDown() override {
-        HwInfoConfigTestLinux::TearDown();
+        ProductHelperTestLinux::TearDown();
     }
-    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(IGFX_UNKNOWN)]};
-    MockHwInfoConfigHw<IGFX_UNKNOWN> productHelper;
+    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(IGFX_UNKNOWN)]};
+    MockProductHelperHw<IGFX_UNKNOWN> mockProductHelper;
 };
 
-TEST_F(ProductHelperTestLinux, GivenDummyConfigWhenConfiguringHwInfoThenSucceeds) {
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+TEST_F(MockProductHelperTestLinux, GivenDummyConfigWhenConfiguringHwInfoThenSucceeds) {
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
 }
 
-HWTEST2_F(ProductHelperTestLinux, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenIgnore, IsAtMostGen11) {
+HWTEST2_F(MockProductHelperTestLinux, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenIgnore, IsAtMostGen11) {
     DebugManagerStateRestore restore{};
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
+    mockProductHelper.configureHardwareCustom(&hardwareInfo, nullptr);
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
-HWTEST2_F(ProductHelperTestLinux, givenUnsupportedChipsetUniqueUUIDWhenGettingUuidThenReturnFalse, IsAtMostGen11) {
+HWTEST2_F(MockProductHelperTestLinux, givenUnsupportedChipsetUniqueUUIDWhenGettingUuidThenReturnFalse, IsAtMostGen11) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
-    auto hwInfoConfig = HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    std::array<uint8_t, HwInfoConfig::uuidSize> id;
-    EXPECT_FALSE(hwInfoConfig->getUuid(nullptr, id));
+    auto productHelper = ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    std::array<uint8_t, ProductHelper::uuidSize> id;
+    EXPECT_FALSE(productHelper->getUuid(nullptr, id));
 }
 
-TEST_F(ProductHelperTestLinux, GivenDummyConfigThenEdramIsDetected) {
-    productHelper.use128MbEdram = true;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+TEST_F(MockProductHelperTestLinux, GivenDummyConfigThenEdramIsDetected) {
+    mockProductHelper.use128MbEdram = true;
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 }
 
-TEST_F(ProductHelperTestLinux, givenEnabledPlatformCoherencyWhenConfiguringHwInfoThenIgnoreAndSetAsDisabled) {
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+TEST_F(MockProductHelperTestLinux, givenEnabledPlatformCoherencyWhenConfiguringHwInfoThenIgnoreAndSetAsDisabled) {
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 
-TEST_F(ProductHelperTestLinux, givenDisabledPlatformCoherencyWhenConfiguringHwInfoThenSetValidCapability) {
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+TEST_F(MockProductHelperTestLinux, givenDisabledPlatformCoherencyWhenConfiguringHwInfoThenSetValidCapability) {
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 
-TEST_F(ProductHelperTestLinux, GivenFailGetEuCountWhenConfiguringHwInfoThenFails) {
+TEST_F(MockProductHelperTestLinux, GivenFailGetEuCountWhenConfiguringHwInfoThenFails) {
     drm->storedRetValForEUVal = -4;
     drm->failRetTopology = true;
 
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(-4, ret);
 }
 
-TEST_F(ProductHelperTestLinux, GivenFailGetSsCountWhenConfiguringHwInfoThenFails) {
+TEST_F(MockProductHelperTestLinux, GivenFailGetSsCountWhenConfiguringHwInfoThenFails) {
     drm->storedRetValForSSVal = -5;
     drm->failRetTopology = true;
 
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(-5, ret);
 }
 
-TEST_F(ProductHelperTestLinux, whenFailGettingTopologyThenFallbackToEuCountIoctl) {
+TEST_F(MockProductHelperTestLinux, whenFailGettingTopologyThenFallbackToEuCountIoctl) {
     drm->failRetTopology = true;
 
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_NE(-1, ret);
 }
 
-TEST_F(ProductHelperTestLinux, givenInvalidTopologyDataWhenConfiguringThenReturnError) {
+TEST_F(MockProductHelperTestLinux, givenInvalidTopologyDataWhenConfiguringThenReturnError) {
     auto storedSVal = drm->storedSVal;
     auto storedSSVal = drm->storedSSVal;
     auto storedEUVal = drm->storedEUVal;
@@ -134,62 +134,62 @@ TEST_F(ProductHelperTestLinux, givenInvalidTopologyDataWhenConfiguringThenReturn
     }
 }
 
-TEST_F(ProductHelperTestLinux, GivenFailingCustomConfigWhenConfiguringHwInfoThenFails) {
-    productHelper.failOnConfigureHardwareCustom = true;
+TEST_F(MockProductHelperTestLinux, GivenFailingCustomConfigWhenConfiguringHwInfoThenFails) {
+    mockProductHelper.failOnConfigureHardwareCustom = true;
 
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(-1, ret);
 }
 
-TEST_F(ProductHelperTestLinux, whenConfigureHwInfoIsCalledThenAreNonPersistentContextsSupportedReturnsTrue) {
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+TEST_F(MockProductHelperTestLinux, whenConfigureHwInfoIsCalledThenAreNonPersistentContextsSupportedReturnsTrue) {
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_TRUE(drm->areNonPersistentContextsSupported());
 }
 
-TEST_F(ProductHelperTestLinux, whenConfigureHwInfoIsCalledAndPersitentContextIsUnsupportedThenAreNonPersistentContextsSupportedReturnsFalse) {
+TEST_F(MockProductHelperTestLinux, whenConfigureHwInfoIsCalledAndPersitentContextIsUnsupportedThenAreNonPersistentContextsSupportedReturnsFalse) {
     drm->storedPersistentContextsSupport = 0;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(drm->areNonPersistentContextsSupported());
 }
 
-HWTEST_F(ProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
+HWTEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
 
-    productHelper.enableMidThreadPreemption = true;
+    mockProductHelper.enableMidThreadPreemption = true;
 
     UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(pInHwInfo, true);
 
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidThread, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(ProductHelperTestLinux, GivenPreemptionDrmEnabledThreadGroupOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
+TEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledThreadGroupOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    productHelper.enableThreadGroupPreemption = true;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    mockProductHelper.enableThreadGroupPreemption = true;
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(ProductHelperTestLinux, givenDebugFlagSetWhenConfiguringHwInfoThenPrintGetParamIoctlsOutput) {
+TEST_F(MockProductHelperTestLinux, givenDebugFlagSetWhenConfiguringHwInfoThenPrintGetParamIoctlsOutput) {
     DebugManagerStateRestore restore;
     DebugManager.flags.PrintIoctlEntries.set(true);
 
     testing::internal::CaptureStdout(); // start capturing
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
 
     std::array<std::string, 1> expectedStrings = {{"DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: 7, retCode: 0"
@@ -205,143 +205,143 @@ TEST_F(ProductHelperTestLinux, givenDebugFlagSetWhenConfiguringHwInfoThenPrintGe
     EXPECT_EQ(std::string::npos, output.find("UNKNOWN"));
 }
 
-TEST_F(ProductHelperTestLinux, GivenPreemptionDrmEnabledMidBatchOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
+TEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidBatchOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    productHelper.enableMidBatchPreemption = true;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    mockProductHelper.enableMidBatchPreemption = true;
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidBatch, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(ProductHelperTestLinux, WhenConfiguringHwInfoThenPreemptionIsSupportedPreemptionDrmEnabledNoPreemptionWhenConfiguringHwInfoThenPreemptionIsNotSupported) {
+TEST_F(MockProductHelperTestLinux, WhenConfiguringHwInfoThenPreemptionIsSupportedPreemptionDrmEnabledNoPreemptionWhenConfiguringHwInfoThenPreemptionIsNotSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(ProductHelperTestLinux, GivenPreemptionDrmDisabledAllPreemptionWhenConfiguringHwInfoThenPreemptionIsNotSupported) {
+TEST_F(MockProductHelperTestLinux, GivenPreemptionDrmDisabledAllPreemptionWhenConfiguringHwInfoThenPreemptionIsNotSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport = 0;
-    productHelper.enableMidThreadPreemption = true;
-    productHelper.enableMidBatchPreemption = true;
-    productHelper.enableThreadGroupPreemption = true;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    productHelper.enableMidThreadPreemption = true;
+    mockProductHelper.enableMidThreadPreemption = true;
+    mockProductHelper.enableMidBatchPreemption = true;
+    mockProductHelper.enableThreadGroupPreemption = true;
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    mockProductHelper.enableMidThreadPreemption = true;
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_FALSE(drm->isPreemptionSupported());
 }
 
-TEST_F(ProductHelperTestLinux, GivenPreemptionDrmEnabledAllPreemptionDriverThreadGroupWhenConfiguringHwInfoThenPreemptionIsSupported) {
+TEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledAllPreemptionDriverThreadGroupWhenConfiguringHwInfoThenPreemptionIsSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    productHelper.enableMidBatchPreemption = true;
-    productHelper.enableThreadGroupPreemption = true;
-    productHelper.enableMidThreadPreemption = true;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    mockProductHelper.enableMidBatchPreemption = true;
+    mockProductHelper.enableThreadGroupPreemption = true;
+    mockProductHelper.enableMidThreadPreemption = true;
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(ProductHelperTestLinux, GivenPreemptionDrmEnabledAllPreemptionDriverMidBatchWhenConfiguringHwInfoThenPreemptionIsSupported) {
+TEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledAllPreemptionDriverMidBatchWhenConfiguringHwInfoThenPreemptionIsSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidBatch;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    productHelper.enableMidBatchPreemption = true;
-    productHelper.enableThreadGroupPreemption = true;
-    productHelper.enableMidThreadPreemption = true;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    mockProductHelper.enableMidBatchPreemption = true;
+    mockProductHelper.enableThreadGroupPreemption = true;
+    mockProductHelper.enableMidThreadPreemption = true;
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidBatch, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(ProductHelperTestLinux, GivenConfigPreemptionDrmEnabledAllPreemptionDriverDisabledWhenConfiguringHwInfoThenPreemptionIsSupported) {
+TEST_F(MockProductHelperTestLinux, GivenConfigPreemptionDrmEnabledAllPreemptionDriverDisabledWhenConfiguringHwInfoThenPreemptionIsSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    productHelper.enableMidBatchPreemption = true;
-    productHelper.enableThreadGroupPreemption = true;
-    productHelper.enableMidThreadPreemption = true;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    mockProductHelper.enableMidBatchPreemption = true;
+    mockProductHelper.enableThreadGroupPreemption = true;
+    mockProductHelper.enableMidThreadPreemption = true;
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(ProductHelperTestLinux, givenPlatformEnabledFtrCompressionWhenInitializingThenFlagsAreSet) {
+TEST_F(MockProductHelperTestLinux, givenPlatformEnabledFtrCompressionWhenInitializingThenFlagsAreSet) {
     pInHwInfo.capabilityTable.ftrRenderCompressedImages = true;
     pInHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
 }
 
-TEST_F(ProductHelperTestLinux, givenPointerToHwInfoWhenConfigureHwInfoCalledThenRequiedSurfaceSizeIsSettedProperly) {
+TEST_F(MockProductHelperTestLinux, givenPointerToHwInfoWhenConfigureHwInfoCalledThenRequiedSurfaceSizeIsSettedProperly) {
     EXPECT_EQ(MemoryConstants::pageSize, pInHwInfo.capabilityTable.requiredPreemptionSurfaceSize);
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     auto expectedSize = static_cast<size_t>(outHwInfo.gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte);
     GfxCoreHelper::get(outHwInfo.platform.eRenderCoreFamily).adjustPreemptionSurfaceSize(expectedSize);
     EXPECT_EQ(expectedSize, outHwInfo.capabilityTable.requiredPreemptionSurfaceSize);
 }
 
-TEST_F(ProductHelperTestLinux, givenInstrumentationForHardwareIsEnabledOrDisabledWhenConfiguringHwInfoThenOverrideItUsingHaveInstrumentation) {
+TEST_F(MockProductHelperTestLinux, givenInstrumentationForHardwareIsEnabledOrDisabledWhenConfiguringHwInfoThenOverrideItUsingHaveInstrumentation) {
     int ret;
 
     pInHwInfo.capabilityTable.instrumentationEnabled = false;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     ASSERT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.instrumentationEnabled);
 
     pInHwInfo.capabilityTable.instrumentationEnabled = true;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     ASSERT_EQ(0, ret);
     EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled);
 }
 
-TEST_F(ProductHelperTestLinux, givenGttSizeReturnedWhenInitializingHwInfoThenSetSvmFtr) {
+TEST_F(MockProductHelperTestLinux, givenGttSizeReturnedWhenInitializingHwInfoThenSetSvmFtr) {
     drm->storedGTTSize = MemoryConstants::max64BitAppAddress;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSvm);
 
     drm->storedGTTSize = MemoryConstants::max64BitAppAddress + 1;
-    ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrSvm);
 }
 
-TEST_F(ProductHelperTestLinux, givenGttSizeReturnedWhenInitializingHwInfoThenSetGpuAddressSpace) {
+TEST_F(MockProductHelperTestLinux, givenGttSizeReturnedWhenInitializingHwInfoThenSetGpuAddressSpace) {
     drm->storedGTTSize = maxNBitValue(40) + 1;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     EXPECT_EQ(drm->storedGTTSize - 1, outHwInfo.capabilityTable.gpuAddressSpace);
 }
 
-TEST_F(ProductHelperTestLinux, givenFailingGttSizeIoctlWhenInitializingHwInfoThenSetDefaultValues) {
+TEST_F(MockProductHelperTestLinux, givenFailingGttSizeIoctlWhenInitializingHwInfoThenSetDefaultValues) {
     drm->storedRetValForGetGttSize = -1;
-    int ret = productHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    int ret = mockProductHelper.configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
 
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrSvm);

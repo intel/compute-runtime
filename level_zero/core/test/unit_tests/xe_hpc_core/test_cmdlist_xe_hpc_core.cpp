@@ -33,7 +33,7 @@ struct LocalMemoryModuleFixture : public ModuleFixture {
 using CommandListAppendLaunchKernelXeHpcCore = Test<LocalMemoryModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsXeHpcCore) {
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -56,7 +56,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
         VariableBackup<EngineGroupType> engineGroupType{&pCommandList->engineGroupType};
         VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
         engineGroupType = EngineGroupType::RenderCompute;
-        hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
         result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
@@ -569,10 +569,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     constexpr size_t size = 4096u;
     constexpr size_t alignment = 4096u;
@@ -639,10 +639,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     constexpr size_t size = 4096u;
     constexpr size_t alignment = 4096u;
@@ -707,10 +707,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     constexpr size_t size = 4096u;
     constexpr size_t alignment = 4096u;
@@ -763,10 +763,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     constexpr size_t size = 4096u;
     constexpr size_t alignment = 4096u;
@@ -835,10 +835,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     constexpr size_t size = 4096u;
     constexpr size_t alignment = 4096u;
@@ -905,10 +905,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     constexpr size_t size = 4096u;
     constexpr size_t alignment = 4096u;
@@ -1045,10 +1045,10 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto &hwInfo = *input.device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
         VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-        hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
         constexpr size_t size = 4096u;
         constexpr size_t alignment = 4096u;
@@ -1107,10 +1107,10 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto &hwInfo = *input.device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
         VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-        hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
         constexpr size_t size = 4096u;
         constexpr size_t alignment = 4096u;

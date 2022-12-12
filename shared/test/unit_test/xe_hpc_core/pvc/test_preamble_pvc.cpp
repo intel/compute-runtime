@@ -20,7 +20,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
     using CFE_STATE = typename FamilyType::CFE_STATE;
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(hwInfo->platform.eProductFamily);
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::RenderCompute);
     std::array<std::pair<uint32_t, bool>, 4> revisions = {
         {{REVISION_A0, false},
@@ -30,7 +30,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
 
     for (const auto &[revision, kernelExecutionType] : revisions) {
         StreamProperties streamProperties{};
-        hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, *hwInfo);
+        hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(revision, *hwInfo);
         streamProperties.frontEndState.setProperties(kernelExecutionType, false, false, false, *hwInfo);
 
         PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *hwInfo, 0u, 0, 0, streamProperties, nullptr);
@@ -65,11 +65,11 @@ PVCTEST_F(PreamblePipelineSelectState, givenRevisionBAndAboveWhenCallingProgramP
         {0x6, false},
         {0x7, false},
     };
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
     for (auto &testInput : testInputs) {
         LinearStream linearStream(&gfxAllocation);
         hwInfo->platform.usRevId = testInput.revId;
-        pipelineArgs.systolicPipelineSelectSupport = hwInfoConfig.isSystolicModeConfigurable(*hwInfo);
+        pipelineArgs.systolicPipelineSelectSupport = productHelper.isSystolicModeConfigurable(*hwInfo);
 
         PreambleHelper<FamilyType>::programPipelineSelect(&linearStream, pipelineArgs, *hwInfo);
         parseCommands<FamilyType>(linearStream);

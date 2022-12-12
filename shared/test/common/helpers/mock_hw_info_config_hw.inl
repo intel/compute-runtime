@@ -6,26 +6,26 @@
  */
 
 template <>
-std::vector<int32_t> MockHwInfoConfigHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> MockProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
     return threadArbPolicies;
 }
 template <>
-bool MockHwInfoConfigHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
+bool MockProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return isCooperativeEngineSupportedValue;
 }
 
 template <>
-bool MockHwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+bool MockProductHelperHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
     return false;
 }
 
 template <>
-uint32_t MockHwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+uint32_t MockProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     return returnedStepping;
 }
 
 template <>
-int MockHwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+int MockProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     FeatureTable *featureTable = &hwInfo->featureTable;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 0;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 0;
@@ -48,17 +48,17 @@ int MockHwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo
 }
 
 template <>
-uint64_t MockHwInfoConfigHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint64_t MockProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 1024u;
 }
 
 template <>
-uint32_t MockHwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint32_t MockProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 800u;
 }
 
 template <>
-uint32_t MockHwInfoConfigHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive) const {
+uint32_t MockProductHelperHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive) const {
     if (isDebuggerActive) {
         return this->returnedL1CachePolicyIfDebugger;
     }

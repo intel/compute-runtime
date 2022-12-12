@@ -50,8 +50,8 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
             csrDeps.timestampPacketContainer.push_back(timestampPacketContainer);
 
             if (!sameCsr) {
-                const auto &hwInfoConfig = *NEO::HwInfoConfig::get(event->getCommandQueue()->getDevice().getHardwareInfo().platform.eProductFamily);
-                if (hwInfoConfig.isDcFlushAllowed()) {
+                const auto &productHelper = *NEO::ProductHelper::get(event->getCommandQueue()->getDevice().getHardwareInfo().platform.eProductFamily);
+                if (productHelper.isDcFlushAllowed()) {
                     if (!dependentCsr.isLatestTaskCountFlushed()) {
                         flushDependentCsr(dependentCsr, csrDeps);
                         currentCsr.makeResident(*dependentCsr.getTagAllocation());

@@ -97,7 +97,7 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenPassedFormatWhenCreatingU
 }
 
 template <bool pageTableManagerSupported>
-class MockHwInfoConfig : public HwInfoConfigHw<IGFX_UNKNOWN> {
+class MockProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
   public:
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override {
         return pageTableManagerSupported;
@@ -128,8 +128,8 @@ struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryMan
 HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPageTableManagerWhenCreatingUnifiedImageThenSetCorrespondingFieldInGmmAndDoNotUsePageTableManager) {
     MemoryManagerReturningCompressedAllocations memoryManager{};
     VariableBackup<MemoryManager *> memoryManagerBackup{&this->context->memoryManager, &memoryManager};
-    using HwInfoConfigNotSupportingPageTableManager = MockHwInfoConfig<false>;
-    RAIIHwInfoConfigFactory<HwInfoConfigNotSupportingPageTableManager> hwInfoConfigBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
+    using ProductHelperNotSupportingPageTableManager = MockProductHelper<false>;
+    RAIIProductHelperFactory<ProductHelperNotSupportingPageTableManager> productHelperBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
 
     cl_mem_flags flags{};
     cl_int retVal{};
@@ -145,8 +145,8 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPag
 HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndPageTableManagerWhenCreatingUnifiedImageThenSetCorrespondingFieldInGmmBasedOnAuxGpuVaMappingResult) {
     MemoryManagerReturningCompressedAllocations memoryManager{};
     VariableBackup<MemoryManager *> memoryManagerBackup{&this->context->memoryManager, &memoryManager};
-    using HwInfoConfigNotSupportingPageTableManager = MockHwInfoConfig<true>;
-    RAIIHwInfoConfigFactory<HwInfoConfigNotSupportingPageTableManager> hwInfoConfigBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
+    using ProductHelperNotSupportingPageTableManager = MockProductHelper<true>;
+    RAIIProductHelperFactory<ProductHelperNotSupportingPageTableManager> productHelperBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
 
     cl_mem_flags flags{};
     cl_int retVal{};

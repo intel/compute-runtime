@@ -69,12 +69,12 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenEnabledFtrPooledEuAndA0SteppingWhen
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     FeatureTable &mySkuTable = myHwInfo.featureTable;
     PLATFORM &myPlatform = myHwInfo.platform;
-    const auto &hwInfoConfig = *HwInfoConfig::get(myPlatform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(myPlatform.eProductFamily);
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
     mySkuTable.flags.ftrPooledEuEnabled = 1;
-    myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
+    myPlatform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -88,13 +88,13 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenDeviceThatHasHighNumberOfExecutionU
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;
-    const auto &hwInfoConfig = *HwInfoConfig::get(myPlatform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(myPlatform.eProductFamily);
 
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
     mySysInfo.DualSubSliceCount = 2;
     mySysInfo.ThreadCount = 32 * 8;
-    myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
+    myPlatform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(512u, device->sharedDeviceInfo.maxWorkGroupSize);
@@ -106,12 +106,12 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenEnabledFtrPooledEuAndNotA0SteppingW
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     FeatureTable &mySkuTable = myHwInfo.featureTable;
     PLATFORM &myPlatform = myHwInfo.platform;
-    const auto &hwInfoConfig = *HwInfoConfig::get(myPlatform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(myPlatform.eProductFamily);
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
     mySkuTable.flags.ftrPooledEuEnabled = 1;
-    myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, myHwInfo);
+    myPlatform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, myHwInfo);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -125,13 +125,13 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenDeviceThatHasHighNumberOfExecutionU
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;
-    const auto &hwInfoConfig = *HwInfoConfig::get(myPlatform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(myPlatform.eProductFamily);
 
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
     mySysInfo.DualSubSliceCount = 2;
     mySysInfo.ThreadCount = 32 * 8; // 128 threads per subslice, in simd 8 gives 1024
-    myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, myHwInfo);
+    myPlatform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, myHwInfo);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(1024u, device->sharedDeviceInfo.maxWorkGroupSize);

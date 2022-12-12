@@ -37,14 +37,14 @@ DG1TEST_F(GfxCoreHelperTestDg1, givenDg1SteppingBWhenAdjustDefaultEngineTypeCall
 
 DG1TEST_F(GfxCoreHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundRequiredThenCorrectValueIsReturned) {
     const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
     uint32_t steppings[] = {
         REVISION_A0,
         REVISION_B,
         CommonConstants::invalidStepping};
 
     for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
 
         switch (stepping) {
         case REVISION_A0:

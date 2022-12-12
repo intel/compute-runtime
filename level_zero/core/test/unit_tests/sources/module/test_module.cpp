@@ -153,8 +153,8 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
         EXPECT_TRUE(ki->isIsaCopiedToAllocation());
     }
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
         EXPECT_EQ(zebinData->numOfKernels, blitterCalled);
     } else {
         EXPECT_EQ(0u, blitterCalled);
@@ -2276,10 +2276,10 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPackedTargetDeviceBinary) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     HardwareIpVersion aotConfig = {0};
-    aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -2294,7 +2294,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPacked
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    target.aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 

@@ -72,7 +72,7 @@ bool GfxCoreHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo)
 
 template <>
 bool GfxCoreHelperHw<Family>::isSipWANeeded(const HardwareInfo &hwInfo) const {
-    return hwInfo.platform.usRevId <= HwInfoConfig::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo);
+    return hwInfo.platform.usRevId <= ProductHelper::get(hwInfo.platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, hwInfo);
 }
 
 template <>
@@ -80,7 +80,7 @@ bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t si
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
+    if (ProductHelper::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
         return true;
     } else {
         return size > KB;

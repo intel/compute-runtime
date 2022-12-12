@@ -18,7 +18,7 @@
 
 namespace NEO {
 
-int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
+int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
     auto &gfxCoreHelper = rootDeviceEnvironemnt.getHelper<GfxCoreHelper>();
     auto &productHelper = rootDeviceEnvironemnt.getHelper<ProductHelper>();
     auto compilerProductHelper = CompilerProductHelper::get(outHwInfo->platform.eProductFamily);

@@ -24,7 +24,7 @@ class GfxPartition;
 class Gdi;
 class Gmm;
 class GmmMemory;
-class HwInfoConfig;
+class ProductHelper;
 class OsContextWin;
 class SettingsReader;
 class WddmAllocation;
@@ -222,7 +222,7 @@ class Wddm : public DriverModel {
         }
         return evictNeeded;
     }
-    void setPlatformSupportEvictIfNecessaryFlag(const HwInfoConfig &hwInfoConfig);
+    void setPlatformSupportEvictIfNecessaryFlag(const ProductHelper &productHelper);
     void populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterInfo);
     void populateIpVersion(HardwareInfo &hwInfo);
 

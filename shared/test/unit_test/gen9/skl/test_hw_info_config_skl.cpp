@@ -16,9 +16,8 @@
 #include "platforms.h"
 
 using namespace NEO;
-using SklProductHelper = HwInfoConfigTest;
+using SklProductHelper = ProductHelperTest;
 
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_SKYLAKE)
 SKLTEST_F(SklProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
     EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
 }

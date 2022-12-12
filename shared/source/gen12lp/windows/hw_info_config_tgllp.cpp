@@ -21,7 +21,7 @@ constexpr static auto gfxProduct = IGFX_TIGERLAKE_LP;
 namespace NEO {
 
 template <>
-void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
     coherencyFlag = true;
     GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     if (gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
@@ -30,5 +30,5 @@ void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &
     }
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

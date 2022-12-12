@@ -65,8 +65,8 @@ void OsContextLinux::initializeContext() {
 }
 
 bool OsContextLinux::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return this->getDrm().isVmBindAvailable() && hwInfoConfig->isDirectSubmissionSupported(hwInfo);
+    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    return this->getDrm().isVmBindAvailable() && productHelper->isDirectSubmissionSupported(hwInfo);
 }
 
 Drm &OsContextLinux::getDrm() const {

@@ -79,7 +79,7 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousValuesWhenCallingSetBa
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandContainerWhenNumGrfRequiredIsGreaterThanDefaultThenLargeGrfModeEnabled) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.setProperties(false, GrfConfig::LargeGrfNumber, 0u, PreemptionMode::Disabled, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
@@ -90,7 +90,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
     ASSERT_NE(itorCmd, commands.end());
 
     auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*itorCmd);
-    EXPECT_EQ(hwInfoConfig.isGrfNumReportedWithScm(), cmd->getLargeGrfMode());
+    EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), cmd->getLargeGrfMode());
 }
 
 using CommandEncodeStatesTestHpc = Test<CommandEncodeStatesFixture>;
@@ -119,7 +119,7 @@ HWTEST2_F(CommandEncodeStatesTestHpc, GivenVariousSlmTotalSizesAndSettingRevIDTo
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     for (auto rev : revs) {
-        hwInfo.platform.usRevId = HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
+        hwInfo.platform.usRevId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
         if ((hwInfo.platform.eProductFamily == IGFX_PVC) && (rev == REVISION_A0)) {
             verifyPreferredSlmValues<FamilyType>(valuesToTestForPvcAStep, hwInfo);
         } else {

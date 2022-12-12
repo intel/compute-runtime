@@ -11,9 +11,9 @@
 
 using namespace NEO;
 
-struct IcllpProductHelperLinux : HwInfoConfigTestLinux {
+struct IcllpProductHelperLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
     }
 };
 

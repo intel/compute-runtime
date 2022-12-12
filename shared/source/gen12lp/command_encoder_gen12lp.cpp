@@ -27,8 +27,8 @@ namespace NEO {
 template <>
 size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {
     size_t size = 0;
-    const auto &hwInfoConfig = *HwInfoConfig::get(device.getHardwareInfo().platform.eProductFamily);
-    if (isRcs && hwInfoConfig.is3DPipelineSelectWARequired()) {
+    const auto &productHelper = *ProductHelper::get(device.getHardwareInfo().platform.eProductFamily);
+    if (isRcs && productHelper.is3DPipelineSelectWARequired()) {
         size += 2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(device.getHardwareInfo());
     }
     return size;
@@ -56,8 +56,8 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 template <>
 void EncodeWA<Family>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args,
                                                       bool is3DPipeline, const HardwareInfo &hwInfo, bool isRcs) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs) {
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.is3DPipelineSelectWARequired() && isRcs) {
         PipelineSelectArgs pipelineSelectArgs = args;
         pipelineSelectArgs.is3DPipelineRequired = is3DPipeline;
         PreambleHelper<Family>::programPipelineSelect(&stream, pipelineSelectArgs, hwInfo);

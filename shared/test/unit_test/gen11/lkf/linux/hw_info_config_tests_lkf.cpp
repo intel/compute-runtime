@@ -10,9 +10,9 @@
 
 using namespace NEO;
 
-struct LkfProductHelperLinux : HwInfoConfigTestLinux {
+struct LkfProductHelperLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
 
         drm->storedSSVal = 8;
     }

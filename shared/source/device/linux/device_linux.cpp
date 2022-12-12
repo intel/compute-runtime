@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-void Device::getAdapterLuid(std::array<uint8_t, HwInfoConfig::luidSize> &luid) {}
+void Device::getAdapterLuid(std::array<uint8_t, ProductHelper::luidSize> &luid) {}
 
 bool Device::verifyAdapterLuid() { return false; }
 } // namespace NEO

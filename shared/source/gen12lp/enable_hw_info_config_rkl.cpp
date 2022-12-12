@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_ROCKETLAKE> enableRKL;
+static EnableProductProductHelper<IGFX_ROCKETLAKE> enableRKL;
 
 } // namespace NEO

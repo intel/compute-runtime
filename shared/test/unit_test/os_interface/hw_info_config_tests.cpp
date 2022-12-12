@@ -24,16 +24,15 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-using ProductHelperTest = HwInfoConfigTest;
 
-HwInfoConfigTest::HwInfoConfigTest() {
+ProductHelperTest::ProductHelperTest() {
     executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     productHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 }
 
-HwInfoConfigTest::~HwInfoConfigTest() = default;
+ProductHelperTest::~ProductHelperTest() = default;
 
-void HwInfoConfigTest::SetUp() {
+void ProductHelperTest::SetUp() {
     pInHwInfo = *defaultHwInfo;
     testPlatform = &pInHwInfo.platform;
 }
@@ -252,23 +251,23 @@ HWTEST_F(ProductHelperTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingTh
 }
 
 HWTEST_F(ProductHelperTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwRevIdThenReturnValuesAreCorrect) {
-    MockHwInfoConfigHw<IGFX_UNKNOWN> mockHwInfoConfig;
-    mockHwInfoConfig.returnedStepping = REVISION_A0;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
-    mockHwInfoConfig.returnedStepping = REVISION_A1;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
-    mockHwInfoConfig.returnedStepping = REVISION_A3;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
-    mockHwInfoConfig.returnedStepping = REVISION_B;
-    EXPECT_EQ(AubMemDump::SteppingValues::B, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
-    mockHwInfoConfig.returnedStepping = REVISION_C;
-    EXPECT_EQ(AubMemDump::SteppingValues::C, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
-    mockHwInfoConfig.returnedStepping = REVISION_D;
-    EXPECT_EQ(AubMemDump::SteppingValues::D, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
-    mockHwInfoConfig.returnedStepping = REVISION_K;
-    EXPECT_EQ(AubMemDump::SteppingValues::K, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
-    mockHwInfoConfig.returnedStepping = CommonConstants::invalidStepping;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    MockProductHelperHw<IGFX_UNKNOWN> mockProductHelper;
+    mockProductHelper.returnedStepping = REVISION_A0;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockProductHelper.returnedStepping = REVISION_A1;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockProductHelper.returnedStepping = REVISION_A3;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockProductHelper.returnedStepping = REVISION_B;
+    EXPECT_EQ(AubMemDump::SteppingValues::B, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockProductHelper.returnedStepping = REVISION_C;
+    EXPECT_EQ(AubMemDump::SteppingValues::C, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockProductHelper.returnedStepping = REVISION_D;
+    EXPECT_EQ(AubMemDump::SteppingValues::D, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockProductHelper.returnedStepping = REVISION_K;
+    EXPECT_EQ(AubMemDump::SteppingValues::K, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    mockProductHelper.returnedStepping = CommonConstants::invalidStepping;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedForDefaultEngineTypeAdjustmentThenFalseIsReturned) {
@@ -311,11 +310,11 @@ HWTEST_F(ProductHelperTest, WhenAllowStatelessCompressionIsCalledThenReturnCorre
 HWTEST_F(ProductHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore{};
 
-    struct MockHwInfoConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
-        using HwInfoConfig::getDefaultLocalMemoryAccessMode;
+    struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
+        using ProductHelper::getDefaultLocalMemoryAccessMode;
     };
-    auto mockHwInfoConfig = static_cast<MockHwInfoConfig &>(*HwInfoConfig::get(productFamily));
-    EXPECT_EQ(mockHwInfoConfig.getDefaultLocalMemoryAccessMode(pInHwInfo), mockHwInfoConfig.getLocalMemoryAccessMode(pInHwInfo));
+    auto mockProductHelper = static_cast<MockProductHelper &>(*ProductHelper::get(productFamily));
+    EXPECT_EQ(mockProductHelper.getDefaultLocalMemoryAccessMode(pInHwInfo), mockProductHelper.getLocalMemoryAccessMode(pInHwInfo));
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
     EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
@@ -662,19 +661,19 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedTh
     EXPECT_FALSE(productHelper->isPlatformQuerySupported());
 }
 
-HWTEST_F(HwInfoConfigTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned) {
+HWTEST_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
-    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    auto productHelper = ProductHelper::get(pInHwInfo.platform.eProductFamily);
 
     // ResolveDependenciesViaPipeControls = -1 (default)
-    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
-    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
 
     DebugManager.flags.ResolveDependenciesViaPipeControls.set(0);
-    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
-    EXPECT_FALSE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
+    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
 
     DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    EXPECT_TRUE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
-    EXPECT_TRUE(hwInfoConfig->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));
+    EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true));
 }

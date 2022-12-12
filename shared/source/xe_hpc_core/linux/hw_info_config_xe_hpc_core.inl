@@ -11,7 +11,7 @@
 
 namespace NEO {
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     enableCompression(hwInfo);
 
     hwInfo->featureTable.flags.ftr57bGPUAddressing = (hwInfo->capabilityTable.gpuAddressSpace == maxNBitValue(57));
@@ -30,7 +30,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
+bool ProductHelperHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
     return true;
 }
 

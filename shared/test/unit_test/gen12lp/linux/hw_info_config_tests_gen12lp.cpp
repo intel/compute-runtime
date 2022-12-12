@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using Gen12lpProductHelperLinux = HwInfoConfigTestLinux;
+using Gen12lpProductHelperLinux = ProductHelperTestLinux;
 
 GEN12LPTEST_F(Gen12lpProductHelperLinux, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
 

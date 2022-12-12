@@ -22,8 +22,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream
     auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
     *cmdSpace = *args.stateBaseAddressCmd;
 
-    auto &hwInfoConfig = *HwInfoConfig::get(args.hwInfo->platform.eProductFamily);
-    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(*args.hwInfo)) {
+    auto &productHelper = *ProductHelper::get(args.hwInfo->platform.eProductFamily);
+    if (productHelper.isAdditionalStateBaseAddressWARequired(*args.hwInfo)) {
         auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
         *cmdSpace = *args.stateBaseAddressCmd;
     }

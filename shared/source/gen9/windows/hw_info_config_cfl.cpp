@@ -14,4 +14,4 @@ constexpr static auto gfxProduct = IGFX_COFFEELAKE;
 
 #include "shared/source/gen9/cfl/os_agnostic_hw_info_config_cfl.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

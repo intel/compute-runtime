@@ -53,9 +53,9 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBuffer
     }
 }
 
-using HwInfoConfigTestXeHpgCore = Test<DeviceFixture>;
+using ProductHelperTestXeHpgCore = Test<DeviceFixture>;
 
-XE_HPG_CORETEST_F(HwInfoConfigTestXeHpgCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
+XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
     auto &productHelper = getHelper<ProductHelper>();
 

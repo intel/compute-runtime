@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-using XeHpSdvProductHelper = HwInfoConfigTest;
+using XeHpSdvProductHelper = ProductHelperTest;
 
 XEHPTEST_F(XeHpSdvProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::XeHpSdv, productHelper->getAubStreamProductFamily());

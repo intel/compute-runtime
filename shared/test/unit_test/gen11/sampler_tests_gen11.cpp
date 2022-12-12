@@ -23,6 +23,6 @@ GEN11TEST_F(Gen11SamplerTest, WhenAppendingSamplerStateParamsThenStateIsNotChang
     auto stateWithoutAppendedParams = FamilyType::cmdInitSamplerState;
     auto stateWithAppendedParams = FamilyType::cmdInitSamplerState;
     EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
-    HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&stateWithAppendedParams, *defaultHwInfo);
+    ProductHelper::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&stateWithAppendedParams, *defaultHwInfo);
     EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
 }

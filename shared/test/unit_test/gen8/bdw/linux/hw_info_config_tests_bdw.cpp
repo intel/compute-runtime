@@ -10,9 +10,9 @@
 
 using namespace NEO;
 
-struct BdwProductHelperLinux : HwInfoConfigTestLinux {
+struct BdwProductHelperLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
     }
 };
 

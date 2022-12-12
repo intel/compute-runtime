@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
+int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
     UNRECOVERABLE_IF(true);
     return {};
 }

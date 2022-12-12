@@ -339,7 +339,7 @@ struct ProgramAllFieldsInComputeMode {
 HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenWithoutTrackingFieldsChangedWithTrackingUpdatedClean, ProgramAllFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
     Mock<::L0::Kernel> kernel;
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
@@ -351,7 +351,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
     commandList->updateStreamProperties(kernel, false);
     if (commandList->stateComputeModeTracking) {
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
-        if (hwInfoConfig.isGrfNumReportedWithScm()) {
+        if (productHelper.isGrfNumReportedWithScm()) {
             EXPECT_NE(-1, commandList->finalStreamState.stateComputeMode.largeGrfMode.value);
         } else {
             EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.largeGrfMode.value);

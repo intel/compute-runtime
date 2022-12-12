@@ -205,7 +205,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     }
     auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
     auto productFamily = hwInfo.platform.eProductFamily;
-    auto stepping = NEO::HwInfoConfig::get(productFamily)->getSteppingFromHwRevId(hwInfo);
+    auto stepping = NEO::ProductHelper::get(productFamily)->getSteppingFromHwRevId(hwInfo);
     for (auto hbmModuleIndex = 0u; hbmModuleIndex < numHbmModules; hbmModuleIndex++) {
         uint32_t counterValue = 0;
         // To read counters from VFID 0 and HBM module 0, key would be: VF0_HBM0_READ

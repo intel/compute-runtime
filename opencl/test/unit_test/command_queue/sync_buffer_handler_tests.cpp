@@ -32,8 +32,8 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
     void SetUp() override {
         hardwareInfo = *defaultHwInfo;
         hardwareInfo.capabilityTable.blitterOperationsSupported = true;
-        uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
-        hardwareInfoSetup[productFamily](&hardwareInfo, true, hwInfoConfig);
+        uint64_t productHelper = defaultHardwareInfoConfigTable[productFamily];
+        hardwareInfoSetup[productFamily](&hardwareInfo, true, productHelper);
         setUpImpl(&hardwareInfo);
     }
 
@@ -72,8 +72,8 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
         auto &hwInfo = pClDevice->getHardwareInfo();
-        auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
+        auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        if (productHelper.isCooperativeEngineSupported(hwInfo)) {
             commandQueue->gpgpuEngine = &pClDevice->getEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative);
         }
     }

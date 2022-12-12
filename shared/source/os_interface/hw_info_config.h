@@ -29,14 +29,14 @@ struct PipelineSelectPropertiesSupport;
 struct StateBaseAddressPropertiesSupport;
 struct StateComputeModeProperties;
 struct StateComputeModePropertiesSupport;
-class HwInfoConfig;
+class ProductHelper;
 class GraphicsAllocation;
 class MemoryManager;
 struct RootDeviceEnvironment;
 class OSInterface;
 enum class DriverModelType;
 
-extern HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT];
+extern ProductHelper *productHelperFactory[IGFX_MAX_PRODUCT];
 
 enum class UsmAccessCapabilities {
     Host = 0,
@@ -46,10 +46,10 @@ enum class UsmAccessCapabilities {
     SharedSystemCrossDevice
 };
 
-class HwInfoConfig {
+class ProductHelper {
   public:
-    static HwInfoConfig *get(PRODUCT_FAMILY product) {
-        return hwInfoConfigFactory[product];
+    static ProductHelper *get(PRODUCT_FAMILY product) {
+        return productHelperFactory[product];
     }
     static constexpr uint32_t uuidSize = 16u;
     static constexpr uint32_t luidSize = 8u;
@@ -111,7 +111,7 @@ class HwInfoConfig {
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDcFlushAllowed() const = 0;
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
-    virtual bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const = 0;
+    virtual bool getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const = 0;
     virtual bool isFlushTaskAllowed() const = 0;
     virtual bool programAllStateComputeCommandFields() const = 0;
     virtual bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const = 0;
@@ -182,7 +182,7 @@ class HwInfoConfig {
     virtual void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
     virtual uint32_t getDefaultRevisionId() const = 0;
 
-    MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
+    MOCKABLE_VIRTUAL ~ProductHelper() = default;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
@@ -193,10 +193,10 @@ class HwInfoConfig {
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-class HwInfoConfigHw : public HwInfoConfig {
+class ProductHelperHw : public ProductHelper {
   public:
-    static HwInfoConfig *get() {
-        static HwInfoConfigHw<gfxProduct> instance;
+    static ProductHelper *get() {
+        static ProductHelperHw<gfxProduct> instance;
         return &instance;
     }
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
@@ -255,7 +255,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
     bool isDcFlushAllowed() const override;
     uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const override;
-    bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override;
+    bool getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override;
     bool isFlushTaskAllowed() const override;
     bool programAllStateComputeCommandFields() const override;
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
@@ -327,7 +327,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint32_t getDefaultRevisionId() const override;
 
   protected:
-    HwInfoConfigHw() = default;
+    ProductHelperHw() = default;
 
     void enableCompression(HardwareInfo *hwInfo) const;
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo) const;
@@ -339,13 +339,13 @@ class HwInfoConfigHw : public HwInfoConfig {
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-struct EnableProductHwInfoConfig {
+struct EnableProductProductHelper {
     typedef typename HwMapper<gfxProduct>::GfxProduct GfxProduct;
 
-    EnableProductHwInfoConfig() {
-        HwInfoConfig *pHwInfoConfig = HwInfoConfigHw<gfxProduct>::get();
-        hwInfoConfigFactory[gfxProduct] = pHwInfoConfig;
-        pHwInfoConfig->threadsPerEu = GfxProduct::threadsPerEu;
+    EnableProductProductHelper() {
+        ProductHelper *pProductHelper = ProductHelperHw<gfxProduct>::get();
+        productHelperFactory[gfxProduct] = pProductHelper;
+        pProductHelper->threadsPerEu = GfxProduct::threadsPerEu;
     }
 };
 

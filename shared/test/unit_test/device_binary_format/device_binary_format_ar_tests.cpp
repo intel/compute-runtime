@@ -58,10 +58,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToFindMatchingBinariesThenUnpackingFa
 
 TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItAsABestMatch) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -99,10 +99,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItA
 
 TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTargetDeviceBinaryIsSet) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -130,10 +130,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTar
 
 TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -148,7 +148,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch)
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    target.aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
@@ -239,10 +239,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
     PatchTokensTestData::ValidEmptyProgram programTokens;
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
 
@@ -259,7 +259,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    target.aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
@@ -347,10 +347,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductFamil
 
 TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductConfigAvailableThenUseIr) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -369,7 +369,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductConfi
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
-    target.aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    target.aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 
     auto arData = encoder.encode();
     std::string unpackErrors;
@@ -571,10 +571,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenU
     PatchTokensTestData::ValidEmptyProgram programTokens;
     NEO::Ar::ArEncoder encoder;
 
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];

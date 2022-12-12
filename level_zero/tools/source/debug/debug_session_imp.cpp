@@ -277,8 +277,8 @@ size_t DebugSession::getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId t
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t threadEuRatio = hwInfoConfig.getThreadEuRatioForScratch(hwInfo);
+    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    uint32_t threadEuRatio = productHelper.getThreadEuRatioForScratch(hwInfo);
     uint32_t multiplyFactor = 1;
     if (threadEuRatio / numThreadsPerEu > 1) {
         multiplyFactor = threadEuRatio / numThreadsPerEu;

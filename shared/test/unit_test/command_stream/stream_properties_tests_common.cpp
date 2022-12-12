@@ -63,8 +63,8 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     StreamProperties properties;
 
     FrontEndPropertiesSupport frontEndPropertiesSupport = {};
-    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    hwInfoConfig->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, *defaultHwInfo);
+    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    productHelper->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, *defaultHwInfo);
 
     for (auto isEngineInstanced : ::testing::Bool()) {
         for (auto isCooperativeKernel : ::testing::Bool()) {
@@ -103,8 +103,8 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
     DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
-    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    hwInfoConfig->fillScmPropertiesSupportStructure(scmPropertiesSupport);
+    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    productHelper->fillScmPropertiesSupportStructure(scmPropertiesSupport);
 
     int32_t threadArbitrationPolicyValues[] = {
         ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,
@@ -262,8 +262,8 @@ TEST(StreamPropertiesTests, givenOtherPipelineSelectPropertiesStructWhenSetPrope
 
 TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
     FrontEndPropertiesSupport fePropertiesSupport{};
-    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    hwInfoConfig.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, *defaultHwInfo);
+    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, *defaultHwInfo);
 
     MockFrontEndProperties feProperties{};
     EXPECT_FALSE(feProperties.propertiesSupportLoaded);
@@ -292,8 +292,8 @@ TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueI
     StreamProperties properties;
 
     PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
-    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    hwInfoConfig->fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, *defaultHwInfo);
+    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    productHelper->fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, *defaultHwInfo);
 
     for (auto modeSelected : ::testing::Bool()) {
         for (auto mediaSamplerDopClockGate : ::testing::Bool()) {
@@ -417,8 +417,8 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
 
 TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagDefaultValueWhenSettingPropertyAndCheckIfDirtyThenExpectValueSetForSupportedAndCleanForNotSupported) {
     StateBaseAddressPropertiesSupport sbaPropertiesSupport = {};
-    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    hwInfoConfig->fillStateBaseAddressPropertiesSupportStructure(sbaPropertiesSupport, *defaultHwInfo);
+    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    productHelper->fillStateBaseAddressPropertiesSupportStructure(sbaPropertiesSupport, *defaultHwInfo);
 
     StateBaseAddressProperties sbaProperties{};
 

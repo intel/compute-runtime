@@ -42,14 +42,14 @@ uint8_t GfxCoreHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarr
 template <>
 const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     EngineInstancesContainer engines;
 
     if (hwInfo.featureTable.flags.ftrCCSNode) {
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
             engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Regular});
-            if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
+            if (productHelper.isCooperativeEngineSupported(hwInfo)) {
                 engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Cooperative});
             }
         }
@@ -154,8 +154,8 @@ uint32_t GfxCoreHelperHw<Family>::getMaxNumSamplers() const {
 
 template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }
@@ -172,8 +172,8 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
     using MI_MEM_FENCE = typename Family::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }
@@ -251,7 +251,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     if (allocationData.flags.requiresCpuAccess && !allocationData.flags.useSystemMemory &&
         (allocationData.storageInfo.getMemoryBanks() > 1)) {
 
-        bool applyWa = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isTilePlacementResourceWaRequired(hwInfo);
+        bool applyWa = ProductHelper::get(hwInfo.platform.eProductFamily)->isTilePlacementResourceWaRequired(hwInfo);
 
         if (applyWa) {
             allocationData.storageInfo.memoryBanks = 1; // force Tile0
@@ -358,7 +358,7 @@ int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
 
 template <>
 bool GfxCoreHelperHw<Family>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
-    return HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported();
+    return ProductHelper::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported();
 }
 
 template <>
@@ -370,7 +370,7 @@ bool GfxCoreHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwI
                            aub_stream::ENGINE_BCS1 == engineType ||
                            aub_stream::ENGINE_BCS3 == engineType);
 
-    return affectedEngine ? !HwInfoConfig::get(hwInfo.platform.eProductFamily)->isBcsReportWaRequired(hwInfo) : true;
+    return affectedEngine ? !ProductHelper::get(hwInfo.platform.eProductFamily)->isBcsReportWaRequired(hwInfo) : true;
 }
 
 template <>

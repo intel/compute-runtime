@@ -184,7 +184,7 @@ uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool 
 
 template <>
 bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) {
-    return HwInfoConfig::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo);
+    return ProductHelper::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo);
 }
 
 template <>
@@ -194,13 +194,13 @@ bool MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaReq
 
 template <>
 void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
         if (GraphicsAllocation::isCpuAccessRequired(properties.allocationType)) {
             allocationData.flags.useSystemMemory = true;
         }
     }
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
+    if (ProductHelper::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
         if (properties.allocationType == AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
             allocationData.storageInfo.isLockable = true;
         }

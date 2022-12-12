@@ -536,11 +536,11 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
 HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThenDebugSurfaceHasCachePolicyWBP, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    MockHwInfoConfigHw<productFamily> hwInfoConfig;
-    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    hwInfoConfigFactoryBackup = &hwInfoConfig;
-    hwInfoConfig.returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
-    hwInfoConfig.returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
+    MockProductHelperHw<productFamily> productHelper;
+    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    productHelperFactoryBackup = &productHelper;
+    productHelper.returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
+    productHelper.returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
 
     Mock<::L0::Kernel> kernel;
     ze_result_t returnValue;

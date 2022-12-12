@@ -80,9 +80,9 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
         this->staticWorkPartitioningEnabled = true;
     }
 
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfoConfig->fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
-    hwInfoConfig->fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);
+    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    productHelper->fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
+    productHelper->fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -852,7 +852,7 @@ bool CommandStreamReceiver::needsPageTableManager() const {
     if (pageTableManager.get() != nullptr) {
         return false;
     }
-    return HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
+    return ProductHelper::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
 }
 
 void CommandStreamReceiver::printDeviceIndex() {

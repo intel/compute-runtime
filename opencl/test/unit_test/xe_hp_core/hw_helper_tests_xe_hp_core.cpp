@@ -115,10 +115,10 @@ XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamil
     };
 
     const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
 
     for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
 
         if (hardwareInfo.platform.eProductFamily == IGFX_XE_HP_SDV) {
             if (stepping == REVISION_A0) {
@@ -137,13 +137,13 @@ XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamil
 }
 
 XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenRevisionEnumThenProperMaxThreadsForWorkgroupIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-    EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    EXPECT_EQ(64u, productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
 
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
     uint32_t numThreadsPerEU = hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount;
-    EXPECT_EQ(64u * numThreadsPerEU, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
+    EXPECT_EQ(64u * numThreadsPerEU, productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
 }
 
 XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsDefaultWhenLocalMemoryIsEnabledThenReturnFalseAndDoNotProgramPipeControl) {
@@ -206,9 +206,9 @@ XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenXeHPAndLaterPlatformWhenChec
     EXPECT_FALSE(gfxCoreHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
 }
 
-using HwInfoConfigTestXE_HP_CORE = Test<DeviceFixture>;
+using ProductHelperTestXE_HP_CORE = Test<DeviceFixture>;
 
-XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
+XE_HP_CORE_TEST_F(ProductHelperTestXE_HP_CORE, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
     auto &productHelper = getHelper<ProductHelper>();
 
@@ -223,7 +223,7 @@ XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenDebugVariableSetWhenConfigure
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
 
-XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
+XE_HP_CORE_TEST_F(ProductHelperTestXE_HP_CORE, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
     auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;

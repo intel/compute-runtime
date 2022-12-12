@@ -20,7 +20,7 @@ constexpr static auto gfxProduct = IGFX_DG1;
 namespace NEO {
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
 
@@ -33,5 +33,5 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     return 0;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

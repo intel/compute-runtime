@@ -31,10 +31,10 @@ XEHPTEST_F(CommandQueueDebugCommandsForSldXeHP, givenSteppingA0OrBWhenGlobalSipI
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    std::array<uint32_t, 2> revisions = {hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
-                                         hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
+    std::array<uint32_t, 2> revisions = {productHelper.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
+                                         productHelper.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
 
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;
@@ -110,10 +110,10 @@ XEHPTEST_F(CommandQueueDebugCommandsDebuggerL0XeHP, givenSteppingA0OrBWhenGlobal
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    std::array<uint32_t, 2> revisions = {hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
-                                         hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
+    std::array<uint32_t, 2> revisions = {productHelper.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
+                                         productHelper.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
 
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;

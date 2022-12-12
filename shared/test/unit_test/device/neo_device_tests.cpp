@@ -133,7 +133,7 @@ TEST_F(DeviceTest, givenDispatchGlobalsAllocationFailsThenRTDispatchGlobalsInfoI
 }
 
 TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
-    std::array<uint8_t, HwInfoConfig::uuidSize> uuid, expectedUuid;
+    std::array<uint8_t, ProductHelper::uuidSize> uuid, expectedUuid;
     pDevice->generateUuid(uuid);
     uint32_t rootDeviceIndex = pDevice->getRootDeviceIndex();
 
@@ -142,7 +142,7 @@ TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
     memcpy_s(&expectedUuid[4], sizeof(uint32_t), &pDevice->getHardwareInfo().platform.usDeviceID, sizeof(pDevice->getHardwareInfo().platform.usDeviceID));
     memcpy_s(&expectedUuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
 
-    EXPECT_EQ(memcmp(&uuid, &expectedUuid, HwInfoConfig::uuidSize), 0);
+    EXPECT_EQ(memcmp(&uuid, &expectedUuid, ProductHelper::uuidSize), 0);
 }
 
 using DeviceGetCapsTest = Test<DeviceFixture>;

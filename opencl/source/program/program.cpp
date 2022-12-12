@@ -82,8 +82,8 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
     }
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
 

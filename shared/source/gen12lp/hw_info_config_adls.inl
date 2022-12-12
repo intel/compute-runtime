@@ -10,7 +10,7 @@
 namespace NEO {
 
 template <>
-int HwInfoConfigHw<IGFX_ALDERLAKE_S>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int ProductHelperHw<IGFX_ALDERLAKE_S>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     if (nullptr == osIface) {
         return 0;
     }
@@ -22,5 +22,5 @@ int HwInfoConfigHw<IGFX_ALDERLAKE_S>::configureHardwareCustom(HardwareInfo *hwIn
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_ALDERLAKE_S>;
+template class ProductHelperHw<IGFX_ALDERLAKE_S>;
 } // namespace NEO

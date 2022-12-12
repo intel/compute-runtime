@@ -270,7 +270,7 @@ bool Device::createDeviceImpl() {
 
         if (DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
             if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
-                uuid.isValid = HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
+                uuid.isValid = ProductHelper::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
             }
         }
 
@@ -406,7 +406,7 @@ uint64_t Device::getProfilingTimerClock() {
 }
 
 bool Device::isBcsSplitSupported() {
-    auto bcsSplit = HwInfoConfig::get(getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getHardwareInfo()) &&
+    auto bcsSplit = ProductHelper::get(getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getHardwareInfo()) &&
                     ApiSpecificConfig::isBcsSplitWaSupported() &&
                     Device::isBlitSplitEnabled();
 
@@ -704,20 +704,20 @@ void Device::initializeEngineRoundRobinControls() {
 
 OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get(); };
 
-bool Device::getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+bool Device::getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     if (this->uuid.isValid) {
         uuid = this->uuid.id;
 
         if (!isSubDevice() && deviceBitfield.count() == 1) {
             // In case of no sub devices created (bits set in affinity mask == 1), return the UUID of enabled sub-device.
             uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-            uuid[HwInfoConfig::uuidSize - 1] = subDeviceIndex + 1;
+            uuid[ProductHelper::uuidSize - 1] = subDeviceIndex + 1;
         }
     }
     return this->uuid.isValid;
 }
 
-bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != PhysicalDevicePciBusInfo::invalidValue) {
 
         uuid.fill(0);
@@ -725,13 +725,13 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
         memcpy_s(&uuid[2], 1, &pciBusInfo.pciBus, 1);
         memcpy_s(&uuid[3], 1, &pciBusInfo.pciDevice, 1);
         memcpy_s(&uuid[4], 1, &pciBusInfo.pciFunction, 1);
-        uuid[HwInfoConfig::uuidSize - 1] = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+        uuid[ProductHelper::uuidSize - 1] = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
         return true;
     }
     return false;
 }
 
-void Device::generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+void Device::generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     const auto &deviceInfo = getDeviceInfo();
     const auto &hardwareInfo = getHardwareInfo();
     uint32_t rootDeviceIndex = getRootDeviceIndex();
@@ -772,7 +772,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     }
 
     auto &hwInfo = getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     GraphicsAllocation *dispatchGlobalsArrayAllocation = nullptr;
 
@@ -814,7 +814,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
         dispatchGlobalsAsArray[7] = 1;
 
-        MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(this->getHardwareInfo(), *dispatchGlobalsArrayAllocation),
+        MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getHardwareInfo(), *dispatchGlobalsArrayAllocation),
                                                          *this,
                                                          dispatchGlobalsArrayAllocation,
                                                          tile * dispatchGlobalsStride,

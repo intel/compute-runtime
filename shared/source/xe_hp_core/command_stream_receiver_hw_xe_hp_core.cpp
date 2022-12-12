@@ -34,8 +34,8 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 template <>
 MemoryCompressionState CommandStreamReceiverHw<Family>::getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const {
     auto memoryCompressionState = MemoryCompressionState::NotApplicable;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.allowStatelessCompression(hwInfo)) {
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.allowStatelessCompression(hwInfo)) {
         memoryCompressionState = auxTranslationRequired ? MemoryCompressionState::Disabled : MemoryCompressionState::Enabled;
     }
     return memoryCompressionState;
@@ -98,10 +98,10 @@ void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     auto &gfxCoreHelper = GfxCoreHelperHw<Family>::get();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
 
     if (gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) &&
-        hwInfoConfig.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
+        productHelper.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
         blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
         blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
@@ -113,10 +113,10 @@ void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     auto &gfxCoreHelper = GfxCoreHelperHw<Family>::get();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
 
     if (gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) &&
-        hwInfoConfig.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
+        productHelper.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
         blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
     }
 }

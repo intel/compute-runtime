@@ -7,8 +7,8 @@
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args) {
-    auto hwInfoConfig = HwInfoConfig::get(args.gmmHelper->getHardwareInfo()->platform.eProductFamily);
-    auto cachePolicy = hwInfoConfig->getL1CachePolicy(args.isDebuggerActive);
+    auto productHelper = ProductHelper::get(args.gmmHelper->getHardwareInfo()->platform.eProductFamily);
+    auto cachePolicy = productHelper->getL1CachePolicy(args.isDebuggerActive);
     args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(cachePolicy));
 
     if (DebugManager.flags.ForceStatelessL1CachingPolicy.get() != -1 &&

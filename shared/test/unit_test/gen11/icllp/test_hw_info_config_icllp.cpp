@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using IcllpProductHelper = HwInfoConfigTest;
+using IcllpProductHelper = ProductHelperTest;
 
 ICLLPTEST_F(IcllpProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 

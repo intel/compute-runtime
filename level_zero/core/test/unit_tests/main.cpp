@@ -271,7 +271,7 @@ int main(int argc, char **argv) {
 
     productFamily = hwInfoForTests.platform.eProductFamily;
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
-    uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
+    uint32_t threadsPerEu = productHelperFactory[productFamily]->threadsPerEu;
     PLATFORM &platform = hwInfoForTests.platform;
     if (revId != -1) {
         platform.usRevId = revId;

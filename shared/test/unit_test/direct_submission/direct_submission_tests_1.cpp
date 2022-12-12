@@ -960,7 +960,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(expectedStoreAddress, storeDataCmdAtPosition->getAddress());
 
     cmdBufferPosition += sizeof(MI_STORE_DATA_IMM);
-    if (HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isPrefetcherDisablingInDirectSubmissionRequired()) {
+    if (ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isPrefetcherDisablingInDirectSubmissionRequired()) {
         cmdBufferPosition += directSubmission.getSizeDisablePrefetcher();
     }
     MI_SEMAPHORE_WAIT *semaphoreWaitCmdAtPosition = genCmdCast<MI_SEMAPHORE_WAIT *>(cmdBufferPosition);

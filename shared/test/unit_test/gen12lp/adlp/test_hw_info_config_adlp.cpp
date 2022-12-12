@@ -66,7 +66,7 @@ ADLPTEST_F(AdlpHwInfo, givenAdlpWhenCheckL0ThenReturnTrue) {
     EXPECT_TRUE(hardwareInfo.capabilityTable.levelZeroSupported);
 }
 
-using AdlpProductHelper = HwInfoConfigTest;
+using AdlpProductHelper = ProductHelperTest;
 
 ADLPTEST_F(AdlpProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Adlp, productHelper->getAubStreamProductFamily());

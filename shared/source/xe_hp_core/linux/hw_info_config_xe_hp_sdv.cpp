@@ -36,7 +36,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
 namespace NEO {
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (allowCompression(*hwInfo)) {
         enableCompression(hwInfo);
     }
@@ -55,7 +55,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
+bool ProductHelperHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
     GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
     if (gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) && (getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed)) {
         return false;
@@ -65,21 +65,21 @@ bool HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareI
 }
 
 template <>
-uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesValue() {
+uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() {
     return UNIFIED_SHARED_MEMORY_ACCESS;
 }
 
 template <>
-void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
+void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
     *fp16 = 0u;
     *fp32 = FP_ATOMIC_EXT_FLAG_GLOBAL_ADD;
     *fp64 = 0u;
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 2800u;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

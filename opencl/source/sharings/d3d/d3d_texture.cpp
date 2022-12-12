@@ -121,9 +121,9 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     }
 
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-        alloc->getDefaultGmm()->isCompressionEnabled = hwInfoConfig.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                         : true;
+        const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+        alloc->getDefaultGmm()->isCompressionEnabled = productHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                          : true;
     }
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);
@@ -210,9 +210,9 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-        alloc->getDefaultGmm()->isCompressionEnabled = hwInfoConfig.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                         : true;
+        const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+        alloc->getDefaultGmm()->isCompressionEnabled = productHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                          : true;
     }
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);

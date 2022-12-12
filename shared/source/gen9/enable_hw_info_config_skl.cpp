@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_SKYLAKE> enableSKL;
+static EnableProductProductHelper<IGFX_SKYLAKE> enableSKL;
 
 } // namespace NEO

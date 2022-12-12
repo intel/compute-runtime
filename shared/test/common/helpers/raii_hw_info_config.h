@@ -10,23 +10,23 @@
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
-extern HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT];
+extern ProductHelper *productHelperFactory[IGFX_MAX_PRODUCT];
 
-template <typename MockHwInfoConfig>
-class RAIIHwInfoConfigFactory {
+template <typename MockProductHelper>
+class RAIIProductHelperFactory {
   public:
     PRODUCT_FAMILY productFamily;
-    HwInfoConfig *hwInfoConfig;
-    MockHwInfoConfig mockHwInfoConfig{};
+    ProductHelper *productHelper;
+    MockProductHelper mockProductHelper{};
 
-    RAIIHwInfoConfigFactory(PRODUCT_FAMILY productFamily) {
+    RAIIProductHelperFactory(PRODUCT_FAMILY productFamily) {
         this->productFamily = productFamily;
-        hwInfoConfig = hwInfoConfigFactory[this->productFamily];
-        hwInfoConfigFactory[this->productFamily] = &mockHwInfoConfig;
+        productHelper = productHelperFactory[this->productFamily];
+        productHelperFactory[this->productFamily] = &mockProductHelper;
     }
 
-    ~RAIIHwInfoConfigFactory() {
-        hwInfoConfigFactory[this->productFamily] = hwInfoConfig;
+    ~RAIIProductHelperFactory() {
+        productHelperFactory[this->productFamily] = productHelper;
     }
 };
 } // namespace NEO

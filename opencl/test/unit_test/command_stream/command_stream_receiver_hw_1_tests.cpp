@@ -632,7 +632,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(pHwInfo->platform.eProductFamily);
 
     uint8_t memory[1 * KB];
     auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(),
@@ -642,7 +642,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto revision : revisions) {
-        pHwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, *pHwInfo);
+        pHwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(revision, *pHwInfo);
 
         {
             mockCsr->getStreamProperties().frontEndState = {};
@@ -654,7 +654,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
             mockCsr->programVFEState(commandStream, flags, 10);
             auto cfeState = reinterpret_cast<CFE_STATE *>(&memory);
 
-            auto expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*pHwInfo);
+            auto expectedDisableOverdispatch = productHelper.isDisableOverdispatchAvailable(*pHwInfo);
             EXPECT_EQ(expectedDisableOverdispatch, cfeState->getComputeOverdispatchDisable());
         }
         {

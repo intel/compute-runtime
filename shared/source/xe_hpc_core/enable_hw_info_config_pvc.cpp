@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_PVC> enablePVC;
+static EnableProductProductHelper<IGFX_PVC> enablePVC;
 
 } // namespace NEO

@@ -13,7 +13,7 @@
 using DeviceTest = Test<DeviceFixture>;
 
 TEST_F(DeviceTest, GivenDeviceWhenGetAdapterLuidThenLuidIsNotSet) {
-    std::array<uint8_t, HwInfoConfig::luidSize> luid, expectedLuid;
+    std::array<uint8_t, ProductHelper::luidSize> luid, expectedLuid;
     expectedLuid.fill(-1);
     luid = expectedLuid;
     pDevice->getAdapterLuid(luid);

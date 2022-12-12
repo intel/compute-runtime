@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_GEMINILAKE> enableGLK;
+static EnableProductProductHelper<IGFX_GEMINILAKE> enableGLK;
 
 } // namespace NEO

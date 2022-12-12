@@ -16,4 +16,4 @@ constexpr static auto gfxProduct = IGFX_BROXTON;
 
 #include "shared/source/gen9/bxt/os_agnostic_hw_info_config_bxt.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

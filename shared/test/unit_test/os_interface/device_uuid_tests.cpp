@@ -34,17 +34,17 @@ struct MultipleDeviceBdfUuidTest : public ::testing::Test {
     }
 
     template <PRODUCT_FAMILY gfxProduct>
-    void setupMockHwInfoConfig() {
-        mockHwInfoConfig.reset(new MockHwInfoConfigHw<gfxProduct>());
+    void setupMockProductHelper() {
+        mockProductHelper.reset(new MockProductHelperHw<gfxProduct>());
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<HwInfoConfig> mockHwInfoConfig = nullptr;
+    std::unique_ptr<ProductHelper> mockProductHelper = nullptr;
 };
 
 HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffinityMaskThenUuidIsCorrectForRootAndSubDevices, MatchAny) {
-    setupMockHwInfoConfig<productFamily>();
-    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    setupMockProductHelper<productFamily>();
+    VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2,0.3");
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     const auto deviceFactory = createDevices(pciBusInfo, 4);
@@ -79,8 +79,8 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffinityMaskT
 
 HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDeviceUuidFromBdfThenCorrectUuidIsRetrieved, MatchAny) {
 
-    setupMockHwInfoConfig<productFamily>();
-    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    setupMockProductHelper<productFamily>();
+    VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     std::array<uint8_t, 16> uuid;
     const uint32_t numSubDevices = 2;
     uint8_t expectedUuid[16] = {0xad, 0x54, 0x34, 0xab,
@@ -104,8 +104,8 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDevic
 
 HWTEST2_F(MultipleDeviceBdfUuidTest, GivenIncorrectBdfWhenRetrievingDeviceUuidFromBdfThenUuidIsNotRetrieved, MatchAny) {
 
-    setupMockHwInfoConfig<productFamily>();
-    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    setupMockProductHelper<productFamily>();
+    VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue,
                                         PhysicalDevicePciBusInfo::invalidValue,
                                         PhysicalDevicePciBusInfo::invalidValue,
@@ -118,8 +118,8 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenIncorrectBdfWhenRetrievingDeviceUuidFr
 
 HWTEST2_F(MultipleDeviceBdfUuidTest, GivenNoSubDevicesInAffinityMaskwhenRetrievingDeviceUuidFromBdfThenUuidOfRootDeviceIsRetrieved, MatchAny) {
 
-    setupMockHwInfoConfig<productFamily>();
-    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    setupMockProductHelper<productFamily>();
+    VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     std::array<uint8_t, 16> uuid;
     uint8_t expectedUuid[16] = {0x00, 0x00, 0x34, 0xab,
                                 0xcd, 0x0, 0x0, 0x0,
@@ -136,8 +136,8 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenNoSubDevicesInAffinityMaskwhenRetrievi
 
 HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMaskThenUuidOfRootDeviceIsBasedOnAffinityMask, MatchAny) {
 
-    setupMockHwInfoConfig<productFamily>();
-    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    setupMockProductHelper<productFamily>();
+    VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.3");
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     const auto deviceFactory = createDevices(pciBusInfo, 4);
@@ -156,11 +156,11 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMas
 using DeviceUuidEnablementTest = MultipleDeviceBdfUuidTest;
 
 template <PRODUCT_FAMILY gfxProduct>
-class MockHwInfoConfigHwUuidEnablementTest : public HwInfoConfigHw<gfxProduct> {
+class MockProductHelperHwUuidEnablementTest : public ProductHelperHw<gfxProduct> {
   public:
     const bool returnStatus;
-    MockHwInfoConfigHwUuidEnablementTest(bool returnStatus) : returnStatus(returnStatus) {}
-    bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override {
+    MockProductHelperHwUuidEnablementTest(bool returnStatus) : returnStatus(returnStatus) {}
+    bool getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {
         uuid.fill(255u);
         return returnStatus;
     }
@@ -168,8 +168,8 @@ class MockHwInfoConfigHwUuidEnablementTest : public HwInfoConfigHw<gfxProduct> {
 
 HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIstUsed, MatchAny) {
 
-    mockHwInfoConfig.reset(new MockHwInfoConfigHwUuidEnablementTest<productFamily>(true));
-    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    mockProductHelper.reset(new MockProductHelperHwUuidEnablementTest<productFamily>(true));
+    VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     std::array<uint8_t, 16> uuid, expectedUuid;
     uuid.fill(0u);
     expectedUuid.fill(255u);
@@ -188,8 +188,8 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDev
 
 HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsUsed, MatchAny) {
 
-    mockHwInfoConfig.reset(new MockHwInfoConfigHwUuidEnablementTest<productFamily>(true));
-    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    mockProductHelper.reset(new MockProductHelperHwUuidEnablementTest<productFamily>(true));
+    VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     DebugManager.flags.EnableChipsetUniqueUUID.set(1);
     std::array<uint8_t, 16> uuid, expectedUuid;
     uuid.fill(0u);
@@ -207,8 +207,8 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDev
 
 HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsNotUsed, MatchAny) {
 
-    mockHwInfoConfig.reset(new MockHwInfoConfigHwUuidEnablementTest<productFamily>(true));
-    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    mockProductHelper.reset(new MockProductHelperHwUuidEnablementTest<productFamily>(true));
+    VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     DebugManager.flags.EnableChipsetUniqueUUID.set(0);
     std::array<uint8_t, 16> uuid, expectedUuid;
     uuid.fill(0u);

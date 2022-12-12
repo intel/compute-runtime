@@ -329,7 +329,7 @@ struct ProgramChangedFieldsInComputeMode {
 };
 HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenChangedFieldsAreDirty, ProgramChangedFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -345,13 +345,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStr
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     } else {
-        EXPECT_EQ(hwInfoConfig.getScmPropertyCoherencyRequiredSupport(), commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
-        EXPECT_EQ(hwInfoConfig.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+        EXPECT_EQ(productHelper.getScmPropertyCoherencyRequiredSupport(), commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+        EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
     commandList->updateStreamProperties(kernel, false);
-    EXPECT_EQ(hwInfoConfig.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+    EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
 
@@ -366,7 +366,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
           GivenComputeModeTraitsSetToFalsePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenFieldsAreDirtyWithTrackingAndCleanWithoutTracking,
           ProgramAllFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
     Mock<::L0::Kernel> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -380,25 +380,25 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     commandList->updateStreamProperties(kernel, false);
     if (commandList->stateComputeModeTracking) {
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
-        if (hwInfoConfig.isGrfNumReportedWithScm()) {
+        if (productHelper.isGrfNumReportedWithScm()) {
             EXPECT_NE(-1, commandList->finalStreamState.stateComputeMode.largeGrfMode.value);
         } else {
             EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.largeGrfMode.value);
         }
     } else {
         EXPECT_TRUE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
-        EXPECT_EQ(hwInfoConfig.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+        EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
     commandList->updateStreamProperties(kernel, false);
-    EXPECT_EQ(hwInfoConfig.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+    EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -414,8 +414,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertes
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     } else {
-        EXPECT_EQ(hwInfoConfig.getScmPropertyCoherencyRequiredSupport(), commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
-        EXPECT_EQ(hwInfoConfig.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
+        EXPECT_EQ(productHelper.getScmPropertyCoherencyRequiredSupport(), commandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+        EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
 
     commandList->updateStreamProperties(kernel, false);
@@ -770,7 +770,7 @@ using MultiReturnCommandListTest = Test<MultiReturnCommandListFixture>;
 HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
 
@@ -936,7 +936,7 @@ HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDis
 HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
 
@@ -1101,7 +1101,7 @@ HWTEST2_F(MultiReturnCommandListTest,
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandQueue->frontEndStateTracking);
@@ -1350,7 +1350,7 @@ HWTEST2_F(MultiReturnCommandListTest,
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
 
@@ -1596,7 +1596,7 @@ HWTEST2_F(MultiReturnCommandListTest,
 HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothRegularFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandListImmediate->frontEndStateTracking);
@@ -1721,7 +1721,7 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
 HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandListImmediate->frontEndStateTracking);

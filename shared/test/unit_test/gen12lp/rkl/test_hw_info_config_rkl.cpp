@@ -76,7 +76,7 @@ RKLTEST_F(RklHwInfo, givenRklWhenCheckL0ThenReturnTrue) {
     EXPECT_TRUE(hardwareInfo.capabilityTable.levelZeroSupported);
 }
 
-using RklProductHelper = HwInfoConfigTest;
+using RklProductHelper = ProductHelperTest;
 
 RKLTEST_F(RklProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
     EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::RKL);

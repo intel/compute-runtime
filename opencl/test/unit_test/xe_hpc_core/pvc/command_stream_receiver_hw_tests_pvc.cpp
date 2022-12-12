@@ -83,10 +83,10 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
         {0x6, false},
         {0x7, false},
     };
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
     for (auto &testInput : testInputs) {
         hwInfo->platform.usRevId = testInput.revId;
-        hwInfoConfig->fillPipelineSelectPropertiesSupportStructure(commandStreamReceiver.pipelineSupportFlags, *hwInfo);
+        productHelper->fillPipelineSelectPropertiesSupportStructure(commandStreamReceiver.pipelineSupportFlags, *hwInfo);
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.lastMediaSamplerConfig = false;
         commandStreamReceiver.lastSystolicPipelineSelectMode = false;

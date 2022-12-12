@@ -166,7 +166,7 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenPrepareDevice
     }
 }
 
-using TgllpProductHelper = HwInfoConfigTest;
+using TgllpProductHelper = ProductHelperTest;
 
 TGLLPTEST_F(TgllpProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Tgllp, productHelper->getAubStreamProductFamily());

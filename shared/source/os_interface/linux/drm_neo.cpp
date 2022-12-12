@@ -74,7 +74,7 @@ SubmissionStatus Drm::getSubmissionStatusFromReturnCode(int32_t retCode) {
 void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
-    this->vmBindPatIndexProgrammingSupported = HwInfoConfig::get(hwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+    this->vmBindPatIndexProgrammingSupported = ProductHelper::get(hwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
 }
 
 int Drm::ioctl(DrmIoctl request, void *arg) {
@@ -1311,8 +1311,8 @@ bool Drm::isVmBindAvailable() {
         int ret = ioctlHelper->isVmBindAvailable();
 
         auto hwInfo = this->getRootDeviceEnvironment().getHardwareInfo();
-        auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
-        ret &= static_cast<int>(hwInfoConfig->isNewResidencyModelSupported());
+        auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
+        ret &= static_cast<int>(productHelper->isNewResidencyModelSupported());
 
         bindAvailable = ret;
 

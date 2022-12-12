@@ -10,9 +10,9 @@
 
 namespace NEO {
 
-void Device::getAdapterLuid(std::array<uint8_t, HwInfoConfig::luidSize> &luid) {
+void Device::getAdapterLuid(std::array<uint8_t, ProductHelper::luidSize> &luid) {
     const LUID adapterLuid = getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>()->getAdapterLuid();
-    memcpy_s(&luid, HwInfoConfig::luidSize, &adapterLuid, sizeof(luid));
+    memcpy_s(&luid, ProductHelper::luidSize, &adapterLuid, sizeof(luid));
 }
 
 bool Device::verifyAdapterLuid() {

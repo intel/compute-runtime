@@ -199,9 +199,9 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckIsUpdateTaskC
     EXPECT_TRUE(gfxCoreHelper.isUpdateTaskCountFromWaitSupported());
 }
 
-using HwInfoConfigTestDg2AndLater = ::testing::Test;
+using ProductHelperTestDg2AndLater = ::testing::Test;
 
-HWTEST2_F(HwInfoConfigTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeHpgCore) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.heapInLocalMem(*defaultHwInfo));
+HWTEST2_F(ProductHelperTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeHpgCore) {
+    const auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(productHelper.heapInLocalMem(*defaultHwInfo));
 }

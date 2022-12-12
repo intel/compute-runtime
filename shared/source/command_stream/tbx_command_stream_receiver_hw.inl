@@ -168,7 +168,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
     if (withAubDump) {
         auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hwInfo);
         auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName, rootDeviceIndex);
@@ -204,7 +204,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         csr->stream->open(nullptr);
 
         // Add the file header.
-        bool streamInitialized = csr->stream->init(hwInfoConfig.getAubStreamSteppingFromHwRevId(hwInfo), csr->aubDeviceId);
+        bool streamInitialized = csr->stream->init(productHelper.getAubStreamSteppingFromHwRevId(hwInfo), csr->aubDeviceId);
         csr->streamInitialized = streamInitialized;
     }
     return csr;

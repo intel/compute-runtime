@@ -21,11 +21,11 @@ DG2TEST_F(GfxCoreHelperTestDg2, GivenDifferentSteppingWhenComputeSlmSizeIsCalled
 
     __REVID revisions[] = {REVISION_A0, REVISION_B};
     auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
 
     auto hwInfo = *defaultHwInfo;
     for (auto revision : revisions) {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
         for (auto &testInput : computeSlmValuesXeHPAndLaterTestsInput) {
             EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize));
         }

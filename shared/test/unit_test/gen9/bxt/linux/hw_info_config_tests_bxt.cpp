@@ -11,9 +11,9 @@
 
 using namespace NEO;
 
-struct BxtProductHelperLinux : HwInfoConfigTestLinux {
+struct BxtProductHelperLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
 
         drm->storedEUVal = 18;
         drm->storedHasPooledEU = 1;

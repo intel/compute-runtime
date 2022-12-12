@@ -25,7 +25,7 @@ PVCTEST_F(PVCDebugSession, givenPVCRevId3WhenGettingPerThreadScratchOffsetThenPe
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.usRevId = 3;
 
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     L0::ult::Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
@@ -39,9 +39,9 @@ PVCTEST_F(PVCDebugSession, givenPVCRevId3WhenGettingPerThreadScratchOffsetThenPe
     EuThread::ThreadId thread2EuLastSubslice1 = {0, 0, 1, hwInfo.gtSystemInfo.MaxEuPerSubSlice - 1, 2};
 
     const uint32_t ptss = 128;
-    const uint32_t ratio = hwInfoConfig.getThreadEuRatioForScratch(hwInfo) / numThreadsPerEu;
+    const uint32_t ratio = productHelper.getThreadEuRatioForScratch(hwInfo) / numThreadsPerEu;
 
-    EXPECT_EQ(2u, hwInfoConfig.getThreadEuRatioForScratch(hwInfo) / numThreadsPerEu);
+    EXPECT_EQ(2u, productHelper.getThreadEuRatioForScratch(hwInfo) / numThreadsPerEu);
 
     auto offset = debugSession->getPerThreadScratchOffset(ptss, thread0Eu0);
     EXPECT_EQ(0u, offset);

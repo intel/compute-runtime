@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_LAKEFIELD> enableLKF;
+static EnableProductProductHelper<IGFX_LAKEFIELD> enableLKF;
 
 } // namespace NEO

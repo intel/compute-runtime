@@ -181,12 +181,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     const bool enqueueWithBlitAuxTranslation = isBlitAuxTranslationRequired(multiDispatchInfo);
     const auto &hwInfo = this->getDevice().getHardwareInfo();
-    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
     bool canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = false;
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::GpuKernel &&
-                                                                   hwInfoConfig->isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled());
+                                                                   productHelper->isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled());
         if (false == clearDependenciesForSubCapture &&
             false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
             eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::OnCsr);

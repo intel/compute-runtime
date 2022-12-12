@@ -7,11 +7,11 @@
 
 namespace UuidUtil {
 static inline bool uuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString,
-                                     const uint64_t offset, const uint8_t deviceIndex, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
+                                     const uint64_t offset, const uint8_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid);
 } // namespace UuidUtil
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+bool ProductHelperHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
 
     UNRECOVERABLE_IF(device == nullptr);
     if (device->getRootDeviceEnvironment().osInterface == nullptr) {
@@ -53,7 +53,7 @@ bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwI
 namespace UuidUtil {
 
 bool uuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString, const uint64_t offset,
-                       const uint8_t deviceIndex, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+                       const uint8_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     auto pos = guidUuidOffsetMap.find(guidString.data());
     if (pos != guidUuidOffsetMap.end()) {
         uuid.fill(0);

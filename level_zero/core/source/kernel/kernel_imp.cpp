@@ -802,7 +802,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     auto neoDevice = module->getDevice()->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
     auto &kernelDescriptor = kernelImmData->getDescriptor();
     auto ret = NEO::KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, neoDevice);
     if (ret == NEO::KernelHelper::ErrorCode::INVALID_KERNEL) {
@@ -814,7 +814,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
     if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL) {
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
                                                               *neoDevice,
                                                               isaAllocation,
                                                               0,

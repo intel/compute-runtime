@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_DG2> enableDG2;
+static EnableProductProductHelper<IGFX_DG2> enableDG2;
 
 } // namespace NEO

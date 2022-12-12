@@ -14,7 +14,7 @@
 
 namespace NEO {
 template <>
-AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     auto deviceId = hwInfo.platform.usDeviceID;
     bool isKbl = (std::find(kblDeviceIds.begin(), kblDeviceIds.end(), deviceId) != kblDeviceIds.end());
     bool isAml = (std::find(amlDeviceIds.begin(), amlDeviceIds.end(), deviceId) != amlDeviceIds.end());
@@ -28,12 +28,12 @@ AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const
 }
 
 template <>
-std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Kbl;
 };
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDefaultRevisionId() const {
+uint32_t ProductHelperHw<gfxProduct>::getDefaultRevisionId() const {
     return 9u;
 }
 

@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using Dg2ProductHelper = HwInfoConfigTest;
+using Dg2ProductHelper = ProductHelperTest;
 
 DG2TEST_F(Dg2ProductHelper, givenDG2WithCSteppingThenAdditionalStateBaseAddressWAIsNotRequired) {
     pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_C, pInHwInfo);
@@ -52,7 +52,7 @@ DG2TEST_F(Dg2ProductHelper, givenSteppingWhenAskingForLocalMemoryAccessModeThenD
     EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
-DG2TEST_F(Dg2ProductHelper, givenDG2HwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+DG2TEST_F(Dg2ProductHelper, givenDG2ProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported(pInHwInfo));
 }
 

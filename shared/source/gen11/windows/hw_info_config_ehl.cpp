@@ -16,4 +16,4 @@ constexpr static auto gfxProduct = IGFX_ELKHARTLAKE;
 
 #include "shared/source/gen11/ehl/os_agnostic_hw_info_config_ehl.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

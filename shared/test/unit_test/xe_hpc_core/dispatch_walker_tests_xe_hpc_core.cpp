@@ -33,8 +33,8 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     }
 
     {
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        uint32_t expectedValue = hwInfoConfig.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo);
+        const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        uint32_t expectedValue = productHelper.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo);
         walkerArgs.kernelExecutionType = KernelExecutionType::Concurrent;
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
         EXPECT_EQ(expectedValue, walkerCmd.getComputeDispatchAllWalkerEnable());

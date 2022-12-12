@@ -416,10 +416,10 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
     uint32_t contextTypes[] = {ContextType::CONTEXT_TYPE_DEFAULT, ContextType::CONTEXT_TYPE_SPECIALIZED,
                                ContextType::CONTEXT_TYPE_UNRESTRICTIVE};
     __REVID steppingValues[] = {REVISION_A0, REVISION_B};
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
     for (auto stepping : steppingValues) {
-        hardwareStepping = hwInfoConfig.getHwRevIdFromStepping(stepping, *defaultHwInfo);
+        hardwareStepping = productHelper.getHwRevIdFromStepping(stepping, *defaultHwInfo);
         if (hardwareStepping == CommonConstants::invalidStepping) {
             continue;
         }

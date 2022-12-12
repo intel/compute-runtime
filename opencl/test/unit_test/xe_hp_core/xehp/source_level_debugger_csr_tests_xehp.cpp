@@ -30,8 +30,8 @@ XEHPTEST_F(CommandStreamReceiverWithActiveDebuggerXehpTest, GivenASteppingAndAct
     using MI_NOOP = typename FamilyType::MI_NOOP;
 
     hwInfo = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVID::REVISION_A0, *hwInfo);
 
     auto mockCsr = createCSR<FamilyType>();
     mockCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);

@@ -72,7 +72,7 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
         }
     }
 
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAllocationSizeAdjustmentRequired(hwInfo)) {
+    if (ProductHelper::get(hwInfo.platform.eProductFamily)->isAllocationSizeAdjustmentRequired(hwInfo)) {
         pInterfaceDescriptor->setPreferredSlmAllocationSize(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K);
     } else {
         pInterfaceDescriptor->setPreferredSlmAllocationSize(programmableIdPreferredSlmSize);
@@ -87,8 +87,8 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
 
 template <>
 void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
         if (interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup() == 1) {
             interfaceDescriptor.setThreadGroupDispatchSize(static_cast<INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE>(2u));
         } else {
@@ -113,7 +113,7 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 
 template <>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
-    bool l3PrefetchDisable = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isPrefetchDisablingRequired(hwInfo);
+    bool l3PrefetchDisable = ProductHelper::get(hwInfo.platform.eProductFamily)->isPrefetchDisablingRequired(hwInfo);
     int32_t overrideL3PrefetchDisable = DebugManager.flags.ForceL3PrefetchForComputeWalker.get();
     if (overrideL3PrefetchDisable != -1) {
         l3PrefetchDisable = !overrideL3PrefetchDisable;
@@ -131,8 +131,8 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
     auto maskBits = stateComputeMode.getMaskBits();
 
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    bool ignoreIsDirty = hwInfoConfig.programAllStateComputeCommandFields();
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    bool ignoreIsDirty = productHelper.programAllStateComputeCommandFields();
 
     if (properties.zPassAsyncComputeThreadLimit.isDirty ||
         (ignoreIsDirty && (properties.zPassAsyncComputeThreadLimit.value != -1))) {
@@ -155,7 +155,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
     stateComputeMode.setMaskBits(maskBits);
 
-    hwInfoConfig.setForceNonCoherent(&stateComputeMode, properties);
+    productHelper.setForceNonCoherent(&stateComputeMode, properties);
 
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();
     *buffer = stateComputeMode;
@@ -176,8 +176,8 @@ void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE 
 
 template <>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isAdjustWalkOrderAvailable(hwInfo)) {
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isAdjustWalkOrderAvailable(hwInfo)) {
         if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::linearWalk) {
             walkerCmd.setDispatchWalkOrder(WALKER_TYPE::DISPATCH_WALK_ORDER::LINERAR_WALKER);
         } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {

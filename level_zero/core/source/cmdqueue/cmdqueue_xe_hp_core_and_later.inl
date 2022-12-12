@@ -91,13 +91,13 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
 
     NEO::Device *neoDevice = device->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
     size_t size = 0;
 
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         size += sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
 
-        if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+        if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
             size += sizeof(STATE_BASE_ADDRESS);
         }
     }

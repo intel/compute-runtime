@@ -94,9 +94,9 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenKernelArgIsSetA
 
         DebugManagerStateRestore dbgRestore;
         DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
-        const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+        const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
         auto stepping = (isA0Stepping ? REVISION_A0 : REVISION_A1);
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->initGmm();
 
@@ -217,9 +217,9 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenAllocationRequi
         DebugManagerStateRestore restore;
         DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
         DebugManager.flags.EnableTimestampPacket.set(0);
-        const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+        const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
         auto stepping = (isA0Stepping ? REVISION_A0 : REVISION_A1);
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->initGmm();
 

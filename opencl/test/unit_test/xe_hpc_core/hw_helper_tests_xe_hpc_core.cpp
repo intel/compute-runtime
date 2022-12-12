@@ -80,7 +80,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocat
         EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
     }
 
-    if (HwInfoConfig::get(hwInfo->platform.eProductFamily)->isTilePlacementResourceWaRequired(*hwInfo)) {
+    if (ProductHelper::get(hwInfo->platform.eProductFamily)->isTilePlacementResourceWaRequired(*hwInfo)) {
         EXPECT_EQ(tile0Mask, heapAllocation->storageInfo.memoryBanks);
     }
 
@@ -116,8 +116,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGe
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenSetCccsProperly) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.featureTable.flags.ftrRcsNode = false;
@@ -151,8 +151,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledButDebugVariable
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenDontSetCccs) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.featureTable.flags.ftrRcsNode = false;
@@ -184,8 +184,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBcsDisabledWhenIsCooperative
     const size_t numEngines = 11;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 0;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
@@ -228,8 +228,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenOneBcsEnabledWhenIsCooperati
     const size_t numEngines = 13;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -275,8 +275,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenIsCoope
     const size_t numEngines = 10;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.featureTable.ftrBcsInfo.set(0, false);
@@ -323,8 +323,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenOneCcsEnabledWhenIsCooperati
     const size_t numEngines = 16;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -373,8 +373,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenIsCoo
     const size_t numEngines = 22;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -429,8 +429,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedE
     const size_t numEngines = 22;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -485,8 +485,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedE
     const size_t numEngines = 22;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -659,17 +659,17 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperWhenGettingThre
     EXPECT_EQ(8U, configs[1]);
 }
 
-using HwInfoConfigTestXeHpcCore = Test<DeviceFixture>;
+using ProductHelperTestXeHpcCore = Test<DeviceFixture>;
 
-XE_HPC_CORETEST_F(HwInfoConfigTestXeHpcCore, givenDefaultHwInfoConfigHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
-    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenDefaultProductHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
+    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
     MockGraphicsAllocation allocation;
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
     allocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
-    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, allocation));
+    EXPECT_FALSE(productHelper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, allocation));
 }
 
-XE_HPC_CORETEST_F(HwInfoConfigTestXeHpcCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
+XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
     auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -683,7 +683,7 @@ XE_HPC_CORETEST_F(HwInfoConfigTestXeHpcCore, givenDebugVariableSetWhenConfigureI
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
 
-XE_HPC_CORETEST_F(HwInfoConfigTestXeHpcCore, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
+XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
     auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -730,7 +730,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportI
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto productHelper = ProductHelper::get(productFamily);
 
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
 
@@ -750,7 +750,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportI
                                            (aub_stream::ENGINE_BCS == engineTypeT ||
                                             aub_stream::ENGINE_BCS1 == engineTypeT ||
                                             aub_stream::ENGINE_BCS3 == engineTypeT));
-                    bool isBdA0 = hwInfoConfig->isBcsReportWaRequired(hwInfo);
+                    bool isBdA0 = productHelper->isBcsReportWaRequired(hwInfo);
 
                     bool applyWa = affectedEngine;
                     applyWa &= isBdA0 || (debugFlag == 1);
@@ -768,7 +768,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZ
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto productHelper = ProductHelper::get(productFamily);
 
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
     constexpr DeviceBitfield originalTileMasks[4] = {0b1, 0b11, 0b10, 0b1011};
@@ -784,7 +784,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZ
         for (auto rev : bdRev) {
             hwInfo.platform.usRevId = rev;
 
-            bool isBdA0 = hwInfoConfig->isTilePlacementResourceWaRequired(hwInfo);
+            bool isBdA0 = productHelper->isTilePlacementResourceWaRequired(hwInfo);
 
             for (auto originalMask : originalTileMasks) {
                 AllocationData allocData;

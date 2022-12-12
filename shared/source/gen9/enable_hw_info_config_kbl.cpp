@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_KABYLAKE> enableKBL;
+static EnableProductProductHelper<IGFX_KABYLAKE> enableKBL;
 
 } // namespace NEO

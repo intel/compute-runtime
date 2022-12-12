@@ -74,7 +74,7 @@ DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
 }
 
-using Dg1ProductHelper = HwInfoConfigTest;
+using Dg1ProductHelper = ProductHelperTest;
 
 DG1TEST_F(Dg1ProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Dg1, productHelper->getAubStreamProductFamily());

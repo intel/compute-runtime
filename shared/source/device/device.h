@@ -140,9 +140,9 @@ class Device : public ReferenceTrackedObject<Device> {
 
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
-    bool getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
-    void generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
-    void getAdapterLuid(std::array<uint8_t, HwInfoConfig::luidSize> &luid);
+    bool getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
+    void generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
+    void getAdapterLuid(std::array<uint8_t, ProductHelper::luidSize> &luid);
     MOCKABLE_VIRTUAL bool verifyAdapterLuid();
     void getAdapterMask(uint32_t &nodeMask);
     const GfxCoreHelper &getGfxCoreHelper() const;
@@ -216,9 +216,9 @@ class Device : public ReferenceTrackedObject<Device> {
 
     struct {
         bool isValid = false;
-        std::array<uint8_t, HwInfoConfig::uuidSize> id;
+        std::array<uint8_t, ProductHelper::uuidSize> id;
     } uuid;
-    bool generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
+    bool generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, ProductHelper::uuidSize> &uuid);
 };
 
 inline EngineControl &Device::getDefaultEngine() {

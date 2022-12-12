@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,8 @@ XE_HPC_CORETEST_F(EnqueueKernelTestGenXeHpcCore, givenCommandQueueWithCCCSEngine
     cl_int retVal = CL_SUCCESS;
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = true;
     pCommandQueue->getGpgpuEngine().osContext = pCommandQueue->getDevice().getEngine(aub_stream::ENGINE_CCCS, EngineUsage::Regular).osContext;

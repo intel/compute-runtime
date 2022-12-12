@@ -31,7 +31,7 @@
 namespace NEO {
 
 IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelper(drmArg) {
-    auto gfxCoreHelper = HwInfoConfig::get(this->drm.getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
+    auto gfxCoreHelper = ProductHelper::get(this->drm.getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
     handleExecBufferInNonBlockMode = gfxCoreHelper && gfxCoreHelper->isNonBlockingGpuSubmissionSupported();
     if (DebugManager.flags.ForceNonblockingExecbufferCalls.get() != -1) {
         handleExecBufferInNonBlockMode = DebugManager.flags.ForceNonblockingExecbufferCalls.get();
@@ -750,7 +750,7 @@ bool IoctlHelperPrelim20::initialize() {
     bool result = queryHwIpVersion(engineInfo, hwInfo->ipVersion, ret);
     if (result == false &&
         ret != 0 &&
-        HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPlatformQuerySupported()) {
+        ProductHelper::get(hwInfo->platform.eProductFamily)->isPlatformQuerySupported()) {
         int err = drm.getErrno();
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
                            "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));

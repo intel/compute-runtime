@@ -183,7 +183,7 @@ bool MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(const Hardwar
 
 template <typename GfxFamily>
 inline bool GfxCoreHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const {
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
+    if (ProductHelper::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
         return false;
     }
 

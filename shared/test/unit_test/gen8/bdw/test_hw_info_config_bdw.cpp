@@ -17,7 +17,7 @@
 #include "platforms.h"
 
 using namespace NEO;
-using BdwProductHelper = HwInfoConfigTest;
+using BdwProductHelper = ProductHelperTest;
 
 BDWTEST_F(BdwProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 

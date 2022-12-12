@@ -23,11 +23,11 @@ HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAddi
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
-    if (!hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
+    if (!productHelper.isDisableOverdispatchAvailable(hwInfo)) {
         GTEST_SKIP();
     }
 

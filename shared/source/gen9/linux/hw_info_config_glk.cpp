@@ -22,7 +22,7 @@ constexpr static auto gfxProduct = IGFX_GEMINILAKE;
 namespace NEO {
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (nullptr == osIface || osIface->getDriverModel()->getDriverModelType() == DriverModelType::WDDM) {
         return 0;
     }
@@ -69,5 +69,5 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     return 0;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

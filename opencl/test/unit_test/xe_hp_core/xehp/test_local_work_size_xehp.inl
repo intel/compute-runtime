@@ -33,8 +33,8 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpA0WhenKernelIsaIsBelowThreshold
     auto maxWgSize = pClDevice->getSharedDeviceInfo().maxWorkGroupSize;
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_EQ(64u, expectedLws.x * expectedLws.y * expectedLws.z);
@@ -60,7 +60,7 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpA0WhenKernelIsaIsBelowThreshold
 
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 0u;
     //on B0 algorithm is disabled
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);
         EXPECT_EQ(maxWgSize, expectedLws.x * expectedLws.y * expectedLws.z);

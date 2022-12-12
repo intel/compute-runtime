@@ -10,9 +10,9 @@
 
 using namespace NEO;
 
-struct SklProductHelperLinux : HwInfoConfigTestLinux {
+struct SklProductHelperLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
     }
 };
 
@@ -196,8 +196,8 @@ TYPED_TEST(SklHwInfoTests, givenGTSystemInfoTypeWhenConfigureHardwareCustomThenS
     TypeParam::setupHardwareInfo(&hwInfo, false);
     auto sliceCount = gtSystemInfo.SliceCount;
 
-    HwInfoConfig *hwConfig = HwInfoConfig::get(PRODUCT_FAMILY::IGFX_SKYLAKE);
+    ProductHelper *productHelper = ProductHelper::get(PRODUCT_FAMILY::IGFX_SKYLAKE);
 
-    hwConfig->configureHardwareCustom(&hwInfo, osInterface.get());
+    productHelper->configureHardwareCustom(&hwInfo, osInterface.get());
     EXPECT_EQ(gtSystemInfo.SliceCount, sliceCount);
 }

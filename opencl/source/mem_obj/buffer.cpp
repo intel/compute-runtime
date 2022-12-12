@@ -181,11 +181,11 @@ bool inline copyHostPointer(Buffer *buffer,
         auto context = buffer->getContext();
         auto &device = context->getDevice(0u)->getDevice();
         auto &hwInfo = device.getHardwareInfo();
-        auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
         bool copyOnCpuAllowed = implicitScalingEnabled == false &&
                                 size <= Buffer::maxBufferSizeForCopyOnCpu &&
                                 isCompressionEnabled == false &&
-                                hwInfoConfig->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed;
+                                productHelper->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed;
         if (DebugManager.flags.CopyHostPtrOnCpu.get() != -1) {
             copyOnCpuAllowed = DebugManager.flags.CopyHostPtrOnCpu.get() == 1;
         }
@@ -197,7 +197,7 @@ bool inline copyHostPointer(Buffer *buffer,
         } else {
             auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
 
-            if (hwInfoConfig->isBlitterFullySupported(hwInfo) && isLocalMemory) {
+            if (productHelper->isBlitterFullySupported(hwInfo) && isLocalMemory) {
                 blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, memory, buffer->getOffset(), hostPtr, {size, 1, 1});
             }
 

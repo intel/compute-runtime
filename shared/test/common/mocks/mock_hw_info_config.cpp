@@ -16,118 +16,118 @@
 namespace NEO {
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
+void ProductHelperHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     return 0;
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
     return 0;
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {
+void ProductHelperHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
+void ProductHelperHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
 }
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilities(const HardwareInfo *hwInfo) {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilities(const HardwareInfo *hwInfo) {
     return 0;
 }
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemCapabilities() {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemCapabilities() {
     return 0;
 }
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getSingleDeviceSharedMemCapabilities() {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSingleDeviceSharedMemCapabilities() {
     return 0;
 }
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getCrossDeviceSharedMemCapabilities() {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getCrossDeviceSharedMemCapabilities() {
     return 0;
 }
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) {
     return 0;
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
+void ProductHelperHw<IGFX_UNKNOWN>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::overrideGfxPartitionLayoutForWsl() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::overrideGfxPartitionLayoutForWsl() const {
     return false;
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 0;
 }
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 0;
 }
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 0;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isBlitterFullySupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isBlitterFullySupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }
 
 template <>
-AOT::PRODUCT_CONFIG HwInfoConfigHw<IGFX_UNKNOWN>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+AOT::PRODUCT_CONFIG ProductHelperHw<IGFX_UNKNOWN>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     return AOT::UNKNOWN_ISA;
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     switch (getSteppingFromHwRevId(hwInfo)) {
     default:
     case REVISION_A0:
@@ -145,233 +145,233 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const Har
     }
 }
 template <>
-std::string HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryName() const {
+std::string ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryName() const {
     return "";
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::allowCompression(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::allowCompression(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-LocalMemoryAccessMode HwInfoConfigHw<IGFX_UNKNOWN>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+LocalMemoryAccessMode ProductHelperHw<IGFX_UNKNOWN>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     return LocalMemoryAccessMode::Default;
 }
 
 template <>
-LocalMemoryAccessMode HwInfoConfigHw<IGFX_UNKNOWN>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+LocalMemoryAccessMode ProductHelperHw<IGFX_UNKNOWN>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     return LocalMemoryAccessMode::Default;
 }
 
 template <>
-std::vector<int32_t> HwInfoConfigHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> ProductHelperHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbitrationPolicies() {
     return {};
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
     return false;
 }
 
 template <>
-std::pair<bool, bool> HwInfoConfigHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+std::pair<bool, bool> ProductHelperHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     return {false, false};
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+void ProductHelperHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdditionalMediaSamplerProgrammingRequired() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isAdditionalMediaSamplerProgrammingRequired() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isInitialFlagsProgrammingRequired() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isInitialFlagsProgrammingRequired() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::is3DPipelineSelectWARequired() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::is3DPipelineSelectWARequired() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isStorageInfoAdjustmentRequired() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isStorageInfoAdjustmentRequired() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isBlitterForImagesSupported() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isBlitterForImagesSupported() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isDcFlushAllowed() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isDcFlushAllowed() const {
     return true;
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isFlushTaskAllowed() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isFlushTaskAllowed() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::programAllStateComputeCommandFields() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::programAllStateComputeCommandFields() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
     return 8u;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {
+void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) {
+void ProductHelperHw<IGFX_UNKNOWN>::updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) {
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::enableCompression(HardwareInfo *hwInfo) const {
+void ProductHelperHw<IGFX_UNKNOWN>::enableCompression(HardwareInfo *hwInfo) const {
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isTimestampWaitSupportedForEvents() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isTimestampWaitSupportedForEvents() const {
     return false;
 }
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() {
     return 0;
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvictionIfNecessaryFlagSupported() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isEvictionIfNecessaryFlagSupported() const {
     return true;
 }
 
@@ -386,7 +386,7 @@ uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy(bool isDebug
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isPrefetcherDisablingInDirectSubmissionRequired() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isPrefetcherDisablingInDirectSubmissionRequired() const {
     return true;
 }
 
@@ -451,5 +451,5 @@ struct HwMapper<IGFX_UNKNOWN> {
 
 #include "shared/source/os_interface/hw_info_config.inl"
 
-template class NEO::HwInfoConfigHw<IGFX_UNKNOWN>;
+template class NEO::ProductHelperHw<IGFX_UNKNOWN>;
 template struct NEO::L1CachePolicyHelper<IGFX_UNKNOWN>;

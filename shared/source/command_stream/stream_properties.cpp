@@ -19,8 +19,8 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
                                                const HardwareInfo &hwInfo) {
 
     if (this->propertiesSupportLoaded == false) {
-        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        hwInfoConfig.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
+        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        productHelper.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
         this->propertiesSupportLoaded = true;
     }
 
@@ -105,8 +105,8 @@ void StateComputeModeProperties::clearIsDirty() {
 
 void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
     if (this->propertiesSupportLoaded == false) {
-        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        hwInfoConfig.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
+        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }
 
@@ -131,8 +131,8 @@ void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUF
 
 void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
     if (this->propertiesSupportLoaded == false) {
-        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        hwInfoConfig.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
+        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }
     this->singleSliceDispatchCcsMode.isDirty = false;
@@ -164,8 +164,8 @@ void FrontEndProperties::clearIsDirty() {
 
 void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const HardwareInfo &hwInfo) {
     if (this->propertiesSupportLoaded == false) {
-        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        hwInfoConfig.fillPipelineSelectPropertiesSupportStructure(this->pipelineSelectPropertiesSupport, hwInfo);
+        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        productHelper.fillPipelineSelectPropertiesSupportStructure(this->pipelineSelectPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }
 
@@ -207,8 +207,8 @@ void StateBaseAddressProperties::setProperties(bool globalAtomics, int32_t state
                                                int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
                                                int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const HardwareInfo &hwInfo) {
     if (this->propertiesSupportLoaded == false) {
-        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        hwInfoConfig.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport, hwInfo);
+        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        productHelper.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }
 

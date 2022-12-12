@@ -500,7 +500,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesA
 PVCTEST_F(EngineNodeHelperPvcTests, givenNonTile0AccessWhenGettingIsBlitCopyRequiredForLocalMemoryThenProperValueIsReturned) {
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
@@ -512,23 +512,23 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenNonTile0AccessWhenGettingIsBlitCopyRequ
 
     graphicsAllocation.storageInfo.cloningOfPageTables = false;
     graphicsAllocation.storageInfo.memoryBanks = 0b11;
-    EXPECT_EQ(expectedRetVal, hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    EXPECT_EQ(expectedRetVal, productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
     graphicsAllocation.storageInfo.memoryBanks = 0b10;
-    EXPECT_EQ(expectedRetVal, hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    EXPECT_EQ(expectedRetVal, productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
 
     {
         VariableBackup<unsigned short> revisionId{&hwInfo.platform.usRevId};
         revisionId = 0b111000;
-        EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+        EXPECT_FALSE(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
     }
     {
         VariableBackup<bool> cloningOfPageTables{&graphicsAllocation.storageInfo.cloningOfPageTables};
         cloningOfPageTables = true;
-        EXPECT_EQ(expectedRetVal, hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+        EXPECT_EQ(expectedRetVal, productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
     }
     {
         VariableBackup<DeviceBitfield> memoryBanks{&graphicsAllocation.storageInfo.memoryBanks};
         memoryBanks = 0b1;
-        EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+        EXPECT_FALSE(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
     }
 }

@@ -59,9 +59,9 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     }
 
     auto &hwInfo = device.getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    auto success = MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *gpuAllocation),
+    auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *gpuAllocation),
                                                                     device, gpuAllocation, 0, initData, size);
 
     UNRECOVERABLE_IF(!success);

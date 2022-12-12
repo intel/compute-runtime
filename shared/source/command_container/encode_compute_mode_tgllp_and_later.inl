@@ -15,8 +15,8 @@ namespace NEO {
 template <typename Family>
 size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
     size_t size = 0;
-    auto &hwInfoConfig = (*HwInfoConfig::get(hwInfo.platform.eProductFamily));
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    auto &productHelper = (*ProductHelper::get(hwInfo.platform.eProductFamily));
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {
@@ -26,7 +26,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
     if (hasSharedHandles) {
         size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
     }
-    if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs) {
+    if (productHelper.is3DPipelineSelectWARequired() && isRcs) {
         size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(hwInfo));
     }
     return size;
@@ -39,8 +39,8 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
 
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, hwInfo, isRcs);
 
-    auto &hwInfoConfig = (*HwInfoConfig::get(hwInfo.platform.eProductFamily));
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    auto &productHelper = (*ProductHelper::get(hwInfo.platform.eProductFamily));
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {

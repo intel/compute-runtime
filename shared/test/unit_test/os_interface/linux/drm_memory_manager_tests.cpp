@@ -3786,7 +3786,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
     if ((GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getNumCacheRegions() == 0) &&
-        HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
+        ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
         EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
     } else {
         EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
@@ -3803,7 +3803,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     allocation.bufferObjects[0] = &bo;
 
     if ((GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getNumCacheRegions() == 0) &&
-        HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
+        ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
         EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
     } else {
         EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
@@ -5155,7 +5155,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenPatIndex
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     ASSERT_NE(nullptr, drmAllocation->getBO());
 
-    auto isVmBindPatIndexProgrammingSupported = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+    auto isVmBindPatIndexProgrammingSupported = ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
 
     EXPECT_EQ(isVmBindPatIndexProgrammingSupported, mock->isVmBindPatIndexProgrammingSupported());
 
@@ -5186,7 +5186,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     ASSERT_NE(nullptr, drmAllocation->getBO());
 
-    auto isVmBindPatIndexProgrammingSupported = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+    auto isVmBindPatIndexProgrammingSupported = ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
 
     if (isVmBindPatIndexProgrammingSupported) {
         auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());

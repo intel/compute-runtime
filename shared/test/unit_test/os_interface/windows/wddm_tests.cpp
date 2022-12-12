@@ -116,9 +116,9 @@ TEST_F(WddmTests, GivenDebugFlagDisablesEvictIfNecessarySupportThenFlagIsFalse) 
     DebugManagerStateRestore restorer{};
     DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(0);
 
-    auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
+    auto productHelper = ProductHelper::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
 
-    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*productHelper);
     EXPECT_FALSE(wddm->platformSupportsEvictIfNecessary);
 }
 
@@ -126,25 +126,25 @@ TEST_F(WddmTests, GivenDebugFlagEnablesEvictIfNecessarySupportThenFlagIsTrue) {
     DebugManagerStateRestore restorer{};
     DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
-    auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
+    auto productHelper = ProductHelper::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
 
-    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*productHelper);
     EXPECT_TRUE(wddm->platformSupportsEvictIfNecessary);
 }
 
 TEST_F(WddmTests, givenDebugFlagForceEvictOnlyIfNecessaryAllValuesThenForceSettingIsSetCorrectly) {
     DebugManagerStateRestore restorer{};
-    auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
+    auto productHelper = ProductHelper::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
 
-    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*productHelper);
     EXPECT_EQ(-1, wddm->forceEvictOnlyIfNecessary);
 
     DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(0);
-    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*productHelper);
     EXPECT_EQ(0, wddm->forceEvictOnlyIfNecessary);
 
     DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(1);
-    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*productHelper);
     EXPECT_EQ(1, wddm->forceEvictOnlyIfNecessary);
 }
 

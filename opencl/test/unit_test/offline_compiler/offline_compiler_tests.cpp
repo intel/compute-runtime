@@ -3010,7 +3010,7 @@ class MockCompilerProductHelperHw : public CompilerProductHelperHw<productFamily
 
 HWTEST2_F(OfflineCompilerStatelessToStatefulTests, givenMockWhenAppendExtraInternalOptionsThenInternalOptionsAreCorrect, MatchAny) {
     MockCompilerProductHelperHw<productFamily> mockCompilerProductHelper;
-    VariableBackup<CompilerProductHelper *> backupMockHwInfoConfig(&CompilerProductHelperFactory[productFamily], &mockCompilerProductHelper);
+    VariableBackup<CompilerProductHelper *> backupMockProductHelper(&CompilerProductHelperFactory[productFamily], &mockCompilerProductHelper);
     runTest();
 }
 

@@ -22,10 +22,10 @@ struct ProductConfigTest : public T {
     void SetUp() override {
         T::SetUp();
         hwInfo = *NEO::defaultHwInfo;
-        hwInfoConfig = NEO::HwInfoConfig::get(productFamily);
+        productHelper = NEO::ProductHelper::get(productFamily);
     }
 
-    NEO::HwInfoConfig *hwInfoConfig = nullptr;
+    NEO::ProductHelper *productHelper = nullptr;
     NEO::HardwareInfo hwInfo = {};
     AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
 };

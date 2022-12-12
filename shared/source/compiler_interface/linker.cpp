@@ -480,13 +480,13 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
 
     if (isAnySymbolRelocated) {
         auto &hwInfo = pDevice->getHardwareInfo();
-        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
         if (globalConstantsSeg) {
-            bool useBlitter = hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *globalConstantsSeg);
+            bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *globalConstantsSeg);
             MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalConstantsSeg, 0, constantsInitDataCopy.data(), constantsInitDataCopy.size());
         }
         if (globalVariablesSeg) {
-            bool useBlitter = hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *globalVariablesSeg);
+            bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *globalVariablesSeg);
             MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalVariablesSeg, 0, variablesInitDataCopy.data(), variablesInitDataCopy.size());
         }
     }

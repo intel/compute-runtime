@@ -337,7 +337,7 @@ HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnab
 
 HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
-        !(HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
+        !(ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
         GTEST_SKIP();
     }
 

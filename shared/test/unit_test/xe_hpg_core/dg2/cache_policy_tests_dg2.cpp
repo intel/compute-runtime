@@ -15,13 +15,13 @@
 
 using namespace NEO;
 
-DG2TEST_F(HwInfoConfigTest, givenDG2WhenGetL1CachePolicyThenReturnWbPolicyUnlessDebuggerIsActive) {
+DG2TEST_F(ProductHelperTest, givenDG2WhenGetL1CachePolicyThenReturnWbPolicyUnlessDebuggerIsActive) {
     using GfxFamily = typename HwMapper<IGFX_DG2>::GfxFamily;
     EXPECT_EQ(L1CachePolicyHelper<IGFX_DG2>::getL1CachePolicy(false), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB);
     EXPECT_EQ(L1CachePolicyHelper<IGFX_DG2>::getL1CachePolicy(true), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP);
 }
 
-DG2TEST_F(HwInfoConfigTest, givenDG2WhenGetCachingPolicyOptionsThenReturnCorrectValue) {
+DG2TEST_F(ProductHelperTest, givenDG2WhenGetCachingPolicyOptionsThenReturnCorrectValue) {
     {
         const char *writeBackPolicyOptions = "-cl-store-cache-default=7 -cl-load-cache-default=4";
         EXPECT_EQ(0, memcmp(L1CachePolicyHelper<IGFX_DG2>::getCachingPolicyOptions(false), writeBackPolicyOptions, strlen(writeBackPolicyOptions)));

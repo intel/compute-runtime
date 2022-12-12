@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_ALDERLAKE_P> enableADLP;
+static EnableProductProductHelper<IGFX_ALDERLAKE_P> enableADLP;
 
 } // namespace NEO

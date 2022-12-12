@@ -18,17 +18,17 @@ using ClGfxCoreHelperTestsPvcXt = Test<ClGfxCoreHelperXeHpcCoreFixture>;
 
 PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenSingleTileCsrOnPvcXtWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInProperMemoryPool) {
     auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
     hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo); // not BD A0
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo); // not BD A0
     checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(&hwInfo);
 }
 
 PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenMultiTileCsrOnPvcWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInLocalMemoryPool) {
     auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
     hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo); // not BD A0
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo); // not BD A0
     checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(&hwInfo);
 }
 } // namespace NEO

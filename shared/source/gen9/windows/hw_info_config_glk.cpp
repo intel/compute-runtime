@@ -16,4 +16,4 @@ constexpr static auto gfxProduct = IGFX_GEMINILAKE;
 
 #include "shared/source/gen9/glk/os_agnostic_hw_info_config_glk.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

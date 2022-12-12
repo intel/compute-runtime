@@ -551,10 +551,10 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
 
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     auto &hwInfo = this->getHwInfo();
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, hwInfoConfig.getDeviceMemoryName().c_str());
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, productHelper.getDeviceMemoryName().c_str());
     auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
-    pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(hwInfo, osInterface, 0);
+    pMemProperties->maxClockRate = productHelper.getDeviceMemoryMaxClkRate(hwInfo, osInterface, 0);
     pMemProperties->maxBusWidth = deviceInfo.addressBits;
 
     if (this->isImplicitScalingCapable() ||
@@ -587,8 +587,8 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
             if (this->isImplicitScalingCapable()) {
                 enabledSubDeviceCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
             }
-            extendedProperties->physicalSize = hwInfoConfig.getDeviceMemoryPhysicalSizeInBytes(osInterface, 0) * enabledSubDeviceCount;
-            const uint64_t bandwidthInBytesPerSecond = hwInfoConfig.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, osInterface, 0) * enabledSubDeviceCount;
+            extendedProperties->physicalSize = productHelper.getDeviceMemoryPhysicalSizeInBytes(osInterface, 0) * enabledSubDeviceCount;
+            const uint64_t bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, osInterface, 0) * enabledSubDeviceCount;
 
             // Convert to nano-seconds range
             extendedProperties->readBandwidth = static_cast<uint32_t>(bandwidthInBytesPerSecond * 1e-9);
@@ -603,15 +603,15 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
 
 ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) {
     auto &hwInfo = this->getHwInfo();
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
     pMemAccessProperties->hostAllocCapabilities =
-        static_cast<ze_memory_access_cap_flags_t>(hwInfoConfig.getHostMemCapabilities(&hwInfo));
+        static_cast<ze_memory_access_cap_flags_t>(productHelper.getHostMemCapabilities(&hwInfo));
 
     pMemAccessProperties->deviceAllocCapabilities =
-        static_cast<ze_memory_access_cap_flags_t>(hwInfoConfig.getDeviceMemCapabilities());
+        static_cast<ze_memory_access_cap_flags_t>(productHelper.getDeviceMemCapabilities());
 
     pMemAccessProperties->sharedSingleDeviceAllocCapabilities =
-        static_cast<ze_memory_access_cap_flags_t>(hwInfoConfig.getSingleDeviceSharedMemCapabilities());
+        static_cast<ze_memory_access_cap_flags_t>(productHelper.getSingleDeviceSharedMemCapabilities());
 
     pMemAccessProperties->sharedCrossDeviceAllocCapabilities = {};
     if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported) {
@@ -628,7 +628,7 @@ ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_propert
     }
 
     pMemAccessProperties->sharedSystemAllocCapabilities =
-        static_cast<ze_memory_access_cap_flags_t>(hwInfoConfig.getSharedSystemMemCapabilities(&hwInfo));
+        static_cast<ze_memory_access_cap_flags_t>(productHelper.getSharedSystemMemCapabilities(&hwInfo));
 
     return ZE_RESULT_SUCCESS;
 }
@@ -690,7 +690,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     pKernelProperties->printfBufferSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().printfBufferSize);
 
     auto &hwInfo = this->getHwInfo();
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
     void *pNext = pKernelProperties->pNext;
     while (pNext) {
@@ -698,13 +698,13 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
             ze_float_atomic_ext_properties_t *floatProperties =
                 reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);
-            hwInfoConfig.getKernelExtendedProperties(&floatProperties->fp16Flags,
-                                                     &floatProperties->fp32Flags,
-                                                     &floatProperties->fp64Flags);
+            productHelper.getKernelExtendedProperties(&floatProperties->fp16Flags,
+                                                      &floatProperties->fp32Flags,
+                                                      &floatProperties->fp64Flags);
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES) {
             ze_scheduling_hint_exp_properties_t *hintProperties =
                 reinterpret_cast<ze_scheduling_hint_exp_properties_t *>(extendedProperties);
-            auto supportedThreadArbitrationPolicies = hwInfoConfig.getKernelSupportedThreadArbitrationPolicies();
+            auto supportedThreadArbitrationPolicies = productHelper.getKernelSupportedThreadArbitrationPolicies();
             hintProperties->schedulingHintFlags = 0;
             for (auto &p : supportedThreadArbitrationPolicies) {
                 switch (p) {
@@ -751,7 +751,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->flags = 0u;
 
-    std::array<uint8_t, NEO::HwInfoConfig::uuidSize> deviceUuid;
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
     if (this->neoDevice->getUuid(deviceUuid) == false) {
         this->neoDevice->generateUuid(deviceUuid);
     }

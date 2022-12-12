@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_TIGERLAKE_LP> enableTGLLP;
+static EnableProductProductHelper<IGFX_TIGERLAKE_LP> enableTGLLP;
 
 } // namespace NEO

@@ -502,8 +502,8 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
     DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
     auto productFamily = rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily;
-    HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
-    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwConfig);
+    ProductHelper *productHelper = ProductHelper::get(productFamily);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*productHelper);
 
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
     trimNotification.Flags.PeriodicTrim = 1;
@@ -587,8 +587,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
     auto productFamily = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily;
-    HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
-    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwConfig);
+    ProductHelper *productHelper = ProductHelper::get(productFamily);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*productHelper);
 
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
     trimNotification.Flags.PeriodicTrim = 1;

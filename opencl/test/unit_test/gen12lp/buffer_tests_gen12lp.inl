@@ -149,7 +149,7 @@ GEN12LPTEST_F(Gen12lpCreateBufferTest, WhenCreatingBufferWithCopyHostPtrThenDont
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
-    EXPECT_FALSE(HwInfoConfig::get(hwInfo.platform.eProductFamily)->isBlitterFullySupported(hwInfo));
+    EXPECT_FALSE(ProductHelper::get(hwInfo.platform.eProductFamily)->isBlitterFullySupported(hwInfo));
     std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
     std::unique_ptr<BcsMockContext> newBcsMockContext = std::make_unique<BcsMockContext>(newDevice.get());
 

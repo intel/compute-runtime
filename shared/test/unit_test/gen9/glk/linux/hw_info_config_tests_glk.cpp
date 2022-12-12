@@ -10,9 +10,9 @@
 
 using namespace NEO;
 
-struct GlkProductHelperLinux : HwInfoConfigTestLinux {
+struct GlkProductHelperLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
 
         drm->storedEUVal = 18;
         drm->storedHasPooledEU = 1;

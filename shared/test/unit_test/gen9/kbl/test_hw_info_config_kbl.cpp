@@ -16,9 +16,8 @@
 
 using namespace NEO;
 
-using KblProductHelper = HwInfoConfigTest;
+using KblProductHelper = ProductHelperTest;
 
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingDefaultRevisionIdThenZeroIsReturned, IGFX_KABYLAKE)
 KBLTEST_F(KblProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
     EXPECT_EQ(9u, productHelper->getDefaultRevisionId());
 }

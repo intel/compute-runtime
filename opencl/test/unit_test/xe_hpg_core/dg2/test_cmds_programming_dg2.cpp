@@ -151,8 +151,8 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferAndDebugge
 
 DG2TEST_F(CmdsProgrammingTestsDg2, givenDG2WithBSteppingWhenFlushingTaskThenAdditionalStateBaseAddressCommandIsPresent) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);

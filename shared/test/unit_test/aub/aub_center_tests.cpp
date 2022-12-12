@@ -79,9 +79,9 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
     DebugManager.flags.UseAubStream.set(true);
 
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
     for (auto steppingPair : steppingPairsToTest) {
-        auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(steppingPair.stepping, hwInfo);
+        auto hwRevId = productHelper.getHwRevIdFromStepping(steppingPair.stepping, hwInfo);
         if (hwRevId == CommonConstants::invalidStepping) {
             continue;
         }

@@ -9,12 +9,12 @@
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesValue() {
+uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() {
     return (UNIFIED_SHARED_MEMORY_ACCESS);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() {
+uint64_t ProductHelperHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() {
     uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
 
     if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::SharedCrossDevice)) {
@@ -25,13 +25,13 @@ uint64_t HwInfoConfigHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::enableCompression(HardwareInfo *hwInfo) const {
+void ProductHelperHw<gfxProduct>::enableCompression(HardwareInfo *hwInfo) const {
     hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.flags.ftrE2ECompression;
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.flags.ftrE2ECompression;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
+uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     if (isMaxThreadsForWorkgroupWARequired(hwInfo)) {
         return std::min(getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice), 64u);
     }
@@ -39,42 +39,42 @@ uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const Ha
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isBlitterFullySupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isBlitterFullySupported(const HardwareInfo &hwInfo) const {
     return hwInfo.capabilityTable.blitterOperationsSupported;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isNewResidencyModelSupported() const {
+bool ProductHelperHw<gfxProduct>::isNewResidencyModelSupported() const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
     coherencyFlag = false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
+bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
     return true;
 }
 

@@ -63,8 +63,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 
-        auto &hwConfig = rootDeviceEnvironment.getHwInfoConfig();
-        hwConfig.configureHardwareCustom(hardwareInfo, nullptr);
+        auto &productHelper = rootDeviceEnvironment.getProductHelper();
+        productHelper.configureHardwareCustom(hardwareInfo, nullptr);
 
         if (productConfigFound) {
             const auto &compilerProductHelper = *CompilerProductHelper::get(hardwareInfo->platform.eProductFamily);

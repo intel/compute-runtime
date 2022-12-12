@@ -486,7 +486,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                        alignedSize, AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
-    cpuProperties.alignment = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHwInfoConfig().getSvmCpuAlignment();
+    cpuProperties.alignment = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().getSvmCpuAlignment();
     cpuProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false, cacheRegion);
@@ -661,8 +661,8 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             allocationType = AllocationType::WRITE_COMBINED;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
-            const auto &hwInfoConfig = *HwInfoConfig::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eProductFamily);
-            if (hwInfoConfig.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
+            const auto &productHelper = *ProductHelper::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eProductFamily);
+            if (productHelper.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
                 compressionEnabled = true;
             }
             allocationType = AllocationType::BUFFER;

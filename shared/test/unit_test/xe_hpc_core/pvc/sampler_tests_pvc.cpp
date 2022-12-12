@@ -24,7 +24,7 @@ PVCTEST_F(PvcSamplerTest, givenPvcSamplerWhenUsingDefaultFilteringAndAppendSampl
     auto state = FamilyType::cmdInitSamplerState;
 
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
+    ProductHelper::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
@@ -37,6 +37,6 @@ PVCTEST_F(PvcSamplerTest, givenPvcSamplerWhenForcingLowQualityFilteringAndAppend
     auto state = FamilyType::cmdInitSamplerState;
 
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
+    ProductHelper::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }

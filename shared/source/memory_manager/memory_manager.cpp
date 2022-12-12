@@ -575,7 +575,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (use32Allocator || isAllocationOnLimitedGPU ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwInfoConfig::get(hwInfo->platform.eProductFamily)->heapInLocalMem(*hwInfo) : false;
+        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? ProductHelper::get(hwInfo->platform.eProductFamily)->heapInLocalMem(*hwInfo) : false;
         return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMem);
     }
     if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {

@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using BxtProductHelper = HwInfoConfigTest;
+using BxtProductHelper = ProductHelperTest;
 
 BXTTEST_F(BxtProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 

@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-using PvcProductHelper = HwInfoConfigTest;
+using PvcProductHelper = ProductHelperTest;
 
 PVCTEST_F(PvcProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Pvc, productHelper->getAubStreamProductFamily());

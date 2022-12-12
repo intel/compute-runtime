@@ -29,14 +29,14 @@ DG2TEST_F(GfxCoreHelperTestDg2, whenGetExtensionsIsCalledThenMatrixMultiplyAccum
 
 DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto productHelper = ProductHelper::get(productFamily);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.featureTable.flags.ftrRcsNode = true;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    productHelper->configureHardwareCustom(&hwInfo, nullptr);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 

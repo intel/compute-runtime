@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using XeHpProductHelper = HwInfoConfigTest;
+using XeHpProductHelper = ProductHelperTest;
 
 XEHPTEST_F(XeHpProductHelper, givenXEHPWithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
 
@@ -51,7 +51,7 @@ XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenRevisionIsAtLeastBThenAllowS
     }
 }
 
-XEHPTEST_F(XeHpProductHelper, givenXeHpCoreHwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+XEHPTEST_F(XeHpProductHelper, givenXeHpCoreProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     auto hwInfo = *defaultHwInfo;
 
     {

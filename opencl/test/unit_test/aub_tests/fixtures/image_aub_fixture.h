@@ -29,7 +29,7 @@ struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture 
 
     void setUp(bool enableBlitter) {
         if (enableBlitter) {
-            if (!(HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterForImagesSupported())) {
+            if (!(ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isBlitterForImagesSupported())) {
                 GTEST_SKIP();
             }
 

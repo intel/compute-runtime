@@ -21,9 +21,9 @@
 
 using namespace NEO;
 
-using XeHPHwInfoConfig = Test<DeviceFixture>;
+using XeHPProductHelper = Test<DeviceFixture>;
 
-XEHPTEST_F(XeHPHwInfoConfig, givenXeHPMultiConfigWhenConfigureHardwareCustomIsCalledThenCapabilityTableIsSetProperly) {
+XEHPTEST_F(XeHPProductHelper, givenXeHPMultiConfigWhenConfigureHardwareCustomIsCalledThenCapabilityTableIsSetProperly) {
     auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrE2ECompression = true;
@@ -39,7 +39,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenXeHPMultiConfigWhenConfigureHardwareCustomIsCa
     EXPECT_TRUE(hwInfo.capabilityTable.ftrRenderCompressedImages);
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenXeHPWhenConfiguringThenDisableRcs) {
+XEHPTEST_F(XeHPProductHelper, givenXeHPWhenConfiguringThenDisableRcs) {
     auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
 
@@ -47,7 +47,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenXeHPWhenConfiguringThenDisableRcs) {
     EXPECT_FALSE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableRcs) {
+XEHPTEST_F(XeHPProductHelper, givenDebugVariableSetWhenConfiguringThenEnableRcs) {
     DebugManagerStateRestore restore;
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
 
@@ -58,13 +58,13 @@ XEHPTEST_F(XeHPHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableRcs) 
     EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenXeHpWhenCallingGetDeviceMemoryNameThenHbmIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    auto deviceMemoryName = hwInfoConfig->getDeviceMemoryName();
+XEHPTEST_F(XeHPProductHelper, givenXeHpWhenCallingGetDeviceMemoryNameThenHbmIsReturned) {
+    auto productHelper = ProductHelper::get(productFamily);
+    auto deviceMemoryName = productHelper->getDeviceMemoryName();
     EXPECT_TRUE(hasSubstr(deviceMemoryName, std::string("HBM")));
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenA0OrA1SteppingWhenAskingIfExtraParametersAreInvalidThenReturnTrue) {
+XEHPTEST_F(XeHPProductHelper, givenA0OrA1SteppingWhenAskingIfExtraParametersAreInvalidThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
     std::array<std::pair<uint32_t, bool>, 4> revisions = {
         {{REVISION_A0, true},
@@ -85,68 +85,68 @@ XEHPTEST_F(XeHPHwInfoConfig, givenA0OrA1SteppingWhenAskingIfExtraParametersAreIn
 using XeHPGfxCoreHelperTest = GfxCoreHelperTest;
 
 XEHPTEST_F(XeHPGfxCoreHelperTest, givenXeHPMultiConfigWhenAllowCompressionIsCalledThenCorrectValueIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto productHelper = ProductHelper::get(productFamily);
     HardwareInfo hwInfo = *defaultHwInfo;
 
     hwInfo.gtSystemInfo.EUCount = 512u;
-    EXPECT_TRUE(hwInfoConfig->allowCompression(hwInfo));
+    EXPECT_TRUE(productHelper->allowCompression(hwInfo));
 
     hwInfo.gtSystemInfo.EUCount = 256u;
-    EXPECT_FALSE(hwInfoConfig->allowCompression(hwInfo));
+    EXPECT_FALSE(productHelper->allowCompression(hwInfo));
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
-    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+XEHPTEST_F(XeHPProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
+    auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = *defaultHwInfo;
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-    EXPECT_FALSE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+    EXPECT_FALSE(productHelper.isDisableOverdispatchAvailable(hwInfo));
 
     FrontEndPropertiesSupport fePropertiesSupport{};
-    hwInfoConfig.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, hwInfo);
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, hwInfo);
     EXPECT_FALSE(fePropertiesSupport.disableOverdispatch);
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    EXPECT_TRUE(productHelper.isDisableOverdispatchAvailable(hwInfo));
 
-    hwInfoConfig.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, hwInfo);
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, hwInfo);
     EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWithMultipleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+XEHPTEST_F(XeHPProductHelper, givenProductHelperWithMultipleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     auto isRcs = false;
 
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_TRUE(isExtendedWARequired);
     EXPECT_TRUE(isBasicWARequired);
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
+XEHPTEST_F(XeHPProductHelper, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_TRUE(isExtendedWARequired);
     EXPECT_TRUE(isBasicWARequired);
 }
 
-XEHPTEST_F(XeHPHwInfoConfig, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandDisabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenFalseIsReturned) {
+XEHPTEST_F(XeHPProductHelper, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandDisabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_FALSE(isExtendedWARequired);
     EXPECT_TRUE(isBasicWARequired);

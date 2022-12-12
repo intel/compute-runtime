@@ -86,7 +86,7 @@ bool tryWritePartitionLayoutWithinProcess(Wddm &wddm, GMM_GFX_PARTITIONING &part
 
 bool adjustGfxPartitionLayout(GMM_GFX_PARTITIONING &partitionLayout, uint64_t gpuAddressSpace, uintptr_t minAllowedAddress, Wddm &wddm, PRODUCT_FAMILY productFamily) {
     bool requiresRepartitioning = (gpuAddressSpace == maxNBitValue(47)) && wddm.getFeatureTable().flags.ftrCCSRing;
-    requiresRepartitioning |= HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl();
+    requiresRepartitioning |= ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl();
     if (false == requiresRepartitioning) {
         return true;
     }

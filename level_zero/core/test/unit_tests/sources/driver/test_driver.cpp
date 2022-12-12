@@ -317,8 +317,8 @@ TEST(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpTh
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isIpSamplingSupported(hwInfo)) {
+    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isIpSamplingSupported(hwInfo)) {
         GTEST_SKIP();
     }
 

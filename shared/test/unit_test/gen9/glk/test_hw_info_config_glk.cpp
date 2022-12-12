@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using GlkProductHelper = HwInfoConfigTest;
+using GlkProductHelper = ProductHelperTest;
 
 GLKTEST_F(GlkProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 

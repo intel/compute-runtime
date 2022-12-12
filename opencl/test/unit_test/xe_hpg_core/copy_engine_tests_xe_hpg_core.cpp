@@ -293,8 +293,8 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandAndRevisionB0ThenSetTargetMemory) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     HardwareInfo *hwInfo = clDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
     MockContext context(clDevice.get());

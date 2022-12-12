@@ -14,4 +14,4 @@ constexpr static auto gfxProduct = IGFX_KABYLAKE;
 
 #include "shared/source/gen9/kbl/os_agnostic_hw_info_config_kbl.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

@@ -24,7 +24,7 @@
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     enableCompression(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
@@ -32,26 +32,26 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
+void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
     *fp16 = 0u;
     *fp32 = 0u;
     *fp64 = 0u;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::vector<int32_t> HwInfoConfigHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> ProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
     return PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {}
+void ProductHelperHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {}
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {}
+void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {}
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hwInfo) const {
+void ProductHelperHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hwInfo) const {
     hwInfo->capabilityTable.blitterOperationsSupported = obtainBlitterPreference(*hwInfo);
 
     if (DebugManager.flags.EnableBlitterOperationsSupport.get() != -1) {
@@ -60,7 +60,7 @@ void HwInfoConfigHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::disableRcsExposure(HardwareInfo *hwInfo) const {
+void ProductHelperHw<gfxProduct>::disableRcsExposure(HardwareInfo *hwInfo) const {
     hwInfo->featureTable.flags.ftrRcsNode = false;
     if ((DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) || (DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS))) {
         hwInfo->featureTable.flags.ftrRcsNode = true;
@@ -68,7 +68,7 @@ void HwInfoConfigHw<gfxProduct>::disableRcsExposure(HardwareInfo *hwInfo) const 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemCapabilities() {
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemCapabilities() {
     uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
 
     if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::Device)) {
@@ -79,7 +79,7 @@ uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemCapabilities() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
+uint64_t ProductHelperHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
     uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
 
     if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::SharedSingleDevice)) {
@@ -90,12 +90,12 @@ uint64_t HwInfoConfigHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
+bool ProductHelperHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *hwInfo) {
+uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *hwInfo) {
     bool supported = getHostMemCapabilitiesSupported(hwInfo);
 
     if (DebugManager.flags.EnableHostUsmSupport.get() != -1) {
@@ -112,7 +112,7 @@ uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) {
+uint64_t ProductHelperHw<gfxProduct>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) {
     bool supported = false;
 
     if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
@@ -123,7 +123,7 @@ uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities(const Hardwa
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) {
+bool ProductHelperHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) {
     auto supported = false;
 
     if (DebugManager.flags.EnableUsmConcurrentAccessSupport.get() > 0) {
@@ -135,67 +135,67 @@ bool HwInfoConfigHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(Usm
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 0u;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 0;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 0;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
+uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
     uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
     return maxNumEUsPerSubSlice * numThreadsPerEU;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {}
+void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {}
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {}
+void ProductHelperHw<gfxProduct>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {}
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) {}
+void ProductHelperHw<gfxProduct>::updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) {}
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
+bool ProductHelperHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     switch (getSteppingFromHwRevId(hwInfo)) {
     default:
     case REVISION_A0:
@@ -214,32 +214,32 @@ uint32_t HwInfoConfigHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const Hardw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::optional<aub_stream::ProductFamily> HwInfoConfigHw<gfxProduct>::getAubStreamProductFamily() const {
+std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return std::nullopt;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::string HwInfoConfigHw<gfxProduct>::getDeviceMemoryName() const {
+std::string ProductHelperHw<gfxProduct>::getDeviceMemoryName() const {
     return "DDR";
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return getFrontEndPropertyDisableOverDispatchSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
     if (!NEO::ApiSpecificConfig::isStatelessCompressionSupported()) {
         return false;
     }
@@ -250,12 +250,12 @@ bool HwInfoConfigHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &h
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     return LocalMemoryAccessMode::Default;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     switch (static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get())) {
     case LocalMemoryAccessMode::Default:
     case LocalMemoryAccessMode::CpuAccessAllowed:
@@ -266,188 +266,188 @@ LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getLocalMemoryAccessMode(const
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
+bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     return {false, false};
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
+bool ProductHelperHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isInitialFlagsProgrammingRequired() const {
+bool ProductHelperHw<gfxProduct>::isInitialFlagsProgrammingRequired() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
+bool ProductHelperHw<gfxProduct>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::extraParametersInvalid(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::is3DPipelineSelectWARequired() const {
+bool ProductHelperHw<gfxProduct>::is3DPipelineSelectWARequired() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
+bool ProductHelperHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
+bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isDcFlushAllowed() const {
+bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+bool ProductHelperHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
+bool ProductHelperHw<gfxProduct>::isFlushTaskAllowed() const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
+bool ProductHelperHw<gfxProduct>::programAllStateComputeCommandFields() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
     return getPipelineSelectPropertySystolicModeSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
-    return HwInfoConfigHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(hwInfo);
+bool ProductHelperHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
+    return ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(hwInfo);
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
     return 8u;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-size_t HwInfoConfigHw<gfxProduct>::getSvmCpuAlignment() const {
+size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
     return MemoryConstants::pageSize2Mb;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
     return getFrontEndPropertyComputeDispatchAllWalkerSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isVmBindPatIndexProgrammingSupported() const {
+bool ProductHelperHw<gfxProduct>::isVmBindPatIndexProgrammingSupported() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isGrfNumReportedWithScm() const {
+bool ProductHelperHw<gfxProduct>::isGrfNumReportedWithScm() const {
     if (DebugManager.flags.ForceGrfNumProgrammingWithScm.get() != -1) {
         return DebugManager.flags.ForceGrfNumProgrammingWithScm.get();
     }
-    return HwInfoConfigHw<gfxProduct>::getScmPropertyLargeGrfModeSupport();
+    return ProductHelperHw<gfxProduct>::getScmPropertyLargeGrfModeSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isThreadArbitrationPolicyReportedWithScm() const {
+bool ProductHelperHw<gfxProduct>::isThreadArbitrationPolicyReportedWithScm() const {
     if (DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get() != -1) {
         return DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get();
     }
-    return HwInfoConfigHw<gfxProduct>::getScmPropertyThreadArbitrationPolicySupport();
+    return ProductHelperHw<gfxProduct>::getScmPropertyThreadArbitrationPolicySupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
+bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != -1) {
         return DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get();
     }
@@ -455,7 +455,7 @@ bool HwInfoConfigHw<gfxProduct>::isTilePlacementResourceWaRequired(const Hardwar
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.EnableMemoryPrefetch.get() != -1) {
         return !!DebugManager.flags.EnableMemoryPrefetch.get();
     }
@@ -463,7 +463,7 @@ bool HwInfoConfigHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo)
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
         return DebugManager.flags.DoNotReportTile1BscWaActive.get();
     }
@@ -471,60 +471,60 @@ bool HwInfoConfigHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInf
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
+bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
     return allocation.isAllocatedInLocalMemoryPool() &&
-           (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
+           (ProductHelper::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
             !allocation.isAllocationLockable());
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const {
+bool ProductHelperHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const { return false; }
+bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const { return false; }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive) const {
+uint32_t ProductHelperHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive) const {
     return L1CachePolicyHelper<gfxProduct>::getL1CachePolicy(isDebuggerActive);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {}
+void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {}
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {
+bool ProductHelperHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isStatefulAddressingModeSupported() const {
+bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isPlatformQuerySupported() const {
+bool ProductHelperHw<gfxProduct>::isPlatformQuerySupported() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
+bool ProductHelperHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const {
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const {
     constexpr bool enabled = false;
     if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
@@ -533,12 +533,12 @@ bool HwInfoConfigHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(co
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isMidThreadPreemptionDisallowedForRayTracingKernels() const {
+bool ProductHelperHw<gfxProduct>::isMidThreadPreemptionDisallowedForRayTracingKernels() const {
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) {
+void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) {
     propertiesSupport.coherencyRequired = getScmPropertyCoherencyRequiredSupport();
     propertiesSupport.threadArbitrationPolicy = isThreadArbitrationPolicyReportedWithScm();
     propertiesSupport.largeGrfMode = isGrfNumReportedWithScm();
@@ -548,127 +548,127 @@ void HwInfoConfigHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComp
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) {
+void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) {
     fillScmPropertiesSupportStructureBase(propertiesSupport);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyThreadArbitrationPolicySupport() const {
+bool ProductHelperHw<gfxProduct>::getScmPropertyThreadArbitrationPolicySupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::threadArbitrationPolicy;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyCoherencyRequiredSupport() const {
+bool ProductHelperHw<gfxProduct>::getScmPropertyCoherencyRequiredSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::coherencyRequired;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyZPassAsyncComputeThreadLimitSupport() const {
+bool ProductHelperHw<gfxProduct>::getScmPropertyZPassAsyncComputeThreadLimitSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::zPassAsyncComputeThreadLimit;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyPixelAsyncComputeThreadLimitSupport() const {
+bool ProductHelperHw<gfxProduct>::getScmPropertyPixelAsyncComputeThreadLimitSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::pixelAsyncComputeThreadLimit;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyLargeGrfModeSupport() const {
+bool ProductHelperHw<gfxProduct>::getScmPropertyLargeGrfModeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::largeGrfMode;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyDevicePreemptionModeSupport() const {
+bool ProductHelperHw<gfxProduct>::getScmPropertyDevicePreemptionModeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::devicePreemptionMode;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getStateBaseAddressPropertyGlobalAtomicsSupport() const {
+bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyGlobalAtomicsSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateBaseAddressStateSupport::globalAtomics;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getStateBaseAddressPropertyStatelessMocsSupport() const {
+bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyStatelessMocsSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateBaseAddressStateSupport::statelessMocs;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const {
+bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateBaseAddressStateSupport::bindingTablePoolBaseAddress;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
     propertiesSupport.globalAtomics = getStateBaseAddressPropertyGlobalAtomicsSupport();
     propertiesSupport.statelessMocs = getStateBaseAddressPropertyStatelessMocsSupport();
     propertiesSupport.bindingTablePoolBaseAddress = getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPreemptionDbgPropertyPreemptionModeSupport() const {
+bool ProductHelperHw<gfxProduct>::getPreemptionDbgPropertyPreemptionModeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::PreemptionDebugSupport::preemptionMode;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPreemptionDbgPropertyStateSipSupport() const {
+bool ProductHelperHw<gfxProduct>::getPreemptionDbgPropertyStateSipSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::PreemptionDebugSupport::stateSip;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPreemptionDbgPropertyCsrSurfaceSupport() const {
+bool ProductHelperHw<gfxProduct>::getPreemptionDbgPropertyCsrSurfaceSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::PreemptionDebugSupport::csrSurface;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyScratchSizeSupport() const {
+bool ProductHelperHw<gfxProduct>::getFrontEndPropertyScratchSizeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::FrontEndStateSupport::scratchSize;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyPrivateScratchSizeSupport() const {
+bool ProductHelperHw<gfxProduct>::getFrontEndPropertyPrivateScratchSizeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::FrontEndStateSupport::privateScratchSize;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyComputeDispatchAllWalkerSupport() const {
+bool ProductHelperHw<gfxProduct>::getFrontEndPropertyComputeDispatchAllWalkerSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::FrontEndStateSupport::computeDispatchAllWalker;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyDisableEuFusionSupport() const {
+bool ProductHelperHw<gfxProduct>::getFrontEndPropertyDisableEuFusionSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::FrontEndStateSupport::disableEuFusion;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyDisableOverDispatchSupport() const {
+bool ProductHelperHw<gfxProduct>::getFrontEndPropertyDisableOverDispatchSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::FrontEndStateSupport::disableOverdispatch;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertySingleSliceDispatchCcsModeSupport() const {
+bool ProductHelperHw<gfxProduct>::getFrontEndPropertySingleSliceDispatchCcsModeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::FrontEndStateSupport::singleSliceDispatchCcsMode;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+void ProductHelperHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
     propertiesSupport.computeDispatchAllWalker = isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
     propertiesSupport.disableEuFusion = getFrontEndPropertyDisableEuFusionSupport();
     propertiesSupport.disableOverdispatch = isDisableOverdispatchAvailable(hwInfo);
@@ -676,32 +676,32 @@ void HwInfoConfigHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEnd
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPipelineSelectPropertyModeSelectedSupport() const {
+bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertyModeSelectedSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::PipelineSelectStateSupport::modeSelected;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const {
+bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::PipelineSelectStateSupport::mediaSamplerDopClockGate;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPipelineSelectPropertySystolicModeSupport() const {
+bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertySystolicModeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::PipelineSelectStateSupport::systolicMode;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+void ProductHelperHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
     propertiesSupport.modeSelected = getPipelineSelectPropertyModeSelectedSupport();
     propertiesSupport.mediaSamplerDopClockGate = getPipelineSelectPropertyMediaSamplerDopClockGateSupport();
     propertiesSupport.systolicMode = isSystolicModeConfigurable(hwInfo);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getDefaultRevisionId() const {
+uint32_t ProductHelperHw<gfxProduct>::getDefaultRevisionId() const {
     return 0u;
 }
 

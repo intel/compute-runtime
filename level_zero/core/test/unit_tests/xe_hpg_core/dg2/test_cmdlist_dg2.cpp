@@ -24,8 +24,8 @@ HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAddi
 
     ze_result_t returnValue;
     auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto &commandContainer = commandList->commandContainer;

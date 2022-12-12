@@ -49,9 +49,9 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::PRINTF_SURFACE, device.getDeviceBitfield()});
 
     auto &hwInfo = device.getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
+    MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
                                                      device, printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),
                                                      sizeof(*printfSurfaceInitialDataSizePtr.get()));
 
@@ -80,12 +80,12 @@ bool PrintfHandler::printEnqueueOutput() {
     auto &hwInfo = device.getHardwareInfo();
 
     auto usesStringMap = kernel->getDescriptor().kernelAttributes.usesStringMap();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
     auto printfOutputBuffer = reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer());
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
     std::unique_ptr<uint8_t[]> printfOutputDecompressed;
 
-    if (hwInfoConfig.allowStatelessCompression(hwInfo) || hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface)) {
+    if (productHelper.allowStatelessCompression(hwInfo) || productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface)) {
         printfOutputDecompressed = std::make_unique<uint8_t[]>(printfOutputSize);
         printfOutputBuffer = printfOutputDecompressed.get();
         auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(hwInfo, device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);

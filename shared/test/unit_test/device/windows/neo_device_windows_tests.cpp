@@ -18,12 +18,12 @@
 using DeviceTest = Test<DeviceFixture>;
 
 TEST_F(DeviceTest, GivenDeviceWhenGetAdapterLuidThenLuidIsSet) {
-    std::array<uint8_t, HwInfoConfig::luidSize> luid, expectedLuid;
+    std::array<uint8_t, ProductHelper::luidSize> luid, expectedLuid;
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     auto mockWddm = new WddmMock(*pDevice->executionEnvironment->rootDeviceEnvironments[0]);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
 
-    memcpy_s(expectedLuid.data(), HwInfoConfig::luidSize, &mockWddm->mockAdaperLuid, sizeof(LUID));
+    memcpy_s(expectedLuid.data(), ProductHelper::luidSize, &mockWddm->mockAdaperLuid, sizeof(LUID));
     pDevice->getAdapterLuid(luid);
 
     EXPECT_EQ(expectedLuid, luid);

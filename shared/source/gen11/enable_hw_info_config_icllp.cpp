@@ -10,6 +10,6 @@
 
 namespace NEO {
 
-static EnableProductHwInfoConfig<IGFX_ICELAKE_LP> enableICLLP;
+static EnableProductProductHelper<IGFX_ICELAKE_LP> enableICLLP;
 
 } // namespace NEO

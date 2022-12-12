@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinux : public HwInfoConfigTest {
+struct ProductHelperTestLinux : public ProductHelperTest {
     static void mockCpuidex(int *cpuInfo, int functionId, int subfunctionId) {
         if (subfunctionId == 0) {
             cpuInfo[0] = 0x7F;
@@ -31,7 +31,7 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
     }
 
     void SetUp() override {
-        HwInfoConfigTest::SetUp();
+        ProductHelperTest::SetUp();
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
@@ -51,7 +51,7 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
     void TearDown() override {
         CpuInfo::cpuidexFunc = rt_cpuidex_func;
 
-        HwInfoConfigTest::TearDown();
+        ProductHelperTest::TearDown();
     }
 
     template <typename HelperType>

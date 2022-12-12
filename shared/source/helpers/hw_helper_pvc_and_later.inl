@@ -34,8 +34,8 @@ bool GfxCoreHelperHw<Family>::isRcsAvailable(const HardwareInfo &hwInfo) const {
 
 template <>
 bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const {
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isCooperativeEngineSupported(hwInfo)) {
         if (engineGroupType == EngineGroupType::RenderCompute) {
             return false;
         }
@@ -57,8 +57,8 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupC
     if (!isCooperativeDispatchSupported(engineGroupType, hwInfo)) {
         return 1u;
     }
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    bool requiresLimitation = hwInfoConfig.isCooperativeEngineSupported(hwInfo) &&
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    bool requiresLimitation = productHelper.isCooperativeEngineSupported(hwInfo) &&
                               (engineGroupType != EngineGroupType::CooperativeCompute) &&
                               (!isEngineInstanced);
     if (requiresLimitation) {

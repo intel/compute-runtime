@@ -27,13 +27,13 @@ DG2TEST_F(CommandEncodeStatesDg2Test, GivenSmallSlmTotalSizesWhenSetAdditionalIn
     uint32_t slmTotalSize = 0;
 
     {
-        revisionId = HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_A0, *defaultHwInfo);
+        revisionId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(REVISION_A0, *defaultHwInfo);
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, *defaultHwInfo, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K, idd.getPreferredSlmAllocationSize());
     }
     {
-        revisionId = HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
+        revisionId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, *defaultHwInfo, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
         EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K, idd.getPreferredSlmAllocationSize());
@@ -45,7 +45,7 @@ DG2TEST_F(CommandEncodeStatesDg2Test, givenNoWorkaroundNeededWhenSelectingPrefer
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.platform.usRevId = HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
+    hwInfo.platform.usRevId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo);
     hwInfo.gtSystemInfo.ThreadCount = 1024;
     hwInfo.gtSystemInfo.DualSubSliceCount = 8;
     hwInfo.gtSystemInfo.SubSliceCount = 2 * hwInfo.gtSystemInfo.DualSubSliceCount;

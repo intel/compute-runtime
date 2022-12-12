@@ -45,8 +45,8 @@ void setupAUB(const NEO::Device *pDevice, aub_stream::EngineType engineType) {
     // Header
     auto &hwInfo = pDevice->getHardwareInfo();
     auto deviceId = hwInfo.capabilityTable.aubDeviceId;
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    aubFile.init(hwInfoConfig.getAubStreamSteppingFromHwRevId(hwInfo), deviceId);
+    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    aubFile.init(productHelper.getAubStreamSteppingFromHwRevId(hwInfo), deviceId);
 
     aubFile.writeMMIO(mmioBase + 0x229c, 0xffff8280);
 

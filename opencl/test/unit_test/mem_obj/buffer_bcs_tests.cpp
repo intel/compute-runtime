@@ -76,7 +76,7 @@ struct BcsBufferTests : public ::testing::Test {
         hwInfo.capabilityTable.blitterOperationsSupported = true;
         device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
-        if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(device->getHardwareInfo())) {
+        if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(device->getHardwareInfo())) {
             GTEST_SKIP();
         }
 
@@ -143,7 +143,7 @@ HWTEST_F(NoBcsBufferTests, givenProductWithNoFullyBlitterSupportWhenCreatingBuff
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
 
-    EXPECT_FALSE(HwInfoConfig::get(hwInfo.platform.eProductFamily)->isBlitterFullySupported(hwInfo));
+    EXPECT_FALSE(ProductHelper::get(hwInfo.platform.eProductFamily)->isBlitterFullySupported(hwInfo));
     std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
     std::unique_ptr<BcsMockContext> newBcsMockContext = std::make_unique<BcsMockContext>(newDevice.get());
 

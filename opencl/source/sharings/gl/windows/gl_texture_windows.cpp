@@ -150,9 +150,9 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     if (texInfo.isAuxEnabled && alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
         const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        alloc->getDefaultGmm()->isCompressionEnabled = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                        : true;
+        const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        alloc->getDefaultGmm()->isCompressionEnabled = productHelper.isPageTableManagerSupported(hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                         : true;
     }
     auto multiGraphicsAllocation = MultiGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     multiGraphicsAllocation.addAllocation(alloc);

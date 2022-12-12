@@ -17,8 +17,8 @@ bool CompressionSelector::preferCompressedAllocation(const AllocationProperties 
     case AllocationType::CONSTANT_SURFACE:
     case AllocationType::SVM_GPU:
     case AllocationType::PRINTF_SURFACE: {
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        return hwInfoConfig.allowStatelessCompression(hwInfo);
+        const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        return productHelper.allowStatelessCompression(hwInfo);
     }
     default:
         return false;

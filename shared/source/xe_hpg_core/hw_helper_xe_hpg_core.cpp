@@ -47,7 +47,7 @@ void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
     if (!pHwInfo->featureTable.flags.ftrCCSNode) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     }
-    if (HwInfoConfig::get(pHwInfo->platform.eProductFamily)->isDefaultEngineTypeAdjustmentRequired(*pHwInfo)) {
+    if (ProductHelper::get(pHwInfo->platform.eProductFamily)->isDefaultEngineTypeAdjustmentRequired(*pHwInfo)) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     }
 }
@@ -102,8 +102,8 @@ std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) c
     extensions += "cl_intel_dot_accumulate ";
     extensions += "cl_intel_subgroup_local_block_io ";
 
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isMatrixMultiplyAccumulateSupported(hwInfo)) {
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
     }
@@ -117,7 +117,7 @@ bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t si
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
 
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
+    if (ProductHelper::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
         return true;
     } else {
         return false;

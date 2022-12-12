@@ -34,7 +34,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
             GTEST_SKIP();
         }
 
-        if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->obtainBlitterPreference(*defaultHwInfo.get())) {
+        if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->obtainBlitterPreference(*defaultHwInfo.get())) {
             GTEST_SKIP();
         }
 

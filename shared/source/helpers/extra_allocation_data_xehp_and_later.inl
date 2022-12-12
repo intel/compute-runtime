@@ -14,9 +14,9 @@ namespace NEO {
 
 template <>
 void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    if (LocalMemoryAccessMode::CpuAccessDisallowed == hwInfoConfig.getLocalMemoryAccessMode(hwInfo)) {
+    if (LocalMemoryAccessMode::CpuAccessDisallowed == productHelper.getLocalMemoryAccessMode(hwInfo)) {
         if (properties.allocationType == AllocationType::LINEAR_STREAM ||
             properties.allocationType == AllocationType::INTERNAL_HEAP ||
             properties.allocationType == AllocationType::PRINTF_SURFACE ||
@@ -37,7 +37,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         allocationData.flags.requiresCpuAccess = true;
     }
 
-    if (hwInfoConfig.allowStatelessCompression(hwInfo)) {
+    if (productHelper.allowStatelessCompression(hwInfo)) {
         if (properties.allocationType == AllocationType::GLOBAL_SURFACE ||
             properties.allocationType == AllocationType::CONSTANT_SURFACE ||
             properties.allocationType == AllocationType::PRINTF_SURFACE) {
@@ -46,7 +46,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         }
     }
 
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
+    if (ProductHelper::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
         if (properties.allocationType == AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
             allocationData.storageInfo.isLockable = true;
         }

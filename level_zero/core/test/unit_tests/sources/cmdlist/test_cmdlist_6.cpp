@@ -58,7 +58,7 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
 using CommandListExecuteImmediate = Test<DeviceFixture>;
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastSkl) {
     auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily);
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -76,9 +76,9 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
 
     NEO::StateComputeModePropertiesSupport scmPropertiesSupport = {};
-    hwInfoConfig.fillScmPropertiesSupportStructure(scmPropertiesSupport);
+    productHelper.fillScmPropertiesSupportStructure(scmPropertiesSupport);
     NEO::FrontEndPropertiesSupport frontEndPropertiesSupport = {};
-    hwInfoConfig.fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, device->getHwInfo());
+    productHelper.fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, device->getHwInfo());
 
     int expectedDisableOverdispatch = frontEndPropertiesSupport.disableOverdispatch;
     int32_t expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? gfxCoreHelper.forceNonGpuCoherencyWA(true) : -1;
@@ -805,8 +805,8 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     auto &hwInfo = device->getHwInfo();
 
     uint32_t expectedSbaCount = 1;
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
         expectedSbaCount++;
     }
 

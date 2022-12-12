@@ -123,8 +123,8 @@ HWTEST_F(TimestampPacketTests, givenCrossCsrDependenciesWhenFillCsrDepsThenFlush
 
     eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::All);
 
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHardwareInfo().platform.eProductFamily);
-    if (hwInfoConfig.isDcFlushAllowed()) {
+    const auto &productHelper = *NEO::ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
+    if (productHelper.isDcFlushAllowed()) {
         EXPECT_TRUE(mockCmdQ2->getUltCommandStreamReceiver().flushBatchedSubmissionsCalled);
     } else {
         EXPECT_FALSE(mockCmdQ2->getUltCommandStreamReceiver().flushBatchedSubmissionsCalled);
@@ -184,8 +184,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
 
     size_t sizeForPipeControl = 0;
     const auto &hwInfo = device->getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isResolveDependenciesByPipeControlsSupported(hwInfo, mockCmdQHw->isOOQEnabled())) {
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, mockCmdQHw->isOOQEnabled())) {
         sizeForPipeControl = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     }
 

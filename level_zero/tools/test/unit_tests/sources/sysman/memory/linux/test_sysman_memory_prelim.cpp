@@ -86,7 +86,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         }
         auto &hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo();
         productFamily = hwInfo.platform.eProductFamily;
-        stepping = NEO::HwInfoConfig::get(productFamily)->getSteppingFromHwRevId(hwInfo);
+        stepping = NEO::ProductHelper::get(productFamily)->getSteppingFromHwRevId(hwInfo);
         getMemoryHandles(0);
     }
 
@@ -408,7 +408,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         zesMemoryGetProperties(handle, &properties);
 
         auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        hwInfo->platform.usRevId = NEO::HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *hwInfo);
+        hwInfo->platform.usRevId = NEO::ProductHelper::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *hwInfo);
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
 
         pPmt->mockVfid0Status = true;
@@ -442,7 +442,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         zesMemoryGetProperties(handle, &properties);
 
         auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        hwInfo->platform.usRevId = NEO::HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *hwInfo);
+        hwInfo->platform.usRevId = NEO::ProductHelper::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *hwInfo);
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
 
         pPmt->mockVfid1Status = true;
@@ -473,9 +473,8 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidUsRevIdForRevisionBWhenCallingzes
         zesMemoryGetProperties(handle, &properties);
 
         auto hwInfo = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        hwInfo->platform.usRevId = NEO::HwInfoConfig::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *hwInfo);
+        hwInfo->platform.usRevId = NEO::ProductHelper::get(productFamily)->getHwRevIdFromStepping(REVISION_B, *hwInfo);
         auto pPmt = static_cast<MockMemoryPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(properties.subdeviceId));
-
         pPmt->mockVfid1Status = true;
         pSysfsAccess->mockReadUInt64Value.push_back(hbmRP0Frequency);
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);

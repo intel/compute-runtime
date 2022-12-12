@@ -28,10 +28,10 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenPrope
     };
 
     const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
 
     for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
 
         if (stepping == REVISION_A0) {
             EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));

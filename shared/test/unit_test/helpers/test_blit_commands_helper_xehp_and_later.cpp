@@ -119,8 +119,8 @@ HWTEST2_F(BlitTests, givenA0StepWhenAppendBlitCommandsForFillBufferWithLocalAcce
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
@@ -136,8 +136,8 @@ HWTEST2_F(BlitTests, givenA0StepWhenAppendBlitCommandsForFillBufferWithLocalAcce
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
@@ -153,8 +153,8 @@ HWTEST2_F(BlitTests, givenBStepWhenAppendBlitCommandsForFillBufferWithLocalAcces
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
@@ -170,8 +170,8 @@ HWTEST2_F(BlitTests, givenBStepWhenAppendBlitCommandsForFillBufferWithLocalAcces
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
@@ -187,8 +187,8 @@ HWTEST2_F(BlitTests, givenAllocationInSystemMemWhenAppendBlitCommandsForFillBuff
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A1, *hwInfo);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
@@ -204,8 +204,8 @@ HWTEST2_F(BlitTests, givenAllocationInSystemMemWhenAppendBlitCommandsForFillBuff
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A1, *hwInfo);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
@@ -721,7 +721,7 @@ HWTEST2_F(BlitTests, givenA0orA1SteppingAndCpuLocalMemoryAccessWhenCallingAppend
     DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
 
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto productHelper = ProductHelper::get(productFamily);
     std::array<std::pair<uint32_t, typename XY_BLOCK_COPY_BLT::TARGET_MEMORY>, 3> testParams = {
         {{REVISION_A0, XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM},
          {REVISION_A1, XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM},
@@ -730,7 +730,7 @@ HWTEST2_F(BlitTests, givenA0orA1SteppingAndCpuLocalMemoryAccessWhenCallingAppend
     for (const auto &[revision, expectedTargetMemory] : testParams) {
         auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
         auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-        hwInfo->platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, *hwInfo);
+        hwInfo->platform.usRevId = productHelper->getHwRevIdFromStepping(revision, *hwInfo);
 
         BlitCommandsHelper<FamilyType>::appendExtraMemoryProperties(bltCmd, rootDeviceEnvironment);
         EXPECT_EQ(bltCmd.getSourceTargetMemory(), expectedTargetMemory);

@@ -22,11 +22,11 @@ std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary binary, std::stri
 
 TargetDevice targetDeviceFromHwInfo(const HardwareInfo &hwInfo) {
     TargetDevice targetDevice = {};
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     targetDevice.coreFamily = hwInfo.platform.eRenderCoreFamily;
     targetDevice.productFamily = hwInfo.platform.eProductFamily;
-    targetDevice.aotConfig.value = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    targetDevice.aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
     targetDevice.stepping = hwInfo.platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;

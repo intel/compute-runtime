@@ -64,7 +64,7 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
     return 0;
 }
 
-int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
+int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
     int ret = 0;
     auto osInterface = rootDeviceEnvironemnt.osInterface.get();
     Drm *drm = osInterface->getDriverModel()->as<Drm>();

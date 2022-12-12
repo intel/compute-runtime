@@ -49,7 +49,7 @@ TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllWhenWaForDefaultEngineIsNotApplie
 
 TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIsWorkaroundRequiredThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
     uint32_t steppings[] = {
         REVISION_A0,
         REVISION_B,
@@ -57,7 +57,7 @@ TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIs
         CommonConstants::invalidStepping};
 
     for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
 
         switch (stepping) {
         case REVISION_A0:

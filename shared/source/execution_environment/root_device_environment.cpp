@@ -127,9 +127,9 @@ BindlessHeapsHelper *RootDeviceEnvironment::getBindlessHeapsHelper() const {
     return bindlessHeapsHelper.get();
 }
 
-const HwInfoConfig &RootDeviceEnvironment::getHwInfoConfig() const {
-    auto &hwInfoConfig = *HwInfoConfig::get(this->getHardwareInfo()->platform.eProductFamily);
-    return hwInfoConfig;
+const ProductHelper &RootDeviceEnvironment::getProductHelper() const {
+    auto &productHelper = *ProductHelper::get(this->getHardwareInfo()->platform.eProductFamily);
+    return productHelper;
 }
 
 void RootDeviceEnvironment::createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
@@ -170,8 +170,8 @@ bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
 template <typename HelperType>
 HelperType &RootDeviceEnvironment::getHelper() const {
     if constexpr (std::is_same_v<HelperType, ProductHelper>) {
-        auto &hwInfoConfig = *HwInfoConfig::get(this->getHardwareInfo()->platform.eProductFamily);
-        return hwInfoConfig;
+        auto &productHelper = *ProductHelper::get(this->getHardwareInfo()->platform.eProductFamily);
+        return productHelper;
     } else {
         static_assert(std::is_same_v<HelperType, GfxCoreHelper>, "Only ProductHelper and GfxCoreHelper are supported");
         auto &gfxCoreHelper = GfxCoreHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);

@@ -263,7 +263,7 @@ HWTEST2_F(GmmTestsDG2, givenGmmForImageWithForceLocalMemThenNonLocalIsSetToFalse
 using WddmLinuxConfigureDeviceAddressSpaceTest = WddmLinuxTest;
 
 TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenSvmAddressSpaceThenReserveGpuVAForUSM) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress || NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress || NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -280,7 +280,7 @@ TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenSvmAddressSpaceThenReserve
 }
 
 TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpaceThenMakeSureWholeGpuVAForUSMIsReservedAndProperlyAligned) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress || NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress || NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -324,7 +324,7 @@ TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenNonSvmAddressSpaceThenRese
 using WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest = WddmLinuxConfigureDeviceAddressSpaceTest;
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, whenFailedToReadProceesPartitionLayoutThenFail) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -350,7 +350,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, whenFailedToTransla
         }
     };
 
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -368,7 +368,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, whenFailedToTransla
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenPreconfiguredAddressSpaceFromKmdThenUseIt) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -388,7 +388,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenPreconfiguredA
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdThenConfigureOneAndUpdateKmdItInKmd) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -405,7 +405,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdWhenFailedToReserveValidCpuAddressRangeThenFail) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -425,7 +425,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdWhenUpdatingItInKmdAndFailedToTranslateThenFail) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -454,7 +454,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdWhenKmdGotJustUpdatedByDifferentClientThenUseItsAddressSpaceConfiguration) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -476,7 +476,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfiguredAddressSpaceFromKmdThenConfigureOneBasedOnAligmentAndSizeRequirements) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -515,7 +515,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenNoPreconfigure
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressSpacesThenReserveGpuVAForBoth) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -557,7 +557,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressSpacesWhenReservGpuVAForFirstOneFailsThenFail) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 
@@ -578,7 +578,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
 }
 
 TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressSpacesWhenReservGpuVAForSecondOneFailsThenFail) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
+    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max64BitAppAddress && !NEO::ProductHelper::get(productFamily)->overrideGfxPartitionLayoutForWsl()) {
         GTEST_SKIP();
     }
 

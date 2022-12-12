@@ -335,7 +335,7 @@ HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEna
 
 HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
-        !(HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
+        !(ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
         GTEST_SKIP();
     }
 

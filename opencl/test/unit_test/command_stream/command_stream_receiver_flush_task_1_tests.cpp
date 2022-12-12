@@ -77,7 +77,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPoli
     EXPECT_EQ(-1, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     flushTask(commandStreamReceiver);
-    if (HwInfoConfig::get(pDevice->getHardwareInfo().platform.eProductFamily)->isThreadArbitrationPolicyReportedWithScm()) {
+    if (ProductHelper::get(pDevice->getHardwareInfo().platform.eProductFamily)->isThreadArbitrationPolicyReportedWithScm()) {
         EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
                   commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
     } else {
@@ -703,8 +703,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRe
     flushTask(commandStreamReceiver);
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(pDevice->getHardwareInfo().platform.eProductFamily);
-    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
+    const auto &productHelper = *ProductHelper::get(pDevice->getHardwareInfo().platform.eProductFamily);
+    if (productHelper.is3DPipelineSelectWARequired()) {
         EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
     } else {
         EXPECT_EQ(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());

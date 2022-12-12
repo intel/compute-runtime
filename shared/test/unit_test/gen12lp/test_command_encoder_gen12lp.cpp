@@ -95,7 +95,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenVariousEngineTypesWhenEncodeSbaThenA
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
         auto itorLRI = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
-        if (HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->is3DPipelineSelectWARequired()) {
+        if (ProductHelper::get(defaultHwInfo->platform.eProductFamily)->is3DPipelineSelectWARequired()) {
             EXPECT_NE(itorLRI, commands.end());
         } else {
             EXPECT_EQ(itorLRI, commands.end());

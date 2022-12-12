@@ -32,9 +32,9 @@ void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd,
 
 template <>
 void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
+    if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
         interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
         bool adjustTGDispatchSize = true;
         if (DebugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
@@ -129,8 +129,8 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
     stateComputeMode.setMaskBits(maskBits);
 
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfoConfig.updateScmCommand(&stateComputeMode, properties);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    productHelper.updateScmCommand(&stateComputeMode, properties);
 
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();
     *buffer = stateComputeMode;
@@ -141,7 +141,7 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
     using STATE_PREFETCH = typename Family::STATE_PREFETCH;
     constexpr uint32_t mocsIndexForL3 = (2 << 1);
 
-    bool prefetch = HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowMemoryPrefetch(hwInfo);
+    bool prefetch = ProductHelper::get(hwInfo.platform.eProductFamily)->allowMemoryPrefetch(hwInfo);
 
     if (!prefetch) {
         return;
@@ -224,9 +224,9 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 
 template <>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    auto programGlobalFenceAsPostSyncOperationInComputeWalker = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo) &&
+    auto programGlobalFenceAsPostSyncOperationInComputeWalker = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo) &&
                                                                 walkerArgs.requiredSystemFence;
     int32_t overrideProgramSystemMemoryFence = DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
     if (overrideProgramSystemMemoryFence != -1) {
@@ -240,7 +240,7 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareIn
         walkerCmd.setL3PrefetchDisable(!forceL3PrefetchForComputeWalker);
     }
 
-    auto programComputeDispatchAllWalkerEnableInComputeWalker = hwInfoConfig.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo) &&
+    auto programComputeDispatchAllWalkerEnableInComputeWalker = productHelper.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo) &&
                                                                 walkerArgs.kernelExecutionType == KernelExecutionType::Concurrent;
     int32_t overrideDispatchAllWalkerEnableInComputeWalker = DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
     if (overrideDispatchAllWalkerEnableInComputeWalker != -1) {
@@ -291,9 +291,9 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
         }
     }
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    if ((slmSize == 0) && (hwInfoConfig.isAdjustProgrammableIdPreferredSlmSizeRequired(hwInfo))) {
+    if ((slmSize == 0) && (productHelper.isAdjustProgrammableIdPreferredSlmSizeRequired(hwInfo))) {
         programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K;
     }
 

@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-using EhlProductHelper = HwInfoConfigTest;
+using EhlProductHelper = ProductHelperTest;
 
 EHLTEST_F(EhlProductHelper, givenProductHelperStringThenAfterSetupResultingVmeIsDisabled) {
 

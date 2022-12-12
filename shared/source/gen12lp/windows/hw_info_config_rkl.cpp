@@ -18,4 +18,4 @@ constexpr static auto gfxProduct = IGFX_ROCKETLAKE;
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 #include "shared/source/gen12lp/rkl/os_agnostic_hw_info_config_rkl.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

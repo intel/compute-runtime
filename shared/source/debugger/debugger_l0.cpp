@@ -96,8 +96,8 @@ void DebuggerL0::initialize() {
             memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
         }
 
-        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
+        const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));
         if (gfxCoreHelper.disableL3CacheForDebug(hwInfo)) {

@@ -311,14 +311,14 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto &revision : revisions) {
-        auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        auto hwRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
         hwInfo.platform.usRevId = hwRevId;
         if (hwRevId == CommonConstants::invalidStepping ||
-            !hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
+            !productHelper.isCooperativeEngineSupported(hwInfo)) {
             continue;
         }
 

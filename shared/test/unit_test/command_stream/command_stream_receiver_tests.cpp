@@ -2090,7 +2090,7 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonExisitingPageTableMana
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    bool supportsPageTableManager = HwInfoConfig::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
+    bool supportsPageTableManager = ProductHelper::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
     EXPECT_EQ(nullptr, commandStreamReceiver.pageTableManager.get());
 
     EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager());

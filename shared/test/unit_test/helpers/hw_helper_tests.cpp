@@ -333,9 +333,9 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
 }
 
 HWTEST_F(PipeControlHelperTests, WhenIsDcFlushAllowedIsCalledThenCorrectResultIsReturned) {
-    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(false, *defaultHwInfo));
-    EXPECT_EQ(hwInfoConfig.isDcFlushAllowed(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo));
+    EXPECT_EQ(productHelper.isDcFlushAllowed(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo));
 }
 
 HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncTimestampUsedThenCorrectPostSyncUsed) {
@@ -957,9 +957,9 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsS
     EXPECT_TRUE(pipeControl->getTlbInvalidate());
 }
 
-using HwInfoConfigCommonTest = Test<DeviceFixture>;
+using ProductHelperCommonTest = Test<DeviceFixture>;
 
-HWTEST2_F(HwInfoConfigCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, IsAtLeastGen12lp) {
+HWTEST2_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, IsAtLeastGen12lp) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
     productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
@@ -968,14 +968,14 @@ HWTEST2_F(HwInfoConfigCommonTest, givenBlitterPreferenceWhenEnablingBlitterOpera
     EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
-HWTEST2_F(HwInfoConfigCommonTest, givenHardwareInfoWhendisableRcsExposureIsCalledThenFtrRcsNodeIsFalse, IsAtLeastGen12lp) {
+HWTEST2_F(ProductHelperCommonTest, givenHardwareInfoWhendisableRcsExposureIsCalledThenFtrRcsNodeIsFalse, IsAtLeastGen12lp) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
     productHelper.disableRcsExposure(&hwInfo);
     EXPECT_FALSE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
-HWTEST2_F(HwInfoConfigCommonTest, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenDisableRcsExposureIsCalledThenFtrRcsNodeIsTrue, IsAtLeastGen12lp) {
+HWTEST2_F(ProductHelperCommonTest, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenDisableRcsExposureIsCalledThenFtrRcsNodeIsTrue, IsAtLeastGen12lp) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
     DebugManagerStateRestore restore;
@@ -985,7 +985,7 @@ HWTEST2_F(HwInfoConfigCommonTest, givenHardwareInfoAndDebugVariableNodeOrdinalEq
     EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
 }
 
-HWTEST2_F(HwInfoConfigCommonTest, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsCccsWhenDisableRcsExposureIsCalledThenFtrRcsNodeIsTrue, IsAtLeastGen12lp) {
+HWTEST2_F(ProductHelperCommonTest, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsCccsWhenDisableRcsExposureIsCalledThenFtrRcsNodeIsTrue, IsAtLeastGen12lp) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
     DebugManagerStateRestore restore;
@@ -1024,7 +1024,7 @@ TEST_F(GfxCoreHelperTest, givenInvalidEngineTypeWhenGettingEngineGroupTypeThenTh
     EXPECT_ANY_THROW(gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_VECS, EngineUsage::Regular, hardwareInfo));
 }
 
-HWTEST2_F(HwInfoConfigCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, IsAtLeastGen12lp) {
+HWTEST2_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, IsAtLeastGen12lp) {
     DebugManagerStateRestore restore{};
     HardwareInfo hardwareInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
@@ -1289,7 +1289,7 @@ struct CoherentWANotNeeded {
         return !TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceGpuNonCoherent;
     }
 };
-HWTEST2_F(GfxCoreHelperTest, givenHwInfoConfigWhenCheckingForceNonGpuCoherencyWAThenPassedValueReturned, CoherentWANotNeeded) {
+HWTEST2_F(GfxCoreHelperTest, givenProductHelperWhenCheckingForceNonGpuCoherencyWAThenPassedValueReturned, CoherentWANotNeeded) {
     const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
     EXPECT_TRUE(gfxCoreHelper.forceNonGpuCoherencyWA(true));
     EXPECT_FALSE(gfxCoreHelper.forceNonGpuCoherencyWA(false));
@@ -1304,7 +1304,7 @@ struct ForceNonCoherentMode {
     }
 };
 
-HWTEST2_F(GfxCoreHelperTest, givenHwInfoConfigWhenCheckingForceNonGpuCoherencyWAThenFalseIsReturned, ForceNonCoherentMode) {
+HWTEST2_F(GfxCoreHelperTest, givenProductHelperWhenCheckingForceNonGpuCoherencyWAThenFalseIsReturned, ForceNonCoherentMode) {
     const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
     EXPECT_FALSE(gfxCoreHelper.forceNonGpuCoherencyWA(true));
     EXPECT_FALSE(gfxCoreHelper.forceNonGpuCoherencyWA(false));

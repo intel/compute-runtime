@@ -253,13 +253,13 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
 
     uint8_t buffer[64]{};
     StreamProperties properties{};
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, *defaultHwInfo, nullptr);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    if (hwInfoConfig.isThreadArbitrationPolicyReportedWithScm()) {
+    if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
         EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, pScm->getEuThreadSchedulingModeOverride());
     } else {
         EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
@@ -269,7 +269,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::RoundRobin, PreemptionMode::Disabled, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, *defaultHwInfo, nullptr);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    if (hwInfoConfig.isThreadArbitrationPolicyReportedWithScm()) {
+    if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
         EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
     } else {
         EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
@@ -279,7 +279,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::RoundRobinAfterDependency, PreemptionMode::Disabled, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, *defaultHwInfo, nullptr);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    if (hwInfoConfig.isThreadArbitrationPolicyReportedWithScm()) {
+    if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
         EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
     } else {
         EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
@@ -354,10 +354,10 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceAsPostSy
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -388,9 +388,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    unsigned short pvcRevB = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    unsigned short pvcRevB = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
 
     uint32_t dims[] = {1, 1, 1};
@@ -424,9 +424,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenEven
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    unsigned short pvcRevB = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    unsigned short pvcRevB = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
 
     uint32_t dims[] = {1, 1, 1};
@@ -460,9 +460,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    unsigned short pvcRevB = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    unsigned short pvcRevB = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
 
     uint32_t dims[] = {1, 1, 1};
@@ -514,9 +514,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDispatchSizeSmallerOrEqualToAvailableThreadCountWhenAdjustInterfaceDescriptorDataIsCalledThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.gtSystemInfo.EUCount = 2u;
 
     const uint32_t numGrf = GrfConfig::LargeGrfNumber;
@@ -534,9 +534,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableWalkerPartition.set(0);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.gtSystemInfo.EUCount = 32;
     hwInfo.gtSystemInfo.DualSubSliceCount = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported;
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
@@ -557,9 +557,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
@@ -580,9 +580,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWh
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDifferentNumGrfWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -608,9 +608,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     DebugManagerStateRestore restorer;
     DebugManager.flags.AdjustThreadGroupDispatchSize.set(0);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t threadGroupCount = 512u;
@@ -631,9 +631,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenIndivisibleDispatchSizeWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     const uint32_t threadGroupCount = 343u;
     const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
@@ -648,9 +648,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenIndivisibleDispatchSizeWhenCal
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenThreadGroupCountZeroWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsSetToDefault) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
     auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     const uint32_t threadGroupCount = 0u;
     const uint32_t numGrf = GrfConfig::DefaultGrfNumber;

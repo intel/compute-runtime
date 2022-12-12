@@ -78,19 +78,19 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, whenProgramComputeWalkerThenApplyL3WAFo
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
     auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
 
         EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
     }
 
     {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
 
         if (hwInfo.platform.eProductFamily == IGFX_DG2) {

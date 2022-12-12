@@ -136,9 +136,9 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
             kernelAllocation = kernelAllocations->second.kernelAllocation;
             kernelAllocations->second.reuseCounter++;
             auto &hwInfo = device.getHardwareInfo();
-            auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+            auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-            return MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
+            return MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
                                                                     device, kernelAllocation, 0, heapInfo.pKernelHeap,
                                                                     static_cast<size_t>(kernelIsaSize));
         } else {
@@ -154,9 +154,9 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
     }
 
     auto &hwInfo = device.getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    return MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
+    return MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
                                                             device, kernelAllocation, 0, heapInfo.pKernelHeap,
                                                             static_cast<size_t>(kernelIsaSize));
 }

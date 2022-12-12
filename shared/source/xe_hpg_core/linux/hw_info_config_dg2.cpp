@@ -31,7 +31,7 @@ constexpr static auto gfxProduct = IGFX_DG2;
 namespace NEO {
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (allowCompression(*hwInfo)) {
         enableCompression(hwInfo);
     }
@@ -51,7 +51,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const {
+bool ProductHelperHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
 
     UNRECOVERABLE_IF(device == nullptr);
     if (device->getRootDeviceEnvironment().osInterface == nullptr) {
@@ -82,5 +82,5 @@ bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwI
     return true;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

@@ -6,11 +6,11 @@
  */
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isVmBindPatIndexProgrammingSupported() const {
+bool ProductHelperHw<gfxProduct>::isVmBindPatIndexProgrammingSupported() const {
     return true;
 }
 
 template <>
-size_t HwInfoConfigHw<gfxProduct>::getSvmCpuAlignment() const {
+size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
     return MemoryConstants::pageSize64k;
 }

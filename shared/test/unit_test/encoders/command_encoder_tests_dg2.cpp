@@ -49,20 +49,20 @@ HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGrou
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t forceThreadGroupDispatchSize = -1;
     auto hwInfo = pDevice->getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &productHelper = *ProductHelper::get(productFamily);
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto revision : revisions) {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
 
         for (auto numberOfThreadsInGroup : {1u, 4u, 16u}) {
             iddArg.setNumberOfThreadsInGpgpuThreadGroup(numberOfThreadsInGroup);
             EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, 0, 0);
 
-            if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
+            if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
                 if (numberOfThreadsInGroup == 1) {
                     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
                 } else {

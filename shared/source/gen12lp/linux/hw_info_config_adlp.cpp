@@ -22,16 +22,16 @@ constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
 namespace NEO {
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo));
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = (hwInfo->platform.usRevId >= productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo));
 
     enableBlitterOperationsSupport(hwInfo);
 
     return 0;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

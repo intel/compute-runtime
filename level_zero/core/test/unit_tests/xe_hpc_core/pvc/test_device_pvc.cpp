@@ -24,9 +24,9 @@ using DeviceTestPvcXt = Test<DeviceFixtureXeHpcTests>;
 PVCTEST_F(DeviceTestPvcXt, whenCallingGetMemoryPropertiesWithNonNullPtrAndRevisionIsNotBaseDieA0OnPvcXtThenMaxClockRateReturnedIsZero) {
     auto &device = driverHandle->devices[0];
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
     hwInfo->platform.usDeviceID = pvcXtDeviceIds.front();
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo); // not BD A0
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo); // not BD A0
 
     checkIfCallingGetMemoryPropertiesWithNonNullPtrThenMaxClockRateReturnZero(hwInfo);
 }
@@ -34,8 +34,8 @@ PVCTEST_F(DeviceTestPvcXt, whenCallingGetMemoryPropertiesWithNonNullPtrAndRevisi
 using DeviceTestPvc = Test<DeviceFixtureXeHpcTests>;
 PVCTEST_F(DeviceTestPvc, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingDisabled) {
     auto hwInfo = *NEO::defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);

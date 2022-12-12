@@ -48,10 +48,10 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
         auto &hwInfo = device.getHardwareInfo();
-        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
         if (sipAllocation) {
-            MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+            MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
                                                              device, sipAllocation, 0, sipBinary.data(),
                                                              sipBinary.size());
         }

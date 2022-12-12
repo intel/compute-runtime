@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using XeHpgProductHelper = HwInfoConfigTest;
+using XeHpgProductHelper = ProductHelperTest;
 
 XE_HPG_CORETEST_F(XeHpgProductHelper, givenProductHelperWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isSystolicModeConfigurable(pInHwInfo));

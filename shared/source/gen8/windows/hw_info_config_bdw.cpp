@@ -17,4 +17,4 @@ constexpr static auto gfxProduct = IGFX_BROADWELL;
 
 #include "shared/source/gen8/bdw/os_agnostic_hw_info_config_bdw.inl"
 
-template class NEO::HwInfoConfigHw<gfxProduct>;
+template class NEO::ProductHelperHw<gfxProduct>;

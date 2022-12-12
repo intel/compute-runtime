@@ -310,10 +310,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
     auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     auto engineGroupType = NEO::EngineGroupType::Compute;
-    if (hwInfoConfig.isCooperativeEngineSupported(*defaultHwInfo)) {
+    if (productHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
         engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative, *defaultHwInfo);
     }
     pCommandList->initialize(device, engineGroupType, 0u);
@@ -365,8 +365,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenR
     EXPECT_EQ(-1, pCommandList->requiredStreamState.frontEndState.disableOverdispatch.value);
     EXPECT_EQ(-1, pCommandList->finalStreamState.frontEndState.disableOverdispatch.value);
 
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    int32_t expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*defaultHwInfo) ? 1 : -1;
+    const auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    int32_t expectedDisableOverdispatch = productHelper.isDisableOverdispatchAvailable(*defaultHwInfo) ? 1 : -1;
 
     pCommandList->updateStreamProperties(kernel, false);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->requiredStreamState.frontEndState.disableOverdispatch.value);

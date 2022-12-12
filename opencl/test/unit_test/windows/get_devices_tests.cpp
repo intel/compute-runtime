@@ -47,8 +47,8 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializ
     NEO::ExecutionEnvironment executionEnvironment;
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    productHelper->configureHardwareCustom(&hwInfo, nullptr);
 
     bool expectedValue = false;
     if (hwInfo.featureTable.flags.ftrRcsNode || hwInfo.featureTable.flags.ftrCCSNode) {

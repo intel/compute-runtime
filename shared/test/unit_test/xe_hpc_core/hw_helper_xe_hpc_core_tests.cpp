@@ -77,7 +77,7 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimesta
 XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnTrue) {
     auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
-    EXPECT_EQ(gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo), HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported());
+    EXPECT_EQ(gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo), ProductHelper::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported());
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {

@@ -195,8 +195,8 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
     {
         using L3_FLUSH_EVICTION_POLICY = typename FamilyType::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
         auto cmd = genCmdCast<L3_CONTROL *>(*itorPC);
-        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily);
-        auto isA0Stepping = (hwInfoConfig.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
+        const auto &productHelper = *NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily);
+        auto isA0Stepping = (productHelper.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
         auto maskedAddress = cmd->getL3FlushAddressRange().getAddress(isA0Stepping);
         EXPECT_NE(maskedAddress, 0u);
 
@@ -258,8 +258,8 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddres
     {
         using L3_FLUSH_EVICTION_POLICY = typename FamilyType::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
         auto cmd = genCmdCast<L3_CONTROL *>(*itorPC);
-        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily);
-        auto isA0Stepping = (hwInfoConfig.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
+        const auto &productHelper = *NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily);
+        auto isA0Stepping = (productHelper.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
         auto maskedAddress = cmd->getL3FlushAddressRange().getAddress(isA0Stepping);
         EXPECT_NE(maskedAddress, 0u);
 
