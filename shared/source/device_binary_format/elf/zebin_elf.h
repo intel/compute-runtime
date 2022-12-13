@@ -159,6 +159,7 @@ inline constexpr ConstStringRef slmSize("slm_size");
 inline constexpr ConstStringRef subgroupIndependentForwardProgress("subgroup_independent_forward_progress");
 inline constexpr ConstStringRef workGroupWalkOrderDimensions("work_group_walk_order_dimensions");
 inline constexpr ConstStringRef threadSchedulingMode("thread_scheduling_mode");
+inline constexpr ConstStringRef hasSample("has_sample");
 namespace ThreadSchedulingMode {
 inline constexpr ConstStringRef ageBased("age_based");
 inline constexpr ConstStringRef roundRobin("round_robin");
@@ -431,6 +432,7 @@ using SubgroupIndependentForwardProgressT = bool;
 using WorkgroupWalkOrderDimensionsT = int32_t[3];
 using ThreadSchedulingModeT = ThreadSchedulingMode;
 using IndirectStatelessCountT = int32_t;
+using HasSampleT = bool;
 
 namespace Defaults {
 inline constexpr BarrierCountT barrierCount = 0;
@@ -458,6 +460,7 @@ inline constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardP
 inline constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
 inline constexpr ThreadSchedulingModeT threadSchedulingMode = ThreadSchedulingModeUnknown;
 inline constexpr IndirectStatelessCountT indirectStatelessCount = 0;
+inline constexpr HasSampleT hasSample = false;
 } // namespace Defaults
 
 inline constexpr ConstStringRef required[] = {
@@ -489,6 +492,7 @@ struct ExecutionEnvBaseT {
     WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions{Defaults::workgroupWalkOrderDimensions[0], Defaults::workgroupWalkOrderDimensions[1], Defaults::workgroupWalkOrderDimensions[2]};
     ThreadSchedulingModeT threadSchedulingMode = Defaults::threadSchedulingMode;
     IndirectStatelessCountT indirectStatelessCount = Defaults::indirectStatelessCount;
+    HasSampleT hasSample = Defaults::hasSample;
 };
 
 struct ExperimentalPropertiesBaseT {

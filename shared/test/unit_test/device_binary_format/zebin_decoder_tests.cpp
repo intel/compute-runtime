@@ -1418,6 +1418,7 @@ kernels:
         has_no_stateless_write : true
         has_stack_calls : true
         require_disable_eufusion : true
+        has_sample : true
         hw_preemption_mode : 2
         inline_data_payload_size : 32
         offset_to_skip_per_thread_data_load : 23
@@ -1448,6 +1449,8 @@ kernels:
     std::string errors;
     std::string warnings;
     NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv{};
+    EXPECT_FALSE(execEnv.hasSample);
+
     auto err = NEO::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
@@ -1462,6 +1465,7 @@ kernels:
     EXPECT_TRUE(execEnv.hasMultiScratchSpaces);
     EXPECT_TRUE(execEnv.hasNoStatelessWrite);
     EXPECT_TRUE(execEnv.hasStackCalls);
+    EXPECT_TRUE(execEnv.hasSample);
     EXPECT_EQ(2, execEnv.hwPreemptionMode);
     EXPECT_EQ(32, execEnv.inlineDataPayloadSize);
     EXPECT_EQ(23, execEnv.offsetToSkipPerThreadDataLoad);
@@ -3231,6 +3235,7 @@ TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescrip
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useStackCalls, Defaults::hasStackCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages, Defaults::hasFenceForImageAccess);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, Defaults::hasDpas);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasSample, Defaults::hasSample);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites, (false == Defaults::hasNoStatelessWrite));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.barrierCount, static_cast<uint8_t>(Defaults::barrierCount));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.binaryFormat, DeviceBinaryFormat::Zebin);
