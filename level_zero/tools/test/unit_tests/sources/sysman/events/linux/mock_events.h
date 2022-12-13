@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,65 +19,43 @@ const std::string deviceDir("device");
 
 class EventsFsAccess : public FsAccess {};
 
-template <>
-struct Mock<EventsFsAccess> : public EventsFsAccess {
+struct MockEventsFsAccess : public EventsFsAccess {
+    std::vector<ze_result_t> mockReadStatus{ZE_RESULT_SUCCESS};
+    uint32_t mockReadVal = 2;
 
-    ze_result_t getValReturnValAsOne(const std::string file, uint32_t &val) {
-        if (file.compare(ueventWedgedFile) == 0) {
-            val = 1;
-        } else if (file.compare(ueventDetachFile) == 0) {
-            val = 1;
-        } else if (file.compare(ueventAttachFile) == 0) {
-            val = 1;
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    ze_result_t read(const std::string file, uint32_t &val) override {
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+        if (!mockReadStatus.empty()) {
+            returnValue = mockReadStatus.front();
+            if (returnValue != ZE_RESULT_SUCCESS) {
+                return returnValue;
+            }
+            mockReadStatus.erase(mockReadStatus.begin());
         }
-        return ZE_RESULT_SUCCESS;
+
+        val = mockReadVal;
+        return returnValue;
     }
 
-    ze_result_t getValReturnValAsZero(const std::string file, uint32_t &val) {
-        if (file.compare(ueventWedgedFile) == 0) {
-            val = 0;
-        } else if (file.compare(ueventDetachFile) == 0) {
-            val = 0;
-        } else if (file.compare(ueventAttachFile) == 0) {
-            val = 0;
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getValFileNotFound(const std::string file, uint32_t &val) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getValFileInsufficientPermissions(const std::string file, uint32_t &val) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    }
-
-    Mock<EventsFsAccess>() = default;
-
-    MOCK_METHOD(ze_result_t, read, (const std::string file, uint32_t &val), (override));
-    MOCK_METHOD(ze_result_t, canWrite, (const std::string file), (override));
+    MockEventsFsAccess() = default;
 };
 
 class EventsSysfsAccess : public SysfsAccess {};
-template <>
-struct Mock<EventsSysfsAccess> : public EventsSysfsAccess {
-    MOCK_METHOD(ze_result_t, readSymLink, (const std::string file, std::string &buf), (override));
-    ze_result_t getValStringSymLinkSuccess(const std::string file, std::string &val) {
-        if (file.compare(deviceDir) == 0) {
-            val = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0";
-            return ZE_RESULT_SUCCESS;
+
+struct MockEventsSysfsAccess : public EventsSysfsAccess {
+    ze_result_t mockReadSymLinkFailureError = ZE_RESULT_SUCCESS;
+
+    ze_result_t readSymLink(const std::string file, std::string &val) override {
+        if (mockReadSymLinkFailureError != ZE_RESULT_SUCCESS) {
+            return mockReadSymLinkFailureError;
         }
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-    ze_result_t getValStringSymLinkFailure(const std::string file, std::string &val) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+        val = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0";
+        return ZE_RESULT_SUCCESS;
     }
 
-    Mock<EventsSysfsAccess>() = default;
+    MockEventsSysfsAccess() = default;
 };
 
 class PublicLinuxEventsImp : public L0::LinuxEventsImp {

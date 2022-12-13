@@ -6,9 +6,8 @@
  */
 
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/events/linux/mock_events.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
-
-#include "mock_events.h"
 
 extern bool sysmanUltsEnable;
 
@@ -19,13 +18,13 @@ namespace ult {
 
 class SysmanEventsFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<EventsFsAccess>> pFsAccess;
+    std::unique_ptr<MockEventsFsAccess> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
     OsEvents *pOsEventsPrev = nullptr;
     L0::EventsImp *pEventsImp;
     GlobalOperations *pGlobalOperationsOriginal = nullptr;
     std::unique_ptr<GlobalOperationsImp> pGlobalOperations;
-    std::unique_ptr<Mock<EventsSysfsAccess>> pSysfsAccess;
+    std::unique_ptr<MockEventsSysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOriginal = nullptr;
 
     void SetUp() override {
@@ -34,7 +33,7 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pFsAccess = std::make_unique<NiceMock<Mock<EventsFsAccess>>>();
+        pFsAccess = std::make_unique<MockEventsFsAccess>();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
         pEventsImp = static_cast<L0::EventsImp *>(pSysmanDeviceImp->pEvents);
@@ -46,10 +45,8 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pGlobalOperations->init();
 
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<NiceMock<Mock<EventsSysfsAccess>>>();
+        pSysfsAccess = std::make_unique<MockEventsSysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
-        ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<EventsSysfsAccess>::getValStringSymLinkSuccess));
     }
 
     void TearDown() override {
@@ -70,8 +67,7 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsOne));
+    pFsAccess->mockReadVal = 1;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -85,17 +81,14 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsZero));
+    pFsAccess->mockReadVal = 0;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
-
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValFileNotFound));
+    pFsAccess->mockReadStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
 
@@ -105,8 +98,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForCurrentlyUnsupportedEventsThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_TEMP_THRESHOLD2));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsOne));
+    pFsAccess->mockReadVal = 1;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -118,16 +110,14 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForCurrentlyUnsup
 }
 
 TEST_F(SysmanEventsFixture, GivenReadSymLinkCallFailsWhenGettingPCIBDFThenEmptyPciIdPathTagReceived) {
-    ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<EventsSysfsAccess>::getValStringSymLinkFailure));
+    pSysfsAccess->mockReadSymLinkFailureError = ZE_RESULT_ERROR_NOT_AVAILABLE;
     PublicLinuxEventsImp linuxEventImp(pOsSysman);
     EXPECT_TRUE(linuxEventImp.pciIdPathTag.empty());
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsOne));
+    pFsAccess->mockReadVal = 1;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -141,8 +131,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEventsThenAfterReceivingEventRegisterEventAgainToReceiveEvent) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsOne));
+    pFsAccess->mockReadVal = 1;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -163,17 +152,14 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEventsThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsZero));
+    pFsAccess->mockReadVal = 0;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
-
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValFileNotFound));
+    pFsAccess->mockReadStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
 
@@ -183,8 +169,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsOne));
+    pFsAccess->mockReadVal = 1;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -198,17 +183,14 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEventsThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsZero));
+    pFsAccess->mockReadVal = 0;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
-
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValFileNotFound));
+    pFsAccess->mockReadStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
 
@@ -248,8 +230,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForAListOfEventsT
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenExAPIReturnsAfterReceivingEventWithinTimeout) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsOne));
+    pFsAccess->mockReadVal = 1;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -263,17 +244,15 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenExAPIWaitForTimeoutIfEventNotReceived) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsZero));
+    pFsAccess->mockReadVal = 0;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
+    pFsAccess->mockReadStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValFileNotFound));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
 
