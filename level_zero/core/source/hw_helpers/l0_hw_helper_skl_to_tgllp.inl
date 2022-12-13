@@ -44,4 +44,9 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsRayTracing() const {
     return false;
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::isZebinAllowed(const NEO::Debugger *debugger) const {
+    return !debugger;
+}
+
 } // namespace L0

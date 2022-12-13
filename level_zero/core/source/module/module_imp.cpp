@@ -249,8 +249,7 @@ ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t in
 
     auto &l0GfxCoreHelper = this->device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
-
-    auto isZebinAllowed = l0GfxCoreHelper.isZebinAllowed(this->device->getSourceLevelDebugger());
+    auto isZebinAllowed = l0GfxCoreHelper.isZebinAllowed(this->device->getNEODevice()->getDebugger());
     if (isZebinAllowed == false) {
         auto pos = this->options.find(NEO::CompilerOptions::allowZebin.str());
         if (pos != std::string::npos) {
