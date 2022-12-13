@@ -302,6 +302,10 @@ struct EventPool : _ze_event_pool_handle_t {
         return false;
     }
 
+    uint32_t getMaxKernelCount() const {
+        return maxKernelCount;
+    }
+
     std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
     ze_event_pool_flags_t eventPoolFlags;
 
@@ -314,6 +318,7 @@ struct EventPool : _ze_event_pool_handle_t {
     uint32_t eventAlignment = 0;
     uint32_t eventSize = 0;
     uint32_t eventPackets = 0;
+    uint32_t maxKernelCount = 0;
 };
 
 struct EventPoolImp : public EventPool {

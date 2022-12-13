@@ -1928,10 +1928,8 @@ TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThe
     }
 }
 
-HWTEST2_F(EventUsedPacketSignalTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
-
+using EventUsedPacketSignalNoCompactionTests = Test<EventUsedPacketSignalFixture<1, 0, 0, 0>>;
+HWTEST2_F(EventUsedPacketSignalNoCompactionTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel, IsAtLeastXeHpCore) {
     auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
     EXPECT_FALSE(event->getL3FlushForCurrenKernel());
@@ -2279,15 +2277,8 @@ struct MockEventCompletion : public EventImp<uint32_t> {
     MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device, false) {
         auto neoDevice = device->getNEODevice();
         auto &hwInfo = neoDevice->getHardwareInfo();
-        auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
-
-        uint32_t maxKernels = EventPacketsCount::maxKernelSplit;
-        if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-            maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
-        }
-        kernelEventCompletionData = std::make_unique<KernelEventCompletionData<uint32_t>[]>(maxKernels);
 
         auto alloc = eventPool->getAllocation().getGraphicsAllocation(neoDevice->getRootDeviceIndex());
 
@@ -2297,8 +2288,10 @@ struct MockEventCompletion : public EventImp<uint32_t> {
         hostAddress = reinterpret_cast<void *>(baseHostAddr + eventPoolOffset);
         csr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
-        maxKernelCount = maxKernels;
+        maxKernelCount = eventPool->getMaxKernelCount();
         maxPacketCount = eventPool->getEventMaxPackets();
+
+        kernelEventCompletionData = std::make_unique<KernelEventCompletionData<uint32_t>[]>(maxKernelCount);
     }
 
     void assignKernelEventCompletionData(void *address) override {
@@ -2442,6 +2435,9 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, eventPool);
 
+        auto expectedMaxKernelCount = driverHandle->getEventMaxKernelCount(0, nullptr);
+        EXPECT_EQ(expectedMaxKernelCount, eventPool->getMaxKernelCount());
+
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
         auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
         if constexpr (multiTile == 1) {
@@ -2465,6 +2461,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
 
         uint32_t maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
+        EXPECT_EQ(expectedMaxKernelCount, maxKernels);
         EXPECT_EQ(maxKernels, event->getMaxKernelCount());
     }
 
@@ -2499,6 +2496,9 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, eventPool);
 
+        auto expectedMaxKernelCount = driverHandle->getEventMaxKernelCount(1, deviceHandles.data());
+        EXPECT_EQ(expectedMaxKernelCount, eventPool->getMaxKernelCount());
+
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
         auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
 
@@ -2520,6 +2520,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(expectedPoolMaxPackets, event->getMaxPacketsCount());
 
         uint32_t maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
+        EXPECT_EQ(expectedMaxKernelCount, maxKernels);
         EXPECT_EQ(maxKernels, event->getMaxKernelCount());
     }
 

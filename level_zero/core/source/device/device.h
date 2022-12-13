@@ -139,6 +139,7 @@ struct Device : _ze_device_handle_t {
     virtual void storeReusableAllocation(NEO::GraphicsAllocation &alloc) = 0;
     virtual ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) = 0;
     virtual uint32_t getEventMaxPacketCount() const = 0;
+    virtual uint32_t getEventMaxKernelCount() const = 0;
 
   protected:
     NEO::Device *neoDevice = nullptr;

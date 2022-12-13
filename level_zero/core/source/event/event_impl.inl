@@ -29,13 +29,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    uint32_t maxKernels = EventPacketsCount::maxKernelSplit;
-    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxKernels = l0GfxCoreHelper.getEventMaxKernelCount(hwInfo);
-    }
-
     event->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
-    event->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<TagSizeT>[]>(maxKernels);
 
     auto alloc = eventPool->getAllocation().getGraphicsAllocation(neoDevice->getRootDeviceIndex());
 
@@ -46,8 +40,11 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
     event->csr = csr;
-    event->maxKernelCount = maxKernels;
+    event->maxKernelCount = eventPool->getMaxKernelCount();
     event->maxPacketCount = eventPool->getEventMaxPackets();
+
+    event->kernelEventCompletionData =
+        std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
 
     bool useContextEndOffset = l0GfxCoreHelper.multiTileCapablePlatform();
     int32_t overrideUseContextEndOffset = NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.get();

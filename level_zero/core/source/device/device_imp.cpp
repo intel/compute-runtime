@@ -1615,4 +1615,12 @@ uint32_t DeviceImp::getEventMaxPacketCount() const {
     }
     return basePackets;
 }
+
+uint32_t DeviceImp::getEventMaxKernelCount() const {
+    const auto &hardwareInfo = this->getHwInfo();
+    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    return l0GfxCoreHelper.getEventMaxKernelCount(hardwareInfo);
+}
+
 } // namespace L0

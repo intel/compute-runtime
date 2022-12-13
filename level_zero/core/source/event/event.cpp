@@ -168,8 +168,10 @@ void EventPoolImp::initializeSizeParameters(uint32_t numDevices, ze_device_handl
 
     bool useDynamicEventPackets = l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo);
     eventPackets = EventPacketsCount::eventPackets;
+    maxKernelCount = EventPacketsCount::maxKernelSplit;
     if (useDynamicEventPackets) {
         eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);
+        maxKernelCount = driver.getEventMaxKernelCount(numDevices, deviceHandles);
     }
     setEventSize(static_cast<uint32_t>(alignUp(eventPackets * gfxCoreHelper.getSingleTimestampPacketSize(), eventAlignment)));
 

@@ -764,4 +764,22 @@ uint32_t DriverHandleImp::getEventMaxPacketCount(uint32_t numDevices, ze_device_
     return maxCount;
 }
 
+uint32_t DriverHandleImp::getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const {
+    uint32_t maxCount = 0;
+
+    if (numDevices == 0) {
+        for (auto device : this->devices) {
+            auto deviceMaxCount = device->getEventMaxKernelCount();
+            maxCount = std::max(maxCount, deviceMaxCount);
+        }
+    } else {
+        for (uint32_t i = 0; i < numDevices; i++) {
+            auto deviceMaxCount = Device::fromHandle(deviceHandles[i])->getEventMaxKernelCount();
+            maxCount = std::max(maxCount, deviceMaxCount);
+        }
+    }
+
+    return maxCount;
+}
+
 } // namespace L0
