@@ -76,9 +76,4 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
     return threads;
 }
 
-template <typename Family>
-bool L0GfxCoreHelperHw<Family>::isZebinAllowed(const NEO::SourceLevelDebugger *debugger) const {
-    return !debugger;
-}
-
 } // namespace L0

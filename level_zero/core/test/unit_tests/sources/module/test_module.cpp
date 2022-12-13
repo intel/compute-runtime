@@ -2577,7 +2577,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     }
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndAllowZebinBuildOptionWhenBuildWithSpirvThenModuleBuildFails, IsAtMostGen11) {
+HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndAllowZebinBuildOptionWhenBuildWithSpirvThenModuleBuildFails, IsAtMostGen12lp) {
 
     if (device->getHwInfo().capabilityTable.debuggerSupported == false) {
         GTEST_SKIP();
@@ -2596,7 +2596,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndAllowZebinBuildO
     EXPECT_EQ(result, ZE_RESULT_ERROR_MODULE_BUILD_FAILURE);
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndAllowZebinBuildOptionWhenBuildWithSpirvThenModuleBuildsWithSuccess, IsAtLeastGen12lp) {
+HWTEST2_F(ModuleTranslationUnitTest, givenSourceLevelDebuggerAndAllowZebinBuildOptionWhenBuildWithSpirvThenModuleBuildsWithSuccess, IsAtLeastXeHpCore) {
 
     if (device->getHwInfo().capabilityTable.debuggerSupported == false) {
         GTEST_SKIP();
