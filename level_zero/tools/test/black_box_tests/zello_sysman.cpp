@@ -8,6 +8,7 @@
 #include <level_zero/zes_api.h>
 
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <getopt.h>
 #include <iostream>
@@ -343,7 +344,7 @@ void testSysmanPerformance(ze_device_handle_t &device, std::vector<std::string> 
         double originalFactor = 0;
         VALIDATECALL(zesPerformanceFactorGetConfig(handle, &originalFactor));
         if (verbose) {
-            std::cout << "current Performance Factor = " << originalFactor << std::endl;
+            std::cout << "current Performance Factor = " << std::round(originalFactor) << std::endl;
         }
         std::cout << std::endl;
     }
