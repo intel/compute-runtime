@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 static const char *wslComputeHelperLibName = "wsl_compute_helper.dll";
 #else
 #define CCONV
-static const char *wslComputeHelperLibName = "libwsl_compute_helper.so";
+[[maybe_unused]] static const char *wslComputeHelperLibName = "libwsl_compute_helper.so";
 #endif
 
 typedef size_t(CCONV *getSizeRequiredForStructFPT)(TOK structId);

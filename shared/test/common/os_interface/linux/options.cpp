@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/test/common/mock_gdi/mock_os_library.h"
-
 #include "common/gtsysinfo.h"
 #include "igfxfmid.h"
 #include "test_files_setup.h"
@@ -29,15 +27,3 @@ const char *sysFsPciPathPrefix = NEO_SHARED_TEST_FILES_DIR "/linux/devices/";
 const char *pciDevicesDirectory = NEO_SHARED_TEST_FILES_DIR "/linux/by-path";
 const char *sysFsProcPathPrefix = NEO_SHARED_TEST_FILES_DIR "/linux/proc/";
 } // namespace Os
-
-NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
-    NEO::OsLibrary *mockGdiDll;
-    mockGdiDll = NEO::MockOsLibrary::load("");
-
-    typedef void (*pfSetAdapterInfo)(const void *, const void *, uint64_t);
-    pfSetAdapterInfo setAdapterInfo = reinterpret_cast<pfSetAdapterInfo>(mockGdiDll->getProcAddress("mockSetAdapterInfo"));
-
-    setAdapterInfo(platform, gtSystemInfo, gpuAddressSpace);
-
-    return mockGdiDll;
-}

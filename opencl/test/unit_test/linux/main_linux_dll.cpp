@@ -49,6 +49,7 @@ extern const DeviceDescriptor deviceDescriptorTable[];
 NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
     return nullptr;
 }
+void setupExternalDependencies() {}
 
 using namespace NEO;
 
