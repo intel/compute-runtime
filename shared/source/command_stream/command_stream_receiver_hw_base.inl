@@ -210,6 +210,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         makeResident(*getTagAllocation());
     }
 
+    makeResident(*commandStreamTask.getGraphicsAllocation());
+
     bool submitCSR = (commandStreamStartCSR != commandStreamCSR.getUsed());
     void *bbEndLocation = nullptr;
 
