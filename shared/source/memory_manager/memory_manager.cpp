@@ -461,7 +461,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     default:
         allocationData.flags.resource48Bit = properties.flags.resource48Bit;
     }
-
+    allocationData.forceKMDAllocation = properties.forceKMDAllocation;
+    allocationData.makeGPUVaDifferentThanCPUPtr = properties.makeGPUVaDifferentThanCPUPtr;
     allocationData.flags.shareable = properties.flags.shareable;
     allocationData.flags.isUSMDeviceMemory = properties.flags.isUSMDeviceAllocation;
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);

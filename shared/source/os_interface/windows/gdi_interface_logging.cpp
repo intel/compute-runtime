@@ -30,7 +30,7 @@ void getExitString(Param param, char *input, size_t size) {
 }
 
 template <>
-void getEnterString<D3DKMT_OPENADAPTERFROMLUID *>(D3DKMT_OPENADAPTERFROMLUID *param, char *input, size_t size) {
+void getEnterString<CONST D3DKMT_OPENADAPTERFROMLUID *>(CONST D3DKMT_OPENADAPTERFROMLUID *param, char *input, size_t size) {
     snprintf_s(input, size, size, "D3DKMT_OPENADAPTERFROMLUID LUID 0x%lx 0x%lx", param->AdapterLuid.HighPart, param->AdapterLuid.LowPart);
 }
 
@@ -323,8 +323,8 @@ void close() {
     }
 }
 
-template void logEnter<D3DKMT_OPENADAPTERFROMLUID *>(D3DKMT_OPENADAPTERFROMLUID *param);
-template void logExit<D3DKMT_OPENADAPTERFROMLUID *>(NTSTATUS status, D3DKMT_OPENADAPTERFROMLUID *param);
+template void logEnter<CONST D3DKMT_OPENADAPTERFROMLUID *>(CONST D3DKMT_OPENADAPTERFROMLUID *param);
+template void logExit<CONST D3DKMT_OPENADAPTERFROMLUID *>(NTSTATUS status, CONST D3DKMT_OPENADAPTERFROMLUID *param);
 
 template void logEnter<CONST D3DKMT_CLOSEADAPTER *>(CONST D3DKMT_CLOSEADAPTER *param);
 template void logExit<CONST D3DKMT_CLOSEADAPTER *>(NTSTATUS status, CONST D3DKMT_CLOSEADAPTER *param);

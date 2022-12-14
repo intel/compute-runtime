@@ -107,7 +107,7 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenAdapterFro
                    << std::endl;
 
     testing::internal::CaptureStdout();
-    GdiLogging::logEnter<D3DKMT_OPENADAPTERFROMLUID *>(&param);
+    GdiLogging::logEnter<CONST D3DKMT_OPENADAPTERFROMLUID *>(&param);
     std::string logEnterStr = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
@@ -117,7 +117,7 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenAdapterFro
                    << " " << std::endl;
 
     testing::internal::CaptureStdout();
-    GdiLogging::logExit<D3DKMT_OPENADAPTERFROMLUID *>(status, &param);
+    GdiLogging::logExit<CONST D3DKMT_OPENADAPTERFROMLUID *>(status, &param);
     std::string logExitStr = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
@@ -1289,9 +1289,9 @@ TEST_F(GdiInterfaceLoggingToFileTest, WhenGdiLoggingIsEnabledWhenLoggingAnyGdiTh
 
     EXPECT_EQ(IoFunctions::mockFopenReturned, GdiLogging::output);
 
-    GdiLogging::logEnter<D3DKMT_OPENADAPTERFROMLUID *>(&param);
+    GdiLogging::logEnter<CONST D3DKMT_OPENADAPTERFROMLUID *>(&param);
     EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
-    GdiLogging::logExit<D3DKMT_OPENADAPTERFROMLUID *>(status, &param);
+    GdiLogging::logExit<CONST D3DKMT_OPENADAPTERFROMLUID *>(status, &param);
     EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
 }
 
@@ -1306,11 +1306,11 @@ TEST_F(GdiInterfaceLoggingBaseTest, WhenGdiLoggingIsDisabledWhenLoggingAnyGdiThe
     EXPECT_EQ(nullptr, GdiLogging::output);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFopenCalled);
 
-    GdiLogging::logEnter<D3DKMT_OPENADAPTERFROMLUID *>(&param);
+    GdiLogging::logEnter<CONST D3DKMT_OPENADAPTERFROMLUID *>(&param);
     EXPECT_EQ(0u, NEO::IoFunctions::mockVfptrinfCalled);
 
     NTSTATUS status = 0;
-    GdiLogging::logExit<D3DKMT_OPENADAPTERFROMLUID *>(status, &param);
+    GdiLogging::logExit<CONST D3DKMT_OPENADAPTERFROMLUID *>(status, &param);
     EXPECT_EQ(0u, NEO::IoFunctions::mockVfptrinfCalled);
 
     GdiLogging::close();

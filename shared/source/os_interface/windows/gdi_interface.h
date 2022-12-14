@@ -21,7 +21,7 @@ class Gdi {
     Gdi();
     MOCKABLE_VIRTUAL ~Gdi();
 
-    ThkWrapper<IN OUT D3DKMT_OPENADAPTERFROMLUID *> openAdapterFromLuid{};
+    ThkWrapper<IN OUT CONST D3DKMT_OPENADAPTERFROMLUID *> openAdapterFromLuid{};
     ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation_{};
     ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation2{};
     NTSTATUS(APIENTRY *shareObjects)

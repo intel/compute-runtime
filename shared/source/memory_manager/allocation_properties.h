@@ -47,6 +47,8 @@ struct AllocationProperties {
     uint64_t gpuAddress = 0;
     OsContext *osContext = nullptr;
     bool useMmapObject = true;
+    bool forceKMDAllocation = false;
+    bool makeGPUVaDifferentThanCPUPtr = false;
     uint32_t cacheRegion = 0;
     bool makeDeviceBufferLockable = false;
 
@@ -125,6 +127,8 @@ struct AllocationData {
     ImageInfo *imgInfo = nullptr;
     uint32_t rootDeviceIndex = 0;
     OsContext *osContext = nullptr;
+    bool forceKMDAllocation = false;
+    bool makeGPUVaDifferentThanCPUPtr = false;
     bool useMmapObject = true;
     uint32_t cacheRegion = 0;
 };

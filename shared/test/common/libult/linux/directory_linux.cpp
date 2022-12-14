@@ -21,6 +21,11 @@ std::map<std::string, std::vector<std::string>> directoryFilesMap = {};
 
 std::vector<std::string> Directory::getFiles(const std::string &path) {
     std::vector<std::string> files;
+
+    if (Directory::ReturnEmptyFilesVector) {
+        return files;
+    }
+
     if (path == byPathPattern) {
         files.push_back(byPathPattern + "/pci-0000:00:02.0-card");
         files.push_back(byPathPattern + "/pci-0000:00:02.0-render");

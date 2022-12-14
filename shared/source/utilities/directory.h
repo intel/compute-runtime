@@ -14,6 +14,8 @@
 namespace NEO {
 
 namespace Directory {
+extern bool ReturnEmptyFilesVector;
+
 std::vector<std::string> getFiles(const std::string &path);
 void createDirectory(const std::string &path);
 } // namespace Directory

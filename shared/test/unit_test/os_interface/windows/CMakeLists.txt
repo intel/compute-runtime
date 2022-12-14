@@ -37,6 +37,7 @@ if(WIN32 OR(UNIX AND NOT DISABLE_WDDM_LINUX))
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_preemption_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_shared_allocations_test.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.cpp
   )
 endif()
 
