@@ -9,16 +9,20 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_hw_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -135,4 +139,88 @@ TEST_F(ValidExportHostPtr, givenPropertiesWithDmaBufWhenValidateInputAndCreateBu
     EXPECT_NE(buffer, nullptr);
 
     clReleaseMemObject(buffer);
+}
+
+using BufferCreateLinuxTests = ::testing::Test;
+
+HWTEST_F(BufferCreateLinuxTests, givenClMemCopyHostPointerPassedToBufferCreateWhenCpuCopyAllowedThenLockResourceAndWriteBufferCorrectlyCalled) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
+    auto memoryManager = new MockMemoryManager(true, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    MockClDevice device(new MockDevice(executionEnvironment, mockRootDeviceIndex));
+    ASSERT_TRUE(device.createEngines());
+    DeviceFactory::prepareDeviceEnvironments(*device.getExecutionEnvironment());
+    MockContext context(&device, true);
+    auto commandQueue = new MockCommandQueue(context);
+    context.setSpecialQueue(commandQueue, mockRootDeviceIndex);
+    constexpr size_t smallBufferSize = Buffer::maxBufferSizeForCopyOnCpu;
+    char memory[smallBufferSize];
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{defaultHwInfo->platform.eRenderCoreFamily};
+
+    {
+        // cpu copy allowed
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled + 1);
+
+        writeBufferCounter = commandQueue->writeBufferCounter;
+        lockResourceCalled = memoryManager->lockResourceCalled;
+        overrideGfxCoreHelperHw.mockGfxCoreHelper.setIsLockable = false;
+
+        std::unique_ptr<Buffer> bufferWhenLockNotAllowed(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
+        ASSERT_NE(nullptr, bufferWhenLockNotAllowed.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled + 1);
+    }
+}
+
+HWTEST_F(BufferCreateLinuxTests, givenClMemCopyHostPointerPassedToBufferCreateWhenCpuCopyDisAllowedThenLockResourceAndWriteBufferCorrectlyCalled) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
+    auto memoryManager = new MockMemoryManager(true, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    MockClDevice device(new MockDevice(executionEnvironment, mockRootDeviceIndex));
+    ASSERT_TRUE(device.createEngines());
+    DeviceFactory::prepareDeviceEnvironments(*device.getExecutionEnvironment());
+    MockContext context(&device, true);
+    auto commandQueue = new MockCommandQueue(context);
+    context.setSpecialQueue(commandQueue, mockRootDeviceIndex);
+    constexpr size_t bigBufferSize = Buffer::maxBufferSizeForCopyOnCpu + 1;
+    char bigMemory[bigBufferSize];
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{defaultHwInfo->platform.eRenderCoreFamily};
+
+    {
+        // buffer size over threshold -> cpu copy disallowed
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
+
+        writeBufferCounter = commandQueue->writeBufferCounter;
+        lockResourceCalled = memoryManager->lockResourceCalled;
+        overrideGfxCoreHelperHw.mockGfxCoreHelper.setIsLockable = false;
+
+        std::unique_ptr<Buffer> bufferWhenLockNotAllowed(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
+        ASSERT_NE(nullptr, bufferWhenLockNotAllowed.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
+    }
 }

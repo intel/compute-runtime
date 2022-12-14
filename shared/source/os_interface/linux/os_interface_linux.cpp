@@ -29,6 +29,10 @@ bool OSInterface::isDebugAttachAvailable() const {
     return false;
 }
 
+bool OSInterface::isLockablePointer(bool isLockable) const {
+    return true;
+}
+
 bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex,
                         RootDeviceEnvironment *rootDeviceEnv) {
     auto hwDeviceIdDrm = std::unique_ptr<HwDeviceIdDrm>(reinterpret_cast<HwDeviceIdDrm *>(hwDeviceId.release()));

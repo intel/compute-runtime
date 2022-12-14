@@ -182,10 +182,18 @@ bool inline copyHostPointer(Buffer *buffer,
         auto &device = context->getDevice(0u)->getDevice();
         auto &hwInfo = device.getHardwareInfo();
         auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+
+        auto &osInterface = device.getRootDeviceEnvironment().osInterface;
+        bool isLockable = true;
+        if (osInterface) {
+            isLockable = osInterface->isLockablePointer(memory->storageInfo.isLockable);
+        }
+
         bool copyOnCpuAllowed = implicitScalingEnabled == false &&
                                 size <= Buffer::maxBufferSizeForCopyOnCpu &&
                                 isCompressionEnabled == false &&
-                                productHelper->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed;
+                                productHelper->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed &&
+                                isLockable;
         if (DebugManager.flags.CopyHostPtrOnCpu.get() != -1) {
             copyOnCpuAllowed = DebugManager.flags.CopyHostPtrOnCpu.get() == 1;
         }

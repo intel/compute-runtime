@@ -22,4 +22,8 @@ bool OSInterface::isDebugAttachAvailable() const {
     return false;
 }
 
+bool OSInterface::isLockablePointer(bool isLockable) const {
+    return isLockable;
+}
+
 } // namespace NEO

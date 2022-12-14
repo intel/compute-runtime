@@ -13,12 +13,14 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_hw_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -603,7 +605,6 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     char memory[] = {1, 2, 3, 4, 5, 6, 7, 8};
     auto taskCount = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
-
     memoryManager->returnAllocateNonSystemGraphicsMemoryInDevicePool = true;
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, sizeof(memory), memory, retVal));
     ASSERT_NE(nullptr, buffer.get());
@@ -1807,7 +1808,9 @@ HWTEST_F(BufferHwFromDeviceTests, givenMultiGraphicsAllocationWhenCreateBufferHw
     alignedFree(ptr);
 }
 
-TEST(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuEnabledThenAllocationIsWrittenUsingLockedPointerIfAllowed) {
+using BufferCreateTests = testing::Test;
+
+HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuEnabledThenAllocationIsWrittenUsingLockedPointerIfAllowed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
 
@@ -1817,6 +1820,7 @@ TEST(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocat
 
     MockClDevice device(new MockDevice(executionEnvironment, mockRootDeviceIndex));
     ASSERT_TRUE(device.createEngines());
+    DeviceFactory::prepareDeviceEnvironments(*device.getExecutionEnvironment());
     MockContext context(&device, true);
     auto commandQueue = new MockCommandQueue(context);
     context.setSpecialQueue(commandQueue, mockRootDeviceIndex);
@@ -1824,6 +1828,7 @@ TEST(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocat
     constexpr size_t bigBufferSize = smallBufferSize + 1;
     char memory[smallBufferSize];
     char bigMemory[bigBufferSize];
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{defaultHwInfo->platform.eRenderCoreFamily};
 
     {
         // cpu copy allowed

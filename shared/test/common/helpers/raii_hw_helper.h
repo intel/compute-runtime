@@ -17,7 +17,7 @@ class RAIIGfxCoreHelperFactory {
   public:
     GFXCORE_FAMILY gfxCoreFamily;
     GfxCoreHelper *gfxCoreHelper;
-    MockHelper mockGfxCoreHelper;
+    MockHelper mockGfxCoreHelper{};
 
     RAIIGfxCoreHelperFactory(GFXCORE_FAMILY gfxCoreFamily) {
         this->gfxCoreFamily = gfxCoreFamily;
