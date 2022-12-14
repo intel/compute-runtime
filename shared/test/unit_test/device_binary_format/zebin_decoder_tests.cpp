@@ -2181,6 +2181,10 @@ kernels:
           size : 4
           arg_index	: 2
           is_ptr : true
+        - arg_type : const_base
+          offset : 32
+          size : 8
+          bti_value : 1
 ...
 )===";
 
@@ -2200,7 +2204,7 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(2U, args.size());
+    ASSERT_EQ(3U, args.size());
 
     EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgBypointer, args[0].argType);
     EXPECT_EQ(16, args[0].offset);
@@ -2213,7 +2217,13 @@ kernels:
     EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgByvalue, args[1].argType);
     EXPECT_EQ(24, args[1].offset);
     EXPECT_EQ(4, args[1].size);
+    EXPECT_EQ(2, args[1].argIndex);
     EXPECT_TRUE(args[1].isPtr);
+
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataConstBuffer, args[2].argType);
+    EXPECT_EQ(32, args[2].offset);
+    EXPECT_EQ(8, args[2].size);
+    EXPECT_EQ(1, args[2].btiValue);
 }
 
 TEST(ReadZeInfoPayloadArguments, GivenUnknownEntryThenEmmitsWarning) {
@@ -5646,6 +5656,76 @@ TEST(PopulateArgDescriptor, GivenValidArgOfTypeRTGlobalBufferThenRtGlobalBufferI
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize);
     EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.stateless);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.hasRTCalls);
+}
+
+TEST(PopulateArgDescriptor, GivenValidConstDataBufferArgThenItIsPopulatedCorrectly) {
+    NEO::KernelDescriptor kernelDescriptor;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataConstBuffer;
+    dataConstBuffer.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataConstBuffer;
+    dataConstBuffer.size = 8;
+    dataConstBuffer.offset = 32;
+    dataConstBuffer.btiValue = 1;
+
+    uint32_t crossThreadDataSize = 0U;
+    std::string errors, warnings;
+    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty());
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_EQ(40U, crossThreadDataSize);
+    EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize);
+    EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
+    EXPECT_EQ(64U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful);
+}
+
+TEST(PopulateArgDescriptor, GivenInvalidConstDataBufferArgThenErrorIsReturned) {
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelMetadata.kernelName = "kernel";
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataConstBuffer;
+    dataConstBuffer.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataConstBuffer;
+    dataConstBuffer.btiValue = -1;
+
+    uint32_t crossThreadDataSize = 0U;
+    std::string errors, warnings;
+    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid bti for argument of type const_base in context of : kernel\n", errors.c_str());
+}
+
+TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrectly) {
+    NEO::KernelDescriptor kernelDescriptor;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataGlobalBuffer;
+    dataGlobalBuffer.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataGlobalBuffer;
+    dataGlobalBuffer.size = 8;
+    dataGlobalBuffer.offset = 32;
+    dataGlobalBuffer.btiValue = 1;
+
+    uint32_t crossThreadDataSize = 0U;
+    std::string errors, warnings;
+    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty());
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_EQ(40U, crossThreadDataSize);
+    EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
+    EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
+    EXPECT_EQ(64U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
+}
+
+TEST(PopulateArgDescriptor, GivenInvalidGlobalDataBufferArgThenErrorIsReturned) {
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelMetadata.kernelName = "kernel";
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataGlobalBuffer;
+    dataGlobalBuffer.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataGlobalBuffer;
+    dataGlobalBuffer.btiValue = -1;
+
+    uint32_t crossThreadDataSize = 0U;
+    std::string errors, warnings;
+    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid bti for argument of type global_base in context of : kernel\n", errors.c_str());
 }
 
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
