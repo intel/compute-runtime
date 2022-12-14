@@ -14,13 +14,13 @@
 using namespace NEO;
 
 struct MockDrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandlerDefault {
+    using DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault;
     using DrmMemoryOperationsHandlerDefault::residency;
 };
 
 struct DrmMemoryOperationsHandlerBaseTest : public ::testing::Test {
     void SetUp() override {
-        drmMemoryOperationsHandler = std::make_unique<MockDrmMemoryOperationsHandlerDefault>();
-
+        drmMemoryOperationsHandler = std::make_unique<MockDrmMemoryOperationsHandlerDefault>(0);
         allocationPtr = &graphicsAllocation;
     }
 

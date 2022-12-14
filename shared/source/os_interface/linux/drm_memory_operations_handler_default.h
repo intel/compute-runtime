@@ -14,7 +14,7 @@ namespace NEO {
 class OsContextLinux;
 class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandlerDefault();
+    DrmMemoryOperationsHandlerDefault(uint32_t rootDeviceIndex);
     ~DrmMemoryOperationsHandlerDefault() override;
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override;

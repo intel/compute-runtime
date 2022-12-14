@@ -46,14 +46,14 @@ void ExecutionEnvironment::sortNeoDevicesDRM() {
     if (pciOrderVar) {
         std::vector<uint32_t> presortIndex;
         for (uint32_t i = 0; i < rootDeviceEnvironments.size(); i++) {
-            NEO::DrmMemoryOperationsHandlerBind *drm = static_cast<DrmMemoryOperationsHandlerBind *>(rootDeviceEnvironments[i]->memoryOperationsInterface.get());
+            NEO::DrmMemoryOperationsHandler *drm = static_cast<DrmMemoryOperationsHandler *>(rootDeviceEnvironments[i]->memoryOperationsInterface.get());
             presortIndex.push_back(drm->getRootDeviceIndex());
         }
 
         std::sort(rootDeviceEnvironments.begin(), rootDeviceEnvironments.end(), comparePciIdBusNumberDRM);
 
         for (uint32_t i = 0; i < rootDeviceEnvironments.size(); i++) {
-            NEO::DrmMemoryOperationsHandlerBind *drm = static_cast<DrmMemoryOperationsHandlerBind *>(rootDeviceEnvironments[i]->memoryOperationsInterface.get());
+            NEO::DrmMemoryOperationsHandler *drm = static_cast<DrmMemoryOperationsHandler *>(rootDeviceEnvironments[i]->memoryOperationsInterface.get());
             if (drm->getRootDeviceIndex() != presortIndex[i]) {
                 drm->setRootDeviceIndex(presortIndex[i]);
             }

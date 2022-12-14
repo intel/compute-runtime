@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -29,6 +30,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture_prelim.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include <memory>
@@ -150,6 +152,96 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
         auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
         EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
     }
+}
+
+template <uint32_t numRootDevices>
+struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
+  public:
+    void setUp(bool setPerContextVms) {
+        DebugManager.flags.DeferOsContextInitialization.set(0);
+        DebugManager.flags.CreateMultipleSubDevices.set(2u);
+        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+
+        executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (uint32_t i = 0u; i < numRootDevices; i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        }
+        executionEnvironment->calculateMaxOsContextCount();
+        for (uint32_t i = 0u; i < numRootDevices; i++) {
+            auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
+            mock->setBindAvailable();
+            if (setPerContextVms) {
+                mock->setPerContextVMRequired(setPerContextVms);
+                mock->incrementVmId = true;
+            }
+            executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+            executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+            if (i == 0) {
+                executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerDefault(i));
+            } else {
+                executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface.reset(new MockDrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[i].get(), i));
+            }
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+
+            devices.emplace_back(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, i));
+        }
+        memoryManager = std::make_unique<TestedDrmMemoryManager>(*executionEnvironment);
+        deviceDefault = devices[0].get();
+        device = devices[1].get();
+        mock = executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmQueryMock>();
+        operationHandlerDefault = static_cast<DrmMemoryOperationsHandlerDefault *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
+        operationHandler = static_cast<MockDrmMemoryOperationsHandlerBind *>(executionEnvironment->rootDeviceEnvironments[1]->memoryOperationsInterface.get());
+        memoryManagerBackup = executionEnvironment->memoryManager.release();
+        executionEnvironment->memoryManager.reset(memoryManager.get());
+        memoryManager->registeredEngines = memoryManagerBackup->getRegisteredEngines();
+    }
+    void SetUp() override {
+        setUp(false);
+    }
+
+    void TearDown() override {
+        executionEnvironment->memoryManager.release();
+        executionEnvironment->memoryManager.reset(memoryManagerBackup);
+        memoryManager->getRegisteredEngines().clear();
+    }
+
+  protected:
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    MockDevice *device;
+    MockDevice *deviceDefault;
+    std::vector<std::unique_ptr<MockDevice>> devices;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager;
+    DrmMemoryOperationsHandlerDefault *operationHandlerDefault = nullptr;
+    MockDrmMemoryOperationsHandlerBind *operationHandler = nullptr;
+    DebugManagerStateRestore restorer;
+    DrmQueryMock *mock;
+    MemoryManager *memoryManagerBackup;
+};
+
+using DrmMemoryOperationsHandlerBindMultiRootDeviceTest2 = DrmMemoryOperationsHandlerBindFixture2<2u>;
+
+TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, givenOperationHandlersWhenRootDeviceIndexIsChangedThenEvictSucceeds) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto allocationDefult = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{deviceDefault->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    EXPECT_EQ(operationHandlerDefault->getRootDeviceIndex(), 0u);
+    EXPECT_EQ(operationHandler->getRootDeviceIndex(), 1u);
+
+    operationHandlerDefault->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationDefult, 1));
+    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
+
+    operationHandlerDefault->setRootDeviceIndex(1u);
+    operationHandler->setRootDeviceIndex(0u);
+    EXPECT_EQ(operationHandlerDefault->getRootDeviceIndex(), 1u);
+    EXPECT_EQ(operationHandler->getRootDeviceIndex(), 0u);
+
+    EXPECT_EQ(operationHandlerDefault->evict(device, *allocationDefult), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+
+    memoryManager->freeGraphicsMemory(allocationDefult);
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 using DrmMemoryOperationsHandlerBindTest = DrmMemoryOperationsHandlerBindFixture<1u>;

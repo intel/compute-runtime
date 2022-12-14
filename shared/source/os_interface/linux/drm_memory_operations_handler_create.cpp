@@ -19,7 +19,7 @@ std::unique_ptr<DrmMemoryOperationsHandler> DrmMemoryOperationsHandler::create(D
         return std::make_unique<DrmMemoryOperationsHandlerBind>(drm.getRootDeviceEnvironment(), rootDeviceIndex);
     }
 
-    return std::make_unique<DrmMemoryOperationsHandlerDefault>();
+    return std::make_unique<DrmMemoryOperationsHandlerDefault>(rootDeviceIndex);
 }
 
 } // namespace NEO
