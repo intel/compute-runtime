@@ -270,6 +270,12 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if (this->groupSize[0] == groupSizeX &&
+        this->groupSize[1] == groupSizeY &&
+        this->groupSize[2] == groupSizeZ) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     auto numChannels = kernelImmData->getDescriptor().kernelAttributes.numLocalIdChannels;
     Vec3<size_t> groupSize{groupSizeX, groupSizeY, groupSizeZ};
     auto itemsInGroup = Math::computeTotalElementsCount(groupSize);
