@@ -200,6 +200,7 @@ constexpr ConstStringRef filterMode("sampler_desc_filtermode");
 constexpr ConstStringRef normalized("sampler_desc_normalized");
 constexpr ConstStringRef isPipe("is_pipe");
 constexpr ConstStringRef isPtr("is_ptr");
+constexpr ConstStringRef btiValue("bti_value");
 
 namespace ArgType {
 constexpr ConstStringRef localSize("local_size");
@@ -217,6 +218,8 @@ constexpr ConstStringRef workDimensions("work_dimensions");
 constexpr ConstStringRef implicitArgBuffer("implicit_arg_buffer");
 constexpr ConstStringRef syncBuffer("sync_buffer");
 constexpr ConstStringRef rtGlobalBuffer("rt_global_buffer");
+constexpr ConstStringRef dataConstBuffer("const_base");
+constexpr ConstStringRef dataGlobalBuffer("global_base");
 
 namespace Image {
 constexpr ConstStringRef width("image_width");
@@ -575,6 +578,8 @@ enum ArgType : uint8_t {
     ArgTypeVmeSearchPathType,
     ArgTypeSyncBuffer,
     ArgTypeRtGlobalBuffer,
+    ArgTypeDataConstBuffer,
+    ArgTypeDataGlobalBuffer,
     ArgTypeMax
 };
 
@@ -663,7 +668,7 @@ enum SamplerType : uint8_t {
 };
 
 using ArgTypeT = ArgType;
-using OffseT = int32_t;
+using OffsetT = int32_t;
 using SourceOffseT = int32_t;
 using SizeT = int32_t;
 using ArgIndexT = int32_t;
@@ -672,28 +677,32 @@ using AddrspaceT = AddressSpace;
 using AccessTypeT = AccessType;
 using SlmAlignmentT = uint8_t;
 using SamplerIndexT = int32_t;
+using BtiValueT = int32_t;
 
 namespace Defaults {
 constexpr ArgIndexT argIndex = -1;
 constexpr SlmAlignmentT slmArgAlignment = 16U;
 constexpr SamplerIndexT samplerIndex = -1;
 constexpr SourceOffseT sourceOffset = -1;
+constexpr OffsetT offset = -1;
+constexpr BtiValueT btiValue = -1;
 } // namespace Defaults
 
 struct PayloadArgumentBaseT {
     ArgTypeT argType = ArgTypeUnknown;
-    OffseT offset = 0;
+    OffsetT offset = Defaults::offset;
     SourceOffseT sourceOffset = Defaults::sourceOffset;
     SizeT size = 0;
     ArgIndexT argIndex = Defaults::argIndex;
+    BtiValueT btiValue = Defaults::btiValue;
     AddrmodeT addrmode = MemoryAddressingModeUnknown;
     AddrspaceT addrspace = AddressSpaceUnknown;
     AccessTypeT accessType = AccessTypeUnknown;
     SamplerIndexT samplerIndex = Defaults::samplerIndex;
     SlmAlignmentT slmArgAlignment = Defaults::slmArgAlignment;
     ImageType imageType = ImageTypeUnknown;
-    bool imageTransformable = false;
     SamplerType samplerType = SamplerTypeUnknown;
+    bool imageTransformable = false;
     bool isPipe = false;
     bool isPtr = false;
 };

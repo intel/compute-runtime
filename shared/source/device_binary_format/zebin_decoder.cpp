@@ -591,6 +591,8 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.isPipe, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::isPtr == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.isPtr, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::btiValue == key) {
+                validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.btiValue, context, outErrReason);
             } else {
                 outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
             }
@@ -718,6 +720,15 @@ bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[Len], size_t vecSi
     return true;
 }
 
+bool setSSHOffsetBasedOnBti(SurfaceStateHeapOffset &offset, Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::BtiValueT bti) {
+    if (bti < 0) {
+        return false;
+    }
+    constexpr auto surfaceStateSize = 64U;
+    offset = surfaceStateSize * bti;
+    return true;
+}
+
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t grfSize,
                                        std::string &outErrReason, std::string &outWarning) {
     switch (src.argType) {
@@ -789,7 +800,9 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
 
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize,
                                        std::string &outErrReason, std::string &outWarning) {
-    crossThreadDataSize = std::max<uint32_t>(crossThreadDataSize, src.offset + src.size);
+    if (src.offset != Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults::offset) {
+        crossThreadDataSize = std::max<uint32_t>(crossThreadDataSize, src.offset + src.size);
+    }
 
     auto &explicitArgs = dst.payloadMappings.explicitArgs;
     auto getVmeDescriptor = [&src, &dst]() {
@@ -1102,6 +1115,28 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         dst.payloadMappings.implicitArgs.rtDispatchGlobals.stateless = src.offset;
         dst.kernelAttributes.flags.hasRTCalls = true;
         break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataConstBuffer: {
+        if (src.offset != Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults::offset) {
+            dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless = src.offset;
+            dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize = src.size;
+        }
+        if (false == setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful, src.btiValue)) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid bti for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::dataConstBuffer.str() + " in context of : " + dst.kernelMetadata.kernelName + "\n");
+            return DecodeError::InvalidBinary;
+        }
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataGlobalBuffer: {
+        if (src.offset != Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults::offset) {
+            dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless = src.offset;
+            dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize = src.size;
+        }
+        if (false == setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue)) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid bti for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::dataGlobalBuffer.str() + " in context of : " + dst.kernelMetadata.kernelName + "\n");
+            return DecodeError::InvalidBinary;
+        }
+    } break;
     }
 
     return DecodeError::Success;
