@@ -16,16 +16,13 @@ namespace L0 {
 namespace ult {
 
 class RasFsAccess : public FsAccess {};
-template <>
-struct Mock<RasFsAccess> : public RasFsAccess {
-    MOCK_METHOD(bool, isRootUser, (), (override));
-    bool userIsRoot() {
-        return true;
+
+struct MockRasFsAccess : public RasFsAccess {
+    bool mockRootUser = true;
+    bool isRootUser() override {
+        return mockRootUser;
     }
-    bool userIsNotRoot() {
-        return false;
-    }
-    Mock<RasFsAccess>() = default;
+    MockRasFsAccess() = default;
 };
 
 } // namespace ult

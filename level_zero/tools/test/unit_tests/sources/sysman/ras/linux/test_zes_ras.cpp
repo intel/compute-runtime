@@ -13,7 +13,6 @@ extern bool sysmanUltsEnable;
 
 using ::testing::_;
 using ::testing::Matcher;
-using ::testing::NiceMock;
 
 namespace L0 {
 namespace ult {
@@ -21,7 +20,7 @@ namespace ult {
 constexpr uint32_t mockHandleCount = 0;
 struct SysmanRasFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<RasFsAccess>> pFsAccess;
+    std::unique_ptr<MockRasFsAccess> pFsAccess;
     std::vector<ze_device_handle_t> deviceHandles;
     FsAccess *pFsAccessOriginal = nullptr;
     void SetUp() override {
@@ -29,11 +28,10 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        pFsAccess = std::make_unique<NiceMock<Mock<RasFsAccess>>>();
+        pFsAccess = std::make_unique<MockRasFsAccess>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-        ON_CALL(*pFsAccess.get(), isRootUser())
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<RasFsAccess>::userIsRoot));
+        pFsAccess->mockRootUser = true;
         pSysmanDeviceImp->pRasHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -154,8 +152,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRa
 }
 
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPermissionThenFailureIsReturned) {
-    ON_CALL(*pFsAccess.get(), isRootUser())
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<RasFsAccess>::userIsNotRoot));
+    pFsAccess->mockRootUser = false;
     RasImp *pTestRasImp = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
     pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pTestRasImp);
 

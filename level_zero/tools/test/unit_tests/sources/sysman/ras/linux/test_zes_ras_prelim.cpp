@@ -1,0 +1,758 @@
+/*
+ * Copyright (C) 2022 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/ras/linux/mock_fs_ras_prelim.h"
+
+extern bool sysmanUltsEnable;
+
+using ::testing::_;
+using ::testing::DoDefault;
+using ::testing::Matcher;
+using ::testing::NiceMock;
+using ::testing::Return;
+class OsRas;
+namespace L0 {
+namespace ult {
+constexpr uint32_t mockHandleCount = 2u;
+constexpr uint32_t mockHandleCountForSubDevice = 4u;
+struct SysmanRasFixture : public SysmanDeviceFixture {
+  protected:
+    std::unique_ptr<Mock<RasFsAccess>> pFsAccess;
+    std::unique_ptr<Mock<RasSysfsAccess>> pSysfsAccess;
+    std::unique_ptr<Mock<MockPmuInterfaceImpForRas>> pPmuInterface;
+    std::unique_ptr<Mock<RasFwInterface>> pRasFwUtilInterface;
+    MemoryManager *pMemoryManagerOriginal = nullptr;
+    std::unique_ptr<MockMemoryManagerInRasSysman> pMemoryManager;
+    FsAccess *pFsAccessOriginal = nullptr;
+    SysfsAccess *pSysfsAccessOriginal = nullptr;
+    PmuInterface *pOriginalPmuInterface = nullptr;
+    FirmwareUtil *pFwUtilOriginal = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
+
+    void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        SysmanDeviceFixture::SetUp();
+        pMemoryManagerOriginal = device->getDriverHandle()->getMemoryManager();
+        pMemoryManager = std::make_unique<::testing::NiceMock<MockMemoryManagerInRasSysman>>(*neoDevice->getExecutionEnvironment());
+        pMemoryManager->localMemorySupported[0] = true;
+        device->getDriverHandle()->setMemoryManager(pMemoryManager.get());
+        pFsAccess = std::make_unique<NiceMock<Mock<RasFsAccess>>>();
+        pSysfsAccess = std::make_unique<NiceMock<Mock<RasSysfsAccess>>>();
+        pRasFwUtilInterface = std::make_unique<NiceMock<Mock<RasFwInterface>>>();
+        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
+        pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
+        pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
+        pFwUtilOriginal = pLinuxSysmanImp->pFwUtilInterface;
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
+        pPmuInterface = std::make_unique<NiceMock<Mock<MockPmuInterfaceImpForRas>>>(pLinuxSysmanImp);
+        pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+        for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+            delete handle;
+        }
+
+        pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+        uint32_t subDeviceCount = 0;
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+    }
+    void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        device->getDriverHandle()->setMemoryManager(pMemoryManagerOriginal);
+        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
+        pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
+        pLinuxSysmanImp->pFwUtilInterface = pFwUtilOriginal;
+        SysmanDeviceFixture::TearDown();
+    }
+    std::vector<zes_ras_handle_t> getRasHandles(uint32_t count) {
+        std::vector<zes_ras_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumRasErrorSets(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
+};
+
+TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesInThenSuccessReturn) {
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+
+    uint32_t testcount = count + 1;
+    result = zesDeviceEnumRasErrorSets(device->toHandle(), &testcount, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testcount, mockHandleCount);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        EXPECT_NE(handle, nullptr);
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenGettingRasPropertiesThenSuccessIsReturned) {
+    auto handles = getRasHandles(mockHandleCount);
+    bool correctable = true;
+
+    for (auto handle : handles) {
+        zes_ras_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
+        EXPECT_EQ(properties.pNext, nullptr);
+        EXPECT_EQ(properties.onSubdevice, false);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        if (correctable == true) {
+            EXPECT_EQ(properties.type, ZES_RAS_ERROR_TYPE_CORRECTABLE);
+            correctable = false;
+        } else {
+            EXPECT_EQ(properties.type, ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
+        }
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForGtAndIfReadSymLinkFailsThenNoSupportedErrorTypeIsReturned) {
+    std::set<zes_ras_error_type_t> errorType = {};
+
+    pSysfsAccess->mockReadSymLinkResult = true;
+
+    LinuxRasSourceGt::getSupportedRasErrorTypes(errorType, pOsSysman, device->toHandle());
+    EXPECT_EQ(errorType.size(), 0u);
+}
+
+TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForGtAndIfListDirectoryFailsThenNoSupportedErrorTypeIsReturned) {
+    std::set<zes_ras_error_type_t> errorType = {};
+
+    pFsAccess->mockReadDirectoryFailure = true;
+
+    LinuxRasSourceGt::getSupportedRasErrorTypes(errorType, pOsSysman, device);
+    EXPECT_EQ(errorType.size(), 0u);
+}
+
+TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForHbmAndFwInterfaceIsAbsentThenNoSupportedErrorTypeIsReturned) {
+    std::set<zes_ras_error_type_t> errorType = {};
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+
+    LinuxRasSourceHbm::getSupportedRasErrorTypes(errorType, pOsSysman, device);
+    EXPECT_EQ(errorType.size(), 0u);
+}
+
+TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAreAbsentThenZeroHandlesAreCreated) {
+
+    pFsAccess->mockReadDirectoryWithoutRasEvents = true;
+
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+    uint32_t testcount = count + 1;
+    result = zesDeviceEnumRasErrorSets(device->toHandle(), &testcount, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testcount, 0u);
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtThenSuccessIsReturned) {
+
+    pPmuInterface->mockPmuReadCorrectable = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    bool correctable = true;
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
+        if (correctable == true) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableCacheErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socCorrectableFabricSs0_0Count + initialCorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
+            correctable = false;
+        } else {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalEuErrorCount + fatalTlb + initialUncorrectableCacheErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCount + initialEngineReset);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttention + initialProgrammingErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], initialUncorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiEastCount + socNonFatalPsfCsc0Count + initialUncorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], driverMigration + driverGgtt + driverRps + initialUncorrectableDriverErrors);
+        }
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtAfterClearThenSuccessIsReturned) {
+
+    pPmuInterface->mockPmuReadAfterClear = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    bool correctable = true;
+    ze_bool_t clear = 0;
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, clear, &state));
+        if (correctable == true) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], correctableGrfErrorCount + correctableEuErrorCount + initialCorrectableCacheErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socCorrectableFabricSs0_0Count + initialCorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
+            correctable = false;
+        } else {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalEuErrorCount + fatalTlb + initialUncorrectableCacheErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCount + initialEngineReset);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttention + initialProgrammingErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], initialUncorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiEastCount + socNonFatalPsfCsc0Count + initialUncorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], driverMigration + driverGgtt + driverRps + initialUncorrectableDriverErrors);
+        }
+    }
+    correctable = true;
+    clear = 1;
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, clear, &state));
+        if (correctable == true) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
+            correctable = false;
+        } else {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
+        }
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForHbmThenSuccessIsReturned) {
+
+    pPmuInterface->mockPmuReadResult = true;
+    pRasFwUtilInterface->mockMemorySuccess = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+
+    auto handles = getRasHandles(mockHandleCount);
+    bool correctable = true;
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
+        if (correctable == true) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], hbmCorrectableErrorCount);
+            correctable = false;
+        } else {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], hbmUncorrectableErrorCount);
+        }
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForHbmWithClearThenSuccessIsReturned) {
+
+    pPmuInterface->mockPmuReadResult = true;
+    pRasFwUtilInterface->mockMemorySuccess = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    bool correctable = true;
+    ze_bool_t clear = 0;
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, clear, &state));
+        if (correctable == true) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], hbmCorrectableErrorCount);
+            correctable = false;
+        } else {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], hbmUncorrectableErrorCount);
+        }
+    }
+
+    correctable = true;
+    clear = 1;
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, clear, &state));
+        if (correctable == true) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], 0u);
+            correctable = false;
+        } else {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], 0u);
+        }
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateWithClearOptionWithoutPermissionsThenFailureIsReturned) {
+
+    pFsAccess->mockRootUser = true;
+
+    auto handles = getRasHandles(mockHandleCount);
+    ze_bool_t clear = 1;
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasGetState(handle, clear, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndUnableToRetrieveConfigValuesAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+
+    pFsAccess->mockReadFileFailure = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndPerfEventOpenFailsAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+
+    pPmuInterface->mockPerfEvent = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndPmuReadFailsAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+
+    pPmuInterface->mockPmuReadResult = true;
+
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceWithClearAndPmuReadFailsAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+
+    pPmuInterface->mockPmuReadResult = true;
+
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 1, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateForGtInterfaceAndPMUGetEventTypeFailsAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+
+    pFsAccess->mockReadVal = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateAndFirmwareInterfaceIsAbsentOtherInterfacesAreAlsoAbsentThenFailureIsReturned) {
+
+    pFsAccess->mockReadVal = true;
+
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRasSetConfigThenSuccessIsReturned) {
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_config_t setConfig = {};
+        zes_ras_config_t getConfig = {};
+        setConfig.totalThreshold = 50;
+        memset(setConfig.detailedThresholds.category, 1, sizeof(setConfig.detailedThresholds.category));
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasSetConfig(handle, &setConfig));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetConfig(handle, &getConfig));
+        EXPECT_EQ(setConfig.totalThreshold, getConfig.totalThreshold);
+        int compare = std::memcmp(setConfig.detailedThresholds.category, getConfig.detailedThresholds.category, sizeof(setConfig.detailedThresholds.category));
+        EXPECT_EQ(0, compare);
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPermissionThenFailureIsReturned) {
+
+    pFsAccess->mockRootUser = true;
+
+    auto handles = getRasHandles(mockHandleCount);
+
+    for (auto handle : handles) {
+        zes_ras_config_t setConfig = {};
+        setConfig.totalThreshold = 50;
+        memset(setConfig.detailedThresholds.category, 1, sizeof(setConfig.detailedThresholds.category));
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasSetConfig(handle, &setConfig));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndReadSymLinkFailsDuringInitAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+
+    pSysfsAccess->mockReadSymLinkStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndReadSymLinkFailsInsideGetEventOpenAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+
+    pSysfsAccess->mockReadSymLinkStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndListDirectoryFailsDuringInitAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+
+    pFsAccess->mockListDirectoryStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumRasErrorSetsSucceeds) {
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+
+    pLinuxSysmanImp->reInitSysmanDeviceResources();
+
+    count = 0;
+    result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+}
+
+struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
+  protected:
+    std::unique_ptr<Mock<RasFsAccess>> pFsAccess;
+    std::unique_ptr<Mock<RasSysfsAccess>> pSysfsAccess;
+    std::unique_ptr<Mock<MockPmuInterfaceImpForRas>> pPmuInterface;
+    MemoryManager *pMemoryManagerOriginal = nullptr;
+    std::unique_ptr<MockMemoryManagerInRasSysman> pMemoryManager;
+    std::unique_ptr<Mock<RasFwInterface>> pRasFwUtilInterface;
+    FsAccess *pFsAccessOriginal = nullptr;
+    SysfsAccess *pSysfsAccessOriginal = nullptr;
+    PmuInterface *pOriginalPmuInterface = nullptr;
+    FirmwareUtil *pFwUtilOriginal = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
+
+    void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        SysmanMultiDeviceFixture::SetUp();
+        pMemoryManagerOriginal = device->getDriverHandle()->getMemoryManager();
+        pMemoryManager = std::make_unique<::testing::NiceMock<MockMemoryManagerInRasSysman>>(*neoDevice->getExecutionEnvironment());
+        pMemoryManager->localMemorySupported[0] = true;
+        device->getDriverHandle()->setMemoryManager(pMemoryManager.get());
+        pFsAccess = std::make_unique<NiceMock<Mock<RasFsAccess>>>();
+        pSysfsAccess = std::make_unique<NiceMock<Mock<RasSysfsAccess>>>();
+        pRasFwUtilInterface = std::make_unique<NiceMock<Mock<RasFwInterface>>>();
+        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
+        pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
+        pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
+        pFwUtilOriginal = pLinuxSysmanImp->pFwUtilInterface;
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+        pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
+        pPmuInterface = std::make_unique<NiceMock<Mock<MockPmuInterfaceImpForRas>>>(pLinuxSysmanImp);
+        pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+
+        pFsAccess->mockReadDirectoryForMultiDevice = true;
+
+        for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+            delete handle;
+        }
+
+        pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+        uint32_t subDeviceCount = 0;
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+    }
+    void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        device->getDriverHandle()->setMemoryManager(pMemoryManagerOriginal);
+        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
+        pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
+        pLinuxSysmanImp->pFwUtilInterface = pFwUtilOriginal;
+        SysmanMultiDeviceFixture::TearDown();
+    }
+    std::vector<zes_ras_handle_t> getRasHandles(uint32_t count) {
+        std::vector<zes_ras_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumRasErrorSets(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
+};
+TEST_F(SysmanMultiDeviceFixture, GivenValidSysmanHandleWithMultiDeviceWhenRetrievingRasHandlesThenSuccessIsReturned) {
+    RasHandleContext *pRasHandleContext = new RasHandleContext(pSysmanDeviceImp->pOsSysman);
+    uint32_t count = 0;
+    ze_result_t result = pRasHandleContext->rasGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ((count > 0), true);
+    delete pRasHandleContext;
+}
+TEST_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesThenSuccessIsReturned) {
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCountForSubDevice);
+
+    uint32_t testcount = count + 1;
+    result = zesDeviceEnumRasErrorSets(device->toHandle(), &testcount, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testcount, mockHandleCountForSubDevice);
+    auto handles = getRasHandles(mockHandleCountForSubDevice);
+    for (auto handle : handles) {
+        EXPECT_NE(handle, nullptr);
+    }
+}
+TEST_F(SysmanRasMultiDeviceFixture, GivenValidHandleWhenGettingRasPropertiesThenSuccessIsReturned) {
+    for (auto deviceHandle : deviceHandles) {
+        zes_ras_properties_t properties = {};
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        bool isSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
+        PublicLinuxRasImp *pLinuxRasImp = new PublicLinuxRasImp(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, deviceProperties.subdeviceId);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetProperties(properties));
+        EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
+        EXPECT_EQ(properties.onSubdevice, isSubDevice);
+        EXPECT_EQ(properties.type, ZES_RAS_ERROR_TYPE_CORRECTABLE);
+        delete pLinuxRasImp;
+    }
+}
+
+TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtThenSuccessIsReturned) {
+
+    pPmuInterface->mockPmuReadTile = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCountForSubDevice);
+    uint32_t handleIndex = 0u;
+
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
+        if (handleIndex == 0u) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], correctableGrfErrorCountTile0 + correctableEuErrorCountTile0 + initialCorrectableCacheErrors); // No. of correctable error type for subdevice 0
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socCorrectableHbmSs0_1CountTile0 + initialCorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
+        } else if (handleIndex == 1u) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalEuErrorCountTile0 + initialUncorrectableCacheErrors); // No. of uncorrectable error type for subdevice 0
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCountTile0 + initialEngineReset);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttentionTile0 + initialProgrammingErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], fatalFpuTile0 + FatalL3FabricTile0 + initialUncorrectableComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socNonFatalPsfCsc0CountTile0 + socFatalHbmSs1_15CountTile0 + initialUncorrectableNonComputeErrors);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], driverMigration + driverGgtt + driverRps + initialUncorrectableDriverErrors);
+        } else if (handleIndex == 2u) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], correctableSamplerErrorCountTile1 + correctableGucErrorCountTile1 + initialCorrectableCacheErrorsTile1); // No. of correctable error type for subdevice 1
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socCorrectableFabricSs1_0CountTile1 + initialCorrectableNonComputeErrorsTile1);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], 0u);
+        } else if (handleIndex == 3u) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS], fatalGucErrorCountTile1 + fatalIdiParityErrorCountTile1 + initialUncorrectableCacheErrorsTile1); // No. of uncorrectable error type for subdevice 1
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_RESET], fatalEngineResetCountTile1 + initialEngineResetTile1);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS], euAttentionTile1 + initialProgrammingErrorsTile1);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], socFatalMdfiWestCountTile1 + socNonFatalPunitCountTile1 + initialUncorrectableNonComputeErrorsTile1);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS], 0u);
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS], driverMigration + driverEngineOther + initialUncorrectableDriverErrorsTile1);
+        }
+        handleIndex++;
+    }
+}
+
+TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGeStateForHbmThenSuccessIsReturned) {
+
+    pPmuInterface->mockPmuReadResult = true;
+    pRasFwUtilInterface->mockMemorySuccess = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCountForSubDevice);
+    uint32_t handleIndex = 0u;
+
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
+        if (handleIndex == 0u) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], hbmCorrectableErrorCount); // No. of correctable error type for subdevice 0
+        } else if (handleIndex == 1u) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], hbmUncorrectableErrorCount); // No. of uncorrectable error type for subdevice 0
+        } else if (handleIndex == 2u) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], hbmCorrectableErrorCount); // No. of correctable error type for subdevice 1
+        } else if (handleIndex == 3u) {
+            EXPECT_EQ(state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS], hbmUncorrectableErrorCount); // No. of uncorrectable error type for subdevice 1
+        }
+        handleIndex++;
+    }
+}
+
+class SysmanRasAffinityMaskFixture : public SysmanRasMultiDeviceFixture {
+    void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        SysmanRasMultiDeviceFixture::SetUp();
+    }
+
+    void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        SysmanRasMultiDeviceFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(SysmanRasAffinityMaskFixture, GivenAffinityMaskIsSetWhenCallingRasPropertiesThenPropertiesAreReturnedForTheSubDevicesAccordingToAffinityMask) {
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+    auto handles = getRasHandles(mockHandleCount);
+    uint32_t handleIndex = 0u;
+    for (auto handle : handles) {
+        zes_ras_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
+        EXPECT_EQ(properties.pNext, nullptr);
+        EXPECT_EQ(properties.onSubdevice, true);
+        EXPECT_EQ(properties.subdeviceId, 1u); //Affinity mask 0.1 is set which means only subdevice 1 is exposed
+        if (handleIndex == 0u) {
+            EXPECT_EQ(properties.type, ZES_RAS_ERROR_TYPE_CORRECTABLE);
+
+        } else if (handleIndex == 1u) {
+            EXPECT_EQ(properties.type, ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
+        }
+        handleIndex++;
+    }
+}
+
+} // namespace ult
+} // namespace L0
