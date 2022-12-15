@@ -136,13 +136,18 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     if (lookupTable.isSharedHandle) {
         if (lookupTable.sharedHandleType.isDMABUFHandle) {
             ze_ipc_memory_flags_t flags = {};
-            *ptr = getMemHandlePtr(hDevice, lookupTable.sharedHandleType.fd, flags);
+            *ptr = getMemHandlePtr(hDevice,
+                                   lookupTable.sharedHandleType.fd,
+                                   NEO::AllocationType::BUFFER,
+                                   flags);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
         } else {
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
-            *ptr = this->driverHandle->importNTHandle(hDevice, lookupTable.sharedHandleType.ntHnadle);
+            *ptr = this->driverHandle->importNTHandle(hDevice,
+                                                      lookupTable.sharedHandleType.ntHnadle,
+                                                      NEO::AllocationType::BUFFER);
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -498,7 +503,10 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
              pIpcHandle.data,
              sizeof(handle));
 
-    *ptr = getMemHandlePtr(hDevice, handle, flags);
+    *ptr = getMemHandlePtr(hDevice,
+                           handle,
+                           NEO::AllocationType::BUFFER,
+                           flags);
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

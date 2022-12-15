@@ -281,6 +281,8 @@ TEST_F(MemoryExportImportTest,
                                      size, alignment, &importedPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    EXPECT_EQ(driverHandle->allocationTypeRequested, NEO::AllocationType::BUFFER);
+
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }

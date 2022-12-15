@@ -462,11 +462,15 @@ bool DriverHandleImp::isRemoteResourceNeeded(void *ptr, NEO::GraphicsAllocation 
     return (alloc == nullptr || (allocData && ((allocData->gpuAllocations.getGraphicsAllocations().size() - 1) < device->getRootDeviceIndex())));
 }
 
-void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAlloc) {
+void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
+                                      ze_ipc_memory_flags_t flags,
+                                      uint64_t handle,
+                                      NEO::AllocationType allocationType,
+                                      NEO::GraphicsAllocation **pAlloc) {
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
-                                                      NEO::AllocationType::BUFFER,
+                                                      allocationType,
                                                       neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     NEO::GraphicsAllocation *alloc =
@@ -586,7 +590,11 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
             if (ret < 0) {
                 return nullptr;
             }
-            peerPtr = this->importFdHandle(device->getNEODevice(), flags, handle, &alloc);
+            peerPtr = this->importFdHandle(device->getNEODevice(),
+                                           flags,
+                                           handle,
+                                           NEO::AllocationType::BUFFER,
+                                           &alloc);
         }
 
         if (peerPtr == nullptr) {
@@ -604,7 +612,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
     return alloc;
 }
 
-void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle) {
+void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     auto alloc = this->getMemoryManager()->createGraphicsAllocationFromNTHandle(handle, neoDevice->getRootDeviceIndex(), NEO::AllocationType::SHARED_BUFFER);
