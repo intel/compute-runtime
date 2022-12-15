@@ -127,7 +127,7 @@ GLboolean GLSharingFunctionsWindows::initGLFunctions() {
     glLibrary.reset(OsLibrary::load(Os::openglDllName));
 
     if (glLibrary->isLoaded()) {
-        glFunctionHelper wglLibrary(glLibrary.get(), "wglGetProcAddress");
+        GlFunctionHelper wglLibrary(glLibrary.get(), "wglGetProcAddress");
         GLGetCurrentContext = (*glLibrary)["wglGetCurrentContext"];
         GLGetCurrentDisplay = (*glLibrary)["wglGetCurrentDC"];
         glGetString = (*glLibrary)["glGetString"];
