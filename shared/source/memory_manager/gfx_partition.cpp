@@ -144,6 +144,28 @@ void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
     }
 }
 
+uint64_t GfxPartition::getHeapMinimalAddress(HeapIndex heapIndex) {
+    if (heapIndex == HeapIndex::HEAP_SVM ||
+        heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW ||
+        heapIndex == HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW ||
+        heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW ||
+        heapIndex == HeapIndex::HEAP_INTERNAL_FRONT_WINDOW) {
+        return getHeapBase(heapIndex);
+    } else {
+        if ((heapIndex == HeapIndex::HEAP_EXTERNAL ||
+             heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY) &&
+            (getHeapLimit(HeapAssigner::mapExternalWindowIndex(heapIndex)) != 0)) {
+            return getHeapBase(heapIndex) + GfxPartition::externalFrontWindowPoolSize;
+        } else if (heapIndex == HeapIndex::HEAP_INTERNAL ||
+                   heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) {
+            return getHeapBase(heapIndex) + GfxPartition::internalFrontWindowPoolSize;
+        } else if (heapIndex == HeapIndex::HEAP_STANDARD2MB) {
+            return getHeapBase(heapIndex) + GfxPartition::heapGranularity2MB;
+        }
+        return getHeapBase(heapIndex) + GfxPartition::heapGranularity;
+    }
+}
+
 bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool) {
 
     /*

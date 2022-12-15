@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/device.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/fixtures/device_fixture.h"

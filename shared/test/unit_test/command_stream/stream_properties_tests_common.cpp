@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/command_stream/stream_properties_tests_common.h"
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/hw_helper.h"

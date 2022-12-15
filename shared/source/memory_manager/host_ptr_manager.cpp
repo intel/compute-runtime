@@ -8,6 +8,7 @@
 #include "shared/source/memory_manager/host_ptr_manager.h"
 
 #include "shared/source/helpers/abort.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 using namespace NEO;

@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -86,27 +85,7 @@ class GfxPartition {
         return getHeap(heapIndex).getLimit();
     }
 
-    uint64_t getHeapMinimalAddress(HeapIndex heapIndex) {
-        if (heapIndex == HeapIndex::HEAP_SVM ||
-            heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW ||
-            heapIndex == HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW ||
-            heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW ||
-            heapIndex == HeapIndex::HEAP_INTERNAL_FRONT_WINDOW) {
-            return getHeapBase(heapIndex);
-        } else {
-            if ((heapIndex == HeapIndex::HEAP_EXTERNAL ||
-                 heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY) &&
-                (getHeapLimit(HeapAssigner::mapExternalWindowIndex(heapIndex)) != 0)) {
-                return getHeapBase(heapIndex) + GfxPartition::externalFrontWindowPoolSize;
-            } else if (heapIndex == HeapIndex::HEAP_INTERNAL ||
-                       heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) {
-                return getHeapBase(heapIndex) + GfxPartition::internalFrontWindowPoolSize;
-            } else if (heapIndex == HeapIndex::HEAP_STANDARD2MB) {
-                return getHeapBase(heapIndex) + GfxPartition::heapGranularity2MB;
-            }
-            return getHeapBase(heapIndex) + GfxPartition::heapGranularity;
-        }
-    }
+    uint64_t getHeapMinimalAddress(HeapIndex heapIndex);
 
     bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
 

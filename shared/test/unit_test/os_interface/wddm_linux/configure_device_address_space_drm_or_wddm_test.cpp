@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_interface.h"

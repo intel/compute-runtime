@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/test_macros/test.h"
 

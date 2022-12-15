@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
+
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 
 namespace L0 {

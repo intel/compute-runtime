@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 
 #include <algorithm>
 

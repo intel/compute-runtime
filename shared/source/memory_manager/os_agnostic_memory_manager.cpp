@@ -23,6 +23,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/os_memory.h"

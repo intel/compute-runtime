@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"

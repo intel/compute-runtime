@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/drm_allocation.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"

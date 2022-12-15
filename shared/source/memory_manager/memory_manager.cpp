@@ -25,6 +25,7 @@
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/deferrable_allocation_deletion.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
@@ -93,8 +94,23 @@ bool MemoryManager::isLimitedGPUOnType(uint32_t rootDeviceIndex, AllocationType 
            (type != AllocationType::IMAGE);
 }
 
+void *MemoryManager::alignedMallocWrapper(size_t bytes, size_t alignment) {
+    return ::alignedMalloc(bytes, alignment);
+}
+
+void MemoryManager::alignedFreeWrapper(void *ptr) {
+    ::alignedFree(ptr);
+}
+
 GmmHelper *MemoryManager::getGmmHelper(uint32_t rootDeviceIndex) {
     return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
+}
+
+HeapIndex MemoryManager::selectInternalHeap(bool useLocalMemory) {
+    return useLocalMemory ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_INTERNAL;
+}
+HeapIndex MemoryManager::selectExternalHeap(bool useLocalMemory) {
+    return useLocalMemory ? HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_EXTERNAL;
 }
 
 void MemoryManager::zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
@@ -257,6 +273,17 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
         }
     }
     freeGraphicsMemory(gfxAllocation);
+}
+
+uint64_t MemoryManager::getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) {
+    return getGfxPartition(rootDeviceIndex)->getHeapBase(selectInternalHeap(useLocalMemory));
+}
+uint64_t MemoryManager::getExternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) {
+    return getGfxPartition(rootDeviceIndex)->getHeapBase(selectExternalHeap(useLocalMemory));
+}
+
+bool MemoryManager::isLimitedRange(uint32_t rootDeviceIndex) {
+    return getGfxPartition(rootDeviceIndex)->isLimitedRange();
 }
 
 void MemoryManager::waitForDeletions() {
@@ -904,6 +931,16 @@ bool MemoryManager::isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex) {
     });
 
     return isaInLocalMemory[rootDeviceIndex];
+}
+
+bool MemoryManager::isKernelBinaryReuseEnabled() {
+    auto reuseBinaries = false;
+
+    if (DebugManager.flags.ReuseKernelBinaries.get() != -1) {
+        reuseBinaries = DebugManager.flags.ReuseKernelBinaries.get();
+    }
+
+    return reuseBinaries;
 }
 
 OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, DeviceBitfield subdevicesBitfield) {

@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/memory_manager/gfx_partition.h"

@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {

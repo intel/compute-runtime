@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/device_factory.h"

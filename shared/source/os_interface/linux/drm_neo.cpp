@@ -46,6 +46,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <map>
+#include <sstream>
 
 namespace NEO {
 

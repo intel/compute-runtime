@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/kernel/local_ids_cache.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"

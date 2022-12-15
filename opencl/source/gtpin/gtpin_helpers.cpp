@@ -7,6 +7,7 @@
 
 #include "gtpin_helpers.h"
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"

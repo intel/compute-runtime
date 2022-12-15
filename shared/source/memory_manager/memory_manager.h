@@ -25,6 +25,7 @@
 #include <vector>
 
 namespace NEO {
+class GfxPartition;
 struct ImageInfo;
 struct AllocationData;
 class GmmHelper;
@@ -141,10 +142,10 @@ class MemoryManager {
     virtual double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) = 0;
 
     uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
-    MOCKABLE_VIRTUAL uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) { return getGfxPartition(rootDeviceIndex)->getHeapBase(selectInternalHeap(useLocalMemory)); }
-    uint64_t getExternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) { return getGfxPartition(rootDeviceIndex)->getHeapBase(selectExternalHeap(useLocalMemory)); }
+    MOCKABLE_VIRTUAL uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory);
+    uint64_t getExternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory);
 
-    bool isLimitedRange(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->isLimitedRange(); }
+    bool isLimitedRange(uint32_t rootDeviceIndex);
 
     bool peek64kbPagesEnabled(uint32_t rootDeviceIndex) const;
     bool peekForce32BitAllocations() const { return force32bitAllocations; }
@@ -176,13 +177,9 @@ class MemoryManager {
         return nullptr;
     }
 
-    MOCKABLE_VIRTUAL void *alignedMallocWrapper(size_t bytes, size_t alignment) {
-        return ::alignedMalloc(bytes, alignment);
-    }
+    MOCKABLE_VIRTUAL void *alignedMallocWrapper(size_t bytes, size_t alignment);
 
-    MOCKABLE_VIRTUAL void alignedFreeWrapper(void *ptr) {
-        ::alignedFree(ptr);
-    }
+    MOCKABLE_VIRTUAL void alignedFreeWrapper(void *ptr);
 
     MOCKABLE_VIRTUAL bool isHostPointerTrackingEnabled(uint32_t rootDeviceIndex);
 
@@ -213,8 +210,8 @@ class MemoryManager {
     GmmHelper *getGmmHelper(uint32_t rootDeviceIndex);
     virtual AddressRange reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) = 0;
     virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;
-    static HeapIndex selectInternalHeap(bool useLocalMemory) { return useLocalMemory ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_INTERNAL; }
-    static HeapIndex selectExternalHeap(bool useLocalMemory) { return useLocalMemory ? HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_EXTERNAL; }
+    static HeapIndex selectInternalHeap(bool useLocalMemory);
+    static HeapIndex selectExternalHeap(bool useLocalMemory);
 
     static uint32_t maxOsContextCount;
     virtual void commonCleanup(){};
@@ -245,15 +242,7 @@ class MemoryManager {
         return false;
     }
 
-    bool isKernelBinaryReuseEnabled() {
-        auto reuseBinaries = false;
-
-        if (DebugManager.flags.ReuseKernelBinaries.get() != -1) {
-            reuseBinaries = DebugManager.flags.ReuseKernelBinaries.get();
-        }
-
-        return reuseBinaries;
-    }
+    bool isKernelBinaryReuseEnabled();
 
     struct KernelAllocationInfo {
         KernelAllocationInfo(GraphicsAllocation *allocation, uint32_t reuseCounter) : kernelAllocation(allocation), reuseCounter(reuseCounter) {}

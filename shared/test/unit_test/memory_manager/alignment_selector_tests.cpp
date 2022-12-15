@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/alignment_selector.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
