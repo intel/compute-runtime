@@ -80,9 +80,9 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
         this->staticWorkPartitioningEnabled = true;
     }
 
-    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    productHelper->fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
-    productHelper->fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);
+    auto &productHelper = getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
+    productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -848,11 +848,12 @@ bool CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *src
 
 bool CommandStreamReceiver::needsPageTableManager() const {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto &productHelper = getProductHelper();
 
     if (pageTableManager.get() != nullptr) {
         return false;
     }
-    return ProductHelper::get(hwInfo->platform.eProductFamily)->isPageTableManagerSupported(*hwInfo);
+    return productHelper.isPageTableManagerSupported(*hwInfo);
 }
 
 void CommandStreamReceiver::printDeviceIndex() {
@@ -917,6 +918,10 @@ const RootDeviceEnvironment &CommandStreamReceiver::peekRootDeviceEnvironment() 
 
 const GfxCoreHelper &CommandStreamReceiver::getGfxCoreHelper() const {
     return peekRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+}
+
+const ProductHelper &CommandStreamReceiver::getProductHelper() const {
+    return peekRootDeviceEnvironment().getHelper<ProductHelper>();
 }
 
 TaskCountType CommandStreamReceiver::getCompletionValue(const GraphicsAllocation &gfxAllocation) {

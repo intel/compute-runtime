@@ -53,6 +53,7 @@ class TagAllocatorBase;
 class LogicalStateHelper;
 class KmdNotifyHelper;
 class GfxCoreHelper;
+class ProductHelper;
 
 template <typename TSize>
 class TimestampPackets;
@@ -334,6 +335,7 @@ class CommandStreamReceiver {
     const RootDeviceEnvironment &peekRootDeviceEnvironment() const;
 
     const GfxCoreHelper &getGfxCoreHelper() const;
+    const ProductHelper &getProductHelper() const;
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
     MOCKABLE_VIRTUAL bool checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const;

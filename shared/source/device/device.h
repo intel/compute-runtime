@@ -24,6 +24,7 @@ class SourceLevelDebugger;
 class SubDevice;
 struct PhysicalDevicePciBusInfo;
 class GfxCoreHelper;
+class ProductHelper;
 
 struct SelectorCopyEngine : NonCopyableOrMovableClass {
     std::atomic<bool> isMainUsed = false;
@@ -146,6 +147,7 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL bool verifyAdapterLuid();
     void getAdapterMask(uint32_t &nodeMask);
     const GfxCoreHelper &getGfxCoreHelper() const;
+    const ProductHelper &getProductHelper() const;
 
     std::atomic<uint32_t> debugExecutionCounter = 0;
 

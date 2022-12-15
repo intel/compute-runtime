@@ -265,12 +265,12 @@ bool Device::createDeviceImpl() {
 
     createBindlessHeapsHelper();
     if (!isEngineInstanced()) {
-        auto hardwareInfo = getRootDeviceEnvironment().getMutableHardwareInfo();
         uuid.isValid = false;
 
         if (DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
             if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
-                uuid.isValid = ProductHelper::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
+                auto &productHelper = getProductHelper();
+                uuid.isValid = productHelper.getUuid(this, uuid.id);
             }
         }
 
@@ -406,7 +406,8 @@ uint64_t Device::getProfilingTimerClock() {
 }
 
 bool Device::isBcsSplitSupported() {
-    auto bcsSplit = ProductHelper::get(getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getHardwareInfo()) &&
+    auto &productHelper = getProductHelper();
+    auto bcsSplit = productHelper.isBlitSplitEnqueueWARequired(getHardwareInfo()) &&
                     ApiSpecificConfig::isBcsSplitWaSupported() &&
                     Device::isBlitSplitEnabled();
 
@@ -751,6 +752,10 @@ const GfxCoreHelper &Device::getGfxCoreHelper() const {
     return getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 }
 
+const ProductHelper &Device::getProductHelper() const {
+    return getRootDeviceEnvironment().getHelper<ProductHelper>();
+}
+
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     UNRECOVERABLE_IF(rtDispatchGlobalsInfos.size() < maxBvhLevels + 1);
     UNRECOVERABLE_IF(rtDispatchGlobalsInfos[maxBvhLevels] != nullptr);
@@ -771,8 +776,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         return;
     }
 
-    auto &hwInfo = getHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = getProductHelper();
 
     GraphicsAllocation *dispatchGlobalsArrayAllocation = nullptr;
 

@@ -538,7 +538,7 @@ bool ProductHelperHw<gfxProduct>::isMidThreadPreemptionDisallowedForRayTracingKe
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) {
+void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const {
     propertiesSupport.coherencyRequired = getScmPropertyCoherencyRequiredSupport();
     propertiesSupport.threadArbitrationPolicy = isThreadArbitrationPolicyReportedWithScm();
     propertiesSupport.largeGrfMode = isGrfNumReportedWithScm();
@@ -548,7 +548,7 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateCom
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) {
+void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) const {
     fillScmPropertiesSupportStructureBase(propertiesSupport);
 }
 
@@ -607,7 +607,7 @@ bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBas
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const {
     propertiesSupport.globalAtomics = getStateBaseAddressPropertyGlobalAtomicsSupport();
     propertiesSupport.statelessMocs = getStateBaseAddressPropertyStatelessMocsSupport();
     propertiesSupport.bindingTablePoolBaseAddress = getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport();
@@ -668,7 +668,7 @@ bool ProductHelperHw<gfxProduct>::getFrontEndPropertySingleSliceDispatchCcsModeS
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+void ProductHelperHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const {
     propertiesSupport.computeDispatchAllWalker = isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
     propertiesSupport.disableEuFusion = getFrontEndPropertyDisableEuFusionSupport();
     propertiesSupport.disableOverdispatch = isDisableOverdispatchAvailable(hwInfo);
@@ -694,7 +694,7 @@ bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertySystolicModeSupport()
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+void ProductHelperHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const {
     propertiesSupport.modeSelected = getPipelineSelectPropertyModeSelectedSupport();
     propertiesSupport.mediaSamplerDopClockGate = getPipelineSelectPropertyMediaSamplerDopClockGateSupport();
     propertiesSupport.systolicMode = isSystolicModeConfigurable(hwInfo);
