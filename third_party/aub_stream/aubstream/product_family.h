@@ -26,6 +26,7 @@ enum class ProductFamily : uint32_t {
     XeHpSdv,
     Dg2,
     Pvc,
+    Mtl,
     MaxProduct,
 };
 } // namespace aub_stream
