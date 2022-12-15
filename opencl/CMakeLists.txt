@@ -31,6 +31,12 @@ macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
   endif()
 endmacro()
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/command_queue/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/mem_obj/definitions${BRANCH_DIR_SUFFIX})
+if(MSVC)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/sharings/gl/windows/include)
+endif()
+
 set(NEO_DYNAMIC_LIB_NAME "igdrcl_dll") # single NEO dll
 set(NEO_DLL_NAME_BASE "igdrcl")
 

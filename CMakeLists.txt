@@ -790,12 +790,6 @@ include_directories(${NEO_SHARED_DIRECTORY}/memory_properties${BRANCH_DIR_SUFFIX
 include_directories(${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/xe_hpc_core${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/xe_hpg_core${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/opencl/source/command_queue/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/opencl/source/mem_obj/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/opencl/source/memory_manager/definitions${BRANCH_DIR_SUFFIX})
-if(MSVC)
-  include_directories(${NEO_SOURCE_DIR}/opencl/source/sharings/gl/windows/include)
-endif()
 
 macro(macro_for_each_platform)
   string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
