@@ -21,6 +21,8 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 
+#include "platforms.h"
+
 namespace NEO {
 
 void setKernelMiscInfoPosition(ConstStringRef metadata, NEO::ProgramInfo &dst) {
@@ -39,12 +41,46 @@ bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const u
                : isValidZebinHeader(Elf::decodeElfFileHeader<Elf::EI_CLASS_64>(binary));
 }
 
+bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_CLASS numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Elf::ZebinTargetFlags targetMetadata) {
+    if (targetDevice.maxPointerSizeInBytes == 4 && static_cast<uint32_t>(numBits == Elf::EI_CLASS_64)) {
+        return false;
+    }
+
+    if (gfxCore == IGFX_UNKNOWN_CORE && productFamily == IGFX_UNKNOWN && productConfig == AOT::UNKNOWN_ISA) {
+        return false;
+    }
+    if (productConfig != AOT::UNKNOWN_ISA) {
+        if (targetDevice.aotConfig.value != productConfig) {
+            return false;
+        }
+    } else {
+        if (gfxCore != IGFX_UNKNOWN_CORE) {
+            if (targetDevice.coreFamily != gfxCore) {
+                return false;
+            }
+        }
+        if (productFamily != IGFX_UNKNOWN) {
+            if (false == haveSameCore(targetDevice.productFamily, productFamily)) {
+                return false;
+            }
+        }
+    }
+    if (targetMetadata.validateRevisionId) {
+        bool isValidStepping = (targetDevice.stepping >= targetMetadata.minHwRevisionId) && (targetDevice.stepping <= targetMetadata.maxHwRevisionId);
+        if (false == isValidStepping) {
+            return false;
+        }
+    }
+    return true;
+}
+
 template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
 template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
+    AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
     Elf::ZebinTargetFlags targetMetadata = {};
     std::vector<Elf::IntelGTNote> intelGTNotes = {};
     auto decodeError = getIntelGTNotes(elf, intelGTNotes, outErrReason, outWarning);
@@ -85,17 +121,18 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             }
             break;
         }
+        case Elf::IntelGTSectionType::ProductConfig: {
+            DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
+            auto productConfigData = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
+            productConfig = static_cast<AOT::PRODUCT_CONFIG>(*productConfigData);
+            break;
+        }
         default:
             outWarning.append("DeviceBinaryFormat::Zebin : Unrecognized IntelGTNote type: " + std::to_string(intelGTNote.type) + "\n");
             break;
         }
     }
-    bool validForTarget = (gfxCore != IGFX_UNKNOWN_CORE) | (productFamily != IGFX_UNKNOWN);
-    validForTarget &= (gfxCore != IGFX_UNKNOWN_CORE) ? targetDevice.coreFamily == gfxCore : true;
-    validForTarget &= (productFamily != IGFX_UNKNOWN) ? haveSameCore(targetDevice.productFamily, productFamily) : true;
-    validForTarget &= (0 == targetMetadata.validateRevisionId) | ((targetDevice.stepping >= targetMetadata.minHwRevisionId) & (targetDevice.stepping <= targetMetadata.maxHwRevisionId));
-    validForTarget &= (targetDevice.maxPointerSizeInBytes >= static_cast<uint32_t>(numBits == Elf::EI_CLASS_32 ? 4 : 8));
-    return validForTarget;
+    return validateTargetDevice(targetDevice, numBits, productFamily, gfxCore, productConfig, targetMetadata);
 }
 
 DecodeError validateZeInfoVersion(const Elf::ZebinKernelMetadata::Types::Version &receivedZeInfoVersion, std::string &outErrReason, std::string &outWarning) {

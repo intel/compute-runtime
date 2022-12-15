@@ -20,6 +20,8 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "platforms.h"
+
 #include <numeric>
 #include <vector>
 
@@ -6314,6 +6316,37 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndV
     EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning));
 }
 
+TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTargetDeviceThenUseOnlyItForValidation) {
+    NEO::HardwareIpVersion aotConfig = {0};
+    aotConfig.value = 0x00001234;
+
+    TargetDevice targetDevice;
+    targetDevice.maxPointerSizeInBytes = 8u;
+    ASSERT_EQ(IGFX_UNKNOWN, targetDevice.productFamily);
+    ASSERT_EQ(IGFX_UNKNOWN_CORE, targetDevice.coreFamily);
+    targetDevice.aotConfig.value = aotConfig.value;
+
+    Elf::ElfNoteSection elfNoteSection;
+    elfNoteSection.descSize = 4u;
+    elfNoteSection.nameSize = 8u;
+    elfNoteSection.type = Elf::IntelGTSectionType::ProductConfig;
+
+    uint8_t productConfigData[4];
+    memcpy_s(productConfigData, 4, &aotConfig.value, 4);
+
+    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), productConfigData, NEO::Elf::IntelGtNoteOwnerName.data(), sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning));
+}
+
 TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenValidatingTargetDeviceThenReturnTrue) {
     TargetDevice targetDevice;
     targetDevice.productFamily = productFamily;
@@ -6415,7 +6448,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndI
     targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
 
     Elf::ElfNoteSection elfNoteSection = {};
-    elfNoteSection.type = 5;
+    elfNoteSection.type = Elf::IntelGTSectionType::LastSupported + 1;
     elfNoteSection.descSize = 0u;
     elfNoteSection.nameSize = 8u;
     auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
@@ -6555,6 +6588,65 @@ TEST_F(IntelGTNotesFixture, GivenIncompatibleVersioningWhenValidatingTargetDevic
     validateTargetDevice(elf, targetDevice, outErrReason, outWarning);
     EXPECT_TRUE(outWarning.empty());
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 2, decoder is at : 1\n", outErrReason.c_str());
+}
+
+TEST(ValidateTargetDeviceTests, givenMismatechAotConfigWhenValidatingTargetDeviceThenUseOnlyItForValidationAndReturnFalse) {
+    TargetDevice targetDevice;
+    targetDevice.aotConfig.value = 0x00001234;
+    targetDevice.maxPointerSizeInBytes = 8u;
+
+    auto mismatchedAotConfig = static_cast<AOT::PRODUCT_CONFIG>(0x00004321);
+    Elf::ZebinTargetFlags targetMetadata;
+    auto res = validateTargetDevice(targetDevice, Elf::EI_CLASS_64, productFamily, renderCoreFamily, mismatchedAotConfig, targetMetadata);
+    EXPECT_FALSE(res);
+}
+
+TEST(ValidateTargetDeviceTests, givenMismatchedProductFamilyWhenValidatingTargetDeviceThenReturnFalse) {
+    TargetDevice targetDevice;
+    targetDevice.maxPointerSizeInBytes = 8u;
+    ASSERT_EQ(AOT::UNKNOWN_ISA, targetDevice.aotConfig.value);
+    targetDevice.coreFamily = IGFX_UNKNOWN_CORE;
+    targetDevice.productFamily = productFamily;
+
+    Elf::ZebinTargetFlags targetMetadata;
+    auto mismatchedPlatformFamily = IGFX_UNKNOWN;
+    for (int i = 0; i < IGFX_MAX_PRODUCT; i++) {
+        const auto hwInfo = NEO::hardwareInfoTable[i];
+        if (nullptr != hwInfo && hwInfo->platform.eRenderCoreFamily != renderCoreFamily) {
+            mismatchedPlatformFamily = hwInfo->platform.eProductFamily;
+        }
+    }
+
+    auto res = validateTargetDevice(targetDevice, Elf::EI_CLASS_64, mismatchedPlatformFamily, IGFX_UNKNOWN_CORE, AOT::UNKNOWN_ISA, targetMetadata);
+    EXPECT_FALSE(res);
+}
+
+TEST(ValidateTargetDeviceTests, givenMismatchedGfxCoreWhenValidatingTargetDeviceThenReturnFalse) {
+    TargetDevice targetDevice;
+    targetDevice.maxPointerSizeInBytes = 8u;
+    ASSERT_EQ(AOT::UNKNOWN_ISA, targetDevice.aotConfig.value);
+    targetDevice.coreFamily = renderCoreFamily;
+
+    Elf::ZebinTargetFlags targetMetadata;
+    auto mismatchedGfxCore = static_cast<GFXCORE_FAMILY>(renderCoreFamily + 1);
+
+    auto res = validateTargetDevice(targetDevice, Elf::EI_CLASS_64, IGFX_UNKNOWN, mismatchedGfxCore, AOT::UNKNOWN_ISA, targetMetadata);
+    EXPECT_FALSE(res);
+}
+
+TEST(ValidateTargetDeviceTests, givenSteppingBiggerThanMaxHwRevisionWhenValidatingTargetDeviceThenReturnFalse) {
+    TargetDevice targetDevice;
+    targetDevice.maxPointerSizeInBytes = 8u;
+    auto aotConfigValue = 0x00001234u;
+    targetDevice.aotConfig.value = aotConfigValue;
+
+    targetDevice.stepping = 2u;
+    Elf::ZebinTargetFlags targetMetadata;
+    targetMetadata.validateRevisionId = true;
+    targetMetadata.maxHwRevisionId = 1u;
+
+    auto res = validateTargetDevice(targetDevice, Elf::EI_CLASS_64, IGFX_UNKNOWN, IGFX_UNKNOWN_CORE, static_cast<AOT::PRODUCT_CONFIG>(aotConfigValue), targetMetadata);
+    EXPECT_FALSE(res);
 }
 
 TEST(PopulateGlobalDeviceHostNameMapping, givenValidZebinWithGlobalHostAccessTableSectionThenPopulateHostDeviceNameMapCorrectly) {

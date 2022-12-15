@@ -70,7 +70,8 @@ enum IntelGTSectionType : uint32_t {
     GfxCore = 2,
     TargetMetadata = 3,
     ZebinVersion = 4,
-    LastSupported = ZebinVersion
+    ProductConfig = 5,
+    LastSupported = ProductConfig
 };
 struct IntelGTNote {
     IntelGTSectionType type;
