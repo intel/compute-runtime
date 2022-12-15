@@ -60,7 +60,7 @@ class PreemptionHelper {
     static void programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper);
 
     template <typename GfxFamily>
-    static void programStateSipEndWa(LinearStream &cmdStream, const HardwareInfo &hwInfo, bool debuggerActive);
+    static void programStateSipEndWa(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSize(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);

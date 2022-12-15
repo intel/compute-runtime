@@ -130,7 +130,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
 
     } else {
         if (sipWaAllowed) {
-            PreemptionHelper::programStateSipEndWa<GfxFamily>(commandStream, peekHwInfo(), executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->debugger.get());
+            auto &rootDeviceEnvironment = peekRootDeviceEnvironment();
+            PreemptionHelper::programStateSipEndWa<GfxFamily>(commandStream, rootDeviceEnvironment);
         }
         this->addBatchBufferEnd(commandStream, patchLocation);
     }

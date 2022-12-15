@@ -793,7 +793,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateSipEndWA(bool isStateSipRequired
         return;
     }
     NEO::Device *neoDevice = this->device->getNEODevice();
-    NEO::PreemptionHelper::programStateSipEndWa<GfxFamily>(cmdStream, neoDevice->getHardwareInfo(), neoDevice->getDebugger());
+    NEO::PreemptionHelper::programStateSipEndWa<GfxFamily>(cmdStream, neoDevice->getRootDeviceEnvironment());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

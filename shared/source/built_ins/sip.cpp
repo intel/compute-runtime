@@ -222,10 +222,10 @@ void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, Mem
     }
 }
 
-void SipKernel::selectSipClassType(std::string &fileName, const HardwareInfo &hwInfo) {
+void SipKernel::selectSipClassType(std::string &fileName, const GfxCoreHelper &gfxCoreHelper) {
     const std::string unknown("unk");
     if (fileName.compare(unknown) == 0) {
-        SipKernel::classType = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred()
+        SipKernel::classType = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()
                                    ? SipClassType::HexadecimalHeaderFile
                                    : SipClassType::Builtins;
     } else {
@@ -235,7 +235,7 @@ void SipKernel::selectSipClassType(std::string &fileName, const HardwareInfo &hw
 
 bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device) {
     std::string fileName = DebugManager.flags.LoadBinarySipFromFile.get();
-    SipKernel::selectSipClassType(fileName, *device.getRootDeviceEnvironment().getHardwareInfo());
+    SipKernel::selectSipClassType(fileName, device.getGfxCoreHelper());
 
     switch (SipKernel::classType) {
     case SipClassType::RawBinaryFromFile:

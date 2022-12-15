@@ -76,6 +76,6 @@ template void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambl
 template void PreemptionHelper::programStateSipCmd<GfxFamily>(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper);
 template size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, bool isRcs);
 template size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
-template void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const HardwareInfo &hwInfo, bool debuggerActive);
+template void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment);
 
 } // namespace NEO

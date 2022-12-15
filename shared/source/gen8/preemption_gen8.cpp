@@ -118,5 +118,5 @@ void PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(INTER
 }
 
 template size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
-template void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const HardwareInfo &hwInfo, bool debuggerActive);
+template void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment);
 } // namespace NEO

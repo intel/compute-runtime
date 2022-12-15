@@ -18,8 +18,8 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 class MemoryManager;
+class GfxCoreHelper;
 
-struct HardwareInfo;
 struct RootDeviceEnvironment;
 
 class SipKernel {
@@ -65,7 +65,7 @@ class SipKernel {
     static std::string createHeaderFilename(const std::string &filename);
 
     static bool initHexadecimalArraySipKernel(SipKernelType type, Device &device);
-    static void selectSipClassType(std::string &fileName, const HardwareInfo &hwInfo);
+    static void selectSipClassType(std::string &fileName, const GfxCoreHelper &gfxCoreHelper);
 
     const std::vector<char> stateSaveAreaHeader;
     GraphicsAllocation *sipAllocation = nullptr;

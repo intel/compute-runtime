@@ -43,11 +43,12 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
 }
 
 template <>
-void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const HardwareInfo &hwInfo, bool debuggerActive) {
+void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    if (debuggerActive) {
-        GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (rootDeviceEnvironment.debugger) {
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
         if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
 
             NEO::PipeControlArgs args;
