@@ -219,7 +219,7 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
 
 template <>
 bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
-    return false;
+    return true;
 }
 
 template <>
