@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"

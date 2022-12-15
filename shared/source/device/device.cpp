@@ -435,6 +435,10 @@ bool Device::isDebuggerActive() const {
     return deviceInfo.debuggerActive;
 }
 
+Debugger *Device::getDebugger() const {
+    return getRootDeviceEnvironment().debugger.get();
+}
+
 bool Device::areSharedSystemAllocationsAllowed() const {
     auto sharedSystemAllocationsSupport = static_cast<bool>(getHardwareInfo().capabilityTable.sharedSystemMemCapabilities);
     if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
@@ -576,6 +580,18 @@ NEO::DebuggerL0 *Device::getL0Debugger() {
 
 const std::vector<EngineControl> &Device::getAllEngines() const {
     return this->allEngines;
+}
+
+const RootDeviceEnvironment &Device::getRootDeviceEnvironment() const {
+    return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()];
+}
+
+RootDeviceEnvironment &Device::getRootDeviceEnvironmentRef() const {
+    return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()];
+}
+
+bool Device::isFullRangeSvm() const {
+    return getRootDeviceEnvironment().isFullRangeSvm();
 }
 
 EngineControl &Device::getInternalEngine() {
@@ -842,4 +858,19 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     rtDispatchGlobalsInfos[maxBvhLevels] = dispatchGlobalsInfo.release();
 }
 
+MemoryManager *Device::getMemoryManager() const {
+    return executionEnvironment->memoryManager.get();
+}
+
+GmmHelper *Device::getGmmHelper() const {
+    return getRootDeviceEnvironment().getGmmHelper();
+}
+
+CompilerInterface *Device::getCompilerInterface() const {
+    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getCompilerInterface();
+}
+
+BuiltIns *Device::getBuiltIns() const {
+    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getBuiltIns();
+}
 } // namespace NEO

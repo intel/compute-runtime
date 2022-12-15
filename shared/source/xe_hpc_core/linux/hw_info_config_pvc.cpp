@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"

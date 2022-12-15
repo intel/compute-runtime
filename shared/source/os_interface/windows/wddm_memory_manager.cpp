@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"

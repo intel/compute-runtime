@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/pci_path.h"
 

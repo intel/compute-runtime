@@ -7,6 +7,7 @@
 
 #include "opencl/source/sharings/d3d/d3d_texture.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"

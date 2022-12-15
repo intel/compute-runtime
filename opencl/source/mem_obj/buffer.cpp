@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"

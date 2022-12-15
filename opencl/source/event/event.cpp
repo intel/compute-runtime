@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/mt_helpers.h"

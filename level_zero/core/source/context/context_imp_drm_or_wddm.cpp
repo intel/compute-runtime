@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 

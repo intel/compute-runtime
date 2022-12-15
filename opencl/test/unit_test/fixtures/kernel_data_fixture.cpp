@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"

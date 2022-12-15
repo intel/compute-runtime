@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"

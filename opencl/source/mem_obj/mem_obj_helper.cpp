@@ -7,6 +7,7 @@
 
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 
 #include "opencl/source/cl_device/cl_device.h"

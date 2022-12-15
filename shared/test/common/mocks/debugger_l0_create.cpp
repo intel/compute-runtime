@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 
 NEO::DebugerL0CreateFn mockDebuggerL0HwFactory[IGFX_MAX_CORE];

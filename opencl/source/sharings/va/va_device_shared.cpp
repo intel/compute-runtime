@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/source/os_interface/os_interface.h"

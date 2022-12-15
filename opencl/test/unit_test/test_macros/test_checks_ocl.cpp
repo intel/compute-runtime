@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "shared/source/device/device_info.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 

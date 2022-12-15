@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption.inl"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {

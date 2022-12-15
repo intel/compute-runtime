@@ -12,6 +12,8 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"

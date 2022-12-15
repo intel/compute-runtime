@@ -8,6 +8,8 @@
 #include "opencl/test/unit_test/mocks/mock_debug_program.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {

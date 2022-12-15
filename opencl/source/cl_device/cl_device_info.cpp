@@ -9,6 +9,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_time.h"

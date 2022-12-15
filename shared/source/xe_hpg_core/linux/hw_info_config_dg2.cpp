@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"

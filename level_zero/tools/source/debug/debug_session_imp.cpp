@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/sleep.h"

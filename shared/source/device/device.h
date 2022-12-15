@@ -7,8 +7,6 @@
 
 #pragma once
 #include "shared/source/device/device_info.h"
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -16,6 +14,13 @@
 #include "shared/source/os_interface/performance_counters.h"
 
 namespace NEO {
+class BindlessHeapsHelper;
+class BuiltIns;
+class CompilerInterface;
+class ExecutionEnvironment;
+class Debugger;
+class GmmClientContext;
+class GmmHelper;
 class SyncBufferHandler;
 enum class EngineGroupType : uint32_t;
 class DebuggerL0;
@@ -89,18 +94,16 @@ class Device : public ReferenceTrackedObject<Device> {
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     MOCKABLE_VIRTUAL bool isDebuggerActive() const;
-    Debugger *getDebugger() const { return getRootDeviceEnvironment().debugger.get(); }
+    Debugger *getDebugger() const;
     NEO::SourceLevelDebugger *getSourceLevelDebugger();
     DebuggerL0 *getL0Debugger();
     const EnginesT &getAllEngines() const;
     const std::string getDeviceName(const HardwareInfo &hwInfo) const;
 
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
-    const RootDeviceEnvironment &getRootDeviceEnvironment() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
-    RootDeviceEnvironment &getRootDeviceEnvironmentRef() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
-    bool isFullRangeSvm() const {
-        return getRootDeviceEnvironment().isFullRangeSvm();
-    }
+    const RootDeviceEnvironment &getRootDeviceEnvironment() const;
+    RootDeviceEnvironment &getRootDeviceEnvironmentRef() const;
+    bool isFullRangeSvm() const;
     static bool isBlitSplitEnabled();
     bool isBcsSplitSupported();
     bool areSharedSystemAllocationsAllowed() const;
@@ -225,21 +228,6 @@ class Device : public ReferenceTrackedObject<Device> {
 
 inline EngineControl &Device::getDefaultEngine() {
     return allEngines[defaultEngineIndex];
-}
-
-inline MemoryManager *Device::getMemoryManager() const {
-    return executionEnvironment->memoryManager.get();
-}
-
-inline GmmHelper *Device::getGmmHelper() const {
-    return getRootDeviceEnvironment().getGmmHelper();
-}
-
-inline CompilerInterface *Device::getCompilerInterface() const {
-    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getCompilerInterface();
-}
-inline BuiltIns *Device::getBuiltIns() const {
-    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getBuiltIns();
 }
 
 inline SelectorCopyEngine &Device::getSelectorCopyEngine() {
