@@ -568,6 +568,12 @@ ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
     memcpy_s(pIpcHandle->data + sizeof(int) + sizeof(this->numEvents),
              sizeof(rootDeviceIndex), &rootDeviceIndex, sizeof(rootDeviceIndex));
 
+    memcpy_s(pIpcHandle->data + sizeof(int) + sizeof(this->numEvents) + sizeof(uint32_t),
+             sizeof(this->isDeviceEventPoolAllocation), &this->isDeviceEventPoolAllocation, sizeof(this->isDeviceEventPoolAllocation));
+
+    memcpy_s(pIpcHandle->data + sizeof(int) + sizeof(this->numEvents) + sizeof(uint32_t) + sizeof(bool),
+             sizeof(this->isHostVisibleEventPoolAllocation), &this->isHostVisibleEventPoolAllocation, sizeof(this->isHostVisibleEventPoolAllocation));
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -587,15 +593,26 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     memcpy_s(&rootDeviceIndex, sizeof(rootDeviceIndex),
              hIpc.data + sizeof(int) + sizeof(numEvents), sizeof(rootDeviceIndex));
 
+    memcpy_s(&eventPool->isDeviceEventPoolAllocation, sizeof(eventPool->isDeviceEventPoolAllocation),
+             hIpc.data + sizeof(int) + sizeof(numEvents) + sizeof(rootDeviceIndex), sizeof(eventPool->isDeviceEventPoolAllocation));
+
+    memcpy_s(&eventPool->isHostVisibleEventPoolAllocation, sizeof(eventPool->isHostVisibleEventPoolAllocation),
+             hIpc.data + sizeof(int) + sizeof(numEvents) + sizeof(rootDeviceIndex) + sizeof(bool), sizeof(eventPool->isDeviceEventPoolAllocation));
+
     auto device = Device::fromHandle(this->devices.begin()->second);
     auto neoDevice = device->getNEODevice();
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
 
     eventPool->initializeSizeParameters(this->numDevices, this->deviceHandles.data(), *this->driverHandle, neoDevice->getRootDeviceEnvironment());
 
+    NEO::AllocationType allocationType = NEO::AllocationType::BUFFER_HOST_MEMORY;
+    if (eventPool->isDeviceEventPoolAllocation) {
+        allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+    }
+
     NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                       eventPool->getEventPoolSize(),
-                                                      NEO::AllocationType::BUFFER_HOST_MEMORY,
+                                                      allocationType,
                                                       systemMemoryBitfield};
 
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
@@ -603,7 +620,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     NEO::GraphicsAllocation *alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle,
                                                                                              unifiedMemoryProperties,
                                                                                              false,
-                                                                                             true,
+                                                                                             eventPool->isHostVisibleEventPoolAllocation,
                                                                                              false);
 
     if (alloc == nullptr) {
