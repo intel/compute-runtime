@@ -40,14 +40,6 @@ struct AllocationProperties;
 struct EncodeSurfaceStateArgs;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
-class GfxCoreHelper;
-template <typename GfxFamily>
-class GfxCoreHelperHw;
-
-using HwHelper = GfxCoreHelper;
-
-template <typename GfxFamily>
-using HwHelperHw = GfxCoreHelperHw<GfxFamily>;
 
 class GfxCoreHelper {
   public:
