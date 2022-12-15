@@ -59,7 +59,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     }
 
     auto &hwInfo = device.getHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device.getProductHelper();
 
     auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *gpuAllocation),
                                                                     device, gpuAllocation, 0, initData, size);

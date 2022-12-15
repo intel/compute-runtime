@@ -33,7 +33,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
     auto &hwInfo = *device.getRootDeviceEnvironment().getHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = getProductHelper();
     if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
         size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
     }
@@ -140,11 +140,11 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
     auto &hwInfo = peekHwInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
-    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = getProductHelper();
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired && debuggingEnabled && !gfxCoreHelper.isSipWANeeded(hwInfo)) {

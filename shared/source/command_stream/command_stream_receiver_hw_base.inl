@@ -303,7 +303,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             levelClosed = true;
             // if we guard with ppc, flush dc as well to speed up completion latency
             if (dispatchFlags.guardCommandBufferWithPipeControl) {
-                const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+                const auto &productHelper = getProductHelper();
                 if (productHelper.isDcFlushAllowed()) {
                     dispatchFlags.dcFlush = true;
                 }
@@ -1433,7 +1433,7 @@ inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompr
 
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isPipelineSelectAlreadyProgrammed() const {
-    const auto &productHelper = *ProductHelper::get(peekHwInfo().platform.eProductFamily);
+    const auto &productHelper = getProductHelper();
     return this->streamProperties.stateComputeMode.isDirty() && productHelper.is3DPipelineSelectWARequired() && isRcs();
 }
 

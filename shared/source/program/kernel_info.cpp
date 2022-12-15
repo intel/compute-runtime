@@ -136,7 +136,7 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
             kernelAllocation = kernelAllocations->second.kernelAllocation;
             kernelAllocations->second.reuseCounter++;
             auto &hwInfo = device.getHardwareInfo();
-            auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+            auto &productHelper = device.getProductHelper();
 
             return MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
                                                                     device, kernelAllocation, 0, heapInfo.pKernelHeap,
@@ -154,7 +154,7 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
     }
 
     auto &hwInfo = device.getHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device.getProductHelper();
 
     return MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
                                                             device, kernelAllocation, 0, heapInfo.pKernelHeap,

@@ -154,7 +154,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
         }
         // Add the file header
         auto &hwInfo = this->peekHwInfo();
-        const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        const auto &productHelper = this->getProductHelper();
         stream->init(productHelper.getAubStreamSteppingFromHwRevId(hwInfo), aubDeviceId);
     }
 }

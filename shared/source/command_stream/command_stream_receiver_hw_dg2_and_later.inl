@@ -36,8 +36,8 @@ template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
     size_t size = sizeof(_3DSTATE_BTD);
 
-    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    auto &productHelper = getProductHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isBasicWARequired;
 
     if (isExtendedWARequired) {
@@ -58,8 +58,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(Line
     }
 
     auto &hwInfo = peekHwInfo();
-    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    auto &productHelper = getProductHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isBasicWARequired;
 
     PipeControlArgs args;

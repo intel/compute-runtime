@@ -87,9 +87,9 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     const auto revisionId = std::to_string(hwInfo.platform.usRevId);
     const auto builtinName = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);
-    auto getAddressingMode = [type, &hwInfo, builtin]() {
+    auto getAddressingMode = [type, &productHelper, builtin]() {
         if (type == BuiltinCode::ECodeType::Binary) {
-            const bool requiresStatelessAddressing = (false == ProductHelper::get(hwInfo.platform.eProductFamily)->isStatefulAddressingModeSupported());
+            const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
             const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
             if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
                 return "stateless_";

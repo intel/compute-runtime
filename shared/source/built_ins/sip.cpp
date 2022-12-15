@@ -140,7 +140,7 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
         }
 
         auto &hwInfo = device.getHardwareInfo();
-        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = device.getProductHelper();
 
         MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
                                                          device, sipAllocation, 0, alignedBuffer,
@@ -202,7 +202,7 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     if (sipAllocation == nullptr) {
         return false;
     }
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device.getProductHelper();
     MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
                                                      device, sipAllocation, 0, sipKernelBinary,
                                                      kernelBinarySize);

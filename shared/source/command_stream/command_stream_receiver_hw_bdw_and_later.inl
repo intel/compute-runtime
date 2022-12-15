@@ -39,7 +39,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
 
     size_t size = 0;
-    const auto &productHelper = *ProductHelper::get(peekHwInfo().platform.eProductFamily);
+    const auto &productHelper = getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
         size += (2 * PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo()));
     }

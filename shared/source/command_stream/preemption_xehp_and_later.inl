@@ -81,8 +81,8 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
             size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
             size += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
         } else {
-            auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-            const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+            auto &productHelper = device.getProductHelper();
+            const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
             const auto isWARequired = isBasicWARequired || isExtendedWARequired;
 
             if (isWARequired) {
