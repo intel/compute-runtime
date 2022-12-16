@@ -67,7 +67,7 @@ struct DispatchFlags {
                   KernelExecutionType kernelExecutionTypeP, MemoryCompressionState memoryCompressionStateP,
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
                   bool requiresCoherencyP, bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
-                  bool usePerDSSbackedBufferP, bool useSingleSubdeviceP, bool useGlobalAtomicsP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
+                  bool usePerDSSbackedBufferP, bool useGlobalAtomicsP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
                   bool hasStallingCmds, bool hasRelaxedOrderingDependencies) : csrDependencies(csrDependenciesP),
                                                                                barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
                                                                                pipelineSelectArgs(pipelineSelectArgsP),
@@ -92,7 +92,6 @@ struct DispatchFlags {
                                                                                outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
                                                                                epilogueRequired(epilogueRequiredP),
                                                                                usePerDssBackedBuffer(usePerDSSbackedBufferP),
-                                                                               useSingleSubdevice(useSingleSubdeviceP),
                                                                                useGlobalAtomics(useGlobalAtomicsP),
                                                                                areMultipleSubDevicesInContext(areMultipleSubDevicesInContextP),
                                                                                memoryMigrationRequired(memoryMigrationRequiredP),
@@ -125,7 +124,6 @@ struct DispatchFlags {
     bool outOfOrderExecutionAllowed = false;
     bool epilogueRequired = false;
     bool usePerDssBackedBuffer = false;
-    bool useSingleSubdevice = false;
     bool useGlobalAtomics = false;
     bool areMultipleSubDevicesInContext = false;
     bool memoryMigrationRequired = false;

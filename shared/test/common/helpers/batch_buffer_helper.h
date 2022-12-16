@@ -25,7 +25,6 @@ struct BatchBufferHelper {
             usedSize,                           // usedSize
             stream,                             // stream
             nullptr,                            // endCmdPtr
-            false,                              // useSingleSubdevice
             false,                              // hasStallingCmds
             false                               // hasRelaxedOrderingDependencies
         );

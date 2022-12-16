@@ -44,7 +44,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
 
             contextIndex++;
 
-            if (DebugManager.flags.EnableWalkerPartition.get() == 0 || batchBuffer.useSingleSubdevice) {
+            if (DebugManager.flags.EnableWalkerPartition.get() == 0) {
                 return SubmissionStatus::SUCCESS;
             }
         }

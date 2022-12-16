@@ -1446,26 +1446,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenCsrIsMarkedWithNewResourceThen
     EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissionsCalled);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSubmissionChangesFromSingleSubdeviceThenCallBatchedSubmission) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.dispatchMode = DispatchMode::BatchedDispatch;
-    commandStreamReceiver.wasSubmittedToSingleSubdevice = true;
-
-    flushTask(commandStreamReceiver);
-
-    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissionsCalled);
-}
-
-HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSubmissionChangesToSingleSubdeviceThenCallBatchedSubmission) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.dispatchMode = DispatchMode::BatchedDispatch;
-    flushTaskFlags.useSingleSubdevice = true;
-
-    flushTask(commandStreamReceiver);
-
-    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissionsCalled);
-}
-
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenGpuIsIdleWhenCsrIsEnabledToFlushOnGpuIdleThenCallBatchedSubmission) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.dispatchMode = DispatchMode::BatchedDispatch;

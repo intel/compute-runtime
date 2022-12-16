@@ -813,7 +813,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),             // outOfOrderExecutionAllowed
         false,                                                                                                  // epilogueRequired
         false,                                                                                                  // usePerDssBackedBuffer
-        false,                                                                                                  // useSingleSubdevice
         useGlobalAtomics,                                                                                       // useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                                               // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                                      // memoryMigrationRequired
@@ -1060,7 +1059,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
             false,                                                               // epilogueRequired
             false,                                                               // usePerDssBackedBuffer
-            false,                                                               // useSingleSubdevice
             false,                                                               // useGlobalAtomics
             context->containsMultipleSubDevices(rootDeviceIndex),                // areMultipleSubDevicesInContext
             false,                                                               // memoryMigrationRequired

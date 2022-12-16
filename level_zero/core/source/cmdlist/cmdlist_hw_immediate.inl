@@ -107,7 +107,6 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         this->csr->isNTo1SubmissionModelEnabled(),                   // outOfOrderExecutionAllowed
         false,                                                       // epilogueRequired
         false,                                                       // usePerDssBackedBuffer
-        false,                                                       // useSingleSubdevice
         false,                                                       // useGlobalAtomics
         this->device->getNEODevice()->getNumGenericSubDevices() > 1, // areMultipleSubDevicesInContext
         false,                                                       // memoryMigrationRequired

@@ -31,7 +31,6 @@ struct BatchBuffer {
                 size_t usedSize,
                 LinearStream *stream,
                 void *endCmdPtr,
-                bool useSingleSubdevice,
                 bool hasStallingCmds,
                 bool hasRelaxedOrderingDependencies);
     BatchBuffer() {}
@@ -51,7 +50,6 @@ struct BatchBuffer {
     LinearStream *stream = nullptr;
     void *endCmdPtr = nullptr;
 
-    bool useSingleSubdevice = false;
     bool hasStallingCmds = false;
     bool hasRelaxedOrderingDependencies = false;
     bool ringBufferRestartRequest = false;

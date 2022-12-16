@@ -599,11 +599,9 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     struct MockCsr : NEO::CommandStreamReceiverHw<FamilyType> {
         using NEO::CommandStreamReceiverHw<FamilyType>::CommandStreamReceiverHw;
         NEO::SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-            useSingleSubdeviceValue = batchBuffer.useSingleSubdevice;
             submitBatchBufferCalled++;
             return NEO::CommandStreamReceiver::submitBatchBuffer(batchBuffer, allocationsForResidency);
         }
-        bool useSingleSubdeviceValue = false;
         uint32_t submitBatchBufferCalled = 0;
     };
 
@@ -633,7 +631,6 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     auto result = pCommandQueue->executeCommandLists(1, commandListCooperative, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, pMockCsr->submitBatchBufferCalled);
-    EXPECT_TRUE(pMockCsr->useSingleSubdeviceValue);
 
     auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandListWithNonCooperativeKernels->initialize(&device, NEO::EngineGroupType::Compute, 0u);
@@ -644,7 +641,6 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     result = pCommandQueue->executeCommandLists(1, commandListNonCooperative, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(2u, pMockCsr->submitBatchBufferCalled);
-    EXPECT_FALSE(pMockCsr->useSingleSubdeviceValue);
 
     pCommandQueue->destroy();
 }

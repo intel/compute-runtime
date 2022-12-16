@@ -75,7 +75,6 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), // outOfOrderExecutionAllowed
         false,                                                                       // epilogueRequired
         false,                                                                       // usePerDssBackedBuffer
-        false,                                                                       // useSingleSubdevice
         false,                                                                       // useGlobalAtomics
         false,                                                                       // areMultipleSubDevicesInContext
         false,                                                                       // memoryMigrationRequired
@@ -206,7 +205,6 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
         false,                                                                            // epilogueRequired
         false,                                                                            // usePerDssBackedBuffer
-        false,                                                                            // useSingleSubdevice
         kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                         // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                // memoryMigrationRequired
@@ -382,7 +380,6 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         commandStreamReceiver.isNTo1SubmissionModelEnabled(),                  // outOfOrderExecutionAllowed
         false,                                                                 // epilogueRequired
         false,                                                                 // usePerDssBackedBuffer
-        false,                                                                 // useSingleSubdevice
         false,                                                                 // useGlobalAtomics
         commandQueue.getContext().containsMultipleSubDevices(rootDeviceIndex), // areMultipleSubDevicesInContext
         false,                                                                 // memoryMigrationRequired

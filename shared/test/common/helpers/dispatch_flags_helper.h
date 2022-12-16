@@ -38,7 +38,6 @@ struct DispatchFlagsHelper {
             false,                                   // outOfOrderExecutionAllowed
             false,                                   // epilogueRequired
             false,                                   // usePerDssBackedBuffer
-            false,                                   // useSingleSubdevice
             false,                                   // useGlobalAtomics
             false,                                   // areMultipleSubDevicesInContext
             false,                                   // memoryMigrationRequired

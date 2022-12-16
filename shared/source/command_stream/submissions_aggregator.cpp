@@ -101,13 +101,13 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
 NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_t startOffset,
                               size_t chainedBatchBufferStartOffset, uint64_t taskStartAddress, GraphicsAllocation *chainedBatchBuffer,
                               bool requiresCoherency, bool lowPriority, QueueThrottle throttle, uint64_t sliceCount,
-                              size_t usedSize, LinearStream *stream, void *endCmdPtr, bool useSingleSubdevice, bool hasStallingCmds,
+                              size_t usedSize, LinearStream *stream, void *endCmdPtr, bool hasStallingCmds,
                               bool hasRelaxedOrderingDependencies)
     : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset),
       chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), taskStartAddress(taskStartAddress), chainedBatchBuffer(chainedBatchBuffer),
       requiresCoherency(requiresCoherency), low_priority(lowPriority),
       throttle(throttle), sliceCount(sliceCount),
-      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), useSingleSubdevice(useSingleSubdevice), hasStallingCmds(hasStallingCmds),
+      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), hasStallingCmds(hasStallingCmds),
       hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies) {}
 
 NEO::CommandBuffer::CommandBuffer(Device &device) : device(device) {

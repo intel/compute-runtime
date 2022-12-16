@@ -100,7 +100,7 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::Res
 
     NEO::BatchBuffer batchBuffer(commandStream.getGraphicsAllocation(), offset, 0, 0, nullptr, false, false,
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
-                                 commandStream.getUsed(), &commandStream, endingCmdPtr, isCooperative, false, false);
+                                 commandStream.getUsed(), &commandStream, endingCmdPtr, false, false);
 
     commandStream.getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
     commandStream.getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());

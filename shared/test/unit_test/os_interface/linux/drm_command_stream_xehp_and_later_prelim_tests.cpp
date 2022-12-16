@@ -574,45 +574,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
     memoryManager->freeGraphicsMemory(tileInstancedAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenUseSingleSubdeviceParamSetWhenFlushingThenUseOnlyContext0) {
-    struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
-        using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
-        int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {
-            EXPECT_EQ(0u, execCalled);
-            EXPECT_EQ(0u, drmContextId);
-            EXPECT_EQ(0u, vmHandleId);
-            execCalled++;
-            return 0;
-        }
-        SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
-            EXPECT_EQ(0u, processResidencyCalled);
-            EXPECT_EQ(0u, handleId);
-            processResidencyCalled++;
-            return SubmissionStatus::SUCCESS;
-        }
-
-        uint32_t execCalled = 0;
-        uint32_t processResidencyCalled = 0;
-    };
-    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         gemCloseWorkerMode::gemCloseWorkerActive);
-    csr->setupContext(*osContext);
-
-    const auto size = 1024u;
-    BufferObject *bufferObject = new BufferObject(drm, 3, 30, 0, 1);
-    BufferObjects bufferObjects{bufferObject};
-    auto allocation = new DrmAllocation(0, AllocationType::UNKNOWN, bufferObjects, nullptr, 0u, size, MemoryPool::LocalMemory);
-    csr->CommandStreamReceiver::makeResident(*allocation);
-
-    auto &cs = csr->getCS();
-    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
-    batchBuffer.useSingleSubdevice = true;
-
-    csr->flush(batchBuffer, csr->getResidencyAllocations());
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledImplicitScalingWhenFlushingThenUseOnlyOneContext) {
     DebugManagerStateRestore debugRestore{};
     DebugManager.flags.EnableWalkerPartition.set(0);
