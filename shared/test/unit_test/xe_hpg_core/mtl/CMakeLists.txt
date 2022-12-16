@@ -17,6 +17,7 @@ if(TESTS_MTL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_mtl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests_mtl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_mtl.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_mtl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_mtl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_mtl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_mtl.cpp

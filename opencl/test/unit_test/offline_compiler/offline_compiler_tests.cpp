@@ -646,8 +646,11 @@ TEST_F(MockOfflineCompilerTests, givenAcronymWithUppercaseWhenInitHwInfoThenSucc
 
     for (const auto &deviceMapConfig : allEnabledDeviceConfigs) {
         if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
-            if (!deviceMapConfig.acronyms.empty()) {
-                mockOfflineCompiler.deviceName = deviceMapConfig.acronyms.front().str();
+            if (!deviceMapConfig.deviceAcronyms.empty()) {
+                mockOfflineCompiler.deviceName = deviceMapConfig.deviceAcronyms.front().str();
+                break;
+            } else if (!deviceMapConfig.rtlIdAcronyms.empty()) {
+                mockOfflineCompiler.deviceName = deviceMapConfig.rtlIdAcronyms.front().str();
                 break;
             }
         }

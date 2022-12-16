@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,8 @@ struct DeviceAotInfo {
     const std::vector<unsigned short> *deviceIds = nullptr;
     AOT::FAMILY family = {};
     AOT::RELEASE release = {};
-    std::vector<NEO::ConstStringRef> acronyms{};
+    std::vector<NEO::ConstStringRef> deviceAcronyms{};
+    std::vector<NEO::ConstStringRef> rtlIdAcronyms{};
 
     bool operator==(const DeviceAotInfo &rhs) {
         return aotConfig.value == rhs.aotConfig.value && family == rhs.family && release == rhs.release && hwInfo == rhs.hwInfo;
@@ -80,7 +81,8 @@ struct ProductConfigHelper {
 
     template <typename EqComparableT>
     static auto findAcronym(const EqComparableT &lhs) {
-        return [&lhs](const auto &rhs) { return std::any_of(rhs.acronyms.begin(), rhs.acronyms.end(), findAcronymWithoutDash(lhs)); };
+        return [&lhs](const auto &rhs) { return std::any_of(rhs.deviceAcronyms.begin(), rhs.deviceAcronyms.end(), findAcronymWithoutDash(lhs)) ||
+                                                std::any_of(rhs.rtlIdAcronyms.begin(), rhs.rtlIdAcronyms.end(), findAcronymWithoutDash(lhs)); };
     }
 
     template <typename EqComparableT>
@@ -96,6 +98,11 @@ struct ProductConfigHelper {
     template <typename EqComparableT>
     static auto findProductConfig(const EqComparableT &lhs) {
         return [&lhs](const auto &rhs) { return lhs == rhs.aotConfig.value; };
+    }
+
+    template <typename EqComparableT>
+    static auto findDeviceAcronymForRelease(const EqComparableT &lhs) {
+        return [&lhs](const auto &rhs) { return lhs == rhs.release && !rhs.deviceAcronyms.empty(); };
     }
 
     void initialize();

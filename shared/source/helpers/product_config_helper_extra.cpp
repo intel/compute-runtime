@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ void ProductConfigHelper::initialize() {
     for (auto &device : deviceAotInfo) {
         for (const auto &[acronym, value] : AOT::deviceAcronyms) {
             if (value == device.aotConfig.value) {
-                device.acronyms.push_back(NEO::ConstStringRef(acronym));
+                device.deviceAcronyms.push_back(NEO::ConstStringRef(acronym));
             }
         }
     }

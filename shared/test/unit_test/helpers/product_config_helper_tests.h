@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,10 @@ using ProductConfigHelperTests = ::testing::Test;
 struct AotDeviceInfoTests : public ProductConfigHelperTests {
     AotDeviceInfoTests() {
         productConfigHelper = std::make_unique<ProductConfigHelper>();
+        aotInfos = productConfigHelper->getDeviceAotInfo();
     }
     std::unique_ptr<ProductConfigHelper> productConfigHelper;
+    std::vector<DeviceAotInfo> aotInfos{};
 };
 
 template <typename EqComparableT>

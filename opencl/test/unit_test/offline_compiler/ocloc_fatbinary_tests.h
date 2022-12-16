@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,18 @@ class OclocFatBinaryTest : public OclocEnabledAcronyms {
     std::string outputArchiveName{"output_archive"};
     std::string spirvFilename{"input_file.spv"};
     std::string spirvFileContent{"\x07\x23\x02\x03"};
+};
+
+struct OclocFatbinaryPerProductTests : public ::testing::TestWithParam<std::tuple<std::string, PRODUCT_FAMILY>> {
+    void SetUp() override {
+        std::tie(release, productFamily) = GetParam();
+        argHelper = std::make_unique<OclocArgHelper>();
+        argHelper->getPrinterRef() = MessagePrinter{true};
+    }
+
+    std::string release;
+    PRODUCT_FAMILY productFamily;
+    std::unique_ptr<OclocArgHelper> argHelper;
 };
 
 } // namespace NEO

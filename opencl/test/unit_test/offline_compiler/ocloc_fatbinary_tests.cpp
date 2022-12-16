@@ -133,6 +133,11 @@ std::vector<std::string> prepareFamiliesWithoutDashes(OclocArgHelper *argHelper)
     return acronyms;
 }
 
+template <typename EqComparableT>
+static auto findAcronymForEnum(const EqComparableT &lhs) {
+    return [&lhs](const auto &rhs) { return lhs == rhs.second; };
+}
+
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     const char *args[] = {"ocloc", "-aaa", "*", "-device", "*"};
 
@@ -159,19 +164,27 @@ TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronym
         GTEST_SKIP();
     }
 
-    ConstStringRef acronym("");
     std::vector<ConstStringRef> outRelease{}, outFamily{};
 
     for (auto &device : enabledDeviceConfigs) {
-        if (!device.acronyms.empty()) {
-            acronym = device.acronyms.front();
+        ConstStringRef acronym("");
+        auto hasDeviceAcronym = std::any_of(enabledDeviceConfigs.begin(), enabledDeviceConfigs.end(), ProductConfigHelper::findDeviceAcronymForRelease(device.release));
+
+        if (!device.deviceAcronyms.empty()) {
+            acronym = device.deviceAcronyms.front();
+        } else if (!device.rtlIdAcronyms.empty() && !hasDeviceAcronym) {
+            acronym = device.rtlIdAcronyms.front();
+        }
+
+        if (!acronym.empty()) {
             getProductsAcronymsForTarget<AOT::RELEASE>(outRelease, device.release, argHelper.get());
             EXPECT_TRUE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end());
 
             getProductsAcronymsForTarget<AOT::FAMILY>(outFamily, device.family, argHelper.get());
             EXPECT_TRUE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end());
 
-            device.acronyms.clear();
+            device.deviceAcronyms.clear();
+            device.rtlIdAcronyms.clear();
             outRelease.clear();
             outFamily.clear();
 
@@ -242,7 +255,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgAsSingleProductThenFatB
         const char *singleConfig[] = {"ocloc", "-device", configStr.c_str()};
         EXPECT_FALSE(NEO::requestedFatBinary(3, singleConfig, oclocArgHelperWithoutInput.get()));
 
-        for (const auto &acronym : deviceConfig.acronyms) {
+        for (const auto &acronym : deviceConfig.deviceAcronyms) {
             auto acronymStr = acronym.str();
             const char *singleAcronym[] = {"ocloc", "-device", acronymStr.c_str()};
             EXPECT_FALSE(NEO::requestedFatBinary(3, singleAcronym, oclocArgHelperWithoutInput.get()));
@@ -893,6 +906,92 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWithoutDashe
     EXPECT_EQ(got, expected);
 }
 
+TEST_F(OclocFatBinaryProductAcronymsTests, givenReleaseValueWhenGetProductsAcronymsAndNoDeviceAcronymsAreFoundThenCorrectResultIsReturnedWithNoDuplicates) {
+    auto &aotInfos = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    if (aotInfos.empty()) {
+        GTEST_SKIP();
+    }
+    auto release = aotInfos[0].release;
+
+    for (auto &aotInfo : aotInfos) {
+        if (aotInfo.release == release) {
+            aotInfo.deviceAcronyms.clear();
+            aotInfo.rtlIdAcronyms.clear();
+        }
+    }
+
+    std::vector<ConstStringRef> acronyms{};
+    getProductsAcronymsForTarget(acronyms, release, oclocArgHelperWithoutInput.get());
+
+    EXPECT_TRUE(acronyms.empty());
+
+    std::string tmpStr("tmp");
+    aotInfos[0].rtlIdAcronyms.push_back(ConstStringRef(tmpStr));
+
+    getProductsAcronymsForTarget(acronyms, release, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(acronyms.size(), 1u);
+    EXPECT_EQ(acronyms.front(), tmpStr);
+
+    getProductsAcronymsForTarget(acronyms, release, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(acronyms.size(), 1u);
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenFullRangeWhenGetProductsForRangeThenCorrectResultIsReturned) {
+    auto &aotInfos = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    if (aotInfos.empty()) {
+        GTEST_SKIP();
+    }
+    auto product = aotInfos[0].aotConfig.value;
+    std::vector<ConstStringRef> got{};
+
+    uint32_t productTo = AOT::CONFIG_MAX_PLATFORM;
+    --productTo;
+    NEO::getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), got, oclocArgHelperWithoutInput.get());
+
+    auto expected = oclocArgHelperWithoutInput->productConfigHelper->getRepresentativeProductAcronyms();
+    EXPECT_EQ(got, expected);
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenProductConfigValuesWhenGetProductsForRangeAndAcronymsAreEmptyThenEmptyResultIsReturned) {
+    auto &aotInfos = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    if (aotInfos.size() < 2) {
+        GTEST_SKIP();
+    }
+
+    aotInfos[0].deviceAcronyms.clear();
+    aotInfos[0].rtlIdAcronyms.clear();
+
+    aotInfos[1].deviceAcronyms.clear();
+    aotInfos[1].rtlIdAcronyms.clear();
+
+    std::vector<ConstStringRef> acronyms{};
+    NEO::getProductsForRange(aotInfos[0].aotConfig.value, aotInfos[1].aotConfig.value, acronyms, oclocArgHelperWithoutInput.get());
+    EXPECT_TRUE(acronyms.empty());
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenOnlyRtlIdAcronymsForConfigWhenGetProductsForRangeThenCorrectResultIsReturned) {
+    auto &aotInfos = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    if (aotInfos.empty()) {
+        GTEST_SKIP();
+    }
+    auto &aotInfo = aotInfos[0];
+    auto product = aotInfo.aotConfig.value;
+
+    aotInfo.deviceAcronyms.clear();
+    aotInfo.rtlIdAcronyms.clear();
+
+    std::vector<ConstStringRef> acronyms{};
+
+    std::string tmpStr("tmp");
+    aotInfo.rtlIdAcronyms.push_back(ConstStringRef(tmpStr));
+
+    uint32_t productTo = AOT::CONFIG_MAX_PLATFORM;
+    --productTo;
+    NEO::getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), acronyms, oclocArgHelperWithoutInput.get());
+
+    EXPECT_NE(std::find(acronyms.begin(), acronyms.end(), tmpStr), acronyms.end());
+}
+
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
     if (enabledReleasesAcronyms.size() < 3) {
         GTEST_SKIP();
@@ -907,7 +1006,9 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinar
             getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
             releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromId) + 1);
         }
-
+        if (expected.empty()) {
+            GTEST_SKIP();
+        }
         std::string releasesTarget = release.str() + ":";
         auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
@@ -949,7 +1050,9 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryB
             getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
             releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromId) + 1);
         }
-
+        if (expected.empty()) {
+            GTEST_SKIP();
+        }
         std::string releasesTarget = ":" + release.str();
         auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
@@ -974,6 +1077,132 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryB
 
         EXPECT_STREQ(output.c_str(), resString.str().c_str());
     }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenReleaseWhichHasNoDeviceAcronymWhenGetTargetProductsForFatbinaryThenCorrectResultIsReturned) {
+    auto &aotInfos = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    DeviceAotInfo *deviceInfo = nullptr;
+    std::vector<ConstStringRef> expected{};
+
+    for (auto &aotInfo : aotInfos) {
+        auto hasDeviceAcronym = std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(aotInfo.release));
+        if (!hasDeviceAcronym) {
+            deviceInfo = &aotInfo;
+            break;
+        }
+    }
+    if (deviceInfo == nullptr) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &aotInfo : aotInfos) {
+        if (aotInfo.release == deviceInfo->release) {
+            if (!aotInfo.rtlIdAcronyms.empty()) {
+                expected.push_back(aotInfo.rtlIdAcronyms.front());
+            }
+        }
+    }
+    if (expected.empty()) {
+        GTEST_SKIP();
+    }
+
+    auto it = std::find_if(AOT::releaseAcronyms.begin(), AOT::releaseAcronyms.end(), findAcronymForEnum(deviceInfo->release));
+
+    auto got = NEO::getTargetProductsForFatbinary(it->first, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    deviceInfo->rtlIdAcronyms.clear();
+
+    got = NEO::getTargetProductsForFatbinary(it->first, oclocArgHelperWithoutInput.get());
+    EXPECT_NE(got, expected);
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenReleaseWhichHasDeviceAcronymWhenGetTargetProductsForFatbinaryThenCorrectResultIsReturned) {
+    auto &aotInfos = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    DeviceAotInfo *deviceInfo = nullptr;
+    std::vector<ConstStringRef> expected{};
+
+    for (auto &aotInfo : aotInfos) {
+        auto hasDeviceAcronym = std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(aotInfo.release));
+        if (hasDeviceAcronym && !aotInfo.deviceAcronyms.empty()) {
+            deviceInfo = &aotInfo;
+            break;
+        }
+    }
+    if (deviceInfo == nullptr) {
+        GTEST_SKIP();
+    }
+    for (const auto &aotInfo : aotInfos) {
+        if (aotInfo.release == deviceInfo->release) {
+            if (!aotInfo.deviceAcronyms.empty()) {
+                expected.push_back(aotInfo.deviceAcronyms.front());
+            }
+        }
+    }
+    auto it = std::find_if(AOT::releaseAcronyms.begin(), AOT::releaseAcronyms.end(), findAcronymForEnum(deviceInfo->release));
+
+    auto got = NEO::getTargetProductsForFatbinary(it->first, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    deviceInfo->deviceAcronyms.clear();
+
+    got = NEO::getTargetProductsForFatbinary(it->first, oclocArgHelperWithoutInput.get());
+    EXPECT_NE(got, expected);
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenReleaseWithDeviceAcronymWhenItIsNoLongerExistThenGetRtlIdAcronyms) {
+    auto &aotInfos = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    DeviceAotInfo *deviceInfo = nullptr;
+    std::vector<ConstStringRef> expected{};
+
+    for (auto &aotInfo : aotInfos) {
+        auto hasDeviceAcronym = std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(aotInfo.release));
+        if (hasDeviceAcronym && !aotInfo.deviceAcronyms.empty()) {
+            deviceInfo = &aotInfo;
+            break;
+        }
+    }
+    if (deviceInfo == nullptr) {
+        GTEST_SKIP();
+    }
+    for (auto &aotInfo : aotInfos) {
+        if (aotInfo.release == deviceInfo->release) {
+            aotInfo.deviceAcronyms.clear();
+            if (!aotInfo.rtlIdAcronyms.empty()) {
+                expected.push_back(aotInfo.rtlIdAcronyms.front());
+            }
+        }
+    }
+    auto it = std::find_if(AOT::releaseAcronyms.begin(), AOT::releaseAcronyms.end(), findAcronymForEnum(deviceInfo->release));
+
+    EXPECT_FALSE(std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(deviceInfo->release)));
+    auto got = NEO::getTargetProductsForFatbinary(it->first, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenOnlyRtlIdAcronymsWhenGetProductsAcronymsForReleaseThenCorrectResulstsAreReturned) {
+    auto &aotInfos = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    DeviceAotInfo *deviceInfo = nullptr;
+    std::vector<ConstStringRef> expected{}, got{};
+
+    for (auto &aotInfo : aotInfos) {
+        aotInfo.deviceAcronyms.clear();
+        if (!aotInfo.rtlIdAcronyms.empty()) {
+            deviceInfo = &aotInfo;
+        }
+    }
+    if (deviceInfo == nullptr) {
+        GTEST_SKIP();
+    }
+    for (const auto &aotInfo : aotInfos) {
+        if (deviceInfo->release == aotInfo.release && !aotInfo.rtlIdAcronyms.empty()) {
+            expected.push_back(aotInfo.rtlIdAcronyms.front());
+        }
+    }
+
+    EXPECT_FALSE(std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(deviceInfo->release)));
+    getProductsAcronymsForTarget<AOT::RELEASE>(got, deviceInfo->release, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromFamilyWithoutDashesWhenGetProductsForFatBinaryThenCorrectAcronymsAreReturned) {
@@ -1521,6 +1750,30 @@ TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThen
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
 
     EXPECT_TRUE(output.empty()) << output;
+}
+
+TEST_P(OclocFatbinaryPerProductTests, givenReleaseWhenGetTargetProductsForFarbinaryThenCorrectAcronymsAreReturned) {
+    auto aotInfos = argHelper->productConfigHelper->getDeviceAotInfo();
+    std::vector<NEO::ConstStringRef> expected{};
+    auto releaseValue = ProductConfigHelper::getReleaseForAcronym(release);
+    auto hasDeviceAcronym = std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(releaseValue));
+
+    for (const auto &aotInfo : aotInfos) {
+        if (aotInfo.hwInfo->platform.eProductFamily == productFamily) {
+            if (hasDeviceAcronym) {
+                if (!aotInfo.deviceAcronyms.empty()) {
+                    expected.push_back(aotInfo.deviceAcronyms.front());
+                }
+            } else {
+                if (!aotInfo.rtlIdAcronyms.empty()) {
+                    expected.push_back(aotInfo.rtlIdAcronyms.front());
+                }
+            }
+        }
+    }
+
+    auto got = NEO::getTargetProductsForFatbinary(release, argHelper.get());
+    EXPECT_EQ(got, expected);
 }
 
 } // namespace NEO

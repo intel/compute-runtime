@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,4 +22,10 @@ PVCTEST_F(ProductConfigHelperPvcTests, givenVariousVariantsOfXeHpcAcronymsWhenGe
         auto ret = ProductConfigHelper::getReleaseForAcronym(acronym);
         EXPECT_EQ(ret, AOT::XE_HPC_RELEASE);
     }
+}
+
+PVCTEST_F(ProductConfigHelperPvcTests, givenXeHpcReleaseWhenSearchForDeviceAcronymThenObjectIsFound) {
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+    auto aotInfos = productConfigHelper->getDeviceAotInfo();
+    EXPECT_TRUE(std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(AOT::XE_HPC_RELEASE)));
 }

@@ -28,7 +28,7 @@ struct PrepareDeviceEnvironmentsTest : ::testing::Test {
 
         auto &aotInfos = productConfigHelper->getDeviceAotInfo();
         for (const auto &aotInfo : aotInfos) {
-            if (aotInfo.hwInfo->platform.eProductFamily == productFamily && !aotInfo.acronyms.empty()) {
+            if (aotInfo.hwInfo->platform.eProductFamily == productFamily) {
                 deviceAot = aotInfo;
                 break;
             }
@@ -58,10 +58,15 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathW
     uint32_t expectedDevices = 1;
     DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
 
-    if (deviceAot.acronyms.empty()) {
+    if (!deviceAot.deviceAcronyms.empty()) {
+        product = deviceAot.deviceAcronyms.front().str();
+    } else if (!deviceAot.rtlIdAcronyms.empty()) {
+        product = deviceAot.rtlIdAcronyms.front().str();
+    }
+
+    if (product.empty()) {
         GTEST_SKIP();
     }
-    auto product = deviceAot.acronyms.front().str();
 
     for (int csrTypes = -1; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
         CommandStreamReceiverType csrType;
@@ -216,10 +221,15 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
     uint32_t expectedDevices = 1;
     DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
 
-    if (deviceAot.acronyms.empty()) {
+    if (!deviceAot.deviceAcronyms.empty()) {
+        product = deviceAot.deviceAcronyms.front().str();
+    } else if (!deviceAot.rtlIdAcronyms.empty()) {
+        product = deviceAot.rtlIdAcronyms.front().str();
+    }
+
+    if (product.empty()) {
         GTEST_SKIP();
     }
-    auto product = deviceAot.acronyms.front().str();
 
     for (int csrTypes = -1; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
         CommandStreamReceiverType csrType;
@@ -290,10 +300,15 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseDeprecatedAcronymsToProduc
 }
 
 HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingDevicesThenFindExpectedPlatform) {
-    if (deviceAot.acronyms.empty()) {
+    if (!deviceAot.deviceAcronyms.empty()) {
+        product = deviceAot.deviceAcronyms.front().str();
+    } else if (!deviceAot.rtlIdAcronyms.empty()) {
+        product = deviceAot.rtlIdAcronyms.front().str();
+    }
+
+    if (product.empty()) {
         GTEST_SKIP();
     }
-    auto product = deviceAot.acronyms.front().str();
     std::transform(product.begin(), product.end(), product.begin(), ::toupper);
 
     DebugManager.flags.ProductFamilyOverride.set(product);

@@ -48,26 +48,39 @@ bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *he
 }
 
 template <>
-void getProductsAcronymsForTarget<AOT::FAMILY>(std::vector<NEO::ConstStringRef> &out, AOT::FAMILY target, OclocArgHelper *argHelper) {
+void getProductsAcronymsForTarget<AOT::RELEASE>(std::vector<NEO::ConstStringRef> &out, AOT::RELEASE target, OclocArgHelper *argHelper) {
     auto &allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
+    auto hasDeviceAcronym = std::any_of(allSuppportedProducts.begin(), allSuppportedProducts.end(), ProductConfigHelper::findDeviceAcronymForRelease(target));
     for (const auto &device : allSuppportedProducts) {
-        if (device.family == target && !device.acronyms.empty()) {
-            if (std::find(out.begin(), out.end(), device.acronyms.front()) == out.end()) {
-                out.push_back(device.acronyms.front());
+        if (device.release == target) {
+            ConstStringRef acronym{};
+            if (hasDeviceAcronym) {
+                if (!device.deviceAcronyms.empty()) {
+                    acronym = device.deviceAcronyms.front();
+                }
+            } else {
+                if (!device.rtlIdAcronyms.empty()) {
+                    acronym = device.rtlIdAcronyms.front();
+                }
+            }
+            if (!acronym.empty() && std::find(out.begin(), out.end(), acronym) == out.end()) {
+                out.push_back(acronym);
             }
         }
     }
 }
 
 template <>
-void getProductsAcronymsForTarget<AOT::RELEASE>(std::vector<NEO::ConstStringRef> &out, AOT::RELEASE target, OclocArgHelper *argHelper) {
+void getProductsAcronymsForTarget<AOT::FAMILY>(std::vector<NEO::ConstStringRef> &out, AOT::FAMILY target, OclocArgHelper *argHelper) {
     auto &allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
+    std::vector<AOT::RELEASE> releases{};
     for (const auto &device : allSuppportedProducts) {
-        if (device.release == target && !device.acronyms.empty()) {
-            if (std::find(out.begin(), out.end(), device.acronyms.front()) == out.end()) {
-                out.push_back(device.acronyms.front());
-            }
+        if (device.family == target && std::find(releases.begin(), releases.end(), device.release) == releases.end()) {
+            releases.push_back(device.release);
         }
+    }
+    for (const auto &release : releases) {
+        getProductsAcronymsForTarget<AOT::RELEASE>(out, release, argHelper);
     }
 }
 
@@ -90,9 +103,13 @@ void getProductsForRange(unsigned int productFrom, unsigned int productTo, std::
     for (const auto &device : allSuppportedProducts) {
         auto validAcronym = device.aotConfig.value >= productFrom;
         validAcronym &= device.aotConfig.value <= productTo;
-        validAcronym &= !device.acronyms.empty();
+
         if (validAcronym) {
-            out.push_back(device.acronyms.front());
+            if (!device.deviceAcronyms.empty()) {
+                out.push_back(device.deviceAcronyms.front());
+            } else if (!device.rtlIdAcronyms.empty()) {
+                out.push_back(device.rtlIdAcronyms.front());
+            }
         }
     }
 }

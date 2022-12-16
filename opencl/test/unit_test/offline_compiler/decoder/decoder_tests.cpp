@@ -338,19 +338,21 @@ TEST(DecoderTests, givenProductNamesThatExistsForIgaWhenValidateInputThenSuccess
         if (productFamily != device.hwInfo->platform.eProductFamily)
             continue;
 
-        for (const auto &acronym : device.acronyms) {
-            const std::vector<std::string> args = {
-                "ocloc",
-                "disasm",
-                "-device",
-                acronym.str()};
+        for (const auto *acronyms : {&device.deviceAcronyms, &device.rtlIdAcronyms}) {
+            for (const auto &acronym : *acronyms) {
+                const std::vector<std::string> args = {
+                    "ocloc",
+                    "disasm",
+                    "-device",
+                    acronym.str()};
 
-            ::testing::internal::CaptureStdout();
-            const auto result = decoder.validateInput(args);
-            const auto output{::testing::internal::GetCapturedStdout()};
+                ::testing::internal::CaptureStdout();
+                const auto result = decoder.validateInput(args);
+                const auto output{::testing::internal::GetCapturedStdout()};
 
-            EXPECT_EQ(result, 0);
-            EXPECT_TRUE(output.empty());
+                EXPECT_EQ(result, 0);
+                EXPECT_TRUE(output.empty());
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -235,12 +235,7 @@ TEST_F(ProductConfigHelperTests, GivenDifferentHwInfoInDeviceAotInfosWhenCompari
 }
 
 TEST_F(AotDeviceInfoTests, givenProductOrAotConfigWhenParseMajorMinorRevisionValueThenCorrectStringIsReturned) {
-    auto &enabledDeviceConfigs = productConfigHelper->getDeviceAotInfo();
-    if (enabledDeviceConfigs.empty()) {
-        GTEST_SKIP();
-    }
-
-    for (const auto &device : enabledDeviceConfigs) {
+    for (const auto &device : aotInfos) {
         auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.value);
         auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
         auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
@@ -258,16 +253,23 @@ TEST_F(AotDeviceInfoTests, givenProductConfigAcronymWhenCheckAllEnabledThenCorre
         GTEST_SKIP();
     }
 
-    std::string acronym("");
     for (auto &device : enabledDeviceConfigs) {
-        if (!device.acronyms.empty()) {
-            acronym = device.acronyms.front().str();
+        std::string acronym("");
+
+        if (!device.deviceAcronyms.empty()) {
+            acronym = device.deviceAcronyms.front().str();
+        } else if (!device.rtlIdAcronyms.empty()) {
+            acronym = device.rtlIdAcronyms.front().str();
+        }
+
+        if (!acronym.empty()) {
             auto enabledAcronyms = productConfigHelper->getAllProductAcronyms();
 
             auto acronymFound = std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), findAcronym(acronym));
             EXPECT_TRUE(acronymFound);
 
-            device.acronyms.clear();
+            device.deviceAcronyms.clear();
+            device.rtlIdAcronyms.clear();
             device.aotConfig.value = AOT::UNKNOWN_ISA;
 
             enabledAcronyms = productConfigHelper->getAllProductAcronyms();
@@ -419,11 +421,10 @@ TEST_F(AotDeviceInfoTests, givenDeprecatedAcronymsWhenSearchingPresenceInNewName
 }
 
 TEST_F(AotDeviceInfoTests, givenNotFullConfigWhenGetProductConfigThenUnknownIsaIsReturned) {
-    auto &allEnabledDeviceConfigs = productConfigHelper->getDeviceAotInfo();
-    if (allEnabledDeviceConfigs.empty()) {
+    if (aotInfos.empty()) {
         GTEST_SKIP();
     }
-    auto aotConfig = allEnabledDeviceConfigs[0].aotConfig;
+    auto aotConfig = aotInfos[0].aotConfig;
     std::stringstream majorString;
     majorString << aotConfig.architecture;
     auto major = majorString.str();
@@ -437,13 +438,12 @@ TEST_F(AotDeviceInfoTests, givenNotFullConfigWhenGetProductConfigThenUnknownIsaI
 }
 
 TEST_F(AotDeviceInfoTests, givenEnabledProductsAcronymsAndVersionsWhenCheckIfProductConfigThenTrueIsReturned) {
-    auto &enabledProducts = productConfigHelper->getDeviceAotInfo();
-    for (const auto &product : enabledProducts) {
+    for (const auto &product : aotInfos) {
         auto configStr = ProductConfigHelper::parseMajorMinorRevisionValue(product.aotConfig);
         EXPECT_FALSE(configStr.empty());
         EXPECT_TRUE(productConfigHelper->isProductConfig(configStr));
 
-        for (const auto &acronym : product.acronyms) {
+        for (const auto &acronym : product.deviceAcronyms) {
             EXPECT_TRUE(productConfigHelper->isProductConfig(acronym.str()));
         }
     }
@@ -463,13 +463,33 @@ TEST_F(AotDeviceInfoTests, givenRepresentativeProductsAcronymsWhenSearchInAllPro
     }
 }
 
+TEST_F(AotDeviceInfoTests, givenOnlyOneStringWhenGetRepresentativeProductAcronymsThenCorrectResultIsReturned) {
+    auto &aotInfos = productConfigHelper->getDeviceAotInfo();
+    if (aotInfos.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (auto &aotInfo : aotInfos) {
+        aotInfo.deviceAcronyms.clear();
+        aotInfo.rtlIdAcronyms.clear();
+    }
+    std::string tmp("tmp");
+    NEO::ConstStringRef tmpStr(tmp);
+    aotInfos[0].rtlIdAcronyms.push_back(tmpStr);
+
+    auto representativeAcronyms = productConfigHelper->getRepresentativeProductAcronyms();
+    EXPECT_EQ(representativeAcronyms.size(), 1u);
+    EXPECT_TRUE(representativeAcronyms.front() == tmpStr);
+}
+
 TEST_F(AotDeviceInfoTests, givenClearedProductAcronymWhenSearchInRepresentativeAcronymsThenFewerAcronymsAreFound) {
     auto &enabledProducts = productConfigHelper->getDeviceAotInfo();
 
     for (auto &product : enabledProducts) {
-        if (!product.acronyms.empty()) {
+        if (!product.deviceAcronyms.empty() || !product.rtlIdAcronyms.empty()) {
             auto representativeAcronyms = productConfigHelper->getRepresentativeProductAcronyms();
-            product.acronyms = {};
+            product.deviceAcronyms = {};
+            product.rtlIdAcronyms = {};
             auto cutRepresentativeAcronyms = productConfigHelper->getRepresentativeProductAcronyms();
             EXPECT_LT(cutRepresentativeAcronyms.size(), representativeAcronyms.size());
         }
@@ -477,10 +497,9 @@ TEST_F(AotDeviceInfoTests, givenClearedProductAcronymWhenSearchInRepresentativeA
 }
 
 TEST_F(AotDeviceInfoTests, givenProductConfigWhenGetDeviceAotInfoThenCorrectValuesAreReturned) {
-    auto &enabledProducts = productConfigHelper->getDeviceAotInfo();
     DeviceAotInfo aotInfo{};
 
-    for (auto &product : enabledProducts) {
+    for (auto &product : aotInfos) {
         auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(product.aotConfig.value);
         EXPECT_TRUE(productConfigHelper->getDeviceAotInfoForProductConfig(productConfig, aotInfo));
         EXPECT_TRUE(aotInfo == product);
@@ -495,14 +514,12 @@ TEST_F(AotDeviceInfoTests, givenUnknownIsaWhenGetDeviceAotInfoThenFalseIsReturne
 }
 
 TEST_F(AotDeviceInfoTests, givenDeviceAcronymsOrProductConfigWhenGetProductFamilyThenCorrectResultIsReturned) {
-    auto &enabledProducts = productConfigHelper->getDeviceAotInfo();
-
-    for (const auto &product : enabledProducts) {
+    for (const auto &product : aotInfos) {
         auto config = ProductConfigHelper::parseMajorMinorRevisionValue(product.aotConfig);
         auto productFamily = productConfigHelper->getProductFamilyForAcronym(config);
         EXPECT_EQ(productFamily, product.hwInfo->platform.eProductFamily);
 
-        for (const auto &acronym : product.acronyms) {
+        for (const auto &acronym : product.deviceAcronyms) {
             productFamily = productConfigHelper->getProductFamilyForAcronym(acronym.str());
             EXPECT_EQ(productFamily, product.hwInfo->platform.eProductFamily);
         }
@@ -511,16 +528,36 @@ TEST_F(AotDeviceInfoTests, givenDeviceAcronymsOrProductConfigWhenGetProductFamil
 
 TEST_F(AotDeviceInfoTests, givenDeprecatedDeviceAcronymsWhenGetProductFamilyThenUnknownIsReturned) {
     auto deprecatedAcronyms = productConfigHelper->getDeprecatedAcronyms();
-
     for (const auto &acronym : deprecatedAcronyms) {
         EXPECT_EQ(productConfigHelper->getProductFamilyForAcronym(acronym.str()), IGFX_UNKNOWN);
     }
 }
 
+TEST_F(AotDeviceInfoTests, givenStringWhenFindAcronymThenCorrectResultIsReturned) {
+    std::string a("a"), b("b"), c("c");
+    std::vector<DeviceAotInfo> deviceAotInfo{{}};
+
+    deviceAotInfo[0].deviceAcronyms.push_back(NEO::ConstStringRef(a));
+    deviceAotInfo[0].rtlIdAcronyms.push_back(NEO::ConstStringRef(b));
+
+    EXPECT_TRUE(std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), ProductConfigHelper::findAcronym(a)));
+    EXPECT_TRUE(std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), ProductConfigHelper::findAcronym(b)));
+    EXPECT_FALSE(std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), ProductConfigHelper::findAcronym(c)));
+}
+
 TEST_F(AotDeviceInfoTests, givenProductConfigHelperWhenGetDeviceAcronymsThenCorrectResultsAreReturned) {
     auto acronyms = productConfigHelper->getDeviceAcronyms();
-
     for (const auto &acronym : AOT::deviceAcronyms) {
         EXPECT_TRUE(std::any_of(acronyms.begin(), acronyms.end(), findAcronym(acronym.first)));
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenDeviceAcroynmsWhenSearchingForDeviceAcronymsForReleaseThenObjectIsFound) {
+    for (const auto &device : AOT::deviceAcronyms) {
+        auto it = std::find_if(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findProductConfig(device.second));
+        if (it == aotInfos.end()) {
+            continue;
+        }
+        EXPECT_TRUE(std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(it->release)));
     }
 }

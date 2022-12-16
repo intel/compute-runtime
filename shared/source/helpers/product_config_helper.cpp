@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,10 +107,13 @@ bool ProductConfigHelper::isProductConfig(const std::string &device) {
 std::vector<NEO::ConstStringRef> ProductConfigHelper::getRepresentativeProductAcronyms() {
     std::vector<NEO::ConstStringRef> enabledAcronyms{};
     for (const auto &device : deviceAotInfo) {
-        if (!device.acronyms.empty()) {
-            enabledAcronyms.push_back(device.acronyms.front());
+        if (!device.deviceAcronyms.empty()) {
+            enabledAcronyms.push_back(device.deviceAcronyms.front());
+        } else if (!device.rtlIdAcronyms.empty()) {
+            enabledAcronyms.push_back(device.rtlIdAcronyms.front());
         }
     }
+
     return enabledAcronyms;
 }
 
@@ -145,7 +148,8 @@ std::vector<NEO::ConstStringRef> ProductConfigHelper::getDeviceAcronyms() {
 std::vector<NEO::ConstStringRef> ProductConfigHelper::getAllProductAcronyms() {
     std::vector<NEO::ConstStringRef> allSupportedAcronyms{};
     for (const auto &device : deviceAotInfo) {
-        allSupportedAcronyms.insert(allSupportedAcronyms.end(), device.acronyms.begin(), device.acronyms.end());
+        allSupportedAcronyms.insert(allSupportedAcronyms.end(), device.deviceAcronyms.begin(), device.deviceAcronyms.end());
+        allSupportedAcronyms.insert(allSupportedAcronyms.end(), device.rtlIdAcronyms.begin(), device.rtlIdAcronyms.end());
     }
     return allSupportedAcronyms;
 }
