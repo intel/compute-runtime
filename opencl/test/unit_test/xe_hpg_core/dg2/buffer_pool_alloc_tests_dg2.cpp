@@ -30,8 +30,8 @@ class AggregatedSmallBuffersDg2DefaultTest : public ContextFixture,
     }
 };
 
-DG2TEST_F(AggregatedSmallBuffersDg2DefaultTest, givenAggregatedSmallBuffersDefaultWhenCheckIfEnabledThenReturnTrue) {
-    EXPECT_TRUE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+DG2TEST_F(AggregatedSmallBuffersDg2DefaultTest, givenAggregatedSmallBuffersDefaultWhenCheckIfEnabledThenReturnFalse) {
+    EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
 }
 
 DG2TEST_F(AggregatedSmallBuffersDg2DefaultTest, givenAggregatedSmallBuffersDefaultAndMultiDeviceContextWhenCheckIfEnabledThenReturnFalse) {
