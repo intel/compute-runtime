@@ -51,50 +51,47 @@ const std::string mockFunctionResetPath("/MOCK_FUNCTION_LEVEL_RESET_PATH");
 const std::string mockDeviceDir("devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0");
 const std::string mockDeviceName("/MOCK_DEVICE_NAME");
 
-struct GlobalOperationsEngineHandleContext : public EngineHandleContext {
-    GlobalOperationsEngineHandleContext(OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}
-};
-template <>
-struct Mock<GlobalOperationsEngineHandleContext> : public GlobalOperationsEngineHandleContext {
-    void initMock(std::vector<ze_device_handle_t> &deviceHandles) {}
-    Mock<GlobalOperationsEngineHandleContext>(OsSysman *pOsSysman) : GlobalOperationsEngineHandleContext(pOsSysman) {}
-    MOCK_METHOD(void, init, (std::vector<ze_device_handle_t> & deviceHandles), (override));
+enum mockEnumListProcessCall {
+    DEVICE_IN_USE = 0,
+    DEVICE_UNUSED = 1,
+    RETURN_ERROR = 2
 };
 
-struct GlobalOperationsRasHandleContext : public RasHandleContext {
-    GlobalOperationsRasHandleContext(OsSysman *pOsSysman) : RasHandleContext(pOsSysman) {}
-};
-template <>
-struct Mock<GlobalOperationsRasHandleContext> : public GlobalOperationsRasHandleContext {
-    void initMock(std::vector<ze_device_handle_t> &deviceHandles) {}
-    Mock<GlobalOperationsRasHandleContext>(OsSysman *pOsSysman) : GlobalOperationsRasHandleContext(pOsSysman) {}
-    MOCK_METHOD(void, init, (std::vector<ze_device_handle_t> & deviceHandles), (override));
+struct MockGlobalOperationsEngineHandleContext : public EngineHandleContext {
+    MockGlobalOperationsEngineHandleContext(OsSysman *pOsSysman) : EngineHandleContext(pOsSysman) {}
+    ADDMETHOD_NOBASE_VOIDRETURN(init, (std::vector<ze_device_handle_t> & deviceHandles));
 };
 
-struct GlobalOperationsDiagnosticsHandleContext : public DiagnosticsHandleContext {
-    GlobalOperationsDiagnosticsHandleContext(OsSysman *pOsSysman) : DiagnosticsHandleContext(pOsSysman) {}
+struct MockGlobalOperationsRasHandleContext : public RasHandleContext {
+    MockGlobalOperationsRasHandleContext(OsSysman *pOsSysman) : RasHandleContext(pOsSysman) {}
+    ADDMETHOD_NOBASE_VOIDRETURN(init, (std::vector<ze_device_handle_t> & deviceHandles));
 };
-template <>
-struct Mock<GlobalOperationsDiagnosticsHandleContext> : public GlobalOperationsDiagnosticsHandleContext {
-    Mock<GlobalOperationsDiagnosticsHandleContext>(OsSysman *pOsSysman) : GlobalOperationsDiagnosticsHandleContext(pOsSysman) {}
+
+struct MockGlobalOperationsDiagnosticsHandleContext : public DiagnosticsHandleContext {
+    MockGlobalOperationsDiagnosticsHandleContext(OsSysman *pOsSysman) : DiagnosticsHandleContext(pOsSysman) {}
     ADDMETHOD_NOBASE_VOIDRETURN(init, ());
 };
 
-struct GlobalOperationsFirmwareHandleContext : public FirmwareHandleContext {
-    GlobalOperationsFirmwareHandleContext(OsSysman *pOsSysman) : FirmwareHandleContext(pOsSysman) {}
-};
-template <>
-struct Mock<GlobalOperationsFirmwareHandleContext> : public GlobalOperationsFirmwareHandleContext {
-    Mock<GlobalOperationsFirmwareHandleContext>(OsSysman *pOsSysman) : GlobalOperationsFirmwareHandleContext(pOsSysman) {}
+struct MockGlobalOperationsFirmwareHandleContext : public FirmwareHandleContext {
+    MockGlobalOperationsFirmwareHandleContext(OsSysman *pOsSysman) : FirmwareHandleContext(pOsSysman) {}
     ADDMETHOD_NOBASE_VOIDRETURN(init, ());
 };
 
-class GlobalOperationsSysfsAccess : public SysfsAccess {};
+struct MockGlobalOperationsSysfsAccess : public SysfsAccess {
 
-template <>
-struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
+    ze_result_t mockScanDirEntriesError = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadError = ZE_RESULT_SUCCESS;
+    ze_result_t mockBindDeviceError = ZE_RESULT_SUCCESS;
+    ze_result_t mockUnbindDeviceError = ZE_RESULT_SUCCESS;
+    uint32_t mockCount = 0;
     bool isRootSet = true;
-    ze_result_t getRealPathVal(const std::string file, std::string &val) {
+    bool mockGetScannedDir4EntriesStatus = false;
+    bool mockGetScannedDirPidEntriesStatus = false;
+    bool mockGetScannedDirPidEntriesForClientsStatus = false;
+    bool mockReadStatus = false;
+    bool mockGetValUnsignedLongStatus = false;
+
+    ze_result_t getRealPath(const std::string file, std::string &val) override {
         if (file.compare(functionLevelReset) == 0) {
             val = mockFunctionResetPath;
         } else if (file.compare(deviceDir) == 0) {
@@ -105,26 +102,43 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getValString(const std::string file, std::string &val) {
+    ze_result_t readResult = ZE_RESULT_SUCCESS;
+    std::string mockReadVal = "";
+    ze_result_t read(const std::string file, std::string &val) override {
+        if (mockReadError != ZE_RESULT_SUCCESS) {
+            return mockReadError;
+        }
+
         if (file.compare(subsystemVendorFile) == 0) {
-            val = "0x8086";
+            val = mockReadVal;
         } else if (file.compare("clients/8/pid") == 0) {
             val = bPid4;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
-        return ZE_RESULT_SUCCESS;
+        return readResult;
     }
 
-    ze_result_t getFalseValString(const std::string file, std::string &val) {
-        if (file.compare(subsystemVendorFile) == 0) {
-            val = "0xa086";
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    ze_result_t read(const std::string file, uint64_t &val) override {
+        if (mockReadStatus == true) {
+            if (mockCount == 0) {
+                mockCount++;
+                return getValUnsignedLongCreatedBytesSuccess(file, val);
+            }
+
+            else {
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
         }
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t getValUnsignedLong(const std::string file, uint64_t &val) {
+
+        if (mockReadError != ZE_RESULT_SUCCESS) {
+            return mockReadError;
+        }
+
+        if (mockGetValUnsignedLongStatus == true) {
+            return getValUnsignedLongCreatedBytesSuccess(file, val);
+        }
+
         if ((file.compare("clients/4/pid") == 0) || (file.compare("clients/5/pid") == 0)) {
             val = pid1;
         } else if (file.compare("clients/6/pid") == 0) {
@@ -231,7 +245,23 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getScannedDirEntries(const std::string path, std::vector<std::string> &list) {
+    ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &list) override {
+        if (mockScanDirEntriesError != ZE_RESULT_SUCCESS) {
+            return mockScanDirEntriesError;
+        }
+
+        if (mockGetScannedDir4EntriesStatus == true) {
+            return getScannedDir4Entries(path, list);
+        }
+
+        if (mockGetScannedDirPidEntriesStatus == true) {
+            return getScannedDirPidEntries(path, list);
+        }
+
+        if (mockGetScannedDirPidEntriesForClientsStatus == true) {
+            return getScannedDirPidEntiresForClients(path, list);
+        }
+
         if (path.compare(clientsDir) == 0) {
             list.push_back(clientId1);
             list.push_back(clientId2);
@@ -251,7 +281,7 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getScannedDirPidEntires(const std::string path, std::vector<std::string> &list) {
+    ze_result_t getScannedDirPidEntries(const std::string path, std::vector<std::string> &list) {
         if (path.compare(clientsDir) == 0) {
             list.push_back(clientId8);
         } else if (path.compare("clients/12/busy") == 0) {
@@ -269,7 +299,7 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    bool mockIsMyDeviceFile(const std::string dev) {
+    bool isMyDeviceFile(const std::string dev) override {
         if (dev.compare(mockDeviceName) == 0) {
             return true;
         }
@@ -283,22 +313,29 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
             return false;
         }
     }
-    Mock<GlobalOperationsSysfsAccess>() = default;
 
-    MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
-    MOCK_METHOD(ze_result_t, read, (const std::string file, uint64_t &val), (override));
-    MOCK_METHOD(ze_result_t, scanDirEntries, (const std::string path, std::vector<std::string> &list), (override));
-    MOCK_METHOD(ze_result_t, getRealPath, (const std::string path, std::string &val), (override));
-    MOCK_METHOD(ze_result_t, bindDevice, (const std::string device), (override));
-    MOCK_METHOD(ze_result_t, unbindDevice, (const std::string device), (override));
-    MOCK_METHOD(bool, fileExists, (const std::string file), (override));
-    MOCK_METHOD(bool, isMyDeviceFile, (const std::string dev), (override));
+    ze_result_t unbindDevice(const std::string device) override {
+        if (mockUnbindDeviceError != ZE_RESULT_SUCCESS) {
+            return mockUnbindDeviceError;
+        }
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t bindDevice(const std::string device) override {
+        if (mockBindDeviceError != ZE_RESULT_SUCCESS) {
+            return mockBindDeviceError;
+        }
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    MockGlobalOperationsSysfsAccess() = default;
+
+    ADDMETHOD_NOBASE(fileExists, bool, true, (const std::string file));
 };
 
-class GlobalOperationsProcfsAccess : public ProcfsAccess {};
-
-template <>
-struct Mock<GlobalOperationsProcfsAccess> : public GlobalOperationsProcfsAccess {
+struct MockGlobalOperationsProcfsAccess : public ProcfsAccess {
 
     const ::pid_t extraPid = 4;
     const int extraFd = 5;
@@ -307,148 +344,165 @@ struct Mock<GlobalOperationsProcfsAccess> : public GlobalOperationsProcfsAccess 
     ::pid_t ourDevicePid = 0;
     int ourDeviceFd = 0;
 
-    ze_result_t mockProcessListDeviceUnused(std::vector<::pid_t> &list) {
+    std::vector<mockEnumListProcessCall> mockListProcessCall{};
+    std::vector<bool> isRepeated{};
+    ze_result_t listProcessesResult = ZE_RESULT_SUCCESS;
+    uint32_t listProcessCalled = 0u;
+    ze_result_t listProcesses(std::vector<::pid_t> &list) override {
+        listProcessCalled++;
         list = pidList;
-        return ZE_RESULT_SUCCESS;
-    }
 
-    ze_result_t mockProcessListDeviceInUse(std::vector<::pid_t> &list) {
-        list = pidList;
-        if (ourDevicePid) {
-            list.push_back(ourDevicePid);
+        if (!mockListProcessCall.empty()) {
+            mockEnumListProcessCall mockListProcessCallValue = mockListProcessCall.front();
+            if (mockListProcessCallValue == mockEnumListProcessCall::DEVICE_IN_USE) {
+                if (ourDevicePid) {
+                    list.push_back(ourDevicePid);
+                }
+            }
+
+            else if (mockListProcessCallValue == mockEnumListProcessCall::DEVICE_UNUSED) {
+            }
+
+            else if (mockListProcessCallValue == mockEnumListProcessCall::RETURN_ERROR) {
+                listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+
+            if (!isRepeated.empty()) {
+                if (isRepeated.front() == false) {
+                    mockListProcessCall.erase(mockListProcessCall.begin());
+                    isRepeated.erase(isRepeated.begin());
+                }
+            }
         }
-        return ZE_RESULT_SUCCESS;
+        return listProcessesResult;
     }
 
-    ::pid_t getMockMyProcessId() {
+    ::pid_t myProcessId() override {
         return ::getpid();
     }
 
-    ze_result_t getMockFileDescriptors(const ::pid_t pid, std::vector<int> &list) {
-        // Give every process 3 file descriptors
-        // Except the device that MOCK has the device open. Give it one extra.
+    ze_result_t mockGetFileDescriptorsError = ZE_RESULT_SUCCESS;
+    ze_result_t getFileDescriptorsResult = ZE_RESULT_SUCCESS;
+    ze_result_t getFileDescriptors(const ::pid_t pid, std::vector<int> &list) override {
         list.clear();
+
+        if (mockGetFileDescriptorsError != ZE_RESULT_SUCCESS) {
+            getFileDescriptorsResult = mockGetFileDescriptorsError;
+            mockGetFileDescriptorsError = ZE_RESULT_SUCCESS;
+            return getFileDescriptorsResult;
+        }
+
         list = fdList;
         if (ourDevicePid == pid) {
             list.push_back(ourDeviceFd);
         }
-        return ZE_RESULT_SUCCESS;
+        return getFileDescriptorsResult;
     }
 
-    ze_result_t getMockFileDescriptorsFailure(const ::pid_t pid, std::vector<int> &list) {
-        //return failure to verify the error condition check
-        list.clear();
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
+    ze_result_t mockGetFileNameError = ZE_RESULT_SUCCESS;
+    ze_result_t getFileNameResult = ZE_RESULT_SUCCESS;
+    ze_result_t getFileName(const ::pid_t pid, const int fd, std::string &val) override {
+        if (mockGetFileNameError != ZE_RESULT_SUCCESS) {
+            return mockGetFileNameError;
+        }
 
-    ze_result_t getMockFileName(const ::pid_t pid, const int fd, std::string &val) {
         if (pid == ourDevicePid && fd == ourDeviceFd) {
             val = mockDeviceName;
         } else {
             // return fake filenames for other file descriptors
             val = std::string("/FILENAME") + std::to_string(fd);
         }
-        return ZE_RESULT_SUCCESS;
+        return getFileNameResult;
     }
 
-    bool mockIsAlive(const ::pid_t pid) {
+    bool isAlive(const ::pid_t pid) override {
         if (pid == ourDevicePid) {
             return true;
         }
         return false;
     }
 
-    void mockKill(const ::pid_t pid) {
+    bool mockNoKill = false;
+    void kill(const ::pid_t pid) override {
+        if (mockNoKill == true) {
+            return;
+        }
         ourDevicePid = 0;
     }
 
-    Mock<GlobalOperationsProcfsAccess>() = default;
-
-    MOCK_METHOD(ze_result_t, listProcesses, (std::vector<::pid_t> & list), (override));
-    MOCK_METHOD(::pid_t, myProcessId, (), (override));
-    MOCK_METHOD(ze_result_t, getFileDescriptors, (const ::pid_t pid, std::vector<int> &list), (override));
-    MOCK_METHOD(ze_result_t, getFileName, (const ::pid_t pid, const int fd, std::string &val), (override));
-    MOCK_METHOD(bool, isAlive, (const ::pid_t pid), (override));
-    MOCK_METHOD(void, kill, (const ::pid_t pid), (override));
+    MockGlobalOperationsProcfsAccess() = default;
 };
 
-class GlobalOperationsFsAccess : public FsAccess {};
-
-template <>
-struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
-    ze_result_t getValAgamaFile(const std::string file, std::string &val) {
-        if (file.compare(agamaVersionFile) == 0) {
-            val = driverVersion;
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+struct MockGlobalOperationsFsAccess : public FsAccess {
+    ze_result_t mockReadError = ZE_RESULT_SUCCESS;
+    ze_result_t readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    std::string mockReadVal = "";
+    ze_result_t read(const std::string file, std::string &val) override {
+        if (mockReadError != ZE_RESULT_SUCCESS) {
+            return mockReadError;
         }
 
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getValSrcFile(const std::string file, std::string &val) {
-        if (file.compare(srcVersionFile) == 0) {
-            val = srcVersion;
+        if (mockReadVal == srcVersion) {
+            if (file.compare(srcVersionFile) == 0) {
+                val = mockReadVal;
+                readResult = ZE_RESULT_SUCCESS;
+                return readResult;
+            }
+        } else if (mockReadVal == driverVersion) {
+            if (file.compare(agamaVersionFile) == 0) {
+                val = mockReadVal;
+                readResult = ZE_RESULT_SUCCESS;
+                return readResult;
+            }
         } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
-        return ZE_RESULT_SUCCESS;
+        return readResult;
     }
 
-    ze_result_t getValWedgedFileTrue(const std::string file, uint32_t &val) {
+    uint32_t mockReadUIntVal = 0;
+    ze_result_t read(const std::string file, uint32_t &val) override {
         if (file.compare(ueventWedgedFile) == 0) {
-            val = 1;
+            val = mockReadUIntVal;
+            readResult = ZE_RESULT_SUCCESS;
         } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
-        return ZE_RESULT_SUCCESS;
+        return readResult;
     }
 
-    ze_result_t getValWedgedFileFalse(const std::string file, uint32_t &val) {
-        if (file.compare(ueventWedgedFile) == 0) {
-            val = 0;
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    ze_result_t mockWriteError = ZE_RESULT_SUCCESS;
+    ze_result_t writeResult = ZE_RESULT_SUCCESS;
+    ze_result_t write(const std::string file, const std::string val) override {
+        if (mockWriteError != ZE_RESULT_SUCCESS) {
+            return mockWriteError;
         }
-        return ZE_RESULT_SUCCESS;
+
+        return writeResult;
     }
 
-    Mock<GlobalOperationsFsAccess>() = default;
-
-    MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
-    MOCK_METHOD(ze_result_t, read, (const std::string file, uint32_t &val), (override));
-    MOCK_METHOD(ze_result_t, write, (const std::string file, const std::string val), (override));
-    MOCK_METHOD(ze_result_t, canWrite, (const std::string file), (override));
+    ADDMETHOD_NOBASE(canWrite, ze_result_t, ZE_RESULT_SUCCESS, (const std::string file));
+    MockGlobalOperationsFsAccess() = default;
 };
 
-class GlobalOpsFwInterface : public FirmwareUtil {};
-template <>
-struct Mock<GlobalOpsFwInterface> : public GlobalOpsFwInterface {
+struct MockGlobalOpsFwInterface : public FirmwareUtil {
+    ze_result_t mockIfrError = ZE_RESULT_SUCCESS;
+    ze_result_t mockIfrResult = ZE_RESULT_SUCCESS;
+    bool mockIfrStatus = true;
+    ze_result_t fwIfrApplied(bool &ifrStatus) override {
+        if (mockIfrError != ZE_RESULT_SUCCESS) {
+            return mockIfrError;
+        }
 
-    ze_result_t mockFwDeviceInit(void) {
-        return ZE_RESULT_SUCCESS;
+        ifrStatus = mockIfrStatus;
+        return mockIfrResult;
     }
-    ze_result_t mockFwDeviceInitFail(void) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    ze_result_t mockIfrReturnTrue(bool &ifrStatus) {
-        ifrStatus = true;
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t mockIfrReturnFail(bool &ifrStatus) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    ze_result_t mockIfrReturnFalse(bool &ifrStatus) {
-        ifrStatus = false;
-        return ZE_RESULT_SUCCESS;
-    }
-    Mock<GlobalOpsFwInterface>() = default;
+    MockGlobalOpsFwInterface() = default;
 
-    MOCK_METHOD(ze_result_t, fwDeviceInit, (), (override));
-    MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
-    MOCK_METHOD(ze_result_t, getFwVersion, (std::string fwType, std::string &firmwareVersion), (override));
-    MOCK_METHOD(ze_result_t, flashFirmware, (std::string fwType, void *pImage, uint32_t size), (override));
-    MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));
+    ADDMETHOD_NOBASE(fwDeviceInit, ze_result_t, ZE_RESULT_SUCCESS, (void));
+    ADDMETHOD_NOBASE(getFirstDevice, ze_result_t, ZE_RESULT_SUCCESS, (igsc_device_info * info));
+    ADDMETHOD_NOBASE(getFwVersion, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, std::string &firmwareVersion));
+    ADDMETHOD_NOBASE(flashFirmware, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, void *pImage, uint32_t size));
     ADDMETHOD_NOBASE(fwSupportedDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::vector<std::string> & supportedDiagTests));
     ADDMETHOD_NOBASE(fwRunDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::string & osDiagType, zes_diag_result_t *pResult));
     ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
