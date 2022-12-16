@@ -3875,7 +3875,7 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
         return nullptr;
     }
 
-    return neoContext->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties, neoContext);
+    return neoContext->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 }
 
 CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
@@ -3923,7 +3923,7 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
 
     unifiedMemoryProperties.device = &neoDevice->getDevice();
 
-    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties, neoContext);
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 }
 
 CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
@@ -3976,7 +3976,7 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }
-    auto ptr = neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(size, unifiedMemoryProperties, neoContext->getSpecialQueue(neoDevice->getRootDeviceIndex()), neoContext);
+    auto ptr = neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(size, unifiedMemoryProperties, neoContext->getSpecialQueue(neoDevice->getRootDeviceIndex()));
     if (!ptr) {
         err.set(CL_OUT_OF_RESOURCES);
     }

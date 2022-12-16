@@ -12,7 +12,6 @@
 #include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/memory_pool.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
@@ -41,7 +40,6 @@ struct AlignedAllocationData {
     size_t offset = 0u;
     NEO::GraphicsAllocation *alloc = nullptr;
     bool needsFlush = false;
-    NEO::SvmAllocationData *allocData = nullptr;
 };
 
 struct CmdListFillKernelArguments {

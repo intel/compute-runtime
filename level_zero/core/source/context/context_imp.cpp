@@ -90,8 +90,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
     }
 
     auto usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
-                                                                                          unifiedMemoryProperties,
-                                                                                          this);
+                                                                                          unifiedMemoryProperties);
     if (usmPtr == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
@@ -183,7 +182,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     void *usmPtr =
-        this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties, this);
+        this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (usmPtr == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -284,8 +283,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 
     auto usmPtr = this->driverHandle->svmAllocsManager->createSharedUnifiedMemoryAllocation(size,
                                                                                             unifiedMemoryProperties,
-                                                                                            static_cast<void *>(neoDevice->getSpecializedDevice<L0::Device>()),
-                                                                                            this);
+                                                                                            static_cast<void *>(neoDevice->getSpecializedDevice<L0::Device>()));
     if (usmPtr == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -505,10 +503,6 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(*ptr);
-    UNRECOVERABLE_IF(alloc == nullptr);
-    alloc->context = static_cast<void *>(this);
-
     return ZE_RESULT_SUCCESS;
 }
 
@@ -534,10 +528,6 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
     if (nullptr == *pptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-
-    auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(*pptr);
-    UNRECOVERABLE_IF(alloc == nullptr);
-    alloc->context = static_cast<void *>(this);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -767,7 +757,7 @@ ze_result_t ContextImp::createCommandList(ze_device_handle_t hDevice,
                                           ze_command_list_handle_t *commandList) {
     auto ret = L0::Device::fromHandle(hDevice)->createCommandList(desc, commandList);
     if (*commandList) {
-        L0::CommandList::fromHandle(*commandList)->context = this;
+        L0::CommandList::fromHandle(*commandList)->hContext = this->toHandle();
     }
     return ret;
 }
@@ -777,7 +767,7 @@ ze_result_t ContextImp::createCommandListImmediate(ze_device_handle_t hDevice,
                                                    ze_command_list_handle_t *commandList) {
     auto ret = L0::Device::fromHandle(hDevice)->createCommandListImmediate(desc, commandList);
     if (*commandList) {
-        L0::CommandList::fromHandle(*commandList)->context = this;
+        L0::CommandList::fromHandle(*commandList)->hContext = this->toHandle();
     }
     return ret;
 }

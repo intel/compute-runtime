@@ -37,7 +37,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
         NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, subDeviceBitfields);
         unifiedMemoryProperties.device = &device;
-        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
+        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
             return nullptr;

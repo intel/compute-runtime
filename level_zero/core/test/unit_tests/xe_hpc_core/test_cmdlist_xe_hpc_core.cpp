@@ -409,7 +409,6 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
     ze_command_list_handle_t commandListHandle = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
-    commandList->context = context;
     auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, commandList->isCopyOnly(), false, returnValue);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -944,7 +943,6 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_group_count_t groupCount{8, 1, 1};
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    commandList->context = context;
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     CmdListKernelLaunchParams launchParams = {};
@@ -1080,7 +1078,6 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
 
         constexpr size_t offset = 32;
         void *copyPtr = reinterpret_cast<uint8_t *>(ptr) + offset;
-        commandList->context = input.context;
         result = commandList->appendMemoryCopy(copyPtr, srcPtr, size - offset, event.get(), 0, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1141,7 +1138,6 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
 
         constexpr size_t offset = 32;
         void *copyPtr = reinterpret_cast<uint8_t *>(ptr) + offset;
-        commandList->context = input.context;
         result = commandList->appendMemoryCopy(copyPtr, srcPtr, size - offset, event.get(), 0, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

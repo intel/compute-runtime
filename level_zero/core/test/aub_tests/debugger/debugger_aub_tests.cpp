@@ -91,7 +91,7 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);
 
-    auto bufferDst = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties, nullptr);
+    auto bufferDst = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
     memset(bufferDst, 0, bufferSize);
 
     auto simulatedCsr = AUBFixtureL0::getSimulatedCsr<FamilyType>();
