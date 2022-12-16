@@ -14,13 +14,14 @@
 namespace L0 {
 namespace ult {
 
-template <>
-struct Mock<FabricDevice> : public FabricDevice {
-    MOCK_METHOD(uint32_t, getNumPorts, (), (override));
-    MOCK_METHOD(OsFabricDevice *, getOsFabricDevice, (), (override));
+const uint32_t mockNumPorts = 2;
+struct MockFabricDevice : public FabricDevice {
+    uint32_t getNumPorts() override {
+        return mockNumPorts;
+    }
 
-    Mock() = default;
-    ~Mock() override = default;
+    ADDMETHOD_NOBASE(getOsFabricDevice, OsFabricDevice *, nullptr, ());
+    MockFabricDevice() = default;
 };
 
 } // namespace ult

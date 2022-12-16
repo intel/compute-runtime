@@ -22,8 +22,6 @@ namespace ult {
 
 class ZesFabricPortFixture : public SysmanDeviceFixture {
   protected:
-    static constexpr uint32_t numPorts = 2;
-
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
@@ -38,10 +36,7 @@ class ZesFabricPortFixture : public SysmanDeviceFixture {
             delete pFabricPortHandleContext->pFabricDevice;
             pFabricPortHandleContext->pFabricDevice = nullptr;
         }
-        Mock<FabricDevice> *mockFabricDevice = new NiceMock<Mock<FabricDevice>>;
-        ON_CALL(*mockFabricDevice, getNumPorts())
-            .WillByDefault(Return(numPorts));
-
+        MockFabricDevice *mockFabricDevice = new MockFabricDevice();
         pFabricPortHandleContext->pFabricDevice = mockFabricDevice;
     }
     void TearDown() override {
@@ -57,7 +52,7 @@ TEST_F(ZesFabricPortFixture, GivenPortCountZeroWhenCallingZesFabricPortGetThenCo
     ze_result_t result = zesDeviceEnumFabricPorts(device, &count, NULL);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, ZesFabricPortFixture::numPorts);
+    EXPECT_EQ(count, mockNumPorts);
 }
 
 TEST_F(ZesFabricPortFixture, GivenPortCountZeroAndValidHandlePtrWhenCallingZesFabricPortGetThenCountIsReturnedAndNoHandlesReturnedAndVerifyZesFabricPortGetCallSucceeds) {
@@ -67,35 +62,35 @@ TEST_F(ZesFabricPortFixture, GivenPortCountZeroAndValidHandlePtrWhenCallingZesFa
     ze_result_t result = zesDeviceEnumFabricPorts(device, &count, &handle);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, ZesFabricPortFixture::numPorts);
+    EXPECT_EQ(count, mockNumPorts);
     EXPECT_EQ(handle, static_cast<zes_fabric_port_handle_t>(0UL));
 }
 
 TEST_F(ZesFabricPortFixture, GivenPortCountCorrectWhenCallingZesFabricPortGetThenCountHandlesAreReturnedAndAndVerifyZesFabricPortGetCallSucceeds) {
-    uint32_t count = ZesFabricPortFixture::numPorts;
-    zes_fabric_port_handle_t hPorts[ZesFabricPortFixture::numPorts];
+    uint32_t count = mockNumPorts;
+    zes_fabric_port_handle_t hPorts[mockNumPorts];
     ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, ZesFabricPortFixture::numPorts);
+    EXPECT_EQ(count, mockNumPorts);
 }
 
 TEST_F(ZesFabricPortFixture, GivenPortCountGreaterThanPortsWhenCallingZesFabricPortGetThenCorrectCountisReturnedAndAndVerifyZesFabricPortGetCallSucceeds) {
-    uint32_t count = ZesFabricPortFixture::numPorts + 1U;
-    zes_fabric_port_handle_t hPorts[ZesFabricPortFixture::numPorts + 1U];
+    uint32_t count = mockNumPorts + 1U;
+    zes_fabric_port_handle_t hPorts[mockNumPorts + 1U];
     ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, ZesFabricPortFixture::numPorts);
+    EXPECT_EQ(count, mockNumPorts);
 }
 
 TEST_F(ZesFabricPortFixture, GivenPortCounLessThanPortsWhenCallingZesFabricPortGetThenCountLessTanPortsHandlesAreReturned) {
-    uint32_t count = ZesFabricPortFixture::numPorts - 1U;
-    zes_fabric_port_handle_t hPorts[ZesFabricPortFixture::numPorts - 1U];
+    uint32_t count = mockNumPorts - 1U;
+    zes_fabric_port_handle_t hPorts[mockNumPorts - 1U];
     ze_result_t result = zesDeviceEnumFabricPorts(device, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, ZesFabricPortFixture::numPorts - 1U);
+    EXPECT_EQ(count, mockNumPorts - 1U);
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortGetPropertiesThenZesFabricPortGetPropertiesCallSucceeds) {

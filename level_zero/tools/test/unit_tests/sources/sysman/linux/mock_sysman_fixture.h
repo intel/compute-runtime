@@ -70,16 +70,11 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
 
         pFwUtilInterface = new MockFwUtilInterface();
-        pSysfsAccess = new NiceMock<Mock<LinuxSysfsAccess>>;
-        pProcfsAccess = new NiceMock<Mock<LinuxProcfsAccess>>;
+        pSysfsAccess = new Mock<LinuxSysfsAccess>;
+        pProcfsAccess = new Mock<LinuxProcfsAccess>;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
-
-        ON_CALL(*pSysfsAccess, getRealPath(_, Matcher<std::string &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<LinuxSysfsAccess>::getRealPathVal));
-        ON_CALL(*pProcfsAccess, getFileName(_, _, Matcher<std::string &>(_)))
-            .WillByDefault(::testing::Invoke(pProcfsAccess, &Mock<LinuxProcfsAccess>::getMockFileName));
 
         pSysmanDeviceImp->init();
     }
@@ -125,17 +120,11 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
 
         pFwUtilInterface = new MockFwUtilInterface();
-        pSysfsAccess = new NiceMock<Mock<LinuxSysfsAccess>>;
-        pProcfsAccess = new NiceMock<Mock<LinuxProcfsAccess>>;
+        pSysfsAccess = new Mock<LinuxSysfsAccess>;
+        pProcfsAccess = new Mock<LinuxProcfsAccess>;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
-
-        ON_CALL(*pSysfsAccess, getRealPath(_, Matcher<std::string &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<LinuxSysfsAccess>::getRealPathVal));
-        ON_CALL(*pProcfsAccess, getFileName(_, _, Matcher<std::string &>(_)))
-            .WillByDefault(::testing::Invoke(pProcfsAccess, &Mock<LinuxProcfsAccess>::getMockFileName));
-
         pSysmanDeviceImp->init();
         subDeviceCount = numSubDevices;
     }

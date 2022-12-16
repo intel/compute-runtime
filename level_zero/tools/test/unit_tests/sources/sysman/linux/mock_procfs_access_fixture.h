@@ -28,7 +28,7 @@ template <>
 struct Mock<LinuxProcfsAccess> : public LinuxProcfsAccess {
     ::pid_t ourDevicePid = 0;
     int ourDeviceFd = 0;
-    ze_result_t getMockFileName(const ::pid_t pid, const int fd, std::string &val) {
+    ze_result_t getFileName(const ::pid_t pid, const int fd, std::string &val) override {
         if (pid == ourDevicePid && fd == ourDeviceFd) {
             val = mockedDeviceName;
         } else {
@@ -39,8 +39,6 @@ struct Mock<LinuxProcfsAccess> : public LinuxProcfsAccess {
     }
 
     Mock<LinuxProcfsAccess>() = default;
-
-    MOCK_METHOD(ze_result_t, getFileName, (const ::pid_t pid, const int fd, std::string &val), (override));
 };
 
 } // namespace ult

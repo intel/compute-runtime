@@ -23,14 +23,12 @@ class LinuxSysfsAccess : public SysfsAccess {};
 template <>
 struct Mock<LinuxSysfsAccess> : public LinuxSysfsAccess {
 
-    ze_result_t getRealPathVal(const std::string file, std::string &val) {
+    ze_result_t getRealPath(const std::string file, std::string &val) override {
         val = "/random/path";
         return ZE_RESULT_SUCCESS;
     }
 
     Mock<LinuxSysfsAccess>() = default;
-
-    MOCK_METHOD(ze_result_t, getRealPath, (const std::string path, std::string &val), (override));
 };
 
 } // namespace ult
