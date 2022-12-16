@@ -595,17 +595,13 @@ bool GfxCoreHelperHw<GfxFamily>::isRcsAvailable(const HardwareInfo &hwInfo) cons
 
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const {
-    return false;
+    return true;
 }
 
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                                              const HardwareInfo &hwInfo, bool isEngineInstanced) const {
-    if ((DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.get()) ||
-        (DebugManager.flags.OverrideMaxWorkGroupCount.get() != -1)) {
-        return maxWorkGroupCount;
-    }
-    return 1u;
+    return maxWorkGroupCount;
 }
 
 template <typename GfxFamily>

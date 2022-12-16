@@ -298,9 +298,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsAtLeastSkl) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
-
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();

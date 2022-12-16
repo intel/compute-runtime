@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -66,8 +65,6 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
 
     template <typename FamilyType>
     void setUpT() {
-        NEO::DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
-
         SyncBufferEnqueueHandlerTest::SetUp();
         kernelInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, context);
         kernelInternals->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
@@ -115,7 +112,6 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     std::unique_ptr<MockKernelWithInternals> kernelInternals;
     MockKernel *kernel;
     MockCommandQueue *commandQueue;
-    DebugManagerStateRestore restorer;
 };
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferIsUsed) {

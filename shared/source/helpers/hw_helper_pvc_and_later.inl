@@ -44,7 +44,7 @@ bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupTy
         return !isRcsAvailable(hwInfo) || isExclusiveContextUsed;
     }
 
-    return false;
+    return true;
 }
 
 template <>
@@ -57,7 +57,9 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupC
     if (!isCooperativeDispatchSupported(engineGroupType, hwInfo)) {
         return 1u;
     }
-    bool requiresLimitation = (engineGroupType != EngineGroupType::CooperativeCompute) &&
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    bool requiresLimitation = productHelper.isCooperativeEngineSupported(hwInfo) &&
+                              (engineGroupType != EngineGroupType::CooperativeCompute) &&
                               (!isEngineInstanced);
     if (requiresLimitation) {
         auto ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
