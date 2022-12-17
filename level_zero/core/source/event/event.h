@@ -304,7 +304,6 @@ struct EventPool : _ze_event_pool_handle_t {
 
     std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
     ze_event_pool_flags_t eventPoolFlags;
-    bool isDeviceEventPoolAllocation = false;
 
   protected:
     EventPool() = default;
