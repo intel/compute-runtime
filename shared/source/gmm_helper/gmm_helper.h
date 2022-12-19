@@ -37,11 +37,12 @@ class GmmHelper {
 
     GmmClientContext *getClientContext() const;
 
+    const RootDeviceEnvironment &getRootDeviceEnvironment() const;
     static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(const RootDeviceEnvironment &);
 
   protected:
     uint32_t addressWidth;
-    const HardwareInfo *hwInfo = nullptr;
+    const RootDeviceEnvironment &rootDeviceEnvironment;
     std::unique_ptr<GmmClientContext> gmmClientContext;
     bool allResourcesUncached = false;
 };

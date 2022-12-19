@@ -16,7 +16,8 @@
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 namespace NEO {
-GmmClientContext::GmmClientContext(const RootDeviceEnvironment &rootDeviceEnvironment) : hardwareInfo(rootDeviceEnvironment.getHardwareInfo()) {
+GmmClientContext::GmmClientContext(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto hardwareInfo = rootDeviceEnvironment.getHardwareInfo();
     _SKU_FEATURE_TABLE gmmFtrTable = {};
     _WA_TABLE gmmWaTable = {};
     SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, &hardwareInfo->featureTable);

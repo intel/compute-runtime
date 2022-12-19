@@ -13,7 +13,6 @@
 namespace NEO {
 class GmmClientContext;
 struct RootDeviceEnvironment;
-struct HardwareInfo;
 class GmmHandleAllocator;
 
 class GmmClientContext {
@@ -33,10 +32,6 @@ class GmmClientContext {
         return std::make_unique<T>(rootDeviceEnvironment);
     }
 
-    const HardwareInfo *getHardwareInfo() {
-        return hardwareInfo;
-    }
-
     MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
     MOCKABLE_VIRTUAL uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
 
@@ -49,7 +44,6 @@ class GmmClientContext {
     }
 
   protected:
-    const HardwareInfo *hardwareInfo = nullptr;
     GMM_CLIENT_CONTEXT *clientContext;
     std::unique_ptr<GmmHandleAllocator> handleAllocator;
 };

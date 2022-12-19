@@ -24,7 +24,11 @@ GmmClientContext *GmmHelper::getClientContext() const {
 }
 
 const HardwareInfo *GmmHelper::getHardwareInfo() {
-    return hwInfo;
+    return rootDeviceEnvironment.getHardwareInfo();
+}
+
+const RootDeviceEnvironment &GmmHelper::getRootDeviceEnvironment() const {
+    return rootDeviceEnvironment;
 }
 
 uint32_t GmmHelper::getMOCS(uint32_t type) const {
@@ -43,7 +47,8 @@ void GmmHelper::applyMocsEncryptionBit(uint32_t &index) {
     }
 }
 
-GmmHelper::GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironment) : hwInfo(rootDeviceEnvironment.getHardwareInfo()) {
+GmmHelper::GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironmentArg) : rootDeviceEnvironment(rootDeviceEnvironmentArg) {
+    auto hwInfo = getHardwareInfo();
     auto hwInfoAddressWidth = Math::log2(hwInfo->capabilityTable.gpuAddressSpace + 1);
     addressWidth = std::max(hwInfoAddressWidth, 48u);
 

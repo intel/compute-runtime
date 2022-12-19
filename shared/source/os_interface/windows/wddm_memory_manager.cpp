@@ -1065,8 +1065,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         return nullptr;
     }
 
-    auto gmmClientContext = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext();
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
     std::unique_ptr<Gmm> gmm;
     size_t sizeAligned = 0;
@@ -1088,7 +1088,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
                                         nullptr,
                                         sizeAligned,
                                         alignment,
-                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *gmmClientContext->getHardwareInfo()),
+                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *rootDeviceEnvironment.getHardwareInfo()),
                                         allocationData.flags.preferCompressed,
                                         allocationData.storageInfo,
                                         true);
