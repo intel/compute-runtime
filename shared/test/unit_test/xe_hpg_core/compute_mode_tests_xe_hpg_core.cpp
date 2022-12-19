@@ -57,13 +57,13 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
         {STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_56, STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED},
         {STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_48, STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED},
     };
-
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
     for (auto testValue : testValues) {
         DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(testValue.zPassThreadLimit);
         DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(testValue.pixelThreadLimit);
 
         pCsr->streamProperties.stateComputeMode = {};
-        pCsr->streamProperties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+        pCsr->streamProperties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
         LinearStream stream(buff, 1024);
         pCsr->programComputeMode(stream, flags, *defaultHwInfo);
         EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -84,7 +84,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(-1);
 
     pCsr->streamProperties.stateComputeMode = {};
-    pCsr->streamProperties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+    pCsr->streamProperties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
     LinearStream stream(buff, 1024);
     pCsr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());

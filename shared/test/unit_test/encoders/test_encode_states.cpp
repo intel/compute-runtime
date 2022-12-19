@@ -451,7 +451,7 @@ HWTEST2_F(CommandEncodeStatesTest, whenGetCmdSizeForComputeModeThenCorrectValueI
 
     UltDeviceFactory deviceFactory{1, 0};
     auto &csr = deviceFactory.rootDevices[0]->getUltCommandStreamReceiver<FamilyType>();
-    csr.streamProperties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled, *defaultHwInfo);
+    csr.streamProperties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled, csr.peekRootDeviceEnvironment());
     EXPECT_EQ(expectedScmSize, csr.getCmdSizeForComputeMode());
 }
 

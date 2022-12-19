@@ -357,7 +357,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto requiresCoherency = gfxCoreHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
     this->streamProperties.stateComputeMode.setProperties(requiresCoherency, dispatchFlags.numGrfRequired,
-                                                          dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), hwInfo);
+                                                          dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), peekRootDeviceEnvironment());
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;

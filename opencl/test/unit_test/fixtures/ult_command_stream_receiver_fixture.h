@@ -153,7 +153,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.pipelineSelect.setProperties(true, false, false, *defaultHwInfo);
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
-                                                                              gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), *defaultHwInfo);
+                                                                              gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), pDevice->getRootDeviceEnvironment());
         commandStreamReceiver.streamProperties.frontEndState.setProperties(false, false, false, -1, *defaultHwInfo);
 
         auto logicalStateHelper = commandStreamReceiver.getLogicalStateHelper();

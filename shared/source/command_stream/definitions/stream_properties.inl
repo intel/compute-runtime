@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
+struct RootDeviceEnvironment;
 
 struct StateComputeModePropertiesSupport {
     bool coherencyRequired = false;
@@ -28,7 +29,7 @@ struct StateComputeModeProperties {
     StreamProperty threadArbitrationPolicy{};
     StreamProperty devicePreemptionMode{};
 
-    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, const HardwareInfo &hwInfo);
+    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setProperties(const StateComputeModeProperties &properties);
     bool isDirty() const;
 

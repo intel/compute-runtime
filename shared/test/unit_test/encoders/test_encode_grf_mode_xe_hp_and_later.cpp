@@ -21,7 +21,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenN
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, GrfConfig::DefaultGrfNumber, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    streamProperties.stateComputeMode.setProperties(false, GrfConfig::DefaultGrfNumber, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
 
     GenCmdList commands;
@@ -56,8 +57,9 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeProgrammedThenExpectedComman
     auto usedSpaceBefore = cmdContainer->getCommandStream()->getUsed();
 
     NEO::EncodeComputeMode<GfxFamily>::adjustPipelineSelect(*cmdContainer, descriptor);
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, 256u, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+    streamProperties.stateComputeMode.setProperties(false, 256u, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
     NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
 
     auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();

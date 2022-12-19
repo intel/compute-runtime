@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -16,15 +17,15 @@
 using namespace NEO;
 
 void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode,
-                                               const HardwareInfo &hwInfo) {
+                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
         productHelper.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
         this->propertiesSupportLoaded = true;
     }
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     clearIsDirty();
 
     if (this->scmPropertiesSupport.coherencyRequired) {

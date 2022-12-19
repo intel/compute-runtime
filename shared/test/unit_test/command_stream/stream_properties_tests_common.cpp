@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -64,8 +65,10 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     StreamProperties properties;
 
     FrontEndPropertiesSupport frontEndPropertiesSupport = {};
-    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
-    productHelper->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, *defaultHwInfo);
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    productHelper.fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, *defaultHwInfo);
 
     for (auto isEngineInstanced : ::testing::Bool()) {
         for (auto isCooperativeKernel : ::testing::Bool()) {
@@ -104,8 +107,10 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
     DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
-    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
-    productHelper->fillScmPropertiesSupportStructure(scmPropertiesSupport);
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    productHelper.fillScmPropertiesSupportStructure(scmPropertiesSupport);
 
     int32_t threadArbitrationPolicyValues[] = {
         ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,
@@ -118,7 +123,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
         for (auto requiresCoherency : ::testing::Bool()) {
             for (auto largeGrf : ::testing::Bool()) {
                 for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
-                    properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode, *defaultHwInfo);
+                    properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode, rootDeviceEnvironment);
                     EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
                     if (scmPropertiesSupport.coherencyRequired) {
                         EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
@@ -141,7 +146,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
 
     for (auto forceZPassAsyncComputeThreadLimit : ::testing::Bool()) {
         DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(forceZPassAsyncComputeThreadLimit);
-        properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, *defaultHwInfo);
+        properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, rootDeviceEnvironment);
         if (scmPropertiesSupport.zPassAsyncComputeThreadLimit) {
             EXPECT_EQ(forceZPassAsyncComputeThreadLimit, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
         } else {
@@ -151,7 +156,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
 
     for (auto forcePixelAsyncComputeThreadLimit : ::testing::Bool()) {
         DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
-        properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, *defaultHwInfo);
+        properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, rootDeviceEnvironment);
         if (scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
             EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
         } else {
@@ -161,7 +166,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
 
     for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
         DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
-        properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, *defaultHwInfo);
+        properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, rootDeviceEnvironment);
         if (scmPropertiesSupport.threadArbitrationPolicy) {
             EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
         } else {

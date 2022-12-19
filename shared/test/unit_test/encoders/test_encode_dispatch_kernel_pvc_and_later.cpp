@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/encoders/test_encode_dispatch_kernel_dg2_and_later.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
@@ -79,9 +80,11 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousValuesWhenCallingSetBa
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandContainerWhenNumGrfRequiredIsGreaterThanDefaultThenLargeGrfModeEnabled) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, GrfConfig::LargeGrfNumber, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+    streamProperties.stateComputeMode.setProperties(false, GrfConfig::LargeGrfNumber, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

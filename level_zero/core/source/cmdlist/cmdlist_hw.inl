@@ -2431,17 +2431,18 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
     auto &hwInfo = device->getHwInfo();
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
 
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
     if (!containsAnyKernel) {
         requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, hwInfo);
         requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, hwInfo);
         if (this->stateComputeModeTracking) {
-            requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), hwInfo);
+            requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
             finalStreamState = requiredStreamState;
         } else {
             finalStreamState = requiredStreamState;
-            requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), hwInfo);
+            requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
         }
         containsAnyKernel = true;
     }
@@ -2481,7 +2482,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
         }
     }
 
-    finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), hwInfo);
+    finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
     if (finalStreamState.stateComputeMode.isDirty() && logicalStateHelperBlock) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
         NEO::PipelineSelectArgs pipelineSelectArgs;

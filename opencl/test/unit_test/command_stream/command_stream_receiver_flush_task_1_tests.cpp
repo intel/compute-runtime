@@ -890,7 +890,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble);
 
     commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
-                                                                          flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, *defaultHwInfo);
+                                                                          flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, pDevice->getRootDeviceEnvironment());
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(sizeNeeded, csrCS.getUsed());
@@ -924,7 +924,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble - sizeNeededForStateBaseAddress);
 
     commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
-                                                                          flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, *defaultHwInfo);
+                                                                          flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, pDevice->getRootDeviceEnvironment());
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(sizeNeeded, csrCS.getUsed());
@@ -962,7 +962,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
 
     commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
-                                                                          flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, *defaultHwInfo);
+                                                                          flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, pDevice->getRootDeviceEnvironment());
     commandStreamReceiver.flushTask(
         commandStream,
         0,

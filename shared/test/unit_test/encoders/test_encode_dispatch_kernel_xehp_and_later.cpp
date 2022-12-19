@@ -516,11 +516,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDispatchInterfaceWhen
     DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
 
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, 128, 0u, PreemptionMode::Disabled, *defaultHwInfo);
-    streamProperties.stateComputeMode.setProperties(false, 128, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    streamProperties.stateComputeMode.setProperties(false, 128, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
+    streamProperties.stateComputeMode.setProperties(false, 128, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
     EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
 
-    streamProperties.stateComputeMode.setProperties(false, 256, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+    streamProperties.stateComputeMode.setProperties(false, 256, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
     EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
 }
 
