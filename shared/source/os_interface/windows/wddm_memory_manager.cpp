@@ -120,7 +120,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
         return allocateHugeGraphicsMemory(allocationData, false);
     }
 
-    if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr) {
+    // algin gpu address of device part of usm shared allocation to 64kb for WSL2
+    auto alignGpuAddressTo64KB = preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr;
+
+    if (alignGpuAddressTo64KB) {
         sizeAligned = sizeAligned + allocationData.alignment;
     }
 
@@ -152,12 +155,12 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
     [[maybe_unused]] auto status = true;
 
-    if ((!(preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr) && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) || is32bit) {
+    if ((!(alignGpuAddressTo64KB) && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) || is32bit) {
         status = mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
     } else {
         status = mapGpuVirtualAddress(wddmAllocation.get(), nullptr);
 
-        if (preferredAllocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr) {
+        if (alignGpuAddressTo64KB) {
             void *tempCPUPtr = cpuPtr;
             cpuPtr = alignUp(cpuPtr, MemoryConstants::pageSize64k);
             wddmAllocation->setGpuAddress(wddmAllocation->getGpuAddress() + ptrDiff(cpuPtr, tempCPUPtr));
