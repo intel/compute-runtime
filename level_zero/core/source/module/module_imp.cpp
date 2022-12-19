@@ -274,7 +274,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
     auto productAbbreviation = NEO::hardwarePrefix[device->getNEODevice()->getHardwareInfo().platform.eProductFamily];
 
-    NEO::TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(device->getNEODevice()->getHardwareInfo());
+    NEO::TargetDevice targetDevice = NEO::getTargetDevice(device->getNEODevice()->getRootDeviceEnvironment());
     std::string decodeErrors;
     std::string decodeWarnings;
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(input), inputSize);
@@ -340,7 +340,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
     NEO::SingleDeviceBinary binary = {};
     binary.deviceBinary = blob;
-    binary.targetDevice = NEO::targetDeviceFromHwInfo(device->getHwInfo());
+    binary.targetDevice = NEO::getTargetDevice(device->getNEODevice()->getRootDeviceEnvironment());
     std::string decodeErrors;
     std::string decodeWarnings;
 
@@ -393,7 +393,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     NEO::SingleDeviceBinary singleDeviceBinary = {};
-    singleDeviceBinary.targetDevice = NEO::targetDeviceFromHwInfo(device->getNEODevice()->getHardwareInfo());
+    singleDeviceBinary.targetDevice = NEO::getTargetDevice(device->getNEODevice()->getRootDeviceEnvironment());
     singleDeviceBinary.buildOptions = this->options;
     singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
     singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize);

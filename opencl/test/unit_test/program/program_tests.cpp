@@ -1491,7 +1491,6 @@ using ProgramWithDebugDataTests = Test<ProgramSimpleFixture>;
 
 TEST_F(ProgramWithDebugDataTests, GivenPatchtokensProgramWithDebugSymbolsWhenPackDeviceBinaryThenDebugDataIsAddedToSingleDeviceBinary) {
     auto clDevice = pContext->getDevices()[0];
-    auto &hwInfo = clDevice->getHardwareInfo();
     auto rootDeviceIdx = clDevice->getRootDeviceIndex();
 
     pProgram = new PatchtokensProgramWithDebugData(*clDevice);
@@ -1501,7 +1500,7 @@ TEST_F(ProgramWithDebugDataTests, GivenPatchtokensProgramWithDebugSymbolsWhenPac
     EXPECT_NE(nullptr, buildInfo.packedDeviceBinary.get());
 
     auto packedDeviceBinary = ArrayRef<const uint8_t>::fromAny(buildInfo.packedDeviceBinary.get(), buildInfo.packedDeviceBinarySize);
-    TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(hwInfo);
+    TargetDevice targetDevice = NEO::getTargetDevice(pDevice->getRootDeviceEnvironment());
     std::string decodeErrors;
     std::string decodeWarnings;
     auto singleDeviceBinary = unpackSingleDeviceBinary(packedDeviceBinary, {}, targetDevice,

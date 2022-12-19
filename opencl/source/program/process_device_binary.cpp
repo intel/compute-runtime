@@ -180,7 +180,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
         if (isAnyPackedDeviceBinaryFormat(archive)) {
             std::string outErrReason, outWarning;
             auto productAbbreviation = NEO::hardwarePrefix[clDevice.getHardwareInfo().platform.eProductFamily];
-            NEO::TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(clDevice.getHardwareInfo());
+            NEO::TargetDevice targetDevice = NEO::getTargetDevice(clDevice.getRootDeviceEnvironment());
 
             auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice, outErrReason, outWarning);
             auto singleDeviceBinarySize = singleDeviceBinary.deviceBinary.size();
@@ -206,7 +206,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
     SingleDeviceBinary binary = {};
     binary.deviceBinary = blob;
-    binary.targetDevice = NEO::targetDeviceFromHwInfo(clDevice.getDevice().getHardwareInfo());
+    binary.targetDevice = NEO::getTargetDevice(clDevice.getRootDeviceEnvironment());
     std::string decodeErrors;
     std::string decodeWarnings;
 

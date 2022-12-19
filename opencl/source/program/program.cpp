@@ -151,10 +151,11 @@ cl_int Program::createProgramFromBinary(
         deviceBuildInfos[&clDevice].programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
         this->isCreatedFromBinary = true;
 
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto productAbbreviation = hardwarePrefix[hwInfo->platform.eProductFamily];
 
-        TargetDevice targetDevice = targetDeviceFromHwInfo(*hwInfo);
+        TargetDevice targetDevice = getTargetDevice(rootDeviceEnvironment);
         std::string decodeErrors;
         std::string decodeWarnings;
         auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
@@ -372,11 +373,11 @@ cl_int Program::packDeviceBinary(ClDevice &clDevice) {
         return CL_SUCCESS;
     }
 
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
 
     if (nullptr != this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()) {
         SingleDeviceBinary singleDeviceBinary = {};
-        singleDeviceBinary.targetDevice = NEO::targetDeviceFromHwInfo(*hwInfo);
+        singleDeviceBinary.targetDevice = NEO::getTargetDevice(rootDeviceEnvironment);
         singleDeviceBinary.buildOptions = this->options;
         singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
         singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize);

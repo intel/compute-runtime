@@ -18,7 +18,7 @@
 
 namespace NEO {
 struct ProgramInfo;
-struct HardwareInfo;
+struct RootDeviceEnvironment;
 
 enum class DeviceBinaryFormat : uint8_t {
     Unknown,
@@ -63,7 +63,7 @@ struct TargetDevice {
     uint32_t grfSize = 32U;
     uint32_t minScratchSpaceSize = 0U;
 };
-TargetDevice targetDeviceFromHwInfo(const NEO::HardwareInfo &hwInfo);
+TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment);
 
 struct SingleDeviceBinary {
     DeviceBinaryFormat format = DeviceBinaryFormat::Unknown;
