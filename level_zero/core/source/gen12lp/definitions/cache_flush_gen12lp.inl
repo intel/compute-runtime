@@ -67,7 +67,7 @@ void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t num
 
             NEO::flushGpuCache<GfxFamily>(commandStream, subranges,
                                           postSyncAddressToFlush,
-                                          hwInfo);
+                                          device->getNEODevice()->getRootDeviceEnvironment());
         }
     }
 }

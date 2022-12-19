@@ -24,7 +24,6 @@ using CacheFlushTests = Test<DeviceFixture>;
 HWTEST2_F(CacheFlushTests, GivenCommandStreamWithSingleL3RangeAndNonZeroPostSyncAddressWhenFlushGpuCacheIsCalledThenPostSyncOperationIsSetForL3Control, IsDG1) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
-    auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
     LinearStream *cmdStream = commandList->commandContainer.getCommandStream();
@@ -45,7 +44,7 @@ HWTEST2_F(CacheFlushTests, GivenCommandStreamWithSingleL3RangeAndNonZeroPostSync
         GfxFamily::L3_FLUSH_ADDRESS_RANGE::
             L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION));
     NEO::flushGpuCache<GfxFamily>(cmdStream, ranges, postSyncAddress,
-                                  hardwareInfo);
+                                  neoDevice->getRootDeviceEnvironment());
 
     GenCmdList cmdList;
     EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
