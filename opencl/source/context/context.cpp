@@ -475,16 +475,21 @@ bool Context::isSingleDeviceContext() {
 }
 
 bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *context) const {
-    if (DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {
-        return !!DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get();
-    }
-    bool enabled = false;
-    if (context->isSingleDeviceContext()) {
+    bool isSupportedForSingleDeviceContexts = false;
+    bool isSupportedForAllContexts = false;
+    if (context->getNumDevices() > 0) {
         auto &hwInfo = context->getDevices()[0]->getHardwareInfo();
         auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
-        enabled = productHelper.isBufferPoolAllocatorSupported();
+        isSupportedForSingleDeviceContexts = productHelper.isBufferPoolAllocatorSupported();
     }
-    return enabled;
+
+    if (DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {
+        isSupportedForSingleDeviceContexts = DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() >= 1;
+        isSupportedForAllContexts = DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() >= 2;
+    }
+
+    return isSupportedForAllContexts ||
+           (isSupportedForSingleDeviceContexts && context->isSingleDeviceContext());
 }
 
 void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {

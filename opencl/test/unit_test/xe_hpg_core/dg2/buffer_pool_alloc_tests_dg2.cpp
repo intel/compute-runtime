@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -30,13 +31,43 @@ class AggregatedSmallBuffersDg2DefaultTest : public ContextFixture,
     }
 };
 
-DG2TEST_F(AggregatedSmallBuffersDg2DefaultTest, givenAggregatedSmallBuffersDefaultWhenCheckIfEnabledThenReturnFalse) {
-    EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
-}
-
-DG2TEST_F(AggregatedSmallBuffersDg2DefaultTest, givenAggregatedSmallBuffersDefaultAndMultiDeviceContextWhenCheckIfEnabledThenReturnFalse) {
+DG2TEST_F(AggregatedSmallBuffersDg2DefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+    // Single device context
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
+        EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+        EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+        EXPECT_TRUE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
+        EXPECT_TRUE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    }
+    // Multi device context
     pContext->devices.push_back(nullptr);
-    EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
+        EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+        EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+        EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    }
+    {
+        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
+        EXPECT_TRUE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+    }
     pContext->devices.pop_back();
 }
 

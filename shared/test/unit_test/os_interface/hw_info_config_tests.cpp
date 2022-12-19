@@ -679,6 +679,5 @@ HWTEST_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPip
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    DebugManagerStateRestore restorer;
     EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }
