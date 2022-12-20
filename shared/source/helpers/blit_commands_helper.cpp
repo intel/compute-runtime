@@ -61,12 +61,13 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
             copySize,                      // copySize
             copyOffset,                    // dstOffset
             hostPtrOffset,                 // srcOffset
-            gpuRowPitch,                   // dstRowPitch
-            gpuSlicePitch,                 // dstSlicePitch
-            hostRowPitch,                  // srcRowPitch
-            hostSlicePitch,                // srcSlicePitch
-            copySize,                      // dstSize
-            copySize                       // srcSize
+            true,
+            gpuRowPitch,    // dstRowPitch
+            gpuSlicePitch,  // dstSlicePitch
+            hostRowPitch,   // srcRowPitch
+            hostSlicePitch, // srcSlicePitch
+            copySize,       // dstSize
+            copySize        // srcSize
         };
 
     } else {
@@ -83,12 +84,13 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
             copySize,                      // copySize
             hostPtrOffset,                 // dstOffset
             copyOffset,                    // srcOffset
-            hostRowPitch,                  // dstRowPitch
-            hostSlicePitch,                // dstSlicePitch
-            gpuRowPitch,                   // srcRowPitch
-            gpuSlicePitch,                 // srcSlicePitch
-            copySize,                      // dstSize
-            copySize                       // srcSize
+            true,
+            hostRowPitch,   // dstRowPitch
+            hostSlicePitch, // dstSlicePitch
+            gpuRowPitch,    // srcRowPitch
+            gpuSlicePitch,  // srcSlicePitch
+            copySize,       // dstSize
+            copySize        // srcSize
         };
     };
 }
@@ -113,10 +115,11 @@ BlitProperties BlitProperties::constructPropertiesForCopy(GraphicsAllocation *ds
         copySize,                                        // copySize
         dstOffset,                                       // dstOffset
         srcOffset,                                       // srcOffset
-        dstRowPitch,                                     // dstRowPitch
-        dstSlicePitch,                                   // dstSlicePitch
-        srcRowPitch,                                     // srcRowPitch
-        srcSlicePitch};                                  // srcSlicePitch
+        MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool()),
+        dstRowPitch,    // dstRowPitch
+        dstSlicePitch,  // dstSlicePitch
+        srcRowPitch,    // srcRowPitch
+        srcSlicePitch}; // srcSlicePitch
 }
 
 BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
@@ -135,8 +138,8 @@ BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslati
         allocation->getGpuAddress(),                     // srcGpuAddress
         {allocationSize, 1, 1},                          // copySize
         0,                                               // dstOffset
-        0                                                // srcOffset
-    };
+        0,                                               // srcOffset
+        MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool())};
 }
 
 void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer &blitPropertiesContainer, TimestampPacketDependencies &timestampPacketDependencies,

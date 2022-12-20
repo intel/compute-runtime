@@ -74,6 +74,7 @@ struct BlitProperties {
     Vec3<size_t> copySize = 0;
     Vec3<size_t> dstOffset = 0;
     Vec3<size_t> srcOffset = 0;
+    bool isSystemMemoryPoolUsed = false;
 
     size_t dstRowPitch = 0;
     size_t dstSlicePitch = 0;
@@ -120,18 +121,18 @@ struct BlitCommandsHelper {
     using COLOR_DEPTH = typename GfxFamily::XY_COLOR_BLT::COLOR_DEPTH;
     static uint64_t getMaxBlitWidth(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitWidthOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static uint64_t getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
+    static uint64_t getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static void dispatchPreBlitCommand(LinearStream &linearStream, const HardwareInfo &hwInfo);
     static size_t estimatePreBlitCommandSize();
     static void dispatchPostBlitCommand(LinearStream &linearStream, const HardwareInfo &hwInfo);
     static size_t estimatePostBlitCommandSize();
     static size_t estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
-                                          bool profilingEnabled, bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment);
+                                          bool profilingEnabled, bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, bool profilingEnabled,
                                            bool debugPauseEnabled, bool blitterDirectSubmission, const RootDeviceEnvironment &rootDeviceEnvironment);
-    static size_t getNumberOfBlitsForCopyRegion(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment);
-    static size_t getNumberOfBlitsForCopyPerRow(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getNumberOfBlitsForCopyRegion(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
+    static size_t getNumberOfBlitsForCopyPerRow(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static uint64_t calculateBlitCommandDestinationBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);
     static uint64_t calculateBlitCommandSourceBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);
     static uint64_t calculateBlitCommandDestinationBaseAddressCopyRegion(const BlitProperties &blitProperties, size_t slice);
@@ -166,7 +167,7 @@ struct BlitCommandsHelper {
                                            DebugPauseState waitCondition, const HardwareInfo &hwInfo);
     static size_t getSizeForDebugPauseCommands();
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize);
-    static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static void programGlobalSequencerFlush(LinearStream &commandStream);
     static size_t getSizeForGlobalSequencerFlush();
     static bool miArbCheckWaRequired();

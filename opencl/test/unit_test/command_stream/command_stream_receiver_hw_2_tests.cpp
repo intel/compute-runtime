@@ -56,14 +56,14 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
     auto notAlignedCopySize = Vec3<size_t>{notAlignedBltSize, 1, 1};
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        alignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+        alignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
     auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        notAlignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+        notAlignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedCopySize, pClDevice->getRootDeviceEnvironment()));
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedCopySize, pClDevice->getRootDeviceEnvironment()));
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedCopySize, pClDevice->getRootDeviceEnvironment(), false));
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedCopySize, pClDevice->getRootDeviceEnvironment(), false));
 }
 
 HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
@@ -92,7 +92,7 @@ HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequir
         blitPropertiesContainer, false, true, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSize, estimatedSize);
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(blitProperties.copySize, pClDevice->getRootDeviceEnvironment()));
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(blitProperties.copySize, pClDevice->getRootDeviceEnvironment(), false));
 }
 
 HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAddAllRequiredCommands) {
@@ -117,20 +117,20 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAdd
     }
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        alignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+        alignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
     auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        notAlignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+        notAlignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedBltSize, pClDevice->getRootDeviceEnvironment()));
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, pClDevice->getRootDeviceEnvironment()));
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedBltSize, pClDevice->getRootDeviceEnvironment(), false));
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, pClDevice->getRootDeviceEnvironment(), false));
 }
 
 HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBufferRectThenAddAllRequiredCommands) {
     auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
     auto maxWidthToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
-    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment));
+    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false));
 
     size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
 
@@ -141,7 +141,7 @@ HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBuffer
     Vec3<size_t> alignedBltSize = {(3 * maxWidthToCopy), (4 * maxHeightToCopy), 2};
     Vec3<size_t> notAlignedBltSize = {(3 * maxWidthToCopy + 1), (4 * maxHeightToCopy), 2};
 
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, rootDeviceEnvironment));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, rootDeviceEnvironment, false));
 
     size_t alignedNumberOfBlts = (3 * 4 * alignedBltSize.z);
     size_t notAlignedNumberOfBlts = (4 * 4 * notAlignedBltSize.z);
@@ -155,53 +155,53 @@ HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBuffer
     }
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        alignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment);
+        alignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment, false);
     auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        notAlignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment);
+        notAlignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment, false);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedBltSize, rootDeviceEnvironment));
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, rootDeviceEnvironment));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedBltSize, rootDeviceEnvironment, false));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, rootDeviceEnvironment, false));
 }
 
 HWTEST_F(BcsTests, WhenGetNumberOfBlitsIsCalledThenCorrectValuesAreReturned) {
     auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
     auto maxWidthToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
-    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment));
+    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false));
 
     {
         Vec3<size_t> copySize = {maxWidthToCopy * maxHeightToCopy, 1, 3};
         size_t expectednBlitsCopyRegion = maxHeightToCopy * 3;
         size_t expectednBlitsCopyPerRow = 3;
-        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment);
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, false);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
 
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
         EXPECT_EQ(expectednBlitsCopyRegion, nBlitsCopyRegion);
-        EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
+        EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment, false));
     }
     {
         Vec3<size_t> copySize = {2 * maxWidthToCopy, 16, 3};
         size_t expectednBlitsCopyRegion = 2 * 3;
         size_t expectednBlitsCopyPerRow = 16 * 3;
-        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment);
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, false);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
 
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
         EXPECT_EQ(expectednBlitsCopyRegion, nBlitsCopyRegion);
-        EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
+        EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment, false));
     }
     {
         Vec3<size_t> copySize = {2 * maxWidthToCopy, 3 * maxHeightToCopy, 4};
         size_t expectednBlitsCopyRegion = 2 * 3 * 4;
         size_t expectednBlitsCopyPerRow = 3 * maxHeightToCopy * 4;
-        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment);
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, false);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
 
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
         EXPECT_EQ(expectednBlitsCopyRegion, nBlitsCopyRegion);
-        EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
+        EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment, false));
     }
 }
 
@@ -785,8 +785,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
 
     Vec3<size_t> copySizes[2] = {{1, 1, 1},
                                  {1, 2, 1}};
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[0], pDevice->getRootDeviceEnvironment()));
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[1], pDevice->getRootDeviceEnvironment()));
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[0], pDevice->getRootDeviceEnvironment(), false));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[1], pDevice->getRootDeviceEnvironment(), false));
 
     for (auto &copySize : copySizes) {
         {
@@ -912,8 +912,8 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
     Vec3<size_t> copySizes[2] = {{4, 1, 1},
                                  {4, 2, 1}};
 
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[0], pDevice->getRootDeviceEnvironment()));
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[1], pDevice->getRootDeviceEnvironment()));
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[0], pDevice->getRootDeviceEnvironment(), false));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[1], pDevice->getRootDeviceEnvironment(), false));
 
     for (auto &copySize : copySizes) {
         {
@@ -1277,7 +1277,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
 HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorrectGpuAddresses) {
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto maxWidthToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
-    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment));
+    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, true));
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     cl_int retVal = CL_SUCCESS;
@@ -1300,7 +1300,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     auto srcAddressOffset = srcOrigin[0] + (srcOrigin[1] * srcRowPitch) + (srcOrigin[2] * srcSlicePitch);
     auto dstAddressOffset = dstOrigin[0] + (dstOrigin[1] * dstRowPitch) + (dstOrigin[2] * dstSlicePitch);
 
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(region, rootDeviceEnvironment));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(region, rootDeviceEnvironment, false));
 
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;

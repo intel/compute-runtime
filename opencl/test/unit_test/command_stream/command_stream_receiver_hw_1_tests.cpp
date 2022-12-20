@@ -673,43 +673,43 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
 HWTEST_F(BcsTests, WhenGetNumberOfBlitsForCopyPerRowIsCalledThenCorrectValuesAreReturned) {
     auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
     auto maxWidthToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
-    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment));
+    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false));
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy - 1), 1, 1};
         size_t expectednBlitsCopyPerRow = 2;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy), 1, 1};
         size_t expectednBlitsCopyPerRow = 1;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy + 1), 1, 1};
         size_t expectednBlitsCopyPerRow = 2;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy + maxWidthToCopy), 1, 1};
         size_t expectednBlitsCopyPerRow = 2;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy + maxWidthToCopy + 1), 1, 1};
         size_t expectednBlitsCopyPerRow = 3;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy + 2 * maxWidthToCopy), 1, 1};
         size_t expectednBlitsCopyPerRow = 2;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
-        EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
+        EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment, false));
     }
 }
 
@@ -888,9 +888,9 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
 
     auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment(), false);
     auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWrite, estimatedSizeWithTimestampPacketWrite);
     EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
@@ -911,9 +911,9 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithTimestampPacketWriteAndProfiling = expectedBaseSize + BlitCommandsHelper<FamilyType>::getProfilingMmioCmdsSize();
 
     auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment(), false);
     auto estimatedSizeWithTimestampPacketWriteAndProfiling = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, true, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, true, true, false, pClDevice->getRootDeviceEnvironment(), false);
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWriteAndProfiling, estimatedSizeWithTimestampPacketWriteAndProfiling);
     EXPECT_EQ(expectedBaseSize, estimatedSizeWithTimestampPacketWrite);
@@ -943,7 +943,7 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     }
 
     auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
 
     EXPECT_EQ(expectedSize, estimatedSize);
 }
@@ -962,7 +962,7 @@ HWTEST_F(BcsTests, givenImageAndBufferWhenEstimateBlitCommandSizeThenReturnCorre
         }
 
         auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-            {1, 1, 1}, csrDependencies, false, false, isImage, pClDevice->getRootDeviceEnvironment());
+            {1, 1, 1}, csrDependencies, false, false, isImage, pClDevice->getRootDeviceEnvironment(), false);
 
         EXPECT_EQ(expectedSize, estimatedSize);
     }
@@ -987,13 +987,13 @@ HWTEST_F(BcsTests, givenImageAndBufferBlitDirectionsWhenIsImageOperationIsCalled
 HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
+    auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), true);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
     uint32_t bltLeftover = 17;
-    size_t bltSize = (2 * max2DBlitSize) + bltLeftover;
+    size_t bltSize = static_cast<size_t>((2 * max2DBlitSize) + bltLeftover);
     uint32_t numberOfBlts = 3;
 
     cl_int retVal = CL_SUCCESS;
@@ -1037,7 +1037,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         EXPECT_NE(nullptr, bltCmd);
 
         uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
-        uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
+        uint32_t expectedHeight = static_cast<uint32_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), true));
         if (i == (numberOfBlts - 1)) {
             expectedWidth = bltLeftover;
             expectedHeight = 1;
@@ -1294,6 +1294,9 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 }
 
 HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForWriteReadBufferRect) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.LimitBlitterMaxHeight.set(BlitterConstants::maxBlitHeight);
+
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
@@ -1348,7 +1351,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
         EXPECT_NE(nullptr, bltCmd);
 
         uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
-        uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
+        uint32_t expectedHeight = static_cast<uint32_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), blitProperties.isSystemMemoryPoolUsed));
         if (i % numberOfBltsForSingleBltSizeProgramm == numberOfBltsForSingleBltSizeProgramm - 1) {
             expectedWidth = bltLeftover;
             expectedHeight = 1;
@@ -1390,6 +1393,9 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 }
 
 HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForCopyBufferRect) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.LimitBlitterMaxHeight.set(BlitterConstants::maxBlitHeight);
+
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
@@ -1436,7 +1442,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
         EXPECT_NE(nullptr, bltCmd);
 
         uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
-        uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
+        uint32_t expectedHeight = static_cast<uint32_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), true));
         if (i % numberOfBltsForSingleBltSizeProgramm == numberOfBltsForSingleBltSizeProgramm - 1) {
             expectedWidth = bltLeftover;
             expectedHeight = 1;

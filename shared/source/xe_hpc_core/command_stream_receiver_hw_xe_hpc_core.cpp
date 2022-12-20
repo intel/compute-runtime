@@ -256,6 +256,14 @@ size_t BlitCommandsHelper<Family>::getWaCmdsSize(const BlitPropertiesContainer &
     return (blitPropertiesContainer.size() * sizeof(MI_LOAD_REGISTER_IMM));
 }
 
+template <>
+uint64_t BlitCommandsHelper<Family>::getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+    if (isSystemMemoryPoolUsed) {
+        return 512;
+    }
+    return 0;
+}
+
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
 template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);

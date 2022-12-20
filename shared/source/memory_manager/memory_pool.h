@@ -21,11 +21,13 @@ enum class MemoryPool {
 
 namespace MemoryPoolHelper {
 
-inline bool isSystemMemoryPool(MemoryPool pool) {
-    return pool == MemoryPool::System4KBPages ||
-           pool == MemoryPool::System64KBPages ||
-           pool == MemoryPool::System4KBPagesWith32BitGpuAddressing ||
-           pool == MemoryPool::System64KBPagesWith32BitGpuAddressing;
+template <typename... Args>
+inline bool isSystemMemoryPool(Args... pool) {
+    return ((pool == MemoryPool::System4KBPages ||
+             pool == MemoryPool::System64KBPages ||
+             pool == MemoryPool::System4KBPagesWith32BitGpuAddressing ||
+             pool == MemoryPool::System64KBPagesWith32BitGpuAddressing) &&
+            ...);
 }
 
 } // namespace MemoryPoolHelper

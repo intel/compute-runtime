@@ -150,6 +150,14 @@ HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMe
     }
 }
 
+HWTEST2_F(BlitTests, whenGetMaxBlitHeightOverrideThenReturnProperValue, IsPVC) {
+    auto ret = BlitCommandsHelper<FamilyType>::getMaxBlitHeightOverride(pDevice->getRootDeviceEnvironment(), true);
+    EXPECT_EQ(ret, 512u);
+
+    ret = BlitCommandsHelper<FamilyType>::getMaxBlitHeightOverride(pDevice->getRootDeviceEnvironment(), false);
+    EXPECT_EQ(ret, 0u);
+}
+
 HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndLocalMemWhenAppendBlitCommandsForVillBufferThenCompresionEnabled, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore dbgRestore;

@@ -22,7 +22,7 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidthOverride(const RootDevice
 }
 
 template <typename GfxFamily>
-uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment) {
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
     if (productHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
