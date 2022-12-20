@@ -166,6 +166,8 @@ cl_int CL_API_CALL clEnqueueAcquireDX9ObjectsINTEL(cl_command_queue commandQueue
     }
     retVal = cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_ACQUIRE_DX9_OBJECTS_INTEL);
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -202,6 +204,8 @@ cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish();
     }
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -263,6 +267,8 @@ cl_int CL_API_CALL clEnqueueAcquireDX9MediaSurfacesKHR(cl_command_queue commandQ
     }
     retVal = cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_ACQUIRE_DX9_MEDIA_SURFACES_KHR);
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -301,6 +307,8 @@ cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQ
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish();
     }
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -472,6 +480,8 @@ cl_int CL_API_CALL clEnqueueAcquireD3D10ObjectsKHR(cl_command_queue commandQueue
     }
     retVal = cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_ACQUIRE_D3D10_OBJECTS_KHR);
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -513,6 +523,8 @@ cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish();
     }
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -681,6 +693,8 @@ cl_int CL_API_CALL clEnqueueAcquireD3D11ObjectsKHR(cl_command_queue commandQueue
     }
     retVal = cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_ACQUIRE_D3D11_OBJECTS_KHR);
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -722,6 +736,8 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish();
     }
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
