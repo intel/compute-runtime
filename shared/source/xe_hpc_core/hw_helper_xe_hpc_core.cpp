@@ -393,7 +393,7 @@ bool GfxCoreHelperHw<Family>::isRevisionSpecificBinaryBuiltinRequired() const {
 
 template <>
 size_t GfxCoreHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
-    return 0x2800000;
+    return 40 * MB;
 }
 
 template <>

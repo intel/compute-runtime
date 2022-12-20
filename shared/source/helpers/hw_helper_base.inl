@@ -658,7 +658,7 @@ void GfxCoreHelperHw<GfxFamily>::setSipKernelData(uint32_t *&sipKernelBinary, si
 
 template <typename GfxFamily>
 size_t GfxCoreHelperHw<GfxFamily>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
-    return 0x1800000;
+    return 24 * MB;
 }
 
 template <typename GfxFamily>
