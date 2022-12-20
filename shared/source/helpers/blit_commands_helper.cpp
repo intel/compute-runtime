@@ -193,7 +193,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
         auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
         auto internalUsage = true;
-        auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, internalUsage);
+        auto bcsEngineType = EngineHelpers::getBcsEngineType(pDeviceForBlit->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
         auto bcsEngineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
         auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
         if (!bcsEngine) {

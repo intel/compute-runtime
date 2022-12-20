@@ -324,7 +324,7 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
     auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     auto internalUsage = true;
-    auto expectedEngineType = EngineHelpers::linkCopyEnginesSupported(hwInfo, device->getDeviceBitfield())
+    auto expectedEngineType = EngineHelpers::linkCopyEnginesSupported(device->getRootDeviceEnvironment(), device->getDeviceBitfield())
                                   ? aub_stream::EngineType::ENGINE_BCS2
                                   : aub_stream::EngineType::ENGINE_BCS;
 
@@ -942,7 +942,8 @@ HWTEST_F(CommandQueueTests, givenEngineUsageHintSetWithInvalidValueWhenCreatingC
 
 HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingCommandQueueWithPropertiesWhereComputeEngineSetThenProperEngineUsed) {
     DebugManagerStateRestore restore;
-    auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *defaultHwInfo);
+    MockExecutionEnvironment executionEnvironment{};
+    auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *executionEnvironment.rootDeviceEnvironments[0]);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
@@ -975,7 +976,8 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingComma
 
 HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQueueWithPropertiesAndRegularCcsEngineNotExistThenEngineNotForced) {
     DebugManagerStateRestore restore;
-    auto defaultEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *defaultHwInfo);
+    MockExecutionEnvironment executionEnvironment{};
+    auto defaultEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *executionEnvironment.rootDeviceEnvironments[0]);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(defaultEngine));
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
@@ -992,7 +994,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
     };
     RAIIGfxCoreHelperFactory<FakeGfxCoreHelper> overrideGfxCoreHelper{defaultHwInfo->platform.eRenderCoreFamily};
 
-    auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS, *defaultHwInfo);
+    auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS, pDevice->getRootDeviceEnvironment());
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
 
     auto pCmdQ = CommandQueue::create(
@@ -2739,9 +2741,9 @@ TEST_F(MultiTileFixture, givenTile1WhenQueueIsCreatedThenItContainsTile1Device) 
 
 struct CopyOnlyQueueTests : ::testing::Test {
     void SetUp() override {
-        typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, *defaultHwInfo);
-
         auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
+        typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, device->getRootDeviceEnvironment());
+
         auto copyEngineGroup = std::find_if(device->regularEngineGroups.begin(), device->regularEngineGroups.end(), [](const auto &engineGroup) {
             return engineGroup.engineGroupType == EngineGroupType::Copy;
         });
@@ -2854,7 +2856,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
     auto retVal = CL_SUCCESS;
     const auto &ccsInstances = localHwInfo.gtSystemInfo.CCSInfo.Instances.Bits;
     std::vector<CommandQueueTestValues> commandQueueTestValues;
-    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::RenderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getHardwareInfo()), true);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::RenderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getRootDeviceEnvironment()), true);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 0, aub_stream::ENGINE_CCS, ccsFound);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 1, aub_stream::ENGINE_CCS1, ccsInstances.CCS1Enabled);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 2, aub_stream::ENGINE_CCS2, ccsInstances.CCS2Enabled);

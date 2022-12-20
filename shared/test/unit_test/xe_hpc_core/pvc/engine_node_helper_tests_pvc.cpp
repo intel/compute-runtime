@@ -20,27 +20,28 @@ using EngineNodeHelperPvcTests = ::Test<DeviceFixture>;
 PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledWithoutSelectorEnabledForPVCThenCorrectBcsEngineIsReturned) {
     using namespace aub_stream;
 
-    auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto pHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     auto deviceBitfield = pDevice->getDeviceBitfield();
 
     pHwInfo->featureTable.ftrBcsInfo = 1;
     auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
     selectorCopyEngine.isMainUsed.store(true);
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 
     pHwInfo->featureTable.ftrBcsInfo = 0b111;
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 
     pHwInfo->featureTable.ftrBcsInfo = 0b11;
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 
     pHwInfo->featureTable.ftrBcsInfo = 0b101;
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledForPVCThenCorrectBcsEngineIsReturned) {
@@ -48,27 +49,28 @@ PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledForPVCThenCorrec
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableCopyEngineSelector.set(1);
 
-    auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto pHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     auto deviceBitfield = pDevice->getDeviceBitfield();
 
     pHwInfo->featureTable.ftrBcsInfo = 1;
     auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
     selectorCopyEngine.isMainUsed.store(true);
-    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 
     pHwInfo->featureTable.ftrBcsInfo = 0b111;
-    EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS1, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS1, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 
     pHwInfo->featureTable.ftrBcsInfo = 0b11;
-    EXPECT_EQ(ENGINE_BCS1, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS1, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 
     pHwInfo->featureTable.ftrBcsInfo = 0b101;
-    EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenPvcBaseDieA0AndTile1WhenGettingBcsEngineTypeThenDoNotUseBcs1) {
@@ -76,22 +78,23 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenPvcBaseDieA0AndTile1WhenGettingBcsEngin
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableCopyEngineSelector.set(1);
 
-    auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto pHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     pHwInfo->featureTable.ftrBcsInfo = 0b11111;
     auto deviceBitfield = 0b10;
     auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
 
     {
         auto internalUsage = true;
-        EXPECT_EQ(ENGINE_BCS3, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
-        EXPECT_EQ(ENGINE_BCS3, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
+        EXPECT_EQ(ENGINE_BCS3, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, internalUsage));
+        EXPECT_EQ(ENGINE_BCS3, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, internalUsage));
     }
     {
         auto internalUsage = false;
-        EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
-        EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
-        EXPECT_EQ(ENGINE_BCS4, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
-        EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
+        EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, internalUsage));
+        EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, internalUsage));
+        EXPECT_EQ(ENGINE_BCS4, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, internalUsage));
+        EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, internalUsage));
     }
 }
 

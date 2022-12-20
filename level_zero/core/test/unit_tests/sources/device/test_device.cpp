@@ -1243,7 +1243,7 @@ TEST_F(DeviceTest, whenCheckingIfStatelessCompressionIsSupportedThenReturnFalse)
 
 TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalProperlySet) {
     DebugManagerStateRestore restore;
-    auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *defaultHwInfo);
+    auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, neoDevice->getRootDeviceEnvironment());
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
     auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);
@@ -1286,7 +1286,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     gfxCoreHelperFactoryBackup = &gfxCoreHelper;
 
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
-    auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS2, hwInfo);
+    auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS2, neoDevice->getRootDeviceEnvironment());
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
     auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);

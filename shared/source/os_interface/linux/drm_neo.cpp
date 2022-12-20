@@ -1002,7 +1002,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     auto memInfo = memoryInfo.get();
 
     if (!memInfo) {
-        this->engineInfo.reset(new EngineInfo(this, hwInfo, engines));
+        this->engineInfo.reset(new EngineInfo(this, engines));
         return true;
     }
 
@@ -1035,7 +1035,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     }
 
     if (tileCount == 0u) {
-        this->engineInfo.reset(new EngineInfo(this, hwInfo, engines));
+        this->engineInfo.reset(new EngineInfo(this, engines));
         return true;
     }
 
@@ -1049,7 +1049,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
                                               [](const QueryItem &item) { return item.length == -EINVAL; });
     if (queryUnsupported) {
         DEBUG_BREAK_IF(tileCount != 1);
-        this->engineInfo.reset(new EngineInfo(this, hwInfo, engines));
+        this->engineInfo.reset(new EngineInfo(this, engines));
         return true;
     }
 
@@ -1060,7 +1060,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     multiTileArchInfo.TileCount = tileCount;
     multiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
 
-    this->engineInfo.reset(new EngineInfo(this, hwInfo, tileCount, distanceInfos, queryItems, engines));
+    this->engineInfo.reset(new EngineInfo(this, tileCount, distanceInfos, queryItems, engines));
     return true;
 }
 

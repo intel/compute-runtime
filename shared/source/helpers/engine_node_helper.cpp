@@ -88,7 +88,9 @@ bool isBcsVirtualEngineEnabled(aub_stream::EngineType engineType) {
     return useVirtualEnginesForBcs;
 }
 
-aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, SelectorCopyEngine &selectorCopyEngine, bool internalUsage) {
+aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, SelectorCopyEngine &selectorCopyEngine, bool internalUsage) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (DebugManager.flags.ForceBcsEngineIndex.get() != -1) {
         auto index = DebugManager.flags.ForceBcsEngineIndex.get();
         UNRECOVERABLE_IF(index > 8);
@@ -97,7 +99,7 @@ aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const Device
                             : static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + index - 1);
     }
 
-    if (!linkCopyEnginesSupported(hwInfo, deviceBitfield)) {
+    if (!linkCopyEnginesSupported(rootDeviceEnvironment, deviceBitfield)) {
         return aub_stream::ENGINE_BCS;
     }
 
@@ -109,7 +111,7 @@ aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const Device
         return aub_stream::ENGINE_BCS3;
     }
 
-    auto enableSelector = ProductHelper::get(hwInfo.platform.eProductFamily)->isCopyEngineSelectorEnabled(hwInfo);
+    auto enableSelector = productHelper.isCopyEngineSelectorEnabled(hwInfo);
 
     if (DebugManager.flags.EnableCopyEngineSelector.get() != -1) {
         enableSelector = DebugManager.flags.EnableCopyEngineSelector.get();
@@ -118,7 +120,7 @@ aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const Device
     if (enableSelector) {
         const bool isMainCopyEngineAlreadyUsed = selectorCopyEngine.isMainUsed.exchange(true);
         if (isMainCopyEngineAlreadyUsed) {
-            return selectLinkCopyEngine(hwInfo, deviceBitfield, selectorCopyEngine.selector);
+            return selectLinkCopyEngine(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine.selector);
         }
     }
 
@@ -131,8 +133,9 @@ void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine 
     }
 }
 
-aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputType, const HardwareInfo &hwInfo) {
-    bool isExpectedProduct = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isEngineTypeRemappingToHwSpecificRequired();
+aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputType, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    bool isExpectedProduct = gfxCoreHelper.isEngineTypeRemappingToHwSpecificRequired();
 
     if (isExpectedProduct && inputType == aub_stream::EngineType::ENGINE_RCS) {
         return aub_stream::EngineType::ENGINE_CCCS;
@@ -167,8 +170,9 @@ bool isBcsEnabled(const HardwareInfo &hwInfo, aub_stream::EngineType engineType)
     return hwInfo.featureTable.ftrBcsInfo.test(getBcsIndex(engineType));
 }
 
-bool linkCopyEnginesSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+bool linkCopyEnginesSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield) {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const aub_stream::EngineType engine1 = gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, deviceBitfield, aub_stream::ENGINE_BCS1)
                                                ? aub_stream::ENGINE_BCS1
                                                : aub_stream::ENGINE_BCS4;
@@ -177,8 +181,9 @@ bool linkCopyEnginesSupported(const HardwareInfo &hwInfo, const DeviceBitfield &
     return isBcsEnabled(hwInfo, engine1) || isBcsEnabled(hwInfo, engine2);
 }
 
-aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, std::atomic<uint32_t> &selectorCopyEngine) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, std::atomic<uint32_t> &selectorCopyEngine) {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto enableCmdQRoundRobindBcsEngineAssign = false;
 
     if (DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get() != -1) {

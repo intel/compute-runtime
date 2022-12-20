@@ -78,7 +78,7 @@ class DrmPrelimMock : public DrmMock {
             queryItems[i].length = sizeof(drm_i915_query_engine_info);
         }
 
-        engineInfo = std::make_unique<EngineInfo>(this, customHwInfo.get(), 4, distances, queryItems, engines);
+        engineInfo = std::make_unique<EngineInfo>(this, 4, distances, queryItems, engines);
         return true;
     }
 
@@ -97,7 +97,7 @@ class DrmPrelimMock : public DrmMock {
             queryItems[i].length = sizeof(drm_i915_query_engine_info);
         }
 
-        engineInfo = std::make_unique<EngineInfo>(this, customHwInfo.get(), 1, distances, queryItems, engines);
+        engineInfo = std::make_unique<EngineInfo>(this, 1, distances, queryItems, engines);
         return true;
     }
 

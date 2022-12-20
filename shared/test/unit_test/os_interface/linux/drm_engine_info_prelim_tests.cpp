@@ -35,7 +35,7 @@ TEST(DrmTest, givenEngineQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsIni
     EXPECT_EQ(haveLocalMemory ? 3u : 2u, drm->ioctlCallsCount);
     ASSERT_NE(nullptr, drm->engineInfo);
 
-    auto renderEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *hwInfo);
+    auto renderEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, drm->rootDeviceEnvironment);
 
     auto engineInfo = drm->engineInfo.get();
     auto pEngine = engineInfo->getEngineInstance(0, renderEngine);
@@ -156,12 +156,12 @@ static void givenEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(std:
 
 TEST(DrmTest, givenRcsEngineWhenBindingDrmContextThenContextParamEngineIsSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.initGmm();
 
-    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto hwInfo = drm->rootDeviceEnvironment.getHardwareInfo();
+    auto drm = std::make_unique<DrmQueryMock>(rootDeviceEnvironment);
 
-    auto renderEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *hwInfo);
+    auto renderEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment);
 
     givenEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(drm, renderEngine, drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER);
 }
@@ -574,7 +574,7 @@ TEST(DrmTest, givenDisabledCcsSupportWhenQueryingThenResetHwInfoParams) {
     EXPECT_FALSE(hwInfo->gtSystemInfo.CCSInfo.IsValid);
     EXPECT_EQ(0u, hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     EXPECT_EQ(0u, hwInfo->gtSystemInfo.CCSInfo.Instances.CCSEnableMask);
-    EXPECT_EQ(EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *hwInfo),
+    EXPECT_EQ(EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, drm->rootDeviceEnvironment),
               hwInfo->capabilityTable.defaultEngineType);
 }
 
@@ -746,7 +746,7 @@ TEST(DrmTest, givenSetParamEnginesFailsWhenBindingDrmContextThenCallUnrecoverabl
     EXPECT_EQ(haveLocalMemory ? 3u : 2u, drm->ioctlCallsCount);
     ASSERT_NE(nullptr, drm->engineInfo);
 
-    auto renderEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *hwInfo);
+    auto renderEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, drm->rootDeviceEnvironment);
 
     drm->storedRetValForSetParamEngines = -1;
     auto drmContextId = 42u;

@@ -153,8 +153,7 @@ struct MockSchedulerNeoDrm : public SchedulerNeoDrm {
         i915QueryEngineInfo[33].engine.engineClass = engineClassCompute;
         i915QueryEngineInfo[33].engine.engineInstance = 7;
 
-        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-        this->engineInfo.reset(new EngineInfo(this, &hwInfo, tileCount, distanceInfos, queryItems, i915QueryEngineInfo));
+        this->engineInfo.reset(new EngineInfo(this, tileCount, distanceInfos, queryItems, i915QueryEngineInfo));
         return true;
     }
 
