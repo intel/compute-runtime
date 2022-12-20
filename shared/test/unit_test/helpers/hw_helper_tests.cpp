@@ -868,8 +868,9 @@ HWTEST_F(GfxCoreHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForCompr
 }
 
 HWTEST_F(GfxCoreHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturned) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hardwareInfo));
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hardwareInfo, productHelper));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {

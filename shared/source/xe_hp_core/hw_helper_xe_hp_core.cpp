@@ -59,10 +59,10 @@ void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family:
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
 
     bool forceOverrideMemoryBankIndex = (GfxCoreHelper::getSubDevicesCount(&hwInfo) == 4 &&
-                                         isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo));
+                                         GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, productHelper));
 
     if (DebugManager.flags.ForceMemoryBankIndexOverride.get() != -1) {
         forceOverrideMemoryBankIndex = static_cast<bool>(DebugManager.flags.ForceMemoryBankIndexOverride.get());

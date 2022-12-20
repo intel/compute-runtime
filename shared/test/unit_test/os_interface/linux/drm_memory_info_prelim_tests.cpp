@@ -278,24 +278,24 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     regionInfo[2].probedSize = 32 * GB;
 
     setupMemoryInfo(regionInfo, 2);
-    //route to tile1 banks
+    // route to tile1 banks
     DebugManager.flags.OverrideDrmRegion.set(1);
 
-    //system memory not affected
+    // system memory not affected
     auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *pHwInfo);
     EXPECT_EQ(regionInfo[0].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
     auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
     EXPECT_EQ(8 * GB, regionSize);
 
-    //overrite route to tile 1
+    // overrite route to tile 1
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0), *pHwInfo);
     EXPECT_EQ(regionInfo[2].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[2].region.memoryInstance, regionClassAndInstance.memoryInstance);
     regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0));
     EXPECT_EQ(16 * GB, regionSize);
 
-    //route to tile 0 banks
+    // route to tile 0 banks
     DebugManager.flags.OverrideDrmRegion.set(0);
 
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(1), *pHwInfo);
@@ -308,15 +308,17 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     DebugManager.flags.OverrideDrmRegion.set(-1);
     DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
 
-    auto &helper = GfxCoreHelper::get(pHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(1), *pHwInfo);
-    if (helper.isBankOverrideRequired(*pHwInfo)) {
+    if (gfxCoreHelper.isBankOverrideRequired(*pHwInfo, productHelper)) {
         EXPECT_EQ(regionInfo[1].region.memoryInstance, regionClassAndInstance.memoryInstance);
     } else {
         EXPECT_EQ(regionInfo[2].region.memoryInstance, regionClassAndInstance.memoryInstance);
     }
 
-    //system memory not affected
+    // system memory not affected
     DebugManager.flags.OverrideDrmRegion.set(-1);
     DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *pHwInfo);

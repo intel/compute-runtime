@@ -60,10 +60,13 @@ uint32_t MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t
     return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, vmId, pairHandle);
 }
 
-uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInfo) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank) {
+    auto &hwInfo = *this->drm.getRootDeviceEnvironment().getHardwareInfo();
+    auto &gfxCoreHelper = this->drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+
     auto tileIndex = Math::log2(memoryBank);
-    tileIndex = gfxCoreHelper.isBankOverrideRequired(hwInfo) ? 0 : tileIndex;
+    tileIndex = gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper) ? 0 : tileIndex;
     if (DebugManager.flags.OverrideDrmRegion.get() != -1) {
         tileIndex = DebugManager.flags.OverrideDrmRegion.get();
     }
@@ -71,12 +74,13 @@ uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInf
 }
 
 MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    auto &gfxCoreHelper = this->drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     if (!gfxCoreHelper.getEnableLocalMemory(hwInfo) || memoryBank == 0) {
         return systemMemoryRegion.region;
     }
 
-    auto index = getTileIndex(memoryBank, hwInfo);
+    auto index = getTileIndex(memoryBank);
 
     UNRECOVERABLE_IF(index >= localMemoryRegions.size());
 
@@ -115,7 +119,7 @@ uint32_t MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t a
     std::optional<uint32_t> vmId;
     if (!this->drm.isPerContextVMRequired()) {
         if (memoryBanks != 0 && DebugManager.flags.EnablePrivateBO.get()) {
-            auto tileIndex = getTileIndex(memoryBanks, *pHwInfo);
+            auto tileIndex = getTileIndex(memoryBanks);
             vmId = this->drm.getVirtualMemoryAddressSpace(tileIndex);
         }
     }

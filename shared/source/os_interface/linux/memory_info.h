@@ -34,7 +34,7 @@ class MemoryInfo {
 
     void printRegionSizes();
 
-    uint32_t getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInfo);
+    uint32_t getTileIndex(uint32_t memoryBank);
 
     MOCKABLE_VIRTUAL uint32_t createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle);
     MOCKABLE_VIRTUAL uint32_t createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle);

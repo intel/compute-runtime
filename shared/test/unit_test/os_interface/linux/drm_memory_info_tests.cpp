@@ -203,9 +203,11 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenGettingMemoryRegionClassAndInstan
     DebugManager.flags.OverrideDrmRegion.set(-1);
     DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
 
-    auto &helper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(1), *defaultHwInfo);
-    if (helper.isBankOverrideRequired(*defaultHwInfo)) {
+    if (gfxCoreHelper.isBankOverrideRequired(*defaultHwInfo, productHelper)) {
         EXPECT_EQ(regionInfo[1].region.memoryClass, regionClassAndInstance.memoryClass);
         EXPECT_EQ(regionInfo[1].region.memoryInstance, regionClassAndInstance.memoryInstance);
     } else {

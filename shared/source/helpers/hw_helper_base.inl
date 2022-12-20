@@ -559,7 +559,7 @@ template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {}
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isBankOverrideRequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<GfxFamily>::isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     return false;
 }
 

@@ -103,7 +103,7 @@ class GfxCoreHelper {
     virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
     virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
     virtual void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const = 0;
-    virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
     virtual int32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
@@ -297,7 +297,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const override;
 
-    bool isBankOverrideRequired(const HardwareInfo &hwInfo) const override;
+    bool isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override;
 
     int32_t getDefaultThreadArbitrationPolicy() const override;
 

@@ -11,37 +11,38 @@ using GfxCoreHelperTestsXeHP = GfxCoreHelperTest;
 
 XEHPTEST_F(GfxCoreHelperTestsXeHP, givenXEHPWhenIsBankOverrideRequiredIsCalledThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &productHelper = getHelper<ProductHelper>();
+
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
         hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_TRUE(helper.isBankOverrideRequired(hwInfo));
+        EXPECT_TRUE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
         hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
+        EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
         hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
+        EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
     {
         DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
         hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_TRUE(helper.isBankOverrideRequired(hwInfo));
+        EXPECT_TRUE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
     {
         DebugManager.flags.ForceMemoryBankIndexOverride.set(0);
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
         hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
+        EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
 }
 
