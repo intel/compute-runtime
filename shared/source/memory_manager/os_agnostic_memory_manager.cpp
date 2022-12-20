@@ -463,7 +463,7 @@ AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const void *requiredStar
     if (requiredStartAddress) {
         return AddressRange{0, 0};
     }
-    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootDeviceIndices.size(); rootDeviceIndex++) {
+    for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
         auto gmmHelper = getGmmHelper(rootDeviceIndex);
         gpuVa = gmmHelper->canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));

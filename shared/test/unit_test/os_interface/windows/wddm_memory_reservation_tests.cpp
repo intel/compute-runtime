@@ -51,6 +51,7 @@ TEST_F(WddmMemoryReservationTests, givenWddmMemoryManagerWhenGpuAddressIsReserve
     auto addressRange = memManager->reserveGpuAddress(nullptr, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
     auto gmmHelper = memManager->getGmmHelper(0);
 
+    EXPECT_EQ(rootDeviceIndexReserved, 0u);
     EXPECT_LE(memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
     EXPECT_GT(memManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), gmmHelper->decanonize(addressRange.address));
     memManager->freeGpuAddress(addressRange, 0);

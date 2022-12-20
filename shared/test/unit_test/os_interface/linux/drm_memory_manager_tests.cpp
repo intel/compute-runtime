@@ -233,6 +233,20 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     EXPECT_EQ(fragment, nullptr);
 }
 
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressReservationIsAttemptedAtIndex1ThenAddressFromGfxPartitionIsUsed) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    RootDeviceIndicesContainer rootDevices;
+    rootDevices.push_back(1);
+    uint32_t rootDeviceIndexReserved = 0;
+    auto addressRange = memoryManager->reserveGpuAddress(nullptr, MemoryConstants::pageSize, rootDevices, &rootDeviceIndexReserved);
+    auto gmmHelper = memoryManager->getGmmHelper(1);
+
+    EXPECT_EQ(rootDeviceIndexReserved, 1u);
+    EXPECT_LE(memoryManager->getGfxPartition(1)->getHeapBase(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager->getGfxPartition(1)->getHeapLimit(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
+    memoryManager->freeGpuAddress(addressRange, 1);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressFromGfxPartitionIsUsed) {
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
     RootDeviceIndicesContainer rootDevices;

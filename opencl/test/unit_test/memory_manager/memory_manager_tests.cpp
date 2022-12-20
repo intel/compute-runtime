@@ -1640,6 +1640,21 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReserv
     memoryManager.freeGpuAddress(addressRange, 0);
 }
 
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedOnIndex1AndFreedThenAddressFromGfxPartitionIsUsed) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    RootDeviceIndicesContainer rootDevices;
+    rootDevices.push_back(1);
+    uint32_t rootDeviceIndexReserved = 10;
+    auto addressRange = memoryManager.reserveGpuAddress(nullptr, MemoryConstants::pageSize, rootDevices, &rootDeviceIndexReserved);
+    auto gmmHelper = memoryManager.getGmmHelper(1);
+    EXPECT_EQ(1u, rootDeviceIndexReserved);
+    EXPECT_LE(memoryManager.getGfxPartition(1)->getHeapBase(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager.getGfxPartition(1)->getHeapLimit(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
+
+    memoryManager.freeGpuAddress(addressRange, 1);
+}
+
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressReservationIsAttemptedWihtInvalidSizeThenFailureReturnsNullAddressRange) {
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);

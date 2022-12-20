@@ -1180,7 +1180,7 @@ AddressRange DrmMemoryManager::reserveGpuAddress(const void *requiredStartAddres
     if (requiredStartAddress) {
         return AddressRange{0, 0};
     }
-    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootDeviceIndices.size(); rootDeviceIndex++) {
+    for (auto rootDeviceIndex : rootDeviceIndices) {
         gpuVa = acquireGpuRange(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
         if (gpuVa != 0u) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;

@@ -769,7 +769,7 @@ AddressRange WddmMemoryManager::reserveGpuAddress(const void *requiredStartAddre
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
     size_t reservedSize = 0;
-    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootDeviceIndices.size(); rootDeviceIndex++) {
+    for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
         gpuVa = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(reinterpret_cast<uint64_t>(requiredStartAddress), gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size);
         if (gpuVa != 0u) {
