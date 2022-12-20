@@ -18,8 +18,8 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     bool getUuid(Device *device, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
-    uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) override;
-    uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) override;
+    uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const override;
+    uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const override;
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
 
     bool use128MbEdram = false;

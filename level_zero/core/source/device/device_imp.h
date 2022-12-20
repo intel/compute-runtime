@@ -73,6 +73,7 @@ struct DeviceImp : public Device {
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;
     uint32_t getMOCS(bool l3enabled, bool l1enabled) override;
     const NEO::GfxCoreHelper &getGfxCoreHelper() override;
+    const NEO::ProductHelper &getProductHelper() override;
     const NEO::HardwareInfo &getHwInfo() const override;
     NEO::OSInterface &getOsInterface() override;
     uint32_t getPlatformInfo() const override;

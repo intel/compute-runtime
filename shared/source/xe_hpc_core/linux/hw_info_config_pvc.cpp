@@ -36,7 +36,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
 namespace NEO {
 
 template <>
-uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const {
 
     if (osIface == nullptr) {
         return 0;
@@ -51,7 +51,7 @@ uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const O
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
 
     if (osIface == nullptr) {
         return 0;
@@ -67,7 +67,7 @@ uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareIn
 }
 
 template <>
-uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
     uint64_t memoryMaxClkRateInMhz = getDeviceMemoryMaxClkRate(hwInfo, osIface, subDeviceIndex);
     const uint64_t numberOfHbmStacksPerTile = 4u;
     const uint64_t memoryBusWidth = 128u;

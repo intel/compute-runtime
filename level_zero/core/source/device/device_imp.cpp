@@ -552,7 +552,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
 
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     auto &hwInfo = this->getHwInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = this->getProductHelper();
     strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, productHelper.getDeviceMemoryName().c_str());
     auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
     pMemProperties->maxClockRate = productHelper.getDeviceMemoryMaxClkRate(hwInfo, osInterface, 0);
@@ -1051,6 +1051,10 @@ uint32_t DeviceImp::getMOCS(bool l3enabled, bool l1enabled) {
 
 const NEO::GfxCoreHelper &DeviceImp::getGfxCoreHelper() {
     return this->neoDevice->getGfxCoreHelper();
+}
+
+const NEO::ProductHelper &DeviceImp::getProductHelper() {
+    return this->neoDevice->getProductHelper();
 }
 
 NEO::OSInterface &DeviceImp::getOsInterface() { return *neoDevice->getRootDeviceEnvironment().osInterface; }

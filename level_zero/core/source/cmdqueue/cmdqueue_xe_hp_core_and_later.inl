@@ -91,7 +91,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
 
     NEO::Device *neoDevice = device->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = neoDevice->getProductHelper();
     size_t size = 0;
 
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {

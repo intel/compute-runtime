@@ -94,6 +94,7 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getMaxNumHwThreads() const = 0;
 
     virtual const NEO::GfxCoreHelper &getGfxCoreHelper() = 0;
+    virtual const NEO::ProductHelper &getProductHelper() = 0;
     bool isImplicitScalingCapable() const {
         return implicitScalingCapable;
     }
