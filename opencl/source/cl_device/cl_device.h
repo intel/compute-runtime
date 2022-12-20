@@ -38,6 +38,7 @@ struct HardwareInfo;
 struct RootDeviceEnvironment;
 struct SelectorCopyEngine;
 class GfxCoreHelper;
+class ProductHelper;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -127,6 +128,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     void getQueueFamilyName(char *outputName, EngineGroupType type);
     Platform *getPlatform() const;
     const GfxCoreHelper &getGfxCoreHelper() const;
+    const ProductHelper &getProductHelper() const;
 
   protected:
     void initializeCaps();

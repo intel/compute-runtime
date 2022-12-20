@@ -2087,9 +2087,10 @@ uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, c
     kernelStartOffset += getStartOffset();
 
     auto &hardwareInfo = getHardwareInfo();
-    auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
+    const auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
+    const auto &productHelper = getDevice().getProductHelper();
 
-    if (isCssUsed && gfxCoreHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
+    if (isCssUsed && gfxCoreHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo, productHelper)) {
         kernelStartOffset += kernelInfo.kernelDescriptor.entryPoints.skipSetFFIDGP;
     }
 

@@ -39,8 +39,8 @@ size_t GfxCoreHelperHw<Family>::getMax3dImageWidthOrHeight() const {
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
-    return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+bool GfxCoreHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
+    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, productHelper);
 }
 
 template <>

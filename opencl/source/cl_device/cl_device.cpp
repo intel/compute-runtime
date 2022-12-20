@@ -272,4 +272,8 @@ const GfxCoreHelper &ClDevice::getGfxCoreHelper() const {
     return device.getGfxCoreHelper();
 }
 
+const ProductHelper &ClDevice::getProductHelper() const {
+    return device.getProductHelper();
+}
+
 } // namespace NEO
