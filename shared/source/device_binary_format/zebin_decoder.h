@@ -125,7 +125,7 @@ DecodeError readZeInfoGlobalHostAceessTable(const NEO::Yaml::YamlParser &parser,
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, const uint32_t grfSize,
                                        std::string &outErrReason, std::string &outWarning);
 
-NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize,
+NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize, NEO::Elf::ZebinKernelMetadata::Types::Kernel::BindingTableEntry::BindingTableEntryBaseT &maximumBindingTableEntry,
                                        std::string &outErrReason, std::string &outWarning);
 
 NEO::DecodeError populateInlineSamplers(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT &src, NEO::KernelDescriptor &dst, std::string &outErrReason, std::string &outWarning);
