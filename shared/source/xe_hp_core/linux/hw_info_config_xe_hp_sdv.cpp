@@ -56,8 +56,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
 template <>
 bool ProductHelperHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
-    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
-    if (gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) && (getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed)) {
+    if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo, *this) && (getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed)) {
         return false;
     }
 

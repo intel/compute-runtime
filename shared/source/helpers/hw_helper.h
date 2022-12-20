@@ -163,6 +163,7 @@ class GfxCoreHelper {
     virtual bool isChipsetUniqueUUIDSupported() const = 0;
     virtual bool isTimestampShiftRequired() const = 0;
     virtual bool isRelaxedOrderingSupported() const = 0;
+    static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
 
   protected:
     GfxCoreHelper() = default;
@@ -358,7 +359,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const override;
 
     void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
-    static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
     bool isScratchSpaceSurfaceStateAccessible() const override;
     uint32_t getMaxScratchSize() const override;
     bool preferInternalBcsEngine() const override;

@@ -18,10 +18,9 @@ void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwa
         samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
     }
 
-    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto isMirrorAddressMode = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR == samplerState->getTcxAddressControlMode();
     auto isNearestFilter = SAMPLER_STATE::MIN_MODE_FILTER_NEAREST == samplerState->getMinModeFilter();
-    if (isNearestFilter && isMirrorAddressMode && gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo)) {
+    if (isNearestFilter && isMirrorAddressMode && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo, *this)) {
         samplerState->setRAddressMinFilterRoundingEnable(true);
         samplerState->setRAddressMagFilterRoundingEnable(true);
     }
@@ -102,7 +101,7 @@ void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const statePtr, cons
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>
@@ -112,7 +111,7 @@ bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareI
 
 template <>
 bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
-    if (GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo) &&
+    if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo, *this) &&
         (hwInfo.gtSystemInfo.EUCount != 128)) {
         return false;
     }
@@ -121,7 +120,7 @@ bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) c
 
 template <>
 LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    if (GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
+    if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
         return LocalMemoryAccessMode::CpuAccessDisallowed;
     }
     return LocalMemoryAccessMode::Default;
@@ -129,12 +128,12 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMo
 
 template <>
 bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
-    return GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>

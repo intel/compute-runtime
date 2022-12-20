@@ -97,10 +97,9 @@ void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY
     using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelperHw<Family>::get();
-    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-    if (gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) &&
+    if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo, productHelper) &&
         productHelper.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
         blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
         blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
@@ -112,10 +111,9 @@ void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY
     using XY_COLOR_BLT = typename Family::XY_COLOR_BLT;
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelperHw<Family>::get();
-    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-    if (gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) &&
+    if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo, productHelper) &&
         productHelper.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
         blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
     }

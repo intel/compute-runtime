@@ -139,7 +139,7 @@ uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, u
 
 template <>
 bool GfxCoreHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
-    return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, productHelper);
+    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, productHelper);
 }
 
 template <>
