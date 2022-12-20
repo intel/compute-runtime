@@ -40,6 +40,7 @@ struct AllocationProperties;
 struct EncodeSurfaceStateArgs;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
+class ProductHelper;
 
 class GfxCoreHelper {
   public:
@@ -149,7 +150,7 @@ class GfxCoreHelper {
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual bool isStatelessToStatefulWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
-    virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
+    virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
     virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
     virtual bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const = 0;
@@ -357,7 +358,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const override;
 
     void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
-
+    static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
     bool isScratchSpaceSurfaceStateAccessible() const override;
     uint32_t getMaxScratchSize() const override;
     bool preferInternalBcsEngine() const override;
@@ -366,7 +367,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     bool isStatelessToStatefulWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
-    bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
+    bool disableL3CacheForDebug(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override;
     bool isRevisionSpecificBinaryBuiltinRequired() const override;
     bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;
     bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const override;

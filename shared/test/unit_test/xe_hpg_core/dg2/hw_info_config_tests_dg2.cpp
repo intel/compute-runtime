@@ -363,15 +363,15 @@ DG2TEST_F(ProductHelperTestDg2, givenRevisionEnumAndDisableL3CacheForDebugCalled
     };
 
     auto hardwareInfo = *defaultHwInfo;
-    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
 
     for (auto stepping : steppings) {
         hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
         if (stepping < REVISION_B) {
-            EXPECT_TRUE(gfxCoreHelper.disableL3CacheForDebug(hardwareInfo));
+            EXPECT_TRUE(gfxCoreHelper.disableL3CacheForDebug(hardwareInfo, productHelper));
         } else {
-            EXPECT_FALSE(gfxCoreHelper.disableL3CacheForDebug(hardwareInfo));
+            EXPECT_FALSE(gfxCoreHelper.disableL3CacheForDebug(hardwareInfo, productHelper));
         }
     }
 }

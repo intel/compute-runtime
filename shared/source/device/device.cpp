@@ -215,7 +215,8 @@ bool Device::createDeviceImpl() {
     }
 
     auto &gfxCoreHelper = getGfxCoreHelper();
-    if (getDebugger() && gfxCoreHelper.disableL3CacheForDebug(hwInfo)) {
+    auto &productHelper = getProductHelper();
+    if (getDebugger() && gfxCoreHelper.disableL3CacheForDebug(hwInfo, productHelper)) {
         getGmmHelper()->forceAllResourcesUncached();
     }
 
@@ -269,7 +270,7 @@ bool Device::createDeviceImpl() {
 
         if (DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
             if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
-                auto &productHelper = getProductHelper();
+
                 uuid.isValid = productHelper.getUuid(this, uuid.id);
             }
         }

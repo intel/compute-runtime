@@ -100,7 +100,7 @@ void DebuggerL0::initialize() {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));
-        if (gfxCoreHelper.disableL3CacheForDebug(hwInfo)) {
+        if (gfxCoreHelper.disableL3CacheForDebug(hwInfo, productHelper)) {
             device->getGmmHelper()->forceAllResourcesUncached();
         }
 

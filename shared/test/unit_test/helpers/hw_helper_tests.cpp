@@ -1252,13 +1252,15 @@ TEST(GfxCoreHelperTests, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine)
 }
 
 HWTEST2_F(GfxCoreHelperTest, givenNotXeHpOrXeHpgCoreWhenDisableL3ForDebugCalledThenFalseIsReturned, IsNotXeHpOrXeHpgCore) {
-    const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
-    EXPECT_FALSE(gfxCoreHelper.disableL3CacheForDebug(*defaultHwInfo));
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(gfxCoreHelper.disableL3CacheForDebug(*defaultHwInfo, productHelper));
 }
 
 HWTEST2_F(GfxCoreHelperTest, givenXeHpOrXeHpgCoreWhenDisableL3ForDebugCalledThenTrueIsReturned, IsXeHpOrXeHpgCore) {
-    const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
-    EXPECT_TRUE(gfxCoreHelper.disableL3CacheForDebug(*defaultHwInfo));
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(gfxCoreHelper.disableL3CacheForDebug(*defaultHwInfo, productHelper));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenFalseIsReturned) {
