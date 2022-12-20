@@ -957,7 +957,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingComma
 
     cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, userPropertiesEngineGroupType, CL_QUEUE_INDEX_INTEL, userPropertiesEngineIndex, 0};
 
-    const GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     EXPECT_NE(gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(forcedEngine), EngineUsage::Regular, *defaultHwInfo),
               static_cast<EngineGroupType>(userPropertiesEngineGroupType));
     EXPECT_NE(expectedEngineIndex, userPropertiesEngineIndex);

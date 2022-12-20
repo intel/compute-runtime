@@ -317,7 +317,7 @@ TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPreferredWorkGro
     kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
     MockKernel kernel(pProgram, kernelInfo, *pClDevice);
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     bool fusedDispatchEnabled = gfxCoreHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
     auto expectedValue = kernelInfo.getMaxSimdSize() * (fusedDispatchEnabled ? 2 : 1);
 
@@ -345,7 +345,7 @@ TEST_F(KernelTests, GivenCFEFusedEUDispatchEnabledAndRequiredDisabledUEFusionWhe
     kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
     MockKernel kernel(pProgram, kernelInfo, *pClDevice);
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     bool fusedDispatchEnabled = gfxCoreHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
     auto expectedValue = kernelInfo.getMaxSimdSize() * (fusedDispatchEnabled ? 2 : 1);
 

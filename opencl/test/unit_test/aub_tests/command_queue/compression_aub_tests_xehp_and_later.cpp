@@ -37,7 +37,9 @@ struct CompressionXeHPAndLater : public AUBFixture,
         DebugManager.flags.EnableLocalMemory.set(useLocalMemory);
         DebugManager.flags.NodeOrdinal.set(GetParam());
 
-        auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+        AUBFixture::setUp(defaultHwInfo.get());
+
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
 
         auto expectedEngine = static_cast<aub_stream::EngineType>(GetParam());
         bool engineSupported = false;
@@ -52,7 +54,6 @@ struct CompressionXeHPAndLater : public AUBFixture,
             GTEST_SKIP();
         }
 
-        AUBFixture::setUp(defaultHwInfo.get());
         auto &ftrTable = device->getHardwareInfo().featureTable;
         if ((!ftrTable.flags.ftrFlatPhysCCS) ||
             (!ftrTable.flags.ftrLocalMemory && useLocalMemory)) {
@@ -129,7 +130,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferW
     auto compressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_COPY_HOST_PTR | CL_MEM_COMPRESSED_HINT_INTEL, bufferSize, writePattern, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //now create image2DFromBuffer
+    // now create image2DFromBuffer
 
     cl_image_desc imageDescriptor = {};
     imageDescriptor.mem_object = compressedBuffer.get();
@@ -170,7 +171,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferW
 
     expectMemory<FamilyType>(destMemory, writePattern, imageSize);
 
-    //make sure our objects are in in fact compressed
+    // make sure our objects are in in fact compressed
     auto graphicsAllocation = compressedBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, graphicsAllocation->getDefaultGmm());
     EXPECT_TRUE(graphicsAllocation->getDefaultGmm()->isCompressionEnabled);
