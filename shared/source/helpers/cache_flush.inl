@@ -19,9 +19,10 @@ inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ran
     using L3_FLUSH_EVICTION_POLICY = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
     auto templ = GfxFamily::cmdInitL3ControlWithPostSync;
     templ.getBase().setHdcPipelineFlush(true);
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+
     auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto isA0Stepping = gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto isA0Stepping = GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, productHelper);
 
     for (const L3Range *it = &*ranges.begin(), *last = &*ranges.rbegin(), *end = &*ranges.end(); it != end; ++it) {
         if ((it == last) && (postSyncAddress != 0)) {
