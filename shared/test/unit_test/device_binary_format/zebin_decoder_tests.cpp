@@ -5515,6 +5515,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIs
     bufferOffsetArg.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeBufferOffset;
     bufferOffsetArg.offset = 8;
     bufferOffsetArg.argIndex = 0;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
 
     for (auto size : {1, 2, 8}) {
         bufferOffsetArg.size = size;
@@ -5522,7 +5523,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIs
         uint32_t crossThreadData = 0;
         std::string errors, warnings;
 
-        auto err = NEO::populateArgDescriptor(bufferOffsetArg, kernelDescriptor, crossThreadData, errors, warnings);
+        auto err = NEO::populateArgDescriptor(bufferOffsetArg, kernelDescriptor, crossThreadData, maximumBindingTableEntry, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
         auto expectedError = "DeviceBinaryFormat::Zebin : Invalid size for argument of type buffer_offset in context of : some_kernel. Expected 4. Got : " + std::to_string(size) + "\n";
         EXPECT_STREQ(expectedError.c_str(), errors.c_str());
@@ -5542,7 +5543,8 @@ TEST(PopulateArgDescriptor, GivenValueArgWithPointerMemberThenItIsProperlyPopula
 
     std::string errors, warnings;
     uint32_t crossThreadDataSize = 0U;
-    auto retVal = NEO::populateArgDescriptor(valueArg, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
+    auto retVal = NEO::populateArgDescriptor(valueArg, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, retVal);
     EXPECT_TRUE(warnings.empty());
     EXPECT_TRUE(errors.empty());
@@ -5626,6 +5628,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSize
     NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT workDimensionsArg;
     workDimensionsArg.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeWorkDimensions;
     workDimensionsArg.offset = 0x20;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
 
     for (auto size : {1, 2, 8}) {
         workDimensionsArg.size = size;
@@ -5633,7 +5636,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSize
         uint32_t crossThreadData = 0;
         std::string errors, warnings;
 
-        auto err = NEO::populateArgDescriptor(workDimensionsArg, kernelDescriptor, crossThreadData, errors, warnings);
+        auto err = NEO::populateArgDescriptor(workDimensionsArg, kernelDescriptor, crossThreadData, maximumBindingTableEntry, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
         auto expectedError = "DeviceBinaryFormat::Zebin : Invalid size for argument of type work_dimensions in context of : some_kernel. Expected 4. Got : " + std::to_string(size) + "\n";
         EXPECT_STREQ(expectedError.c_str(), errors.c_str());
@@ -5649,8 +5652,9 @@ TEST(PopulateArgDescriptor, GivenValidArgOfTypeRTGlobalBufferThenRtGlobalBufferI
     rtGlobalBufferArg.offset = 32;
 
     uint32_t crossThreadDataSize = 0U;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(rtGlobalBufferArg, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    auto err = NEO::populateArgDescriptor(rtGlobalBufferArg, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
@@ -5669,8 +5673,9 @@ TEST(PopulateArgDescriptor, GivenValidConstDataBufferArgThenItIsPopulatedCorrect
     dataConstBuffer.btiValue = 1;
 
     uint32_t crossThreadDataSize = 0U;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
@@ -5678,6 +5683,7 @@ TEST(PopulateArgDescriptor, GivenValidConstDataBufferArgThenItIsPopulatedCorrect
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize);
     EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
     EXPECT_EQ(64U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful);
+    EXPECT_EQ(1, maximumBindingTableEntry.btiValue);
 }
 
 TEST(PopulateArgDescriptor, GivenInvalidConstDataBufferArgThenErrorIsReturned) {
@@ -5688,8 +5694,9 @@ TEST(PopulateArgDescriptor, GivenInvalidConstDataBufferArgThenErrorIsReturned) {
     dataConstBuffer.btiValue = -1;
 
     uint32_t crossThreadDataSize = 0U;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty());
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid bti for argument of type const_base in context of : kernel\n", errors.c_str());
@@ -5704,8 +5711,9 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
     dataGlobalBuffer.btiValue = 1;
 
     uint32_t crossThreadDataSize = 0U;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
@@ -5713,6 +5721,7 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
     EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
     EXPECT_EQ(64U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
+    EXPECT_EQ(1, maximumBindingTableEntry.btiValue);
 }
 
 TEST(PopulateArgDescriptor, GivenInvalidGlobalDataBufferArgThenErrorIsReturned) {
@@ -5723,8 +5732,9 @@ TEST(PopulateArgDescriptor, GivenInvalidGlobalDataBufferArgThenErrorIsReturned) 
     dataGlobalBuffer.btiValue = -1;
 
     uint32_t crossThreadDataSize = 0U;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
+    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty());
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid bti for argument of type global_base in context of : kernel\n", errors.c_str());

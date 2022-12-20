@@ -759,10 +759,11 @@ bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[Len], size_t vecSi
     return true;
 }
 
-bool setSSHOffsetBasedOnBti(SurfaceStateHeapOffset &offset, Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::BtiValueT bti) {
+bool setSSHOffsetBasedOnBti(SurfaceStateHeapOffset &offset, Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::BtiValueT bti, Elf::ZebinKernelMetadata::Types::Kernel::BindingTableEntry::BindingTableEntryBaseT &outMaxBindingTableIndex) {
     if (bti < 0) {
         return false;
     }
+    outMaxBindingTableIndex.btiValue = std::max<int32_t>(outMaxBindingTableIndex.btiValue, bti);
     constexpr auto surfaceStateSize = 64U;
     offset = surfaceStateSize * bti;
     return true;
@@ -838,7 +839,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
 }
 
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize,
-                                       std::string &outErrReason, std::string &outWarning) {
+                                       NEO::Elf::ZebinKernelMetadata::Types::Kernel::BindingTableEntry::BindingTableEntryBaseT &maximumBindingTableEntry, std::string &outErrReason, std::string &outWarning) {
     if (src.offset != Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults::offset) {
         crossThreadDataSize = std::max<uint32_t>(crossThreadDataSize, src.offset + src.size);
     }
@@ -1160,7 +1161,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless = src.offset;
             dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize = src.size;
         }
-        if (false == setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful, src.btiValue)) {
+        if (false == setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful, src.btiValue, maximumBindingTableEntry)) {
             outErrReason.append("DeviceBinaryFormat::Zebin : Invalid bti for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::dataConstBuffer.str() + " in context of : " + dst.kernelMetadata.kernelName + "\n");
             return DecodeError::InvalidBinary;
         }
@@ -1171,7 +1172,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless = src.offset;
             dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize = src.size;
         }
-        if (false == setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue)) {
+        if (false == setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue, maximumBindingTableEntry)) {
             outErrReason.append("DeviceBinaryFormat::Zebin : Invalid bti for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::dataGlobalBuffer.str() + " in context of : " + dst.kernelMetadata.kernelName + "\n");
             return DecodeError::InvalidBinary;
         }
@@ -1420,8 +1421,10 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<n
     }
 
     uint32_t crossThreadDataSize = 0;
+    ZeInfoBindingTableIndices bindingTableIndices;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     for (const auto &arg : payloadArguments) {
-        auto decodeErr = populateArgDescriptor(arg, kernelDescriptor, crossThreadDataSize, outErrReason, outWarning);
+        auto decodeErr = populateArgDescriptor(arg, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, outErrReason, outWarning);
         if (DecodeError::Success != decodeErr) {
             return decodeErr;
         }
@@ -1449,8 +1452,6 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<n
     }
     kernelDescriptor.kernelAttributes.crossThreadDataSize = static_cast<uint16_t>(alignUp(crossThreadDataSize, 32));
 
-    ZeInfoBindingTableIndices bindingTableIndices;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     if (false == zeInfokernelSections.bindingTableIndicesNd.empty()) {
         auto btisErr = readZeInfoBindingTableIndices(yamlParser, *zeInfokernelSections.bindingTableIndicesNd[0], bindingTableIndices, maximumBindingTableEntry,
                                                      kernelDescriptor.kernelMetadata.kernelName, outErrReason, outWarning);
@@ -1462,9 +1463,12 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<n
     auto generatedSshPos = kernelDescriptor.generatedHeaps.size();
     uint32_t generatedSshSize = 0U;
     if (false == bindingTableIndices.empty() ||
-        NEO::isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful)) {
+        NEO::isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful) ||
+        NEO::isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful) ||
+        NEO::isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful)) {
         static constexpr auto maxSurfaceStateSize = 64U;
         static constexpr auto btiSize = sizeof(int);
+
         auto numEntries = maximumBindingTableEntry.btiValue + 1;
         kernelDescriptor.generatedHeaps.resize(alignUp(generatedSshPos, maxSurfaceStateSize), 0U);
         generatedSshPos = kernelInfo->kernelDescriptor.generatedHeaps.size();
