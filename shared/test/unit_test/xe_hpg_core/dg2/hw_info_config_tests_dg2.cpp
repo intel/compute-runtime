@@ -303,53 +303,52 @@ DG2TEST_F(ProductHelperTestDg2, givenRevisionEnumAndPlatformFamilyTypeThenProper
     };
 
     auto hardwareInfo = *defaultHwInfo;
-    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    const auto &productHelper = getHelper<ProductHelper>();
 
     for (auto stepping : steppings) {
         hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
 
         if (stepping <= REVISION_B) {
             if (stepping == REVISION_A0) {
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
-                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
-                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo, productHelper));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo, productHelper));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo, productHelper));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo, productHelper));
             } else if (stepping == REVISION_A1) {
-                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
-                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo, productHelper));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo, productHelper));
             } else { // REVISION_B
-                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-                EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
-                EXPECT_TRUE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo, productHelper));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo, productHelper));
             }
         } else {
-            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo));
-            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo));
-            EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo, productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_B, hardwareInfo, productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_C, hardwareInfo, productHelper));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo, productHelper));
         }
 
-        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A1, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_C, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_B, REVISION_A1, hardwareInfo));
-        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_C, REVISION_A1, hardwareInfo));
-        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_C, REVISION_B, hardwareInfo));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A1, REVISION_A0, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_C, REVISION_A0, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A1, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_C, REVISION_A1, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_C, REVISION_B, hardwareInfo, productHelper));
 
-        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
-        EXPECT_FALSE(gfxCoreHelper.isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
+        EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo, productHelper));
     }
 }
 
