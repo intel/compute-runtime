@@ -54,10 +54,10 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
 
   protected:
     zes_diag_handle_t hSysmanDiagnostics = {};
-    std::unique_ptr<Mock<DiagnosticsFwInterface>> pMockDiagFwInterface;
-    std::unique_ptr<Mock<DiagSysfsAccess>> pMockSysfsAccess;
-    std::unique_ptr<Mock<DiagFsAccess>> pMockFsAccess;
-    std::unique_ptr<Mock<DiagProcfsAccess>> pMockDiagProcfsAccess;
+    std::unique_ptr<MockDiagnosticsFwInterface> pMockDiagFwInterface;
+    std::unique_ptr<MockDiagSysfsAccess> pMockSysfsAccess;
+    std::unique_ptr<MockDiagFsAccess> pMockFsAccess;
+    std::unique_ptr<MockDiagProcfsAccess> pMockDiagProcfsAccess;
     std::unique_ptr<MockGlobalOperationsEngineHandleContext> pEngineHandleContext;
     std::unique_ptr<MockDiagLinuxSysmanImp> pMockDiagLinuxSysmanImp;
 
@@ -66,7 +66,6 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOld = nullptr;
     ProcfsAccess *pProcfsAccessOld = nullptr;
     EngineHandleContext *pEngineHandleContextOld = nullptr;
-    LinuxSysmanImp *pLinuxSysmanImpOld = nullptr;
     PRODUCT_FAMILY productFamily;
 
     void SetUp() override {
@@ -79,13 +78,12 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
         pFsAccessOld = pLinuxSysmanImp->pFsAccess;
         pProcfsAccessOld = pLinuxSysmanImp->pProcfsAccess;
         pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
-        pLinuxSysmanImpOld = pLinuxSysmanImp;
 
         pEngineHandleContext = std::make_unique<MockGlobalOperationsEngineHandleContext>(pOsSysman);
-        pMockDiagFwInterface = std::make_unique<NiceMock<Mock<DiagnosticsFwInterface>>>();
-        pMockSysfsAccess = std::make_unique<NiceMock<Mock<DiagSysfsAccess>>>();
-        pMockFsAccess = std::make_unique<NiceMock<Mock<DiagFsAccess>>>();
-        pMockDiagProcfsAccess = std::make_unique<NiceMock<Mock<DiagProcfsAccess>>>();
+        pMockDiagFwInterface = std::make_unique<MockDiagnosticsFwInterface>();
+        pMockSysfsAccess = std::make_unique<MockDiagSysfsAccess>();
+        pMockFsAccess = std::make_unique<MockDiagFsAccess>();
+        pMockDiagProcfsAccess = std::make_unique<MockDiagProcfsAccess>();
         pMockDiagLinuxSysmanImp = std::make_unique<MockDiagLinuxSysmanImp>(pLinuxSysmanImp->getSysmanDeviceImp());
         pSysmanDeviceImp->pEngineHandleContext = pEngineHandleContext.get();
         pLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
@@ -213,9 +211,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
@@ -239,10 +237,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_FORCE_UINT32);
     pMockDiagFwInterface->mockFwRunDiagTestsResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -267,8 +265,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenListProcessFailsThe
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
@@ -295,8 +294,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentingFailsTh
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
@@ -323,8 +323,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
@@ -351,8 +352,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetFailsThenC
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
@@ -380,8 +382,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetFailsThenC
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
@@ -408,8 +411,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetSucceedsAn
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
@@ -436,8 +440,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetSucceedsAn
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
@@ -465,7 +470,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupSu
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
@@ -473,7 +479,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupSu
     pMockDiagProcfsAccess->ourDevicePid = getpid();
     pMockDiagLinuxSysmanImp->ourDevicePid = getpid();
     pMockDiagLinuxSysmanImp->ourDeviceFd = ::open("/dev/null", 0);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pPublicLinuxDiagnosticsImp->gpuProcessCleanup());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->gpuProcessCleanup());
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupFailsThenWaitForQuiescentCompletionsFails) {
@@ -483,8 +489,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupFa
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
@@ -500,8 +507,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentFailsConti
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockSysfsAccess->setErrorAfterCount(12, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
@@ -515,8 +523,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 

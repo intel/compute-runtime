@@ -32,41 +32,6 @@ void OsDiagnostics::getSupportedDiagTestsFromFW(void *pOsSysman, std::vector<std
     }
 }
 
-ze_result_t LinuxDiagnosticsImp::gpuProcessCleanup() {
-    ::pid_t myPid = pProcfsAccess->myProcessId();
-    std::vector<::pid_t> processes;
-    std::vector<int> myPidFds;
-    ze_result_t result = pProcfsAccess->listProcesses(processes);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    for (auto &&pid : processes) {
-        std::vector<int> fds;
-        pLinuxSysmanImp->getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
-        if (pid == myPid) {
-            // L0 is expected to have this file open.
-            // Keep list of fds. Close before unbind.
-            myPidFds = fds;
-            continue;
-        }
-        if (!fds.empty()) {
-            pProcfsAccess->kill(pid);
-        }
-    }
-
-    for (auto &&fd : myPidFds) {
-        // Close open filedescriptors to the device
-        // before unbinding device.
-        // From this point forward, there is no
-        // graceful way to fail the reset call.
-        // All future ze calls by this process for this
-        // device will fail.
-        ::close(fd);
-    }
-    return ZE_RESULT_SUCCESS;
-}
-
 // before running diagnostics need to close all active workloads
 // writing 1 to /sys/class/drm/card<n>/quiesce_gpu will signal KMD
 //to close and clear all allocations,
@@ -86,7 +51,7 @@ ze_result_t LinuxDiagnosticsImp::waitForQuiescentCompletion() {
         if (ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE == result) {
             count++;
             NEO::sleep(std::chrono::seconds(1)); // Sleep for 1second every loop, gives enough time for KMD to clear all allocations and wedge the system
-            auto processResult = gpuProcessCleanup();
+            auto processResult = pLinuxSysmanImp->gpuProcessCleanup();
             if (ZE_RESULT_SUCCESS != processResult) {
                 return processResult;
             }
@@ -110,7 +75,7 @@ ze_result_t LinuxDiagnosticsImp::osRunDiagTestsinFW(zes_diag_result_t *pResult) 
     NEO::ExecutionEnvironment *executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
     auto restorer = std::make_unique<L0::ExecutionEnvironmentRefCountRestore>(executionEnvironment);
     pLinuxSysmanImp->releaseDeviceResources();
-    ze_result_t result = gpuProcessCleanup();
+    ze_result_t result = pLinuxSysmanImp->gpuProcessCleanup();
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
@@ -156,7 +121,6 @@ LinuxDiagnosticsImp::LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string 
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
 }
 
 std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const std::string &diagTests) {

@@ -27,10 +27,7 @@ const std::string mockSlotPath1("/sys/bus/pci/slots/1/");
 const std::string mockCorrectRootAddress("0000:8a:00.0");
 const std::string mockWrongRootAddress("0000:7a:00.0");
 
-class DiagnosticsFwInterface : public FirmwareUtil {};
-
-template <>
-struct Mock<DiagnosticsFwInterface> : public DiagnosticsFwInterface {
+struct MockDiagnosticsFwInterface : public FirmwareUtil {
     zes_diag_result_t mockDiagResult = ZES_DIAG_RESULT_NO_ERRORS;
     ze_result_t mockFwInitResult = ZE_RESULT_SUCCESS;
     ze_result_t mockFwRunDiagTestsResult = ZE_RESULT_SUCCESS;
@@ -57,7 +54,7 @@ struct Mock<DiagnosticsFwInterface> : public DiagnosticsFwInterface {
         mockDiagResult = result;
     }
 
-    Mock<DiagnosticsFwInterface>() = default;
+    MockDiagnosticsFwInterface() = default;
 
     ADDMETHOD_NOBASE(getFwVersion, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, std::string &firmwareVersion));
     ADDMETHOD_NOBASE(flashFirmware, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, void *pImage, uint32_t size));
@@ -72,9 +69,7 @@ struct MockGlobalOperationsEngineHandleContext : public EngineHandleContext {
     void init(std::vector<ze_device_handle_t> &deviceHandles) override {}
 };
 
-class DiagFsAccess : public FsAccess {};
-template <>
-struct Mock<DiagFsAccess> : public DiagFsAccess {
+struct MockDiagFsAccess : public FsAccess {
     ze_result_t mockReadError = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteError = ZE_RESULT_SUCCESS;
     ze_result_t mockListDirError = ZE_RESULT_SUCCESS;
@@ -126,12 +121,10 @@ struct Mock<DiagFsAccess> : public DiagFsAccess {
         mockRootAddress = mockWrongRootAddress;
     }
 
-    Mock<DiagFsAccess>() = default;
+    MockDiagFsAccess() = default;
 };
 
-class DiagSysfsAccess : public SysfsAccess {};
-template <>
-struct Mock<DiagSysfsAccess> : public DiagSysfsAccess {
+struct MockDiagSysfsAccess : public SysfsAccess {
     ze_result_t mockError = ZE_RESULT_SUCCESS;
     int checkErrorAfterCount = 0;
     ze_result_t getRealPath(const std::string file, std::string &val) override {
@@ -183,13 +176,10 @@ struct Mock<DiagSysfsAccess> : public DiagSysfsAccess {
         checkErrorAfterCount = count;
         setMockError(result);
     }
-    Mock<DiagSysfsAccess>() = default;
+    MockDiagSysfsAccess() = default;
 };
 
-class DiagProcfsAccess : public ProcfsAccess {};
-
-template <>
-struct Mock<DiagProcfsAccess> : public DiagProcfsAccess {
+struct MockDiagProcfsAccess : public ProcfsAccess {
     std::vector<::pid_t> pidList = {1, 2, 3};
     ::pid_t ourDevicePid = 0;
     ze_result_t mockError = ZE_RESULT_SUCCESS;
@@ -217,10 +207,11 @@ struct Mock<DiagProcfsAccess> : public DiagProcfsAccess {
         mockError = result;
     }
 
-    Mock<DiagProcfsAccess>() = default;
+    MockDiagProcfsAccess() = default;
 };
 
 struct MockDiagLinuxSysmanImp : public LinuxSysmanImp {
+    using LinuxSysmanImp::pProcfsAccess;
     MockDiagLinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) : LinuxSysmanImp(pParentSysmanDeviceImp) {}
     std::vector<int> fdList = {0, 1, 2};
     ::pid_t ourDevicePid = 0;
@@ -263,7 +254,6 @@ class PublicLinuxDiagnosticsImp : public L0::LinuxDiagnosticsImp {
     using LinuxDiagnosticsImp::gpuProcessCleanup;
     using LinuxDiagnosticsImp::pFwInterface;
     using LinuxDiagnosticsImp::pLinuxSysmanImp;
-    using LinuxDiagnosticsImp::pProcfsAccess;
     using LinuxDiagnosticsImp::pSysfsAccess;
     using LinuxDiagnosticsImp::waitForQuiescentCompletion;
 };
