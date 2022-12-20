@@ -76,11 +76,11 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     }
     rootDeviceIndices.remove_duplicates();
 
-    auto &hwInfo = getDevice()->getHwInfo();
-    auto &l0GfxCoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &rootDeviceEnvironment = getDevice()->getNEODevice()->getRootDeviceEnvironment();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     useDeviceAlloc |= l0GfxCoreHelper.alwaysAllocateEventInLocalMem();
 
-    initializeSizeParameters(numDevices, phDevices, *driverHandleImp, hwInfo);
+    initializeSizeParameters(numDevices, phDevices, *driverHandleImp, rootDeviceEnvironment);
 
     NEO::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
                                                                        : NEO::AllocationType::BUFFER_HOST_MEMORY;
@@ -160,12 +160,14 @@ ze_result_t EventPoolImp::createEvent(const ze_event_desc_t *desc, ze_event_hand
     return ZE_RESULT_SUCCESS;
 }
 
-void EventPoolImp::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::HardwareInfo &hwInfo) {
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+void EventPoolImp::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
 
     setEventAlignment(static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
 
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     bool useDynamicEventPackets = l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo);
     eventPackets = EventPacketsCount::eventPackets;
     maxKernelCount = EventPacketsCount::maxKernelSplit;

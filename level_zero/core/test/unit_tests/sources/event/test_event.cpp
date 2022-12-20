@@ -162,8 +162,8 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
     ASSERT_NE(nullptr, eventPool);
 
     auto &hwInfo = device->getHwInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
 
     uint32_t maxPacketCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
@@ -1153,7 +1153,7 @@ TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventF
 
 TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {
     auto &hwInfo = device->getHwInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     uint32_t maxKernelCount = EventPacketsCount::maxKernelSplit;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
@@ -2008,7 +2008,7 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &hwInfo = device->getHwInfo();
 
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     uint32_t packetCount = EventPacketsCount::eventPackets;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
@@ -2044,7 +2044,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
     auto &hwInfo = device->getHwInfo();
     auto expectedAlignment = static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment());
 
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     uint32_t packetCount = EventPacketsCount::eventPackets;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
@@ -2277,7 +2277,6 @@ struct MockEventCompletion : public EventImp<uint32_t> {
     MockEventCompletion(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device, false) {
         auto neoDevice = device->getNEODevice();
         auto &hwInfo = neoDevice->getHardwareInfo();
-
         signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
 
         auto alloc = eventPool->getAllocation().getGraphicsAllocation(neoDevice->getRootDeviceIndex());
@@ -2421,8 +2420,8 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
     void testAllDevices() {
         auto &hwInfo = device->getHwInfo();
-        auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
 
         ze_event_pool_desc_t eventPoolDesc = {
             ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -2469,7 +2468,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto &hwInfo = device->getHwInfo();
-        auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
         auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         ze_event_pool_desc_t eventPoolDesc = {
@@ -2528,7 +2527,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto &hwInfo = device->getHwInfo();
-        auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
         ze_event_pool_desc_t eventPoolDesc = {
             ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,

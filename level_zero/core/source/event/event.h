@@ -19,6 +19,10 @@ struct _ze_event_handle_t {};
 
 struct _ze_event_pool_handle_t {};
 
+namespace NEO {
+struct RootDeviceEnvironment;
+}
+
 namespace L0 {
 typedef uint64_t FlushStamp;
 struct EventPool;
@@ -338,7 +342,7 @@ struct EventPoolImp : public EventPool {
 
     ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) override;
 
-    void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::HardwareInfo &hwInfo);
+    void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
 
     Device *getDevice() override { return devices[0]; }
 

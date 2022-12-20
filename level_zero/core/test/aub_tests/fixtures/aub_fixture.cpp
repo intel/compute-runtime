@@ -41,15 +41,6 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     ASSERT_NE(nullptr, hardwareInfo);
     const auto &hwInfo = *hardwareInfo;
 
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto engineType = getChosenEngineType(hwInfo);
-
-    const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
-    std::stringstream strfilename;
-
-    strfilename << NEO::ApiSpecificConfig::getAubPrefixForSpecificApi();
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
-
     executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1u);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
@@ -59,6 +50,15 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
         executionEnvironment->setDebuggingEnabled();
     }
     neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
+
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto engineType = getChosenEngineType(hwInfo);
+
+    const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
+    std::stringstream strfilename;
+
+    strfilename << NEO::ApiSpecificConfig::getAubPrefixForSpecificApi();
+    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
 
     if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
         this->csr = NEO::TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());

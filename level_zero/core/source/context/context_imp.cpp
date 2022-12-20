@@ -601,7 +601,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     auto neoDevice = device->getNEODevice();
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
 
-    eventPool->initializeSizeParameters(this->numDevices, this->deviceHandles.data(), *this->driverHandle, device->getHwInfo());
+    eventPool->initializeSizeParameters(this->numDevices, this->deviceHandles.data(), *this->driverHandle, neoDevice->getRootDeviceEnvironment());
 
     NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                       eventPool->getEventPoolSize(),

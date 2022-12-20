@@ -94,7 +94,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
     }
 
     auto &hwInfo = device->getHwInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     uint32_t maxPackets = EventPacketsCount::eventPackets;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
@@ -279,7 +279,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInReset
     auto &commandContainer = commandList->commandContainer;
 
     auto &hwInfo = device->getHwInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -443,7 +443,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     postSyncPipeControlItor++;
     ASSERT_NE(cmdList.end(), postSyncPipeControlItor);
 
-    //find multi tile barrier section: pipe control + atomic/semaphore
+    // find multi tile barrier section: pipe control + atomic/semaphore
     auto itorPipeControl = find<PIPE_CONTROL *>(postSyncPipeControlItor, cmdList.end());
     ASSERT_NE(cmdList.end(), itorPipeControl);
 

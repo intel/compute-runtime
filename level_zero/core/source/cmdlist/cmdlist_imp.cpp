@@ -108,7 +108,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         NEO::CommandStreamReceiver *csr = nullptr;
         auto deviceImp = static_cast<DeviceImp *>(device);
         const auto &hwInfo = device->getHwInfo();
-        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
         if (internalUsage) {
             if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
                 csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;

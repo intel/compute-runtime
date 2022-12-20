@@ -322,7 +322,7 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
@@ -847,7 +847,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
-    auto elfAdditionalSections = {ZebinTestData::appendElfAdditionalSection::CONSTANT}; //for const surface allocation copy
+    auto elfAdditionalSections = {ZebinTestData::appendElfAdditionalSection::CONSTANT}; // for const surface allocation copy
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), elfAdditionalSections);
     const auto &src = zebinData->storage;
 
@@ -871,7 +871,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
 
     auto numIsaAllocations = static_cast<int>(module->getKernelImmutableDataVector().size());
 
-    auto expectedMakeResidentCallsCount = numIsaAllocations + 1; //const surface
+    auto expectedMakeResidentCallsCount = numIsaAllocations + 1; // const surface
     expectedMakeResidentCallsCount += numIsaAllocations;
 
     EXPECT_EQ(expectedMakeResidentCallsCount, memoryOperationsHandler->makeResidentCalledCount);

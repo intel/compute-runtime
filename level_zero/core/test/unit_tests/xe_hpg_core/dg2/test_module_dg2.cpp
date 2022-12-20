@@ -27,7 +27,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenKernelInitializeCalledThen
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
@@ -83,7 +83,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerButDebuggerActiveSetWhenPatc
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
