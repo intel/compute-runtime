@@ -58,7 +58,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
     LinearStream &cs = linearStream;
     auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getHardwareInfo(), 0u, 0, 672u, emptyProperties, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties, nullptr);
 
     parseCommands<FamilyType>(cs);
 
@@ -80,7 +80,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePipeC
 
     auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::Compute);
     StreamProperties emptyProperties{};
-    PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getHardwareInfo(), 0u, 0, 672u, emptyProperties, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties, nullptr);
 
     parseCommands<FamilyType>(cs);
 
@@ -101,7 +101,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePipeC
 
     auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getHardwareInfo(), 0u, 0, 672u, emptyProperties, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties, nullptr);
 
     parseCommands<FamilyType>(cs);
 
@@ -153,7 +153,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditi
 
         DebugManager.flags.CFEFusedEUDispatch.set(debugKeyValue);
 
-        PreambleHelper<FamilyType>::appendProgramVFEState(*hwInfo, streamProperties, cmdSpace);
+        PreambleHelper<FamilyType>::appendProgramVFEState(pDevice->getRootDeviceEnvironment(), streamProperties, cmdSpace);
         EXPECT_EQ(expectedValue, mediaVfeState->getDisableSlice0Subslice2());
     }
 }
@@ -164,8 +164,6 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenMaxNumberOfDssDebugVariableWhenMediaVfeS
     DebugManagerStateRestore restorer;
     DebugManager.flags.MediaVfeStateMaxSubSlices.set(2);
 
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-
     void *cmdSpace = linearStream.getSpace(sizeof(MEDIA_VFE_STATE));
     auto mediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(cmdSpace);
     *mediaVfeState = FamilyType::cmdInitMediaVfeState;
@@ -173,14 +171,12 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenMaxNumberOfDssDebugVariableWhenMediaVfeS
     StreamProperties streamProperties = {};
     streamProperties.frontEndState.disableEUFusion.value = 0;
 
-    PreambleHelper<FamilyType>::appendProgramVFEState(*hwInfo, streamProperties, cmdSpace);
+    PreambleHelper<FamilyType>::appendProgramVFEState(pDevice->getRootDeviceEnvironment(), streamProperties, cmdSpace);
     EXPECT_EQ(2u, mediaVfeState->getMaximumNumberOfDualSubslices());
 }
 
 HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionWhenProgramAdditionalFieldsInVfeStateThenCorrectFieldIsSet, IsTGLLP) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
-
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     void *cmdSpace = linearStream.getSpace(sizeof(MEDIA_VFE_STATE));
     auto mediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(cmdSpace);
@@ -189,7 +185,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionWhenProgramAdditionalFiel
     StreamProperties streamProperties = {};
     streamProperties.frontEndState.disableEUFusion.value = 1;
 
-    PreambleHelper<FamilyType>::appendProgramVFEState(*hwInfo, streamProperties, cmdSpace);
+    PreambleHelper<FamilyType>::appendProgramVFEState(pDevice->getRootDeviceEnvironment(), streamProperties, cmdSpace);
     EXPECT_TRUE(mediaVfeState->getDisableSlice0Subslice2());
 }
 
@@ -199,8 +195,6 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionAndCFEFusedEUDispatchWhen
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.CFEFusedEUDispatch.set(0);
 
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-
     void *cmdSpace = linearStream.getSpace(sizeof(MEDIA_VFE_STATE));
     auto mediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(cmdSpace);
     *mediaVfeState = FamilyType::cmdInitMediaVfeState;
@@ -208,7 +202,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionAndCFEFusedEUDispatchWhen
     StreamProperties streamProperties = {};
     streamProperties.frontEndState.disableEUFusion.value = 1;
 
-    PreambleHelper<FamilyType>::appendProgramVFEState(*hwInfo, streamProperties, cmdSpace);
+    PreambleHelper<FamilyType>::appendProgramVFEState(pDevice->getRootDeviceEnvironment(), streamProperties, cmdSpace);
     EXPECT_FALSE(mediaVfeState->getDisableSlice0Subslice2());
 }
 

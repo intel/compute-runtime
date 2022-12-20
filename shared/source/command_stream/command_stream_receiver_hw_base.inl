@@ -1083,7 +1083,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
         PreambleHelper<GfxFamily>::programVfeState(
-            pVfeState, hwInfo, requiredScratchSize, getScratchPatchAddress(),
+            pVfeState, peekRootDeviceEnvironment(), requiredScratchSize, getScratchPatchAddress(),
             maxFrontEndThreads, streamProperties, logicalStateHelper.get());
         auto commandOffset = PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(&csr, pVfeState);
 

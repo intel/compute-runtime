@@ -24,6 +24,7 @@ class LinearStream;
 class LogicalStateHelper;
 struct PipelineSelectArgs;
 struct StreamProperties;
+struct RootDeviceEnvironment;
 
 template <typename GfxFamily>
 struct PreambleHelper {
@@ -37,12 +38,12 @@ struct PreambleHelper {
                                       const HardwareInfo &hwInfo);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType);
-    static void appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd);
+    static void appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd);
     static void *getSpaceForVfeState(LinearStream *pCommandStream,
                                      const HardwareInfo &hwInfo,
                                      EngineGroupType engineGroupType);
     static void programVfeState(void *pVfeState,
-                                const HardwareInfo &hwInfo,
+                                const RootDeviceEnvironment &rootDeviceEnvironment,
                                 uint32_t scratchSize,
                                 uint64_t scratchAddress,
                                 uint32_t maxFrontEndThreads,

@@ -92,7 +92,7 @@ BDWTEST_F(PreambleVfeState, WhenProgrammingVfeStateThenProgrammingIsCorrect) {
     LinearStream &cs = linearStream;
     auto pVfeCmd = PreambleHelper<Gen8Family>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<Gen8Family>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 168u, emptyProperties, nullptr);
+    PreambleHelper<Gen8Family>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 168u, emptyProperties, nullptr);
 
     parseCommands<Gen8Family>(cs);
 

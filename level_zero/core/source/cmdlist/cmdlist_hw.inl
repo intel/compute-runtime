@@ -2473,7 +2473,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
         if (isPatchingVfeStateAllowed) {
             auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
             auto pVfeState = new VFE_STATE_TYPE;
-            NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
+            NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
             commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
         }
         if (this->frontEndStateTracking) {

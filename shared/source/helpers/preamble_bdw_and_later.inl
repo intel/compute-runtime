@@ -36,7 +36,7 @@ void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStrea
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
-                                                const HardwareInfo &hwInfo,
+                                                const RootDeviceEnvironment &rootDeviceEnvironment,
                                                 uint32_t scratchSize,
                                                 uint64_t scratchAddress,
                                                 uint32_t maxFrontEndThreads,
@@ -56,7 +56,7 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     cmd.setScratchSpaceBasePointer(lowAddress);
     cmd.setScratchSpaceBasePointerHigh(highAddress);
 
-    appendProgramVFEState(hwInfo, streamProperties, &cmd);
+    appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
     *pMediaVfeState = cmd;
 }
 
