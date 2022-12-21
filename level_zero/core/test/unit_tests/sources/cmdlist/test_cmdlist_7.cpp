@@ -329,7 +329,7 @@ struct ProgramChangedFieldsInComputeMode {
 };
 HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenChangedFieldsAreDirty, ProgramChangedFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
-    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -398,7 +398,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
 HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));

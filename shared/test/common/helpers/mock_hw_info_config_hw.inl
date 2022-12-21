@@ -6,7 +6,7 @@
  */
 
 template <>
-std::vector<int32_t> MockProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> MockProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() const {
     return threadArbPolicies;
 }
 template <>

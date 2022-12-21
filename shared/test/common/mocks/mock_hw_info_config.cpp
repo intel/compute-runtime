@@ -38,32 +38,32 @@ void ProductHelperHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo 
 }
 
 template <>
-uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilities(const HardwareInfo *hwInfo) {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilities(const HardwareInfo *hwInfo) const {
     return 0;
 }
 
 template <>
-uint64_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemCapabilities() {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemCapabilities() const {
     return 0;
 }
 
 template <>
-uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSingleDeviceSharedMemCapabilities() {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSingleDeviceSharedMemCapabilities() const {
     return 0;
 }
 
 template <>
-uint64_t ProductHelperHw<IGFX_UNKNOWN>::getCrossDeviceSharedMemCapabilities() {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getCrossDeviceSharedMemCapabilities() const {
     return 0;
 }
 
 template <>
-uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const {
     return 0;
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
+void ProductHelperHw<IGFX_UNKNOWN>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) const {
 }
 
 template <>
@@ -185,7 +185,7 @@ LocalMemoryAccessMode ProductHelperHw<IGFX_UNKNOWN>::getLocalMemoryAccessMode(co
 }
 
 template <>
-std::vector<int32_t> ProductHelperHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> ProductHelperHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbitrationPolicies() const {
     return {};
 }
 
@@ -366,7 +366,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isTimestampWaitSupportedForEvents() const {
 }
 
 template <>
-uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() const {
     return 0;
 }
 

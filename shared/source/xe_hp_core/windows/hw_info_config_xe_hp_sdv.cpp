@@ -33,7 +33,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
+bool ProductHelperHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) const {
     if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo, *this) && (getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed)) {
         return false;
     }
@@ -42,7 +42,7 @@ bool ProductHelperHw<gfxProduct>::getHostMemCapabilitiesSupported(const Hardware
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
+void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) const {
     *fp16 = 0u;
     *fp32 = FP_ATOMIC_EXT_FLAG_GLOBAL_ADD;
     *fp64 = 0u;

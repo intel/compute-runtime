@@ -212,7 +212,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
     EXPECT_EQ(-1, pCommandList->finalStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
 
-    auto &productHelper = *NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
     int32_t expectedDispatchAllWalkerEnable = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo()) ? 0 : -1;
 
     pCommandList->updateStreamProperties(defaultKernel, false);
@@ -290,7 +290,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
     pCommandList->updateStreamProperties(defaultKernel, false);
     pCommandList->updateStreamProperties(cooperativeKernel, true);
 
-    const auto &productHelper = *NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
     size_t expectedCmdsToPatch = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo()) ? 1 : 0;
 
     EXPECT_EQ(expectedCmdsToPatch, pCommandList->commandsToPatch.size());

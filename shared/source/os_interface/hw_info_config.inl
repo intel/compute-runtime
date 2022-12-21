@@ -32,14 +32,14 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
+void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) const {
     *fp16 = 0u;
     *fp32 = 0u;
     *fp64 = 0u;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::vector<int32_t> ProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> ProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() const {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
     return PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies();
 }
@@ -68,7 +68,7 @@ void ProductHelperHw<gfxProduct>::disableRcsExposure(HardwareInfo *hwInfo) const
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getDeviceMemCapabilities() {
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemCapabilities() const {
     uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
 
     if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::Device)) {
@@ -79,7 +79,7 @@ uint64_t ProductHelperHw<gfxProduct>::getDeviceMemCapabilities() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
+uint64_t ProductHelperHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() const {
     uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
 
     if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::SharedSingleDevice)) {
@@ -90,12 +90,12 @@ uint64_t ProductHelperHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
+bool ProductHelperHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) const {
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *hwInfo) {
+uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *hwInfo) const {
     bool supported = getHostMemCapabilitiesSupported(hwInfo);
 
     if (DebugManager.flags.EnableHostUsmSupport.get() != -1) {
@@ -112,7 +112,7 @@ uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) {
+uint64_t ProductHelperHw<gfxProduct>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const {
     bool supported = false;
 
     if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
@@ -123,7 +123,7 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemMemCapabilities(const Hardw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) {
+bool ProductHelperHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) const {
     auto supported = false;
 
     if (DebugManager.flags.EnableUsmConcurrentAccessSupport.get() > 0) {

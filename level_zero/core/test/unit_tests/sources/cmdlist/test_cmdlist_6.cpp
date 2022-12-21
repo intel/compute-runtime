@@ -57,8 +57,9 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
 
 using CommandListExecuteImmediate = Test<DeviceFixture>;
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastSkl) {
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-    auto &productHelper = *NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &productHelper = device->getProductHelper();
+
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -805,7 +806,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     auto &hwInfo = device->getHwInfo();
 
     uint32_t expectedSbaCount = 1;
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
     if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
         expectedSbaCount++;
     }

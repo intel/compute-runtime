@@ -603,7 +603,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
 
 ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) {
     auto &hwInfo = this->getHwInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = this->getProductHelper();
     pMemAccessProperties->hostAllocCapabilities =
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getHostMemCapabilities(&hwInfo));
 
@@ -682,15 +682,11 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     }
 
     pKernelProperties->nativeKernelSupported.id[0] = 0;
-
     processAdditionalKernelProperties(gfxCoreHelper, pKernelProperties);
-
     pKernelProperties->maxArgumentsSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().maxParameterSize);
-
     pKernelProperties->printfBufferSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().printfBufferSize);
 
-    auto &hwInfo = this->getHwInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = this->getProductHelper();
 
     void *pNext = pKernelProperties->pNext;
     while (pNext) {

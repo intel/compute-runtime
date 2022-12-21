@@ -611,7 +611,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     }
 
     registerElfInDebuggerL0();
-    this->maxGroupSize = static_cast<uint32_t>(this->translationUnit->device->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
+    this->maxGroupSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().maxWorkGroupSize);
 
     checkIfPrivateMemoryPerDispatchIsNeeded();
 
@@ -624,7 +624,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
         passDebugData();
     }
 
-    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = neoDevice->getProductHelper();
 
     if (this->isFullyLinked && this->type == ModuleType::User) {
         for (auto &ki : kernelImmDatas) {
@@ -834,8 +834,8 @@ ze_result_t ModuleImp::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData)
 
 void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching) {
     if (this->translationUnit->programInfo.linkerInput && this->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
-        const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
-        const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        const auto &hwInfo = this->device->getNEODevice()->getHardwareInfo();
+        const auto &productHelper = this->device->getProductHelper();
 
         for (auto &kernelImmData : this->kernelImmDatas) {
             if (nullptr == kernelImmData->getIsaGraphicsAllocation()) {

@@ -10,12 +10,12 @@
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() {
+uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
     return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() {
+uint64_t ProductHelperHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() const {
     return 0;
 }
 

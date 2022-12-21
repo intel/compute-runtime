@@ -808,7 +808,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     auto neoDevice = module->getDevice()->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();
-    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = neoDevice->getProductHelper();
     auto &kernelDescriptor = kernelImmData->getDescriptor();
     auto ret = NEO::KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, neoDevice);
     if (ret == NEO::KernelHelper::ErrorCode::INVALID_KERNEL) {
