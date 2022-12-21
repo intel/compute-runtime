@@ -326,7 +326,7 @@ std::pair<int, std::vector<uint8_t>> OfflineLinker::translateToOutputFormat(cons
 
     tryToStoreBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
 
-    const auto errorCode{igcOutput->Successful() ? OclocErrorCode::SUCCESS : OclocErrorCode::BUILD_PROGRAM_FAILURE};
+    const auto errorCode{igcOutput->Successful() && !outputFileContent.empty() ? OclocErrorCode::SUCCESS : OclocErrorCode::BUILD_PROGRAM_FAILURE};
     if (errorCode != OclocErrorCode::SUCCESS) {
         argHelper->printf("Error: Translation has failed! IGC returned empty output.\n");
     }

@@ -547,6 +547,37 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndFailingIGCWhenLlvmBcOutp
     EXPECT_EQ(expectedErrorMessage, output);
 }
 
+TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndIGCSignalingSuccessButReturningEmptyOutputWhenLlvmBcOutputIsRequestedThenErrorIsReturned) {
+    MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
+    igcDebugVars.forceSuccessWithEmptyOutput = true;
+    setIgcDebugVars(igcDebugVars);
+
+    auto spirvFileContent = createFileContent(getEmptySpirvFile(), IGC::CodeType::spirV);
+    auto llvmbcFileContent = createFileContent(getEmptyLlvmBcFile(), IGC::CodeType::llvmBc);
+
+    mockArgHelper.interceptOutput = true;
+
+    HardwareInfo hwInfo{};
+    const auto igcInitializationResult{mockOclocIgcFacade->initialize(hwInfo)};
+    ASSERT_EQ(OclocErrorCode::SUCCESS, igcInitializationResult);
+
+    MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
+    mockOfflineLinker.inputFilesContent.emplace_back(std::move(spirvFileContent.bytes), spirvFileContent.size, spirvFileContent.codeType);
+    mockOfflineLinker.inputFilesContent.emplace_back(std::move(llvmbcFileContent.bytes), llvmbcFileContent.size, llvmbcFileContent.codeType);
+    mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
+    mockOfflineLinker.operationMode = OperationMode::LINK_FILES;
+
+    ::testing::internal::CaptureStdout();
+    const auto linkingResult{mockOfflineLinker.execute()};
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    ASSERT_EQ(OclocErrorCode::BUILD_PROGRAM_FAILURE, linkingResult);
+    EXPECT_EQ(0u, mockArgHelper.interceptedFiles.count("linker_output"));
+
+    const std::string expectedErrorMessage{"Error: Translation has failed! IGC returned empty output.\n"};
+    EXPECT_EQ(expectedErrorMessage, output);
+}
+
 TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndInvalidTranslationOutputWhenLlvmBcOutputIsRequestedThenErrorIsReturned) {
     MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
     igcDebugVars.shouldReturnInvalidTranslationOutput = true;

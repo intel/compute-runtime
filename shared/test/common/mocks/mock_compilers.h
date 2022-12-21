@@ -28,6 +28,7 @@ struct MockCompilerDebugVars {
     bool shouldReturnInvalidTranslationOutput = false;
     bool shouldFailCreationOfTranslationContext = false;
     bool forceBuildFailure = false;
+    bool forceSuccessWithEmptyOutput = false;
     bool forceCreateFailure = false;
     bool forceRegisterFail = false;
     bool internalOptionsExpected = false;

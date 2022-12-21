@@ -413,6 +413,13 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         }
     }
 
+    if (debugVars.forceSuccessWithEmptyOutput) {
+        if (out) {
+            out->setOutput(nullptr, 0);
+        }
+        return;
+    }
+
     if ((debugVars.forceBuildFailure == false) &&
         (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
 
