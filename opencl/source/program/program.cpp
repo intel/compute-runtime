@@ -178,8 +178,10 @@ cl_int Program::createProgramFromBinary(
             this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
             this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
 
-            bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn);
+            auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
+            bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed);
             rebuild |= DebugManager.flags.RebuildPrecompiledKernels.get();
+
             if (rebuild && 0u == this->irBinarySize) {
                 return CL_INVALID_BINARY;
             }
@@ -430,6 +432,15 @@ void Program::setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_progr
             deviceBuildInfos[subDevice].programBinaryType = binaryType;
         }
     }
+}
+
+bool Program::containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const {
+    for (auto kernelInfo : kernelInfos) {
+        if (kernelInfo->isVmeUsed()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Program::isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {

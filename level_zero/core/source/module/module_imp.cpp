@@ -298,7 +298,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         }
 
         bool rebuild = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
-        rebuild |= NEO::isRebuiltToPatchtokensRequired(device->getNEODevice(), archive, this->options, this->isBuiltIn);
+        rebuild |= NEO::isRebuiltToPatchtokensRequired(device->getNEODevice(), archive, this->options, this->isBuiltIn, false);
         if (rebuild && irBinarySize == 0) {
             return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
         }

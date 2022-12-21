@@ -47,6 +47,7 @@ class MockProgram : public Program {
     using Program::allowNonUniform;
     using Program::areSpecializationConstantsInitialized;
     using Program::buildInfos;
+    using Program::containsVmeUsage;
     using Program::context;
     using Program::createdFrom;
     using Program::createProgramFromBinary;

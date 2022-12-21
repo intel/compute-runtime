@@ -100,6 +100,10 @@ struct KernelInfo {
         return maxRequiredWorkGroupSize;
     }
 
+    bool isVmeUsed() const {
+        return kernelDescriptor.kernelAttributes.flags.usesVme;
+    }
+
     uint32_t getConstantBufferSize() const;
     int32_t getArgNumByName(const char *name) const;
 

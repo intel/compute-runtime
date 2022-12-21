@@ -306,6 +306,8 @@ class Program : public BaseObject<_cl_program> {
     void setBuildStatus(cl_build_status status);
     void setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType);
 
+    bool containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const;
+
     bool isSpirV = false;
 
     std::unique_ptr<char[]> irBinary;
