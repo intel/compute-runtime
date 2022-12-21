@@ -454,5 +454,59 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ASSERT_NE(cmdList.end(), itorSemaphore);
 }
 
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
+          givenCopyCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfMiFlushResetPostSyncCommands, IsAtLeastXeHpCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    constexpr uint32_t packets = 2u;
+    event->setPacketsInUse(packets);
+    event->setUsingContextEndOffset(true);
+
+    size_t usedBeforeSize = cmdStream->getUsed();
+    returnValue = commandList->appendEventReset(event->toHandle());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(2u, event->getPacketsInUse());
+    size_t usedAfterSize = cmdStream->getUsed();
+
+    size_t expectedSize = NEO::EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() * packets;
+    EXPECT_EQ(expectedSize, (usedAfterSize - usedBeforeSize));
+
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), usedBeforeSize),
+        expectedSize));
+
+    uint32_t miFlushCountFactor = 1;
+    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+        miFlushCountFactor = 2;
+    }
+    auto expectedMiFlushCount = packets * miFlushCountFactor;
+
+    auto itorMiFlush = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedMiFlushCount, static_cast<uint32_t>(itorMiFlush.size()));
+
+    for (uint32_t i = 0; i < expectedMiFlushCount; i++) {
+        if ((miFlushCountFactor == 2) && (i % 2 == 0)) {
+            continue;
+        }
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*itorMiFlush[i]);
+        EXPECT_EQ(gpuAddress, cmd->getDestinationAddress());
+        EXPECT_EQ(Event::STATE_CLEARED, cmd->getImmediateData());
+        EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, cmd->getPostSyncOperation());
+
+        gpuAddress += event->getSinglePacketSize();
+    }
+}
+
 } // namespace ult
 } // namespace L0

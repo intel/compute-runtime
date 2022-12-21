@@ -431,5 +431,138 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     }
 }
 
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
+          givenCopyCommandListWhenAppendingTimestampEventPacketThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    event->setEventTimestampFlag(true);
+
+    commandList->appendEventForProfilingCopyCommand(event.get(), false);
+    size_t usedAfterSize = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        cmdStream->getCpuBase(),
+        usedAfterSize));
+
+    uint32_t expectedMiFlushCount = 1;
+    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+        expectedMiFlushCount = 2;
+    }
+
+    auto itorMiFlush = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedMiFlushCount, static_cast<uint32_t>(itorMiFlush.size()));
+
+    for (uint32_t i = 0; i < expectedMiFlushCount; i++) {
+        if ((expectedMiFlushCount == 2) && (i % 2 == 0)) {
+            continue;
+        }
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*itorMiFlush[i]);
+        EXPECT_EQ(0u, cmd->getDestinationAddress());
+        EXPECT_EQ(0u, cmd->getImmediateData());
+        EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE, cmd->getPostSyncOperation());
+    }
+}
+
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
+          givenCopyCommandListWhenAppendingImmediateEventPacketPostWalkerThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    event->setEventTimestampFlag(false);
+
+    commandList->appendSignalEventPostWalker(event.get());
+    size_t usedAfterSize = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        cmdStream->getCpuBase(),
+        usedAfterSize));
+
+    uint32_t expectedMiFlushCount = 1;
+    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+        expectedMiFlushCount = 2;
+    }
+
+    auto itorMiFlush = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedMiFlushCount, static_cast<uint32_t>(itorMiFlush.size()));
+
+    auto gpuAddress = event->getGpuAddress(device);
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
+
+    for (uint32_t i = 0; i < expectedMiFlushCount; i++) {
+        if ((expectedMiFlushCount == 2) && (i % 2 == 0)) {
+            continue;
+        }
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*itorMiFlush[i]);
+        EXPECT_EQ(gpuAddress, cmd->getDestinationAddress());
+        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+        EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, cmd->getPostSyncOperation());
+    }
+}
+
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
+          givenCopyCommandListWhenAppendingSignalImmediateEventPacketThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    event->setEventTimestampFlag(false);
+
+    commandList->appendSignalEvent(event->toHandle());
+    size_t usedAfterSize = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        cmdStream->getCpuBase(),
+        usedAfterSize));
+
+    uint32_t expectedMiFlushCount = 1;
+    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+        expectedMiFlushCount = 2;
+    }
+
+    auto itorMiFlush = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedMiFlushCount, static_cast<uint32_t>(itorMiFlush.size()));
+
+    auto gpuAddress = event->getGpuAddress(device);
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
+
+    for (uint32_t i = 0; i < expectedMiFlushCount; i++) {
+        if ((expectedMiFlushCount == 2) && (i % 2 == 0)) {
+            continue;
+        }
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*itorMiFlush[i]);
+        EXPECT_EQ(gpuAddress, cmd->getDestinationAddress());
+        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+        EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, cmd->getPostSyncOperation());
+    }
+}
+
 } // namespace ult
 } // namespace L0
