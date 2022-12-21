@@ -707,9 +707,9 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingP
 
     EXPECT_EQ(csr.recordedDispatchFlags.l3CacheSettings, L3CachingSettings::l3AndL1On);
 
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto gmmHelper = this->pDevice->getGmmHelper();
-    auto expectedMocsIndex = helper.getMocsIndex(*gmmHelper, true, true);
+    auto expectedMocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, true);
     EXPECT_EQ(expectedMocsIndex, csr.latestSentStatelessMocsConfig);
 }
 
@@ -729,9 +729,10 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteOnBlockedCodePa
 
     EXPECT_EQ(csr.recordedDispatchFlags.l3CacheSettings, L3CachingSettings::l3AndL1On);
 
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+
     auto gmmHelper = this->pDevice->getGmmHelper();
-    auto expectedMocsIndex = helper.getMocsIndex(*gmmHelper, true, true);
+    auto expectedMocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, true);
     EXPECT_EQ(expectedMocsIndex, csr.latestSentStatelessMocsConfig);
 
     clReleaseEvent(userEvent);

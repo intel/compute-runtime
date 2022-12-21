@@ -96,7 +96,7 @@ bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwIn
 }
 
 template <typename GfxFamily>
-inline bool GfxCoreHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) {
+inline bool GfxCoreHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const {
     return true;
 }
 

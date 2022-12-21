@@ -335,7 +335,7 @@ TEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBuffe
 HWTEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBufferSetAndAllocationTypeIsBufferNullptr) {
     class MockGfxCoreHelperHw : public GfxCoreHelperHw<FamilyType> {
       public:
-        bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override {
+        bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const override {
             return false;
         }
     };

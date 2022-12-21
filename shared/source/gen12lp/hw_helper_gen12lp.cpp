@@ -76,7 +76,7 @@ bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t si
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) {
+bool GfxCoreHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const {
     return !graphicsAllocation.isCompressionEnabled();
 }
 

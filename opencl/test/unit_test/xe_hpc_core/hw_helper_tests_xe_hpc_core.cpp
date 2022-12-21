@@ -92,8 +92,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocat
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSimdThen16IsReturned) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
-    EXPECT_EQ(16u, helper.getMinimalSIMDSize());
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenReturnZero) {

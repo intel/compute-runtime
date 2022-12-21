@@ -79,7 +79,7 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenRe
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, 0, 1, nullptr, retVal));
 
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     for (uint32_t i = 0; i < numImageTypes; i++) {
         imgDesc.image_type = imgTypes[i];
@@ -89,21 +89,21 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenRe
                            (imgTypes[i] == CL_MEM_OBJECT_IMAGE2D_ARRAY);
 
         // non shared context, dont force linear storage
-        EXPECT_EQ((tilingSupported & allowedType), !helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+        EXPECT_EQ((tilingSupported & allowedType), !gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
         {
             DebugManagerStateRestore restore;
             DebugManager.flags.ForceLinearImages.set(true);
             // non shared context, dont force linear storage + debug flag
-            EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+            EXPECT_TRUE(gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
         }
         // shared context, dont force linear storage
-        EXPECT_TRUE(helper.isLinearStoragePreferred(true, Image::isImage1d(imgDesc), false));
+        EXPECT_TRUE(gfxCoreHelper.isLinearStoragePreferred(true, Image::isImage1d(imgDesc), false));
         // non shared context,  force linear storage
-        EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), true));
+        EXPECT_TRUE(gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), true));
 
         // non shared context, dont force linear storage + create from buffer
         imgDesc.buffer = buffer.get();
-        EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+        EXPECT_TRUE(gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
     }
 }
 

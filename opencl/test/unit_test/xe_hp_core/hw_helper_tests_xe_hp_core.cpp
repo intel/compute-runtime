@@ -80,11 +80,11 @@ XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnab
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
     for (size_t size : sizesToCheck) {
-        EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+        EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
     }
 }
 

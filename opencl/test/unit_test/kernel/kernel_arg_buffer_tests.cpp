@@ -67,7 +67,7 @@ struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
         kernelInfos[1] = pKernelInfosStorage[0].get();
         kernelInfos[2] = pKernelInfosStorage[1].get();
 
-        auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+        auto &gfxCoreHelper = pContext->getDevice(0)->getGfxCoreHelper();
 
         for (auto i = 0u; i < 2; i++) {
             pKernelInfosStorage[i]->heapInfo.pSsh = pSshLocal[i];

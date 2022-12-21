@@ -451,7 +451,7 @@ HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithoutSubDevicesThenWo
 
 TEST(DeviceCreation, givenDeviceWhenCheckingGpgpuEnginesCountThenNumberGreaterThanZeroIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_GT(gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo()).size(), 0u);
 }
 

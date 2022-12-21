@@ -59,7 +59,7 @@ class GfxCoreHelper {
     virtual bool hvAlign4Required() const = 0;
     virtual bool preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const = 0;
     virtual bool isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const = 0;
-    virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
+    virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const = 0;
     static bool compressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool compressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
@@ -223,7 +223,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const override;
 
-    bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override;
+    bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const override;
 
     bool timestampPacketWriteSupported() const override;
 

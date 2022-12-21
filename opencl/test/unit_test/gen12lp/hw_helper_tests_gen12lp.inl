@@ -93,11 +93,11 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, WhenAdjustingDefaultEngineTypeThenRcsIsS
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCompressionPreferenceThenReturnCorrectValue) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     const size_t sizesToCheck[] = {128, 256, 512, 1023, 1024, 1025};
     for (size_t size : sizesToCheck) {
-        EXPECT_FALSE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+        EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
     }
 }
 
@@ -215,7 +215,7 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenFtrCcsNodeSetAndDefaultRcsWhenGetGp
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpWhenIsFusedEuDispatchEnabledIsCalledThenResultIsCorrect) {
     DebugManagerStateRestore restorer;
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &waTable = hardwareInfo.workaroundTable;
 
     std::tuple<bool, bool, int32_t> testParams[]{
@@ -229,7 +229,7 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpWhenIsFusedEuDispatchEnabledIs
     for (auto &[expectedResult, wa, debugKey] : testParams) {
         waTable.flags.waDisableFusedThreadScheduling = wa;
         DebugManager.flags.CFEFusedEUDispatch.set(debugKey);
-        EXPECT_EQ(expectedResult, helper.isFusedEuDispatchEnabled(hardwareInfo, false));
+        EXPECT_EQ(expectedResult, gfxCoreHelper.isFusedEuDispatchEnabled(hardwareInfo, false));
     }
 }
 
@@ -250,23 +250,23 @@ class GfxCoreHelperTestsGen12LpBuffer : public ::testing::Test {
 };
 
 GEN12LPTEST_F(GfxCoreHelperTestsGen12LpBuffer, givenCompressedBufferThenCheckResourceCompatibilityReturnsFalse) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
     MockBuffer::setAllocationType(buffer->getGraphicsAllocation(rootDeviceIndex), context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper(), true);
 
-    EXPECT_FALSE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
+    EXPECT_FALSE(gfxCoreHelper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompatibilityReturnsTrue) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
     buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
 
-    EXPECT_TRUE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
+    EXPECT_TRUE(gfxCoreHelper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
 }
 
 using LriHelperTestsGen12Lp = ::testing::Test;
@@ -306,54 +306,54 @@ GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFiel
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenGen12WhenCallIsPackedSupportedThenReturnTrue) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
-    EXPECT_TRUE(helper.packedFormatsSupported());
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.packedFormatsSupported());
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, whenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
 
     const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
     const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
 
-    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, false));
-    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
-    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
-    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, true));
+    EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, false));
+    EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, true));
+    EXPECT_EQ(mocsL3, gfxCoreHelper.getMocsIndex(*gmmHelper, true, false));
+    EXPECT_EQ(mocsL3, gfxCoreHelper.getMocsIndex(*gmmHelper, true, true));
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenL1ForceEnabledWhenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.ForceL1Caching.set(1);
 
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
 
     const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
     const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
     const auto mocsL1 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
 
-    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, false));
-    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
-    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
-    EXPECT_EQ(mocsL1, helper.getMocsIndex(*gmmHelper, true, true));
+    EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, false));
+    EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, true));
+    EXPECT_EQ(mocsL3, gfxCoreHelper.getMocsIndex(*gmmHelper, true, false));
+    EXPECT_EQ(mocsL1, gfxCoreHelper.getMocsIndex(*gmmHelper, true, true));
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenL1ForceDisabledWhenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.ForceL1Caching.set(0);
 
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
 
     const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
     const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
 
-    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, false));
-    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
-    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
-    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, true));
+    EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, false));
+    EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, true));
+    EXPECT_EQ(mocsL3, gfxCoreHelper.getMocsIndex(*gmmHelper, true, false));
+    EXPECT_EQ(mocsL3, gfxCoreHelper.getMocsIndex(*gmmHelper, true, true));
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenAllocationTypeWithCpuAccessRequiredWhenCpuAccessIsDisallowedThenSystemMemoryIsRequested) {
