@@ -55,7 +55,7 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledWhenFreeingDeviceA
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device;
     for (auto &testData : testDataset) {
-        testData.allocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties, nullptr);
+        testData.allocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties);
         ASSERT_NE(testData.allocation, nullptr);
     }
     size_t expectedCacheSize = 0u;
@@ -103,7 +103,7 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAllocat
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device;
     for (auto &testData : testDataset) {
-        testData.allocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties, nullptr);
+        testData.allocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties);
         ASSERT_NE(testData.allocation, nullptr);
     }
 
@@ -119,7 +119,7 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAllocat
     std::vector<void *> allocationsToFree;
 
     for (auto &testData : testDataset) {
-        auto secondAllocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties, nullptr);
+        auto secondAllocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties);
         EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), testDataset.size() - 1);
         EXPECT_EQ(secondAllocation, testData.allocation);
         svmManager->freeSVMAlloc(secondAllocation);
@@ -151,7 +151,7 @@ TEST(SvmDeviceAllocationCacheTest, givenMultipleAllocationsWhenAllocatingAfterFr
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device;
     for (auto &testData : testDataset) {
-        testData.allocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties, nullptr);
+        testData.allocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties);
         ASSERT_NE(testData.allocation, nullptr);
     }
 
@@ -164,18 +164,18 @@ TEST(SvmDeviceAllocationCacheTest, givenMultipleAllocationsWhenAllocatingAfterFr
     size_t expectedCacheSize = testDataset.size();
     ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), expectedCacheSize);
 
-    auto allocationLargerThanInCache = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis << 3, unifiedMemoryProperties, nullptr);
+    auto allocationLargerThanInCache = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis << 3, unifiedMemoryProperties);
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), expectedCacheSize);
 
-    auto firstAllocation = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties, nullptr);
+    auto firstAllocation = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties);
     EXPECT_EQ(firstAllocation, testDataset[0].allocation);
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), --expectedCacheSize);
 
-    auto secondAllocation = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties, nullptr);
+    auto secondAllocation = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties);
     EXPECT_EQ(secondAllocation, testDataset[1].allocation);
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), --expectedCacheSize);
 
-    auto thirdAllocation = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties, nullptr);
+    auto thirdAllocation = svmManager->createUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties);
     EXPECT_EQ(thirdAllocation, testDataset[2].allocation);
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
 
@@ -252,7 +252,7 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentFlagsWhenAllocat
     for (auto &allocationDataToVerify : testDataset) {
 
         for (auto &testData : testDataset) {
-            testData.allocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, testData.unifiedMemoryProperties, nullptr);
+            testData.allocation = svmManager->createUnifiedMemoryAllocation(testData.allocationSize, testData.unifiedMemoryProperties);
         }
         ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
 
@@ -261,10 +261,10 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentFlagsWhenAllocat
         }
         ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), testDataset.size());
 
-        auto allocationFromCache = svmManager->createUnifiedMemoryAllocation(allocationDataToVerify.allocationSize, allocationDataToVerify.unifiedMemoryProperties, nullptr);
+        auto allocationFromCache = svmManager->createUnifiedMemoryAllocation(allocationDataToVerify.allocationSize, allocationDataToVerify.unifiedMemoryProperties);
         EXPECT_EQ(allocationFromCache, allocationDataToVerify.allocation);
 
-        auto allocationNotFromCache = svmManager->createUnifiedMemoryAllocation(allocationDataToVerify.allocationSize, allocationDataToVerify.unifiedMemoryProperties, nullptr);
+        auto allocationNotFromCache = svmManager->createUnifiedMemoryAllocation(allocationDataToVerify.allocationSize, allocationDataToVerify.unifiedMemoryProperties);
         for (auto &cachedAllocation : testDataset) {
             EXPECT_NE(allocationNotFromCache, cachedAllocation.allocation);
         }
@@ -293,8 +293,8 @@ TEST(SvmDeviceAllocationCacheTest, givenDeviceOutOfMemoryWhenAllocatingThenCache
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device;
 
-    auto allocationInCache = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
-    auto allocationInCache2 = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
+    auto allocationInCache = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    auto allocationInCache2 = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
     ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
     svmManager->freeSVMAlloc(allocationInCache);
     svmManager->freeSVMAlloc(allocationInCache2);
@@ -302,7 +302,7 @@ TEST(SvmDeviceAllocationCacheTest, givenDeviceOutOfMemoryWhenAllocatingThenCache
     ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 2u);
     ASSERT_NE(svmManager->getSVMAlloc(allocationInCache), nullptr);
     ASSERT_NE(svmManager->getSVMAlloc(allocationInCache2), nullptr);
-    auto ptr = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k * 2, unifiedMemoryProperties, nullptr);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k * 2, unifiedMemoryProperties);
     EXPECT_NE(ptr, nullptr);
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
     svmManager->freeSVMAlloc(ptr);

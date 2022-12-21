@@ -119,7 +119,6 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     contextImp->allocDeviceMem(this->toHandle(), &deviceDesc, 8, 1, &memory);
     contextImp->allocDeviceMem(hPeerDevice, &peerDeviceDesc, 8, 1, &peerMemory);
 
-    L0::CommandList::fromHandle(commandList)->context = contextImp;
     auto ret = L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr);
     L0::CommandList::fromHandle(commandList)->close();
 
@@ -398,7 +397,7 @@ ze_result_t DeviceImp::createSampler(const ze_sampler_desc_t *desc,
     }
 }
 
-ze_result_t DeviceImp::createModule(Context *context, const ze_module_desc_t *desc, ze_module_handle_t *module,
+ze_result_t DeviceImp::createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                                     ze_module_build_log_handle_t *buildLog, ModuleType type) {
     ModuleBuildLog *moduleBuildLog = nullptr;
 
@@ -408,7 +407,7 @@ ze_result_t DeviceImp::createModule(Context *context, const ze_module_desc_t *de
     }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto modulePtr = Module::create(context, this, desc, moduleBuildLog, type, &result);
+    auto modulePtr = Module::create(this, desc, moduleBuildLog, type, &result);
     if (modulePtr != nullptr) {
         *module = modulePtr;
     }

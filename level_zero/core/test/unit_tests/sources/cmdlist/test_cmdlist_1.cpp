@@ -29,35 +29,15 @@ namespace ult {
 
 using ContextCommandListCreate = Test<DeviceFixture>;
 
-TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextWithWrongOrdinalThenErrorIsReturned) {
-    ze_command_list_desc_t desc = {};
-    ze_command_list_handle_t hCommandList = {};
-    desc.commandQueueGroupOrdinal = std::numeric_limits<uint32_t>::max();
-
-    ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
-    EXPECT_NE(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(ContextCommandListCreate, whenCreatingImmediateCommandListFromContextWithWrongOrdinalThenErrorIsReturned) {
-    ze_command_queue_desc_t desc = {};
-    ze_command_list_handle_t hCommandList = {};
-    desc.ordinal = std::numeric_limits<uint32_t>::max();
-
-    ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
-    EXPECT_NE(ZE_RESULT_SUCCESS, result);
-}
-
 TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIsReturned) {
     ze_command_list_desc_t desc = {};
     ze_command_list_handle_t hCommandList = {};
 
     ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(CommandList::fromHandle(hCommandList)->context, context);
+    EXPECT_EQ(Context::fromHandle(CommandList::fromHandle(hCommandList)->hContext), context);
 
     L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
-    EXPECT_NE(commandList->context, nullptr);
-
     commandList->destroy();
 }
 
@@ -77,11 +57,9 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListImmediateFromContextThen
 
     ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(CommandList::fromHandle(hCommandList)->context, context);
+    EXPECT_EQ(Context::fromHandle(CommandList::fromHandle(hCommandList)->hContext), context);
 
     L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
-    EXPECT_NE(commandList->context, nullptr);
-
     commandList->destroy();
 }
 

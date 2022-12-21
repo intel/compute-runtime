@@ -11,7 +11,6 @@
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -35,7 +34,6 @@ struct ExecutionEnvironment;
 class MetricDeviceContext;
 struct SysmanDevice;
 struct DebugSession;
-struct Context;
 
 enum class ModuleType;
 
@@ -59,7 +57,7 @@ struct Device : _ze_device_handle_t {
 
     virtual ze_result_t createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) = 0;
 
-    virtual ze_result_t createModule(Context *context, const ze_module_desc_t *desc, ze_module_handle_t *module,
+    virtual ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                                      ze_module_build_log_handle_t *buildLog, ModuleType type) = 0;
     virtual ze_result_t createSampler(const ze_sampler_desc_t *pDesc,
                                       ze_sampler_handle_t *phSampler) = 0;

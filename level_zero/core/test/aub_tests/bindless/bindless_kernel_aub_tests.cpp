@@ -73,10 +73,10 @@ HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorr
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);
 
-    auto bufferSrc = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties, nullptr);
+    auto bufferSrc = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
     memset(bufferSrc, 55, bufferSize);
 
-    auto bufferDst = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties, nullptr);
+    auto bufferDst = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
     memset(bufferDst, 0, bufferSize);
 
     auto simulatedCsr = AUBFixtureL0::getSimulatedCsr<FamilyType>();

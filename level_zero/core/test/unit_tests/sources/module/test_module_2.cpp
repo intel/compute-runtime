@@ -32,7 +32,7 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
         modDesc.inputSize = static_cast<uint32_t>(src.size());
         modDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
         ze_result_t result = ZE_RESULT_SUCCESS;
-        module.reset(whiteboxCast(Module::create(context, device, &modDesc, nullptr, ModuleType::User, &result)));
+        module.reset(whiteboxCast(Module::create(device, &modDesc, nullptr, ModuleType::User, &result)));
         ASSERT_NE(nullptr, module);
     }
 
@@ -184,7 +184,7 @@ TEST_F(ModuleOnlineCompiled, WhenCreatingFromNativeBinaryThenGenBinaryIsReturned
     modDesc.inputSize = binarySize;
     modDesc.pInputModule = reinterpret_cast<const uint8_t *>(storage.get());
     ze_result_t initResult = ZE_RESULT_SUCCESS;
-    L0::Module *moduleFromNativeBinary = Module::create(context, device, &modDesc, nullptr, ModuleType::User, &initResult);
+    L0::Module *moduleFromNativeBinary = Module::create(device, &modDesc, nullptr, ModuleType::User, &initResult);
     EXPECT_NE(nullptr, moduleFromNativeBinary);
 
     delete moduleFromNativeBinary;

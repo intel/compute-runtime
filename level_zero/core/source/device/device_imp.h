@@ -12,7 +12,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
-#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
 
@@ -28,7 +27,6 @@ namespace L0 {
 struct SysmanDevice;
 struct FabricVertex;
 class CacheReservation;
-struct Context;
 
 struct DeviceImp : public Device {
     DeviceImp();
@@ -42,7 +40,7 @@ struct DeviceImp : public Device {
     ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
                                    ze_command_queue_handle_t *commandQueue) override;
     ze_result_t createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) override;
-    ze_result_t createModule(Context *context, const ze_module_desc_t *desc, ze_module_handle_t *module,
+    ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                              ze_module_build_log_handle_t *buildLog, ModuleType type) override;
     ze_result_t createSampler(const ze_sampler_desc_t *pDesc,
                               ze_sampler_handle_t *phSampler) override;

@@ -30,8 +30,7 @@ struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
     MockDeviceForRebuildBuilins(NEO::Device *device) : Mock(device, device->getExecutionEnvironment()) {
     }
 
-    ze_result_t createModule(Context *context,
-                             const ze_module_desc_t *desc,
+    ze_result_t createModule(const ze_module_desc_t *desc,
                              ze_module_handle_t *module,
                              ze_module_build_log_handle_t *buildLog, ModuleType type) override {
 

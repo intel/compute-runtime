@@ -375,18 +375,13 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
-    Context *context = nullptr;
-    if (module) {
-        context = module->getContext();
-    }
-
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
     if (programInfo.globalConstants.size != 0) {
-        this->globalConstBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), programInfo.globalConstants.size, true, programInfo.linkerInput.get(), programInfo.globalConstants.initData, context);
+        this->globalConstBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), programInfo.globalConstants.size, true, programInfo.linkerInput.get(), programInfo.globalConstants.initData);
     }
 
     if (programInfo.globalVariables.size != 0) {
-        this->globalVarBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), programInfo.globalVariables.size, false, programInfo.linkerInput.get(), programInfo.globalVariables.initData, context);
+        this->globalVarBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), programInfo.globalVariables.size, false, programInfo.linkerInput.get(), programInfo.globalVariables.initData);
     }
 
     for (auto &kernelInfo : this->programInfo.kernelInfos) {
@@ -468,7 +463,6 @@ ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType 
     : device(device), translationUnit(std::make_unique<ModuleTranslationUnit>(device)),
       moduleBuildLog(moduleBuildLog), type(type) {
     productFamily = device->getHwInfo().platform.eProductFamily;
-    translationUnit->module = this;
 }
 
 ModuleImp::~ModuleImp() {
@@ -1028,11 +1022,9 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
     return ZE_RESULT_SUCCESS;
 }
 
-Module *Module::create(Context *context, Device *device, const ze_module_desc_t *desc,
+Module *Module::create(Device *device, const ze_module_desc_t *desc,
                        ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
     auto module = new ModuleImp(device, moduleBuildLog, type);
-
-    module->setContext(context);
 
     *result = module->initialize(desc, device->getNEODevice());
     if (*result != ZE_RESULT_SUCCESS) {

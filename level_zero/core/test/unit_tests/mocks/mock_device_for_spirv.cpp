@@ -17,7 +17,7 @@
 namespace L0 {
 namespace ult {
 template <bool useImagesBuiltins, bool isStateless>
-ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(Context *context, const ze_module_desc_t *desc, ze_module_handle_t *module,
+ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                                                                            ze_module_build_log_handle_t *buildLog, ModuleType type) {
     const std::string builtinCopyfill("builtin_copyfill");
     const std::string builtinImages("builtin_images");
@@ -42,7 +42,7 @@ ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(Conte
 
         ModuleBuildLog *moduleBuildLog = nullptr;
         ze_result_t result = ZE_RESULT_SUCCESS;
-        mockModulePtr.reset(Module::create(context, this, &moduleDesc, moduleBuildLog, ModuleType::Builtin, &result));
+        mockModulePtr.reset(Module::create(this, &moduleDesc, moduleBuildLog, ModuleType::Builtin, &result));
         wasModuleCreated = true;
         useImagesBuiltins_prev = useImagesBuiltins;
         isStateless_prev = isStateless;

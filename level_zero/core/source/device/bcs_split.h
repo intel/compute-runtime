@@ -65,7 +65,7 @@ struct BcsSplit {
             cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), true, true);
         }
 
-        auto markerEventIndex = this->events.obtainForSplit(cmdList->context, MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
+        auto markerEventIndex = this->events.obtainForSplit(Context::fromHandle(cmdList->hContext), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
         auto subcopyEventIndex = markerEventIndex * this->cmdQs.size();
         StackVec<ze_event_handle_t, 4> eventHandles;
 

@@ -70,8 +70,7 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
         }
     } else {
         for (uint32_t i = 0; i < numDevices; i++) {
-            DeviceImp *device = static_cast<DeviceImp *>(Device::fromHandle(phDevices[i]));
-            auto neoDevice = device->getNEODevice();
+            auto neoDevice = Device::fromHandle(phDevices[i])->getNEODevice();
             context->getDevices().insert(std::make_pair(neoDevice->getRootDeviceIndex(), phDevices[i]));
             context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),

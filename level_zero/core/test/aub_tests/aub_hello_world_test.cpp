@@ -27,8 +27,8 @@ TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) 
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);
 
-    auto srcMemory = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
-    auto dstMemory = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
+    auto srcMemory = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    auto dstMemory = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 
     memset(srcMemory, val, size);
     commandList->appendMemoryCopy(dstMemory, srcMemory, size, 0, 0, nullptr);

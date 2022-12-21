@@ -1198,13 +1198,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    if ((dstAllocationStruct.allocData && dstAllocationStruct.allocData->context != this->context) ||
-        (srcAllocationStruct.allocData && srcAllocationStruct.allocData->context != this->context)) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                           "Destination and source pointers need to be part of the same context as the list %s\n", "");
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
     }
@@ -1963,7 +1956,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         }
     }
 
-    return {alignedPtr, offset, alloc, hostPointerNeedsFlush, allocData};
+    return {alignedPtr, offset, alloc, hostPointerNeedsFlush};
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

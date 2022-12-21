@@ -122,7 +122,7 @@ struct ModuleFixture : public DeviceFixture {
             return kernelImmDatas;
         }
 
-        static Module *create(L0::Context *context, L0::Device *device, const ze_module_desc_t *desc,
+        static Module *create(L0::Device *device, const ze_module_desc_t *desc,
                               ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
     };
 
