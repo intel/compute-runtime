@@ -449,17 +449,6 @@ inline bool GfxCoreHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(const 
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const {
-    const auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    auto lowestHwRevIdWithBug = productHelper->getHwRevIdFromStepping(lowestSteppingWithBug, hwInfo);
-    auto hwRevIdWithFix = productHelper->getHwRevIdFromStepping(steppingWithFix, hwInfo);
-    if ((lowestHwRevIdWithBug == CommonConstants::invalidStepping) || (hwRevIdWithFix == CommonConstants::invalidStepping)) {
-        return false;
-    }
-    return (lowestHwRevIdWithBug <= hwInfo.platform.usRevId && hwInfo.platform.usRevId < hwRevIdWithFix);
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
     return false;
 }
