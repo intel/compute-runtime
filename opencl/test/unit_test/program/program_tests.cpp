@@ -3361,6 +3361,24 @@ TEST(ProgramPopulateZebinExtendedArgsMetadataTests, givenNonZebinaryFormatWhenCa
     buildInfo.kernelInfoArray.clear();
 }
 
+TEST(ProgramVmeUsage, givenVmeUsageWhenContainsVmeUsageIsCalledThenReturnTrue) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+
+    {
+        KernelInfo kernelInfo;
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = false;
+        std::vector<KernelInfo *> kernelInfos{&kernelInfo};
+        EXPECT_FALSE(program.containsVmeUsage(kernelInfos));
+    }
+    {
+        KernelInfo kernelInfo;
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = true;
+        std::vector<KernelInfo *> kernelInfos{&kernelInfo};
+        EXPECT_TRUE(program.containsVmeUsage(kernelInfos));
+    }
+}
+
 TEST(ProgramPopulateZebinExtendedArgsMetadataTests, givenZebinaryFormatAndDecodeErrorOnDecodingArgsMetadataWhenCallingPopulateZebinExtendedArgsMetadataThenMetadataIsNotPopulated) {
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));

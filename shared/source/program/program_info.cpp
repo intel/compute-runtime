@@ -36,13 +36,13 @@ bool requiresLocalMemoryWindowVA(const ProgramInfo &programInfo) {
     return false;
 }
 
-bool isRebuiltToPatchtokensRequired(Device *neoDevice, ArrayRef<const uint8_t> archive, std::string &optionsString, bool isBuiltin) {
+bool isRebuiltToPatchtokensRequired(Device *neoDevice, ArrayRef<const uint8_t> archive, std::string &optionsString, bool isBuiltin, bool isVmeUsed) {
     if (isBuiltin) {
         return false;
     }
     auto isSourceLevelDebuggerActive = (nullptr != neoDevice->getSourceLevelDebugger());
     auto isZebinFormat = NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(archive);
-    if (isSourceLevelDebuggerActive && isZebinFormat) {
+    if ((isSourceLevelDebuggerActive || isVmeUsed) && isZebinFormat) {
         auto pos = optionsString.find(NEO::CompilerOptions::allowZebin.str());
         optionsString.erase(pos, pos + NEO::CompilerOptions::allowZebin.length());
         optionsString += " " + NEO::CompilerOptions::disableZebin.str();
