@@ -572,5 +572,5 @@ DG2TEST_F(ProductHelperTestDg2, givenDebugFlagWhenCheckingIsResolveDependenciesB
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
-    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
+    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
