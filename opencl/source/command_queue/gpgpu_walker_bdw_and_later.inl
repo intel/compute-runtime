@@ -106,12 +106,13 @@ template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     TagNodeBase &hwTimeStamps,
     LinearStream *commandStream,
-    const HardwareInfo &hwInfo) {
+    const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
     PipeControlArgs args;
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
         PostSyncMode::Timestamp,
@@ -120,7 +121,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
         hwInfo,
         args);
 
-    if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
         // MI_STORE_REGISTER_MEM for context local timestamp
         timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);
 
@@ -138,12 +140,13 @@ template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     TagNodeBase &hwTimeStamps,
     LinearStream *commandStream,
-    const HardwareInfo &hwInfo) {
+    const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalEndTS);
     PipeControlArgs args;
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
         PostSyncMode::Timestamp,
@@ -152,7 +155,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
         hwInfo,
         args);
 
-    if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
         // MI_STORE_REGISTER_MEM for context local timestamp
         uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
 

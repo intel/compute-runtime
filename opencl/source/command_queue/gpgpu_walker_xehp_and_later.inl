@@ -158,11 +158,11 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite() {
 }
 
 template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const HardwareInfo &hwInfo) {
+void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
 template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const HardwareInfo &hwInfo) {
+void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
 template <typename GfxFamily>

@@ -1321,12 +1321,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
     auto hwTimeStamp1 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp1);
 
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, pDevice->getHardwareInfo());
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, pDevice->getRootDeviceEnvironment());
 
     auto hwTimeStamp2 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp2);
 
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp2, &cmdStream, pDevice->getHardwareInfo());
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp2, &cmdStream, pDevice->getRootDeviceEnvironment());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -1393,11 +1393,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
 
     auto hwTimeStamp1 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp1);
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream, pDevice->getHardwareInfo());
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream, pDevice->getRootDeviceEnvironment());
 
     auto hwTimeStamp2 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp2);
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp2, &cmdStream, pDevice->getHardwareInfo());
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp2, &cmdStream, pDevice->getRootDeviceEnvironment());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));

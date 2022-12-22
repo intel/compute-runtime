@@ -52,12 +52,12 @@ class GpgpuWalkerHelper {
     static void dispatchProfilingCommandsStart(
         TagNodeBase &hwTimeStamps,
         LinearStream *commandStream,
-        const HardwareInfo &hwInfo);
+        const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void dispatchProfilingCommandsEnd(
         TagNodeBase &hwTimeStamps,
         LinearStream *commandStream,
-        const HardwareInfo &hwInfo);
+        const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void dispatchPerfCountersCommandsStart(
         CommandQueue &commandQueue,

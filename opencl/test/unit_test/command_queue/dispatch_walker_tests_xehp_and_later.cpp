@@ -1460,9 +1460,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenDispatchPr
 
     auto hwTimeStamp1 = timeStampAllocator.getTag();
 
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, device->getHardwareInfo());
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, device->getRootDeviceEnvironment());
 
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream, device->getHardwareInfo());
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream, device->getRootDeviceEnvironment());
 
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
