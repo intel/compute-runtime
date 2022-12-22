@@ -121,7 +121,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
 
     for (const auto &engine : device->getAllEngines()) {
         auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
-        if (osContexLinux->getDeviceBitfield().test(1u)) {
+        if (osContexLinux->getDeviceBitfield().test(1u) && EngineHelpers::isBcs(osContexLinux->getEngineType())) {
             EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
         } else {
             EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
@@ -139,7 +139,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
 
     for (const auto &engine : devices[1]->getAllEngines()) {
         auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-        if (osContexLinux->getDeviceBitfield().test(0u)) {
+        if (osContexLinux->getDeviceBitfield().test(0u) && EngineHelpers::isBcs(osContexLinux->getEngineType())) {
             EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
         } else {
             EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
