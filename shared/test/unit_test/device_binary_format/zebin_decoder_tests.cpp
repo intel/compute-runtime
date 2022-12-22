@@ -7004,51 +7004,6 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
 }
 
-TEST(PopulateKernelDescriptor, givenGlobalBufferAndConstBufferWhenPopulatingKernelDescriptorThenMakeThemStateful) {
-    NEO::ConstStringRef zeinfo = R"===(
-kernels:
-    - name : some_kernel
-      execution_env:
-        simd_size: 8
-      payload_arguments:
-        - arg_type:        global_base
-          offset:          0
-          size:            8
-          bti_value:       0
-        - arg_type:        const_base
-          offset:          8
-          size:            8
-          bti_value:       1
-...
-)===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto res = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, res);
-    EXPECT_TRUE(warnings.empty());
-    EXPECT_TRUE(errors.empty());
-
-    const auto &kernelInfo = *programInfo.kernelInfos.rbegin();
-    EXPECT_EQ(2u, kernelInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries);
-    EXPECT_EQ(128u, kernelInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
-    ASSERT_EQ(192u, kernelInfo->heapInfo.SurfaceStateHeapSize);
-    ASSERT_NE(nullptr, kernelInfo->heapInfo.pSsh);
-}
-
 TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersFails) {
     NEO::KernelDescriptor kd;
     std::string errors, warnings;
