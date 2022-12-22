@@ -74,6 +74,8 @@ cl_int Program::build(
                 break;
             }
 
+            disableZebinIfVmeEnabled(options, internalOptions);
+
             TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
             if (createdFrom != CreatedFrom::SOURCE) {
                 inputArgs.srcType = isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc;

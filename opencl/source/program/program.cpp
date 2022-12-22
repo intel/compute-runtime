@@ -443,6 +443,27 @@ bool Program::containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) con
     return false;
 }
 
+void Program::disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions) {
+    auto isVme = false;
+    const char *vmeOptions[] = {"cl_intel_device_side_advanced_vme_enable",
+                                "cl_intel_device_side_avc_vme_enable",
+                                "cl_intel_device_side_vme_enable"};
+    for (auto vmeOption : vmeOptions) {
+        auto pos = options.find(vmeOption);
+        if (pos != std::string::npos) {
+            isVme = true;
+            break;
+        }
+    }
+    if (isVme) {
+        auto pos = options.find(CompilerOptions::allowZebin.str());
+        if (pos != std::string::npos) {
+            options.erase(pos, pos + CompilerOptions::allowZebin.length());
+        }
+        internalOptions += " " + CompilerOptions::disableZebin.str();
+    }
+}
+
 bool Program::isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
     return funcNotify != nullptr || userData == nullptr;
 }

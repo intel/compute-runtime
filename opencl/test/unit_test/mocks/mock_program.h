@@ -52,6 +52,7 @@ class MockProgram : public Program {
     using Program::createdFrom;
     using Program::createProgramFromBinary;
     using Program::deviceBuildInfos;
+    using Program::disableZebinIfVmeEnabled;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
     using Program::internalOptionsToExtract;
