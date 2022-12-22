@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 

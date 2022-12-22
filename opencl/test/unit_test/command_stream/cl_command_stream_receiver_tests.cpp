@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/raii_hw_helper.h"

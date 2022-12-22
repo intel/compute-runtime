@@ -12,6 +12,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/test/common/base_ult_config_listener.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"

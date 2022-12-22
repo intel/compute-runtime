@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -35,6 +36,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
@@ -181,6 +183,10 @@ void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &alloc
         allocationsForResidency.clear();
     }
     this->processEviction();
+}
+
+SubmissionStatus CommandStreamReceiver::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
+    return SubmissionStatus::SUCCESS;
 }
 
 void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation) {
@@ -960,6 +966,10 @@ void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait
 
 LogicalStateHelper *CommandStreamReceiver::getLogicalStateHelper() const {
     return logicalStateHelper.get();
+}
+
+bool CommandStreamReceiver::isTbxMode() const {
+    return (getType() == NEO::CommandStreamReceiverType::CSR_TBX || getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 }
 
 TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus status) {

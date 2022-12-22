@@ -9,6 +9,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

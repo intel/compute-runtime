@@ -10,6 +10,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/test_files.h"

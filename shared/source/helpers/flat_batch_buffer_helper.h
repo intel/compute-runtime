@@ -7,13 +7,16 @@
 
 #pragma once
 
-#include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/helpers/address_patch.h"
+#include "shared/source/helpers/common_types.h"
 
 #include <map>
 #include <vector>
 
 namespace NEO {
+class LinearStream;
+class GraphicsAllocation;
+struct BatchBuffer;
 
 enum class DispatchMode;
 class MemoryManager;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/cmd_parse/cmd_parse_3d_state_btd.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"

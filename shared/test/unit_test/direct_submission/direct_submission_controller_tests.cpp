@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/os_thread.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"

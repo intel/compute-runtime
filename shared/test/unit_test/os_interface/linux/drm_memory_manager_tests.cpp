@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/i915.h"

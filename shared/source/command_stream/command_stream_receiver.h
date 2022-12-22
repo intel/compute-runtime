@@ -11,18 +11,14 @@
 #include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/options.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/os_interface/os_thread.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include <chrono>
@@ -31,6 +27,8 @@
 #include <iostream>
 
 namespace NEO {
+class Thread;
+class FlatBatchBufferHelper;
 class AllocationsList;
 class Device;
 class ExecutionEnvironment;
@@ -103,7 +101,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
     MOCKABLE_VIRTUAL void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency, bool clearAllocations);
-    virtual SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) { return SubmissionStatus::SUCCESS; }
+    virtual SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId);
     virtual void processEviction();
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
 
@@ -186,9 +184,9 @@ class CommandStreamReceiver {
     void programForAubSubCapture(bool wasActiveInPreviousEnqueue, bool isActive);
     virtual void addAubComment(const char *comment);
 
-    IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize);
-    void allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap);
-    void releaseIndirectHeap(IndirectHeap::Type heapType);
+    IndirectHeap &getIndirectHeap(IndirectHeapType heapType, size_t minRequiredSize);
+    void allocateHeapMemory(IndirectHeapType heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap);
+    void releaseIndirectHeap(IndirectHeapType heapType);
 
     virtual enum CommandStreamReceiverType getType() const = 0;
     void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
@@ -385,9 +383,7 @@ class CommandStreamReceiver {
         return externalCondition ? dcFlushSupport : false;
     }
 
-    bool isTbxMode() const {
-        return (getType() == NEO::CommandStreamReceiverType::CSR_TBX || getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
-    }
+    bool isTbxMode() const;
 
   protected:
     void cleanupResources();
@@ -442,7 +438,7 @@ class CommandStreamReceiver {
 
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
 
-    IndirectHeap *indirectHeap[IndirectHeap::Type::NUM_TYPES];
+    IndirectHeap *indirectHeap[IndirectHeapType::NUM_TYPES];
     OsContext *osContext = nullptr;
     TaskCountType *completionFenceValuePointer = nullptr;
 

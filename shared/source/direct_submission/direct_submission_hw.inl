@@ -14,6 +14,7 @@
 #include "shared/source/direct_submission/direct_submission_hw_diagnostic_mode.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/ptr_math.h"

@@ -14,6 +14,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/memory_manager.h"

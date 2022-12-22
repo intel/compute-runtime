@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {

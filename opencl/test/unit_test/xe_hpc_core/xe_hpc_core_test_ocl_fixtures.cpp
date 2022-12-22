@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/xe_hpc_core/xe_hpc_core_test_ocl_fixtures.h"
 
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/mocks/mock_platform.h"
