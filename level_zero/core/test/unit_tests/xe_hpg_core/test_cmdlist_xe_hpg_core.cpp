@@ -339,7 +339,7 @@ struct ProgramAllFieldsInComputeMode {
 HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenWithoutTrackingFieldsChangedWithTrackingUpdatedClean, ProgramAllFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
     Mock<::L0::Kernel> kernel;
-    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();

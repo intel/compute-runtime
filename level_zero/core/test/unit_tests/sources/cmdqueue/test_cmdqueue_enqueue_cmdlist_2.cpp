@@ -127,7 +127,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeC
 HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothThenPipelineSelectProgrammedOnce, IsAtMostXeHpcCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
-    bool additionalPipelineSelect = NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily)->is3DPipelineSelectWARequired() &&
+    auto &productHelper = device->getProductHelper();
+    bool additionalPipelineSelect = productHelper.is3DPipelineSelectWARequired() &&
                                     neoDevice->getDefaultEngine().commandStreamReceiver->isRcs();
 
     ze_result_t returnValue;

@@ -366,7 +366,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
           GivenComputeModeTraitsSetToFalsePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenFieldsAreDirtyWithTrackingAndCleanWithoutTracking,
           ProgramAllFieldsInComputeMode) {
     DebugManagerStateRestore restorer;
-    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     Mock<::L0::Kernel> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -770,7 +770,8 @@ using MultiReturnCommandListTest = Test<MultiReturnCommandListFixture>;
 HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
 
@@ -936,7 +937,8 @@ HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDis
 HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
 
@@ -1101,7 +1103,8 @@ HWTEST2_F(MultiReturnCommandListTest,
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandQueue->frontEndStateTracking);
@@ -1350,7 +1353,8 @@ HWTEST2_F(MultiReturnCommandListTest,
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
 
@@ -1596,7 +1600,8 @@ HWTEST2_F(MultiReturnCommandListTest,
 HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothRegularFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandListImmediate->frontEndStateTracking);
@@ -1721,7 +1726,8 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
 HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
-    NEO::ProductHelper::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandListImmediate->frontEndStateTracking);

@@ -60,8 +60,7 @@ class GpgpuWalkerHelper {
         const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void dispatchPerfCountersCommandsStart(
-        CommandQueue &commandQueue,
-        TagNodeBase &hwPerfCounter,
+        CommandQueue &commandQueue, TagNodeBase &hwPerfCounter,
         LinearStream *commandStream);
 
     static void dispatchPerfCountersCommandsEnd(

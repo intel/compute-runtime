@@ -143,7 +143,8 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenCommandListThatRequiresDisabledEU
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    bool disableEuFusion = NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily)->getFrontEndPropertyDisableEuFusionSupport();
+    auto &productHelper = device->getProductHelper();
+    bool disableEuFusion = productHelper.getFrontEndPropertyDisableEuFusionSupport();
     int32_t expectedDisableEuFusion = (disableEuFusion || commandQueue->frontEndStateTracking) ? 1 : -1;
     EXPECT_EQ(expectedDisableEuFusion, commandQueue->getCsr()->getStreamProperties().frontEndState.disableEUFusion.value);
 

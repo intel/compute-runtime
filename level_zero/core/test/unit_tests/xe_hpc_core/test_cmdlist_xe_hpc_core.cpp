@@ -33,7 +33,7 @@ struct LocalMemoryModuleFixture : public ModuleFixture {
 using CommandListAppendLaunchKernelXeHpcCore = Test<LocalMemoryModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsXeHpcCore) {
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -569,7 +569,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
     hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -639,7 +639,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
     hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -707,7 +707,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
     hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -763,7 +763,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
     hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -835,7 +835,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
     hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -905,7 +905,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
     hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -1045,7 +1045,7 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto &hwInfo = *input.device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = input.device->getProductHelper();
 
         VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
         hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -1107,7 +1107,7 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto &hwInfo = *input.device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-        auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = input.device->getProductHelper();
 
         VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
         hwRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);

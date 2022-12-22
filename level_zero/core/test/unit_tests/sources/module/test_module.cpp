@@ -153,7 +153,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
         EXPECT_TRUE(ki->isIsaCopiedToAllocation());
     }
 
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device.getProductHelper();
     if (productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
         EXPECT_EQ(zebinData->numOfKernels, blitterCalled);
     } else {
@@ -2276,7 +2276,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPackedTargetDeviceBinary) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
+    auto &productHelper = device->getProductHelper();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     HardwareIpVersion aotConfig = {0};
     aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);

@@ -1237,7 +1237,7 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
 }
 
 TEST_F(DeviceTest, whenCheckingIfStatelessCompressionIsSupportedThenReturnFalse) {
-    const auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
     EXPECT_FALSE(productHelper.allowStatelessCompression(*defaultHwInfo));
 }
 
@@ -1691,7 +1691,7 @@ TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithNonNullPtrThenPro
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
     auto hwInfo = *NEO::defaultHwInfo;
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
     EXPECT_EQ(memProperties.maxClockRate, productHelper.getDeviceMemoryMaxClkRate(hwInfo, nullptr, 0));
     EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
@@ -2278,7 +2278,8 @@ TEST_F(DeviceTests, WhenGettingMemoryAccessPropertiesThenSuccessIsReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &hwInfo = device->getHwInfo();
-    auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
+
     auto expectedHostAllocCapabilities = static_cast<ze_memory_access_cap_flags_t>(productHelper.getHostMemCapabilities(&hwInfo));
     EXPECT_EQ(expectedHostAllocCapabilities, properties.hostAllocCapabilities);
 

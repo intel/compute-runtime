@@ -79,7 +79,8 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
 
 void ModuleMutableCommandListFixture::setUpImpl(uint32_t revision) {
     if (revision != 0) {
-        auto revId = NEO::ProductHelper::get(device->getHwInfo().platform.eProductFamily)->getHwRevIdFromStepping(revision, device->getHwInfo());
+        auto &productHelper = device->getProductHelper();
+        auto revId = productHelper.getHwRevIdFromStepping(revision, device->getHwInfo());
         neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = revId;
     }
 

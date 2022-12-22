@@ -58,7 +58,8 @@ TEST_F(AlocationHelperTests, GivenLinearStreamAllocTypeWhenUseExternalAllocatorF
     allocationData.type = AllocationType::LINEAR_STREAM;
     std::unique_ptr<MockMemoryManagerAllocationHelper> mockMemoryManager(new MockMemoryManagerAllocationHelper(*device->getNEODevice()->getExecutionEnvironment()));
     mockMemoryManager->allocateGraphicsMemory(allocationData);
-    EXPECT_EQ(mockMemoryManager->passedUseLocalMem, ProductHelper::get(device->getHwInfo().platform.eProductFamily)->heapInLocalMem(device->getHwInfo()));
+    auto &productHelper = device->getProductHelper();
+    EXPECT_EQ(mockMemoryManager->passedUseLocalMem, productHelper.heapInLocalMem(device->getHwInfo()));
 }
 
 TEST_F(AlocationHelperTests, GivenInternalAllocTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUseLocalMemEqualFalse) {
