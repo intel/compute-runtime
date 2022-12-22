@@ -3379,6 +3379,34 @@ TEST(ProgramVmeUsage, givenVmeUsageWhenContainsVmeUsageIsCalledThenReturnTrue) {
     }
 }
 
+TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZebinIsDisabled) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+
+    {
+        std::string options = CompilerOptions::allowZebin.str();
+        std::string internalOptions = "";
+        program.disableZebinIfVmeEnabled(options, internalOptions);
+        EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::allowZebin));
+        EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
+    }
+
+    {
+        std::string options = CompilerOptions::allowZebin.str() + " cl_intel_device_side_vme_enable";
+        std::string internalOptions = "";
+        program.disableZebinIfVmeEnabled(options, internalOptions);
+        EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::allowZebin));
+        EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
+    }
+    {
+        std::string options = "cl_intel_device_side_vme_enable";
+        std::string internalOptions = "";
+        program.disableZebinIfVmeEnabled(options, internalOptions);
+        EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::allowZebin));
+        EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
+    }
+}
+
 TEST(ProgramPopulateZebinExtendedArgsMetadataTests, givenZebinaryFormatAndDecodeErrorOnDecodingArgsMetadataWhenCallingPopulateZebinExtendedArgsMetadataThenMetadataIsNotPopulated) {
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
