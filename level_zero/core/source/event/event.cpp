@@ -48,7 +48,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driver);
     bool useDevicesFromApi = true;
-    this->isDeviceEventPoolAllocation = isEventPoolDeviceAllocationFlagSet();
+    bool useDeviceAlloc = isEventPoolDeviceAllocationFlagSet();
 
     if (numDevices == 0) {
         currentNumDevices = static_cast<uint32_t>(driverHandleImp->devices.size());
@@ -78,17 +78,17 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 
     auto &rootDeviceEnvironment = getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-    this->isDeviceEventPoolAllocation |= l0GfxCoreHelper.alwaysAllocateEventInLocalMem();
+    useDeviceAlloc |= l0GfxCoreHelper.alwaysAllocateEventInLocalMem();
 
     initializeSizeParameters(numDevices, phDevices, *driverHandleImp, rootDeviceEnvironment);
 
     NEO::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
                                                                        : NEO::AllocationType::BUFFER_HOST_MEMORY;
     if (this->devices.size() > 1) {
-        this->isDeviceEventPoolAllocation = false;
+        useDeviceAlloc = false;
     }
 
-    if (this->isDeviceEventPoolAllocation) {
+    if (useDeviceAlloc) {
         allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
     }
 
@@ -96,9 +96,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 
     bool allocatedMemory = false;
 
-    this->isHostVisibleEventPoolAllocation = !(isEventPoolDeviceAllocationFlagSet());
-
-    if (this->isDeviceEventPoolAllocation) {
+    if (useDeviceAlloc) {
         NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, devices[0]->getNEODevice()->getDeviceBitfield()};
         allocationProperties.alignment = eventAlignment;
 
