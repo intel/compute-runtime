@@ -584,8 +584,9 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundWhenDispatchCommandBuffer
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     hwParse.findHardwareCommands<FamilyType>();
     auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
-    EXPECT_EQ(pipeControl, nullptr);
-    EXPECT_TRUE(osContext->isTlbFlushRequired());
+    EXPECT_TRUE(pipeControl->getTlbInvalidate());
+    EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(osContext->isTlbFlushRequired());
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 }
