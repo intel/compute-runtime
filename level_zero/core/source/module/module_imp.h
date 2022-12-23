@@ -182,6 +182,7 @@ struct ModuleImp : public Module {
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
     uint32_t debugModuleHandle = 0;
+    uint32_t debugElfHandle = 0;
     uint32_t profileFlags = 0;
     uint64_t moduleLoadAddress = std::numeric_limits<uint64_t>::max();
 

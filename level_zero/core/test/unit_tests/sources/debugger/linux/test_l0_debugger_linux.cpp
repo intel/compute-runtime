@@ -176,14 +176,14 @@ TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsTh
     EXPECT_FALSE(drmMock->registerClassesCalled);
 }
 
-TEST_F(L0DebuggerLinuxTest, whenRegisterElfisCalledThenItRegistersBindExtHandles) {
+TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledThenItRegistersBindExtHandles) {
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
     MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
     MockBufferObject bo(drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
-    device->getL0Debugger()->registerElf(&debugData, &isaAllocation);
+    device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
 
     EXPECT_EQ(static_cast<size_t>(10), drmMock->registeredDataSize);
 
@@ -196,31 +196,38 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfisCalledThenItRegistersBindExtHandles
     }
 }
 
-TEST_F(L0DebuggerLinuxTest, whenRegisterElfisCalledInAllocationWithNoBOThenItRegistersBindExtHandles) {
+TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledInAllocationWithNoBOThenItRegistersBindExtHandles) {
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
     MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    device->getL0Debugger()->registerElf(&debugData, &isaAllocation);
+    device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
 
     EXPECT_EQ(static_cast<size_t>(10u), drmMock->registeredDataSize);
 }
 
-TEST_F(L0DebuggerLinuxTest, givenNoOSInterfaceThenRegisterElfDoesNothing) {
-    NEO::OSInterface *osInterfaceTmp = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.release();
+HWTEST_F(L0DebuggerLinuxTest, givenFailureToRegisterElfWhenRegisterElfAndLinkWithAllocationIsCalledThenBindExtHandleIsNotAdded) {
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    drmMock->registeredDataSize = 0;
     MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockBufferObject bo(drmMock, 3, 0, 0, 1);
+    isaAllocation.bufferObjects[0] = &bo;
 
-    device->getL0Debugger()->registerElf(&debugData, &isaAllocation);
+    auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
+    debuggerL0Hw->elfHandleToReturn = 0;
+    device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
 
-    EXPECT_EQ(static_cast<size_t>(0u), drmMock->registeredDataSize);
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterfaceTmp);
+    auto &bos = isaAllocation.getBOs();
+    for (auto bo : bos) {
+        if (bo) {
+            auto extBindHandles = bo->getBindExtHandles();
+            EXPECT_EQ(static_cast<size_t>(0), extBindHandles.size());
+        }
+    }
 }
 
-TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAllocationsHaveRegisteredHandle) {
+TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAllocationsHaveRegisteredHandles) {
     MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
     MockBufferObject bo(drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
@@ -230,6 +237,7 @@ TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAlloc
     isaAllocation2.bufferObjects[0] = &bo2;
 
     uint32_t handle = 0;
+    const uint32_t elfHandle = 198;
 
     StackVec<NEO::GraphicsAllocation *, 32> kernelAllocs;
     kernelAllocs.push_back(&isaAllocation);
@@ -238,7 +246,7 @@ TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAlloc
     drmMock->registeredDataSize = 0;
     drmMock->registeredClass = NEO::DrmResourceClass::MaxSize;
 
-    EXPECT_TRUE(device->getL0Debugger()->attachZebinModuleToSegmentAllocations(kernelAllocs, handle));
+    EXPECT_TRUE(device->getL0Debugger()->attachZebinModuleToSegmentAllocations(kernelAllocs, handle, elfHandle));
 
     EXPECT_EQ(sizeof(uint32_t), drmMock->registeredDataSize);
     EXPECT_EQ(NEO::DrmResourceClass::L0ZebinModule, drmMock->registeredClass);
@@ -248,8 +256,15 @@ TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAlloc
         return std::find(bindExtHandles.begin(), bindExtHandles.end(), handle) != bindExtHandles.end();
     };
 
+    const auto containsElfHandle = [elfHandle](const auto &bufferObject) {
+        const auto &bindExtHandles = bufferObject.getBindExtHandles();
+        return std::find(bindExtHandles.begin(), bindExtHandles.end(), elfHandle) != bindExtHandles.end();
+    };
+
     EXPECT_TRUE(containsModuleHandle(bo));
     EXPECT_TRUE(containsModuleHandle(bo2));
+    EXPECT_TRUE(containsElfHandle(bo));
+    EXPECT_TRUE(containsElfHandle(bo2));
 }
 
 TEST_F(L0DebuggerLinuxTest, givenModuleHandleWhenRemoveZebinModuleIsCalledThenHandleIsUnregistered) {

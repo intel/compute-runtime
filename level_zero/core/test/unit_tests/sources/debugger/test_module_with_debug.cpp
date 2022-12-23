@@ -511,7 +511,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializing
 
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
+    EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->registerElfAndLinkCount);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 
     EXPECT_NE(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData.get());
@@ -562,7 +562,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
 
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
+    EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->registerElfAndLinkCount);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 
     EXPECT_EQ(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData.get());
@@ -639,7 +639,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
              zebin.storage.data(), zebin.storage.size());
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(2u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
+    EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 }
 

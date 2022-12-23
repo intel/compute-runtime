@@ -98,10 +98,14 @@ void DebuggerL0::registerAllocationType(GraphicsAllocation *allocation) {
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
 }
 
-void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *allocation) {
+void DebuggerL0::registerElfAndLinkWithAllocation(NEO::DebugData *debugData, NEO::GraphicsAllocation *allocation) {
 }
 
-bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAllocs, uint32_t &moduleHandle) {
+uint32_t DebuggerL0::registerElf(NEO::DebugData *debugData) {
+    return 0;
+}
+
+bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAllocs, uint32_t &moduleHandle, uint32_t elfHandle) {
     return false;
 }
 

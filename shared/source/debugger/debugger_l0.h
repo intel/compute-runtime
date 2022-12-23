@@ -90,7 +90,8 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     }
 
     void printTrackedAddresses(uint32_t contextId);
-    MOCKABLE_VIRTUAL void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation);
+    MOCKABLE_VIRTUAL void registerElfAndLinkWithAllocation(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation);
+    MOCKABLE_VIRTUAL uint32_t registerElf(NEO::DebugData *debugData);
     MOCKABLE_VIRTUAL void notifyCommandQueueCreated(NEO::Device *device);
     MOCKABLE_VIRTUAL void notifyCommandQueueDestroyed(NEO::Device *device);
     MOCKABLE_VIRTUAL void notifyModuleLoadAllocations(Device *device, const StackVec<NEO::GraphicsAllocation *, 32> &allocs);
@@ -102,7 +103,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     virtual size_t getSbaAddressLoadCommandsSize() = 0;
     virtual void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) = 0;
 
-    MOCKABLE_VIRTUAL bool attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAlloc, uint32_t &moduleHandle);
+    MOCKABLE_VIRTUAL bool attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAlloc, uint32_t &moduleHandle, uint32_t elfHandle);
     MOCKABLE_VIRTUAL bool removeZebinModule(uint32_t moduleHandle);
 
     void setSingleAddressSpaceSbaTracking(bool value) {

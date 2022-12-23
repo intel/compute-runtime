@@ -1287,10 +1287,10 @@ void ModuleImp::registerElfInDebuggerL0() {
         NEO::DebugData debugData; // pass debug zebin in vIsa field
         debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
         debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
+        this->debugElfHandle = debuggerL0->registerElf(&debugData);
 
         StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs;
         for (auto &kernImmData : kernelImmDatas) {
-            debuggerL0->registerElf(&debugData, kernImmData->getIsaGraphicsAllocation());
             segmentAllocs.push_back(kernImmData->getIsaGraphicsAllocation());
         }
 
@@ -1301,7 +1301,7 @@ void ModuleImp::registerElfInDebuggerL0() {
             segmentAllocs.push_back(translationUnit->globalConstBuffer);
         }
 
-        debuggerL0->attachZebinModuleToSegmentAllocations(segmentAllocs, debugModuleHandle);
+        debuggerL0->attachZebinModuleToSegmentAllocations(segmentAllocs, this->debugModuleHandle, this->debugElfHandle);
     } else {
         for (auto &kernImmData : kernelImmDatas) {
             if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
@@ -1316,7 +1316,7 @@ void ModuleImp::registerElfInDebuggerL0() {
                     notifyDebugData = &relocatedDebugData;
                 }
 
-                debuggerL0->registerElf(notifyDebugData, kernImmData->getIsaGraphicsAllocation());
+                debuggerL0->registerElfAndLinkWithAllocation(notifyDebugData, kernImmData->getIsaGraphicsAllocation());
             }
         }
     }
