@@ -44,6 +44,11 @@ std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipeli
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isTlbFlushRequired(aub_stream::EngineType engineType) const {
+    return EngineHelpers::isBcs(engineType);
+}
+
+template <>
 void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
     using SAMPLER_STATE = typename XeHpcCoreFamily::SAMPLER_STATE;
 

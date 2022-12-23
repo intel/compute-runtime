@@ -27,6 +27,11 @@ PVCTEST_F(PvcProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
     EXPECT_EQ(aub_stream::ProductFamily::Pvc, productHelper->getAubStreamProductFamily());
 }
 
+PVCTEST_F(PvcProductHelper, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
+    EXPECT_TRUE(productHelper->isTlbFlushRequired(aub_stream::EngineType::ENGINE_BCS2));
+    EXPECT_FALSE(productHelper->isTlbFlushRequired(aub_stream::EngineType::ENGINE_CCS1));
+}
+
 PVCTEST_F(PvcProductHelper, givenPVCRevId3AndAboveWhenGettingThreadEuRatioForScratchThen16IsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.platform.usRevId = 3;
