@@ -131,7 +131,7 @@ class CommandComputeKernel : public Command {
   public:
     CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> surfaces,
                          bool flushDC, bool usesSLM, uint32_t commandType, std::unique_ptr<PrintfHandler> &&printfHandler,
-                         PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount, TagNodeBase *multiRootDeviceSyncNode);
+                         PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount);
 
     ~CommandComputeKernel() override;
 
@@ -150,7 +150,6 @@ class CommandComputeKernel : public Command {
     Kernel *kernel;
     uint32_t kernelCount;
     PreemptionMode preemptionMode;
-    TagNodeBase *multiRootDeviceSyncNode;
 };
 
 class CommandWithoutKernel : public Command {

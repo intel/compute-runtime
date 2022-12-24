@@ -117,11 +117,10 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
 
 CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> surfaces,
                                            bool flushDC, bool usesSLM, uint32_t commandType, std::unique_ptr<PrintfHandler> &&printfHandler,
-                                           PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount,
-                                           TagNodeBase *multiRootDeviceSyncNode)
+                                           PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount)
     : Command(commandQueue, kernelOperation), surfaces(std::move(surfaces)), flushDC(flushDC), slmUsed(usesSLM),
       commandType(commandType), printfHandler(std::move(printfHandler)), kernel(kernel),
-      kernelCount(kernelCount), preemptionMode(preemptionMode), multiRootDeviceSyncNode(multiRootDeviceSyncNode) {
+      kernelCount(kernelCount), preemptionMode(preemptionMode) {
     UNRECOVERABLE_IF(nullptr == this->kernel);
     kernel->incRefInternal();
 }
@@ -163,9 +162,6 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         printfHandler->makeResident(commandStreamReceiver);
     }
     makeTimestampPacketsResident(commandStreamReceiver);
-    if (multiRootDeviceSyncNode != nullptr) {
-        commandStreamReceiver.makeResident(*multiRootDeviceSyncNode->getBaseGraphicsAllocation());
-    }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
         CsrDependencies csrDeps;
@@ -217,7 +213,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         false);                                                                           // hasRelaxedOrderingDependencies
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
-        eventsRequest.fillCsrDependenciesForRootDevices(dispatchFlags.csrDependencies, commandStreamReceiver);
+        eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
     }
 
     const bool isHandlingBarrier = commandQueue.getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
@@ -310,7 +306,7 @@ TaskCountType CommandWithoutKernel::dispatchBlitOperation() {
     blitProperties.outputTimestampPacket = currentTimestampPacketNodes->peekNodes()[0];
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
-        eventsRequest.fillCsrDependenciesForRootDevices(blitProperties.csrDependencies, *bcsCsr);
+        eventsRequest.fillCsrDependenciesForTaskCountContainer(blitProperties.csrDependencies, *bcsCsr);
     }
 
     const auto newTaskCount = bcsCsr->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
@@ -392,7 +388,7 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         false);                                                                // hasRelaxedOrderingDependencies
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
-        eventsRequest.fillCsrDependenciesForRootDevices(dispatchFlags.csrDependencies, commandStreamReceiver);
+        eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
     }
 
     const bool isHandlingBarrier = commandQueue.getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();

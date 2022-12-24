@@ -15,13 +15,10 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/surface.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/tag_allocator.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/command_stream_receiver_fixture.inl"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
@@ -35,7 +32,6 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
@@ -2464,90 +2460,4 @@ HWTEST_F(CommandStreamReceiverHwTest, givenVariousCsrModeWhenGettingTbxModeThenE
 
     ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX_WITH_AUB;
     EXPECT_TRUE(ultCsr.isTbxMode());
-}
-
-HWTEST_F(CommandStreamReceiverHwTest, GivenTwoRootDevicesWhengetMultiRootDeviceTimestampPacketAllocatorCalledThenAllocatorForTwoDevicesCreated) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), true, 2u);
-    auto devices = DeviceFactory::createDevices(*executionEnvironment.release());
-    const RootDeviceIndicesContainer indices = {0u, 1u};
-    auto csr = devices[0]->getDefaultEngine().commandStreamReceiver;
-    auto allocator = csr->createMultiRootDeviceTimestampPacketAllocator(indices);
-    class MockTagAllocatorBase : public TagAllocatorBase {
-      public:
-        using TagAllocatorBase::maxRootDeviceIndex;
-    };
-    EXPECT_EQ(reinterpret_cast<MockTagAllocatorBase *>(allocator.get())->maxRootDeviceIndex, 1u);
-}
-HWTEST_F(CommandStreamReceiverHwTest, GivenFiveRootDevicesWhengetMultiRootDeviceTimestampPacketAllocatorCalledThenAllocatorForFiveDevicesCreated) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), true, 4u);
-    auto devices = DeviceFactory::createDevices(*executionEnvironment.release());
-    const RootDeviceIndicesContainer indices = {0u, 1u, 2u, 3u};
-    auto csr = devices[0]->getDefaultEngine().commandStreamReceiver;
-    auto allocator = csr->createMultiRootDeviceTimestampPacketAllocator(indices);
-    class MockTagAllocatorBase : public TagAllocatorBase {
-      public:
-        using TagAllocatorBase::maxRootDeviceIndex;
-    };
-    EXPECT_EQ(reinterpret_cast<MockTagAllocatorBase *>(allocator.get())->maxRootDeviceIndex, 3u);
-}
-HWTEST_F(CommandStreamReceiverHwTest, givenMultiRootDeviceSyncNodeWhenFlushBcsTAskThenMiFlushAdded) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
-
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
-                                                                          commandStreamReceiver, commandStreamReceiver.getTagAllocation(), nullptr,
-                                                                          commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(),
-                                                                          commandStreamReceiver.getTagAllocation()->getGpuAddress(), 0,
-                                                                          0, 0, 0, 0, 0, 0, 0);
-    auto tag = mockTagAllocator->getTag();
-    blitProperties.multiRootDeviceEventSync = tag;
-
-    BlitPropertiesContainer container;
-    container.push_back(blitProperties);
-    commandStreamReceiver.flushBcsTask(container, true, false, *pDevice);
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-
-    auto cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    bool nodeAddressFound = false;
-    while (cmdIterator != hwParser.cmdList.end()) {
-        auto flush = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
-        if (flush->getDestinationAddress() == tag->getGpuAddress() + tag->getContextEndOffset()) {
-            nodeAddressFound = true;
-            break;
-        }
-        cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(++cmdIterator, hwParser.cmdList.end());
-    }
-    EXPECT_TRUE(nodeAddressFound);
-}
-HWTEST_F(CommandStreamReceiverHwTest, givenNullPtrAsMultiRootDeviceSyncNodeWhenFlushBcsTAskThenMiFlushNotAdded) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
-
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
-                                                                          commandStreamReceiver, commandStreamReceiver.getTagAllocation(), nullptr,
-                                                                          commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(),
-                                                                          commandStreamReceiver.getTagAllocation()->getGpuAddress(), 0,
-                                                                          0, 0, 0, 0, 0, 0, 0);
-    auto tag = mockTagAllocator->getTag();
-
-    BlitPropertiesContainer container;
-    container.push_back(blitProperties);
-    commandStreamReceiver.flushBcsTask(container, true, false, *pDevice);
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-
-    auto cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    bool nodeAddressFound = false;
-    while (cmdIterator != hwParser.cmdList.end()) {
-        auto flush = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
-        if (flush->getDestinationAddress() == tag->getGpuAddress() + tag->getContextEndOffset()) {
-            nodeAddressFound = true;
-            break;
-        }
-        cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(++cmdIterator, hwParser.cmdList.end());
-    }
-    EXPECT_FALSE(nodeAddressFound);
 }

@@ -248,7 +248,6 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::latestSentEnqueueType;
     using BaseClass::obtainCommandStream;
     using BaseClass::obtainNewTimestampPacketNodes;
-    using BaseClass::processDispatchForKernels;
     using BaseClass::requiresCacheFlushAfterWalker;
     using BaseClass::throttle;
     using BaseClass::timestampPacketContainer;

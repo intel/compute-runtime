@@ -13,7 +13,6 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_bdw_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_process_dispatch_for_kernels_instance.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cpu_data_transfer_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_selection_args.h

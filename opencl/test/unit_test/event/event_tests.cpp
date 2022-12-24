@@ -483,7 +483,7 @@ TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefA
 
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     v.push_back(bufferSurf);
-    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1, nullptr);
+    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
@@ -526,7 +526,7 @@ TEST_F(InternalsEventTest, GivenSubmitCommandTrueWhenSubmittingCommandsThenRefAp
     NullSurface *surface = new NullSurface;
     v.push_back(surface);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1, nullptr);
+    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
@@ -577,7 +577,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1, nullptr);
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
@@ -629,7 +629,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1, nullptr);
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
@@ -678,7 +678,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1, nullptr);
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
@@ -1167,7 +1167,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
       public:
         using CommandComputeKernel::eventsWaitlist;
         MockCommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces, Kernel *kernel)
-            : CommandComputeKernel(commandQueue, kernelOperation, surfaces, false, false, false, nullptr, PreemptionMode::Disabled, kernel, 0, nullptr) {}
+            : CommandComputeKernel(commandQueue, kernelOperation, surfaces, false, false, false, nullptr, PreemptionMode::Disabled, kernel, 0) {}
     };
     class MockEvent : public Event {
       public:
@@ -1748,7 +1748,7 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     std::vector<Surface *> v;
-    auto cmd = new CommandComputeKernel(*pCmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1, nullptr);
+    auto cmd = new CommandComputeKernel(*pCmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1);
     event->setCommand(std::unique_ptr<Command>(cmd));
 
     FlushStamp expectedFlushStamp = 0;

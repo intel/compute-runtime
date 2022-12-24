@@ -133,7 +133,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                     walkerArgs.currentTimestampPacketNodes);
 
     walkerArgs.currentDispatchIndex = 0;
-
     for (auto &dispatchInfo : multiDispatchInfo) {
         dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
         walkerArgs.isMainKernel = (dispatchInfo.getKernel() == mainKernel);
@@ -142,19 +141,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         walkerArgs.currentDispatchIndex++;
         dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
-    }
-
-    if (walkerArgs.multiRootDeviceEventStamp != nullptr) {
-        const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
-        PipeControlArgs args;
-        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-        MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-            *commandStream,
-            PostSyncMode::ImmediateData,
-            walkerArgs.multiRootDeviceEventStamp->getGpuAddress() + walkerArgs.multiRootDeviceEventStamp->getContextEndOffset(),
-            std::numeric_limits<uint64_t>::max(),
-            hwInfo,
-            args);
     }
 
     if (mainKernel->requiresCacheFlushCommand(commandQueue)) {

@@ -1902,7 +1902,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenItIsUnblocke
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
     std::vector<Surface *> surfaces;
-    event->setCommand(std::make_unique<CommandComputeKernel>(*pCmdQ, blockedCommandsData, surfaces, false, false, false, nullptr, pDevice->getPreemptionMode(), pKernel, 1, nullptr));
+    event->setCommand(std::make_unique<CommandComputeKernel>(*pCmdQ, blockedCommandsData, surfaces, false, false, false, nullptr, pDevice->getPreemptionMode(), pKernel, 1));
     event->submitCommand(false);
 
     EXPECT_EQ(numGrfRequired, csr->savedDispatchFlags.numGrfRequired);
@@ -1947,7 +1947,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenInitializeBc
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
     std::vector<Surface *> surfaces;
-    event->setCommand(std::make_unique<CommandComputeKernel>(*pCmdQ, blockedCommandsData, surfaces, false, false, false, nullptr, pDevice->getPreemptionMode(), pKernel, 1, nullptr));
+    event->setCommand(std::make_unique<CommandComputeKernel>(*pCmdQ, blockedCommandsData, surfaces, false, false, false, nullptr, pDevice->getPreemptionMode(), pKernel, 1));
     event->submitCommand(false);
     EXPECT_FALSE(pCmdQ->isCsrLocked);
 }

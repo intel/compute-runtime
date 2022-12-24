@@ -16,10 +16,8 @@
 namespace NEO {
 
 typedef Gen9Family Family;
-#include "opencl/source/command_queue/command_queue_process_dispatch_for_kernels_instance.inl"
-} // namespace NEO
-namespace NEO {
 static auto gfxCore = IGFX_GEN9_CORE;
+
 template class CommandQueueHw<Family>;
 
 template <>

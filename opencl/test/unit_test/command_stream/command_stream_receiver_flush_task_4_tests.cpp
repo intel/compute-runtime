@@ -7,14 +7,12 @@
 
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
-#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -46,18 +44,12 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
     MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
 
     Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
-    auto node1 = event1.getMultiRootTimestampSyncNode();
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
     Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
-    auto node3 = event3.getMultiRootTimestampSyncNode();
     Event event4(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
-    auto node4 = event4.getMultiRootTimestampSyncNode();
     Event event5(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
-    auto node5 = event5.getMultiRootTimestampSyncNode();
     UserEvent userEvent1(&pCmdQ1->getContext());
-    userEvent1.getMultiRootTimestampSyncNode();
     UserEvent userEvent2(&pCmdQ2->getContext());
-    userEvent2.getMultiRootTimestampSyncNode();
 
     userEvent1.setStatus(CL_COMPLETE);
     userEvent2.setStatus(CL_COMPLETE);
@@ -94,12 +86,12 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
         EXPECT_EQ(2u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(4u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(7u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
     }
 
     {
@@ -122,12 +114,12 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
         EXPECT_EQ(2u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(15u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(20u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
     }
     alignedFree(svmPtr);
 }
@@ -154,24 +146,17 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
     cl_device_id devices[] = {device1, device2, device3};
 
     auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 3), false);
-    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(context->getRootDeviceIndices(), device1->getExecutionEnvironment()->memoryManager.get(), 10u);
-    std::unique_ptr<TagAllocatorBase> uniquePtr(mockTagAllocator.release());
-    context->setMultiRootDeviceTimestampPacketAllocator(uniquePtr);
+
     auto pCmdQ1 = context->getSpecialQueue(1u);
     auto pCmdQ2 = context->getSpecialQueue(2u);
     auto pCmdQ3 = context->getSpecialQueue(3u);
 
     Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
-    auto node1 = event1.getMultiRootTimestampSyncNode();
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
     Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
-    auto node3 = event3.getMultiRootTimestampSyncNode();
     Event event4(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
-    auto node4 = event4.getMultiRootTimestampSyncNode();
     Event event5(pCmdQ3, CL_COMMAND_NDRANGE_KERNEL, 7, 21);
-    auto node5 = event5.getMultiRootTimestampSyncNode();
     Event event6(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
-    auto node6 = event6.getMultiRootTimestampSyncNode();
     UserEvent userEvent1(&pCmdQ1->getContext());
     UserEvent userEvent2(&pCmdQ2->getContext());
 
@@ -204,16 +189,16 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         EXPECT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(4u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(21u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ3->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
 
         auto semaphoreCmd2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[2]));
-        EXPECT_EQ(1u, semaphoreCmd2->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node6->getContextEndAddress(0u)), semaphoreCmd2->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(7u, semaphoreCmd2->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd2->getSemaphoreGraphicsAddress());
     }
 
     {
@@ -229,16 +214,16 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         EXPECT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(15u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(20u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
 
         auto semaphoreCmd2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[2]));
-        EXPECT_EQ(1u, semaphoreCmd2->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), semaphoreCmd2->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(21u, semaphoreCmd2->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ3->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd2->getSemaphoreGraphicsAddress());
     }
 
     {
@@ -263,8 +248,8 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         EXPECT_EQ(1u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(15u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
     }
 }
 
@@ -300,16 +285,11 @@ HWTEST_F(CrossDeviceDependenciesTests, givenMultipleEventInMultiRootDeviceEnviro
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
-    event1.getMultiRootTimestampSyncNode();
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
     Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 1, 6);
-    event3.getMultiRootTimestampSyncNode();
     Event event4(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
-    event4.getMultiRootTimestampSyncNode();
     Event event5(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
-    event5.getMultiRootTimestampSyncNode();
     Event event6(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
-    event6.getMultiRootTimestampSyncNode();
     UserEvent userEvent1(&pCmdQ1->getContext());
     UserEvent userEvent2(&pCmdQ2->getContext());
 
@@ -335,10 +315,10 @@ HWTEST_F(CrossDeviceDependenciesTests, givenMultipleEventInMultiRootDeviceEnviro
 
         EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, nullptr);
         CsrDependencies csrDeps;
-        eventsRequest.fillCsrDependenciesForRootDevices(csrDeps, pCmdQ1->getGpgpuCommandStreamReceiver());
+        eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, pCmdQ1->getGpgpuCommandStreamReceiver());
 
-        //EXPECT_EQ(0u, csrDeps.taskCountContainer.size());
-        EXPECT_EQ(0u, TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<FamilyType>(csrDeps));
+        EXPECT_EQ(0u, csrDeps.taskCountContainer.size());
+        EXPECT_EQ(0u, TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<FamilyType>(csrDeps));
     }
 
     {
@@ -361,10 +341,10 @@ HWTEST_F(CrossDeviceDependenciesTests, givenMultipleEventInMultiRootDeviceEnviro
 
         EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, nullptr);
         CsrDependencies csrDeps;
-        eventsRequest.fillCsrDependenciesForRootDevices(csrDeps, pCmdQ2->getGpgpuCommandStreamReceiver());
+        eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, pCmdQ2->getGpgpuCommandStreamReceiver());
 
-        EXPECT_EQ(3u, csrDeps.multiRootTimeStampSyncContainer.size());
-        EXPECT_EQ(3u * sizeof(MI_SEMAPHORE_WAIT), TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<FamilyType>(csrDeps));
+        EXPECT_EQ(3u, csrDeps.taskCountContainer.size());
+        EXPECT_EQ(3u * sizeof(MI_SEMAPHORE_WAIT), TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<FamilyType>(csrDeps));
     }
 }
 
@@ -424,6 +404,8 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         EXPECT_EQ(0u, semaphores.size());
     }
     userEvent1.setStatus(CL_COMPLETE);
+    event1->release();
+    event2->release();
     pCmdQ1->finish();
     pCmdQ2->finish();
     {
@@ -434,7 +416,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         EXPECT_EQ(1u, semaphores.size());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(event2->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0)->getContextEndAddress(0u)), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd->getSemaphoreGraphicsAddress());
     }
     {
         HardwareParse csHwParser;
@@ -443,11 +425,9 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 
         EXPECT_EQ(1u, semaphores.size());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(event1->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0)->getContextEndAddress(0u)), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd->getSemaphoreGraphicsAddress());
     }
-    event1->release();
-    event2->release();
     buffer->release();
 }
 
@@ -609,6 +589,9 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         EXPECT_EQ(0u, semaphores.size());
     }
     userEvent1.setStatus(CL_COMPLETE);
+    event1->release();
+    event2->release();
+    event3->release();
     pCmdQ1->finish();
     pCmdQ2->finish();
 
@@ -620,8 +603,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         EXPECT_EQ(1u, semaphores.size());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        auto node = event2->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0);
-        EXPECT_EQ(node->getGpuAddress() + node->getContextEndOffset(), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd->getSemaphoreGraphicsAddress());
     }
     {
         HardwareParse csHwParser;
@@ -637,9 +619,8 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 
         EXPECT_EQ(2u, semaphores.size());
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        auto node = event1->getMultiRootDeviceTimestampPacketNodes()->peekNodes().at(0);
-        EXPECT_EQ(node->getGpuAddress() + node->getContextEndOffset(), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(0u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
     }
     {
         HardwareParse csHwParser;
@@ -648,9 +629,6 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 
         EXPECT_LE(1u, semaphores.size());
     }
-    event1->release();
-    event2->release();
-    event3->release();
     buffer->release();
     pCmdQ1->release();
     pCmdQ2->release();
@@ -899,73 +877,4 @@ HWTEST_F(UltCommandStreamReceiverTest, givenDebugDisablingCacheFlushWhenAddingPi
     EXPECT_FALSE(pipeControl->getVfCacheInvalidationEnable());
     EXPECT_FALSE(pipeControl->getConstantCacheInvalidationEnable());
     EXPECT_FALSE(pipeControl->getStateCacheInvalidationEnable());
-}
-HWTEST_F(CrossDeviceDependenciesTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyDoNotHaveMultiRootSyncNodeThenCsrDepsDoesNotHaveAnyMultiRootSyncContainer) {
-    Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
-    Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
-    Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 1, 6);
-    Event event4(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
-    Event event5(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
-    Event event6(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
-    UserEvent userEvent1(&pCmdQ1->getContext());
-    UserEvent userEvent2(&pCmdQ2->getContext());
-
-    userEvent1.setStatus(CL_COMPLETE);
-    userEvent2.setStatus(CL_COMPLETE);
-    {
-        cl_event eventWaitList[] =
-            {
-                &event1,
-                &event2,
-                &event3,
-                &event4,
-                &event5,
-                &event6,
-                &userEvent1,
-            };
-        cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
-
-        EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, nullptr);
-        CsrDependencies csrDeps;
-        eventsRequest.fillCsrDependenciesForRootDevices(csrDeps, pCmdQ2->getGpgpuCommandStreamReceiver());
-
-        EXPECT_EQ(0u, csrDeps.multiRootTimeStampSyncContainer.size());
-    }
-}
-HWTEST_F(CrossDeviceDependenciesTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyDoNotHaveMultiRootSyncNodeContainersThenCsrDepsDoesNotHaveAnyMultiRootSyncContainer) {
-
-    MockEvent<Event> event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
-    event1.multiRootDeviceTimestampPacketContainer.reset(new TimestampPacketContainer());
-    MockEvent<Event> event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
-    MockEvent<Event> event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
-    event3.multiRootDeviceTimestampPacketContainer.reset(new TimestampPacketContainer());
-    MockEvent<Event> event4(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
-    event4.multiRootDeviceTimestampPacketContainer.reset(new TimestampPacketContainer());
-    MockEvent<Event> event5(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
-    event5.multiRootDeviceTimestampPacketContainer.reset(new TimestampPacketContainer());
-    MockEvent<Event> event6(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
-    event6.multiRootDeviceTimestampPacketContainer.reset(new TimestampPacketContainer());
-    UserEvent userEvent1(&pCmdQ1->getContext());
-
-    userEvent1.setStatus(CL_COMPLETE);
-
-    {
-        cl_event eventWaitList[] =
-            {
-                &event1,
-                &event2,
-                &event3,
-                &event4,
-                &event5,
-                &event6,
-                &userEvent1,
-            };
-        cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
-
-        EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, nullptr);
-        CsrDependencies csrDeps;
-        eventsRequest.fillCsrDependenciesForRootDevices(csrDeps, pCmdQ2->getGpgpuCommandStreamReceiver());
-
-        EXPECT_EQ(0u, csrDeps.multiRootTimeStampSyncContainer.size());
-    }
 }

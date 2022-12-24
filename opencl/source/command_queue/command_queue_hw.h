@@ -388,8 +388,7 @@ class CommandQueueHw : public CommandQueue {
                         EventsRequest &eventsRequest,
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> &&printfHandler,
-                        CommandStreamReceiver *bcsCsr,
-                        TagNodeBase *multiRootDeviceSyncNode);
+                        CommandStreamReceiver *bcsCsr);
 
     CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,
                                                 size_t surfaceCount,
@@ -420,7 +419,7 @@ class CommandQueueHw : public CommandQueue {
                                                  TimestampPacketDependencies &timestampPacketDependencies,
                                                  const EventsRequest &eventsRequest,
                                                  LinearStream *commandStream,
-                                                 uint32_t commandType, bool queueBlocked, TagNodeBase *multiRootDeviceEventSync);
+                                                 uint32_t commandType, bool queueBlocked);
     void submitCacheFlush(Surface **surfaces,
                           size_t numSurfaces,
                           LinearStream *commandStream,
@@ -471,7 +470,7 @@ class CommandQueueHw : public CommandQueue {
             blockedCommandsData = std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
         } else {
             commandStream = &getCommandStream<GfxFamily, commandType>(*this, csrDependencies, profilingRequired, perfCountersRequired,
-                                                                      blitEnqueue, multiDispatchInfo, surfaces, numSurfaces, isMarkerWithProfiling, eventsRequest.numEventsInWaitList > 0, eventsRequest.outEvent);
+                                                                      blitEnqueue, multiDispatchInfo, surfaces, numSurfaces, isMarkerWithProfiling, eventsRequest.numEventsInWaitList > 0);
         }
         return commandStream;
     }

@@ -11,7 +11,6 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/logical_state_helper.h"
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -1217,19 +1216,19 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     auto allocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     // blitDirection
-                                                                          csr, allocation,             // commandStreamReceiver
-                                                                          nullptr,                     // memObjAllocation
-                                                                          hostPtr,                     // preallocatedHostAllocation
-                                                                          allocation->getGpuAddress(), // memObjGpuVa
-                                                                          0,                           // hostAllocGpuVa
-                                                                          hostPtrOffset,               // hostPtrOffset
-                                                                          copyOffset,                  // copyOffset
-                                                                          bltSize,                     // copySize
-                                                                          dstRowPitch,                 // hostRowPitch
-                                                                          dstSlicePitch,               // hostSlicePitch
-                                                                          srcRowPitch,                 // gpuRowPitch
-                                                                          srcSlicePitch                // gpuSlicePitch
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     //blitDirection
+                                                                          csr, allocation,             //commandStreamReceiver
+                                                                          nullptr,                     //memObjAllocation
+                                                                          hostPtr,                     //preallocatedHostAllocation
+                                                                          allocation->getGpuAddress(), //memObjGpuVa
+                                                                          0,                           //hostAllocGpuVa
+                                                                          hostPtrOffset,               //hostPtrOffset
+                                                                          copyOffset,                  //copyOffset
+                                                                          bltSize,                     //copySize
+                                                                          dstRowPitch,                 //hostRowPitch
+                                                                          dstSlicePitch,               //hostSlicePitch
+                                                                          srcRowPitch,                 //gpuRowPitch
+                                                                          srcSlicePitch                //gpuSlicePitch
     );
 
     memoryManager->returnFakeAllocation = false;
@@ -1322,19 +1321,19 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     // blitDirection
-                                                                          csr, allocation,             // commandStreamReceiver
-                                                                          nullptr,                     // memObjAllocation
-                                                                          hostPtr,                     // preallocatedHostAllocation
-                                                                          allocation->getGpuAddress(), // memObjGpuVa
-                                                                          0,                           // hostAllocGpuVa
-                                                                          hostPtrOffset,               // hostPtrOffset
-                                                                          copyOffset,                  // copyOffset
-                                                                          bltSize,                     // copySize
-                                                                          dstRowPitch,                 // hostRowPitch
-                                                                          dstSlicePitch,               // hostSlicePitch
-                                                                          srcRowPitch,                 // gpuRowPitch
-                                                                          srcSlicePitch                // gpuSlicePitch
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     //blitDirection
+                                                                          csr, allocation,             //commandStreamReceiver
+                                                                          nullptr,                     //memObjAllocation
+                                                                          hostPtr,                     //preallocatedHostAllocation
+                                                                          allocation->getGpuAddress(), //memObjGpuVa
+                                                                          0,                           //hostAllocGpuVa
+                                                                          hostPtrOffset,               //hostPtrOffset
+                                                                          copyOffset,                  //copyOffset
+                                                                          bltSize,                     //copySize
+                                                                          dstRowPitch,                 //hostRowPitch
+                                                                          dstSlicePitch,               //hostSlicePitch
+                                                                          srcRowPitch,                 //gpuRowPitch
+                                                                          srcSlicePitch                //gpuSlicePitch
     );
 
     memoryManager->returnFakeAllocation = false;
@@ -1418,16 +1417,16 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     size_t buffer2SlicePitch = std::get<0>(GetParam()).srcSlicePitch;
     auto allocation = buffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation,                   // dstAllocation
-                                                                     allocation,                   // srcAllocation
-                                                                     buffer1Offset,                // dstOffset
-                                                                     buffer2Offset,                // srcOffset
-                                                                     bltSize,                      // copySize
-                                                                     buffer1RowPitch,              // srcRowPitch
-                                                                     buffer1SlicePitch,            // srcSlicePitch
-                                                                     buffer2RowPitch,              // dstRowPitch
-                                                                     buffer2SlicePitch,            // dstSlicePitch
-                                                                     csr.getClearColorAllocation() // clearColorAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation,                   //dstAllocation
+                                                                     allocation,                   //srcAllocation
+                                                                     buffer1Offset,                //dstOffset
+                                                                     buffer2Offset,                //srcOffset
+                                                                     bltSize,                      //copySize
+                                                                     buffer1RowPitch,              //srcRowPitch
+                                                                     buffer1SlicePitch,            //srcSlicePitch
+                                                                     buffer2RowPitch,              //dstRowPitch
+                                                                     buffer2SlicePitch,            //dstSlicePitch
+                                                                     csr.getClearColorAllocation() //clearColorAllocation
     );
     flushBcsTask(&csr, blitProperties, true, *pDevice);
 
