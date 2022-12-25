@@ -15,6 +15,7 @@
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -1437,4 +1438,14 @@ TEST(GfxCoreHelperTests, whenIsDynamicallyPopulatedisTrueThengetHighestEnabledSl
     const auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto maxSlice = gfxCoreHelper.getHighestEnabledSlice(hwInfo);
     EXPECT_EQ(maxSlice, 7u);
+}
+
+HWTEST_F(ProductHelperCommonTest, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenSameIndexIsReturned) {
+    auto &helper = getHelper<ProductHelper>();
+    uint64_t patIndex = 1u;
+    auto allocationType = NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
+    EXPECT_EQ(patIndex, helper.overridePatIndex(allocationType, patIndex));
+    allocationType = NEO::AllocationType::BUFFER;
+    patIndex = 3u;
+    EXPECT_EQ(patIndex, helper.overridePatIndex(allocationType, patIndex));
 }

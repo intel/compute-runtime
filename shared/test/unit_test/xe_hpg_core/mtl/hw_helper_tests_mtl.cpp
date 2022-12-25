@@ -48,6 +48,17 @@ MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCallIsAdjustWalkOrderAvailableThenRe
     }
 }
 
+MTLTEST_F(ProductHelperTestMtl, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenForTimestampPacketTagBufferReturnTwo) {
+    auto &helper = getHelper<ProductHelper>();
+    uint64_t expectedPatIndexWhenTimestampPacketTagBuffer = 2u;
+    uint64_t patIndex = 1u;
+    auto allocationType = NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
+    EXPECT_EQ(expectedPatIndexWhenTimestampPacketTagBuffer, helper.overridePatIndex(allocationType, patIndex));
+    allocationType = NEO::AllocationType::BUFFER;
+    patIndex = 3u;
+    EXPECT_EQ(patIndex, helper.overridePatIndex(allocationType, patIndex));
+}
+
 MTLTEST_F(GfxCoreHelperTestMtl, givenAllocationThenCheckResourceCompatibilityReturnsTrue) {
     auto &helper = GfxCoreHelper::get(renderCoreFamily);
     auto allocation = std::make_unique<GraphicsAllocation>(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, 3u, 0llu);

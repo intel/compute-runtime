@@ -963,8 +963,6 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
-    auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
-
     auto productHelper = ProductHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 
     if (!productHelper->isVmBindPatIndexProgrammingSupported()) {
@@ -974,14 +972,16 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
     mock->context.receivedVmBindPatIndex.reset();
     mock->context.receivedVmUnbindPatIndex.reset();
 
-    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
 
     auto expectedIndex = static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached);
 
     EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 
-    operationHandler->evict(device, *timestampStorageAlloc);
+    operationHandler->evict(device, *allocation);
     EXPECT_EQ(expectedIndex, mock->context.receivedVmUnbindPatIndex.value());
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndex) {

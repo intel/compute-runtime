@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/memory_manager/allocation_type.h"
+
 #include "aubstream/product_family.h"
 
 namespace NEO {
@@ -112,5 +114,14 @@ template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Mtl;
 };
+
+template <>
+uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(AllocationType allocationType, uint64_t patIndex) const {
+    if (allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
+        constexpr uint64_t uncached = 2u;
+        return uncached;
+    }
+    return patIndex;
+}
 
 } // namespace NEO
