@@ -448,19 +448,31 @@ bool Program::containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) con
     return false;
 }
 
-void Program::disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions) {
-    auto isVme = false;
+void Program::disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions, const std::string &sourceCode) {
+
     const char *vmeOptions[] = {"cl_intel_device_side_advanced_vme_enable",
                                 "cl_intel_device_side_avc_vme_enable",
                                 "cl_intel_device_side_vme_enable"};
-    for (auto vmeOption : vmeOptions) {
-        auto pos = options.find(vmeOption);
-        if (pos != std::string::npos) {
-            isVme = true;
-            break;
+
+    const char *vmeEnabledExtensions[] = {"cl_intel_motion_estimation : enable",
+                                          "cl_intel_device_side_avc_motion_estimation : enable",
+                                          "cl_intel_advanced_motion_estimation : enable"};
+
+    auto containsVme = [](const auto &data, const auto &patterns) {
+        for (const auto &pattern : patterns) {
+            auto pos = data.find(pattern);
+            if (pos != std::string::npos) {
+                return true;
+            }
         }
+        return false;
+    };
+
+    if (DebugManager.flags.DontDisableZebinIfVmeUsed.get() == true) {
+        return;
     }
-    if (isVme) {
+
+    if (containsVme(options, vmeOptions) || containsVme(sourceCode, vmeEnabledExtensions)) {
         auto pos = options.find(CompilerOptions::allowZebin.str());
         if (pos != std::string::npos) {
             options.erase(pos, pos + CompilerOptions::allowZebin.length());

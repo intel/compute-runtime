@@ -74,7 +74,7 @@ cl_int Program::build(
                 break;
             }
 
-            disableZebinIfVmeEnabled(options, internalOptions);
+            disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
 
             TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
             if (createdFrom != CreatedFrom::SOURCE) {
