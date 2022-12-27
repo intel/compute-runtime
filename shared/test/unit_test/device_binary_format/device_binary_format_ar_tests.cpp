@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
@@ -58,7 +59,8 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToFindMatchingBinariesThenUnpackingFa
 
 TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItAsABestMatch) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
     aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
@@ -99,7 +101,8 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItA
 
 TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTargetDeviceBinaryIsSet) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
     aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
@@ -130,7 +133,8 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTar
 
 TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
     aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
@@ -239,7 +243,8 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
     PatchTokensTestData::ValidEmptyProgram programTokens;
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
-    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
     aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
@@ -347,7 +352,8 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductFamil
 
 TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductConfigAvailableThenUseIr) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
     aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);
@@ -571,7 +577,8 @@ TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenU
     PatchTokensTestData::ValidEmptyProgram programTokens;
     NEO::Ar::ArEncoder encoder;
 
-    const auto &productHelper = *NEO::ProductHelper::get(productFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
     aotConfig.value = productHelper.getProductConfigFromHwInfo(hwInfo);

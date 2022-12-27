@@ -97,7 +97,7 @@ void DebuggerL0::initialize() {
             memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
         }
 
-        const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        const auto &productHelper = device->getProductHelper();
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));

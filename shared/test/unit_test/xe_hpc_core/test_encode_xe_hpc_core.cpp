@@ -254,10 +254,12 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
 
     uint8_t buffer[64]{};
     StreamProperties properties{};
-    auto &productHelper = *NEO::ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     MockExecutionEnvironment executionEnvironment{};
+
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
     properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled, *executionEnvironment.rootDeviceEnvironments[0]);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, *defaultHwInfo, nullptr);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
