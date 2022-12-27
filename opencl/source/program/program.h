@@ -307,7 +307,7 @@ class Program : public BaseObject<_cl_program> {
     void setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType);
 
     bool containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const;
-    void disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions);
+    void disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions, const std::string &sourceCode);
 
     bool isSpirV = false;
 
