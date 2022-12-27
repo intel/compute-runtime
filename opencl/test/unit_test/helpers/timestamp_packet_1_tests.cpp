@@ -123,7 +123,7 @@ HWTEST_F(TimestampPacketTests, givenCrossCsrDependenciesWhenFillCsrDepsThenFlush
 
     eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::All);
 
-    const auto &productHelper = *NEO::ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
     if (productHelper.isDcFlushAllowed()) {
         EXPECT_TRUE(mockCmdQ2->getUltCommandStreamReceiver().flushBatchedSubmissionsCalled);
     } else {

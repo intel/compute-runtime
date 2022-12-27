@@ -30,7 +30,7 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
 
     // Header
     auto &hwInfo = pDevice->getHardwareInfo();
-    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = pDevice->getProductHelper();
     aubFile.init(productHelper.getAubStreamSteppingFromHwRevId(hwInfo), AUB::Traits::device);
 
     aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x229c), 0xffff8280);
@@ -152,7 +152,7 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
     // Poll until HW complete
     using AubMemDump::CmdServicesMemTraceRegisterPoll;
     aubFile.registerPoll(
-        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS
+        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), // EXECLIST_STATUS
         0x00008000,
         0x00008000,
         false,

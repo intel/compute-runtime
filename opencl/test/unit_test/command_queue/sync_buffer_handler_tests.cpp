@@ -72,7 +72,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
         auto &hwInfo = pClDevice->getHardwareInfo();
-        auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = pClDevice->getProductHelper();
         if (productHelper.isCooperativeEngineSupported(hwInfo)) {
             commandQueue->gpgpuEngine = &pClDevice->getEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative);
         }
