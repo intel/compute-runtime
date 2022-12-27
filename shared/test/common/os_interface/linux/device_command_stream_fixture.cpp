@@ -72,7 +72,7 @@ void DrmMockCustom::testIoctls() {
 int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     auto ext = ioctl_res_ext.load();
 
-    //store flags
+    // store flags
     switch (request) {
     case DrmIoctl::GemExecbuffer2: {
         auto execbuf = static_cast<NEO::MockExecBuffer *>(arg);
@@ -111,7 +111,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::PrimeFdToHandle: {
         auto *primeToHandleParams = static_cast<NEO::PrimeHandle *>(arg);
-        //return BO
+        // return BO
         primeToHandleParams->handle = outputHandle;
         inputFd = primeToHandleParams->fileDescriptor;
         ioctl_cnt.primeFdToHandle++;
@@ -121,7 +121,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::PrimeHandleToFd: {
         auto *handleToPrimeParams = static_cast<NEO::PrimeHandle *>(arg);
-        //return FD
+        // return FD
         inputHandle = handleToPrimeParams->handle;
         inputFlags = handleToPrimeParams->flags;
         handleToPrimeParams->fileDescriptor = outputFd;
@@ -220,7 +220,8 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
 DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
     : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     reset();
-    ioctl_expected.contextCreate = static_cast<int>(NEO::GfxCoreHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+    ioctl_expected.contextCreate = static_cast<int>(gfxCoreHelper.getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
     ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     createVirtualMemoryAddressSpace(NEO::GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));

@@ -32,7 +32,8 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         executionEnvironment->memoryManager.reset(memoryManager);
         csr = &device->getGpgpuCommandStreamReceiver();
         auto &hwInfo = device->getHardwareInfo();
-        auto engineType = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0].first;
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto engineType = gfxCoreHelper.getGpgpuEngineInstances(hwInfo)[0].first;
         auto osContext = memoryManager->createAndRegisterOsContext(csr, EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::Regular},
                                                                                                                      PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
         csr->setupContext(*osContext);

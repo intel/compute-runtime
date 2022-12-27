@@ -69,7 +69,8 @@ void UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
 }
 bool UltDeviceFactory::initializeMemoryManager(ExecutionEnvironment &executionEnvironment) {
     if (executionEnvironment.memoryManager == nullptr) {
-        bool enableLocalMemory = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*defaultHwInfo);
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        bool enableLocalMemory = gfxCoreHelper.getEnableLocalMemory(*defaultHwInfo);
         bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
         executionEnvironment.memoryManager.reset(new MockMemoryManager(false, enableLocalMemory, aubUsage, executionEnvironment));
     }

@@ -46,7 +46,8 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto engine = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto engine = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
         mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
@@ -77,7 +78,8 @@ struct WddmFixtureLuid : public Test<MockExecutionEnvironmentGmmFixture> {
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto engine = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto engine = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
         mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
@@ -114,7 +116,8 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
         wddm->wddmInterface.reset(wddmMockInterface);
 
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto engine = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto engine = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
     }
@@ -162,7 +165,8 @@ struct WddmFixtureWithMockGdiDllWddmNoCleanup : public GdiDllFixture, public Moc
         wddm->wddmInterface.reset(wddmMockInterface);
 
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto engine = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto engine = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
     }

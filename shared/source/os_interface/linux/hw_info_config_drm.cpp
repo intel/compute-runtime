@@ -70,7 +70,6 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     Drm *drm = osInterface->getDriverModel()->as<Drm>();
 
     *outHwInfo = *inHwInfo;
-    auto platform = &outHwInfo->platform;
     auto gtSystemInfo = &outHwInfo->gtSystemInfo;
     auto featureTable = &outHwInfo->featureTable;
 
@@ -141,7 +140,7 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
     outHwInfo->capabilityTable.ftrSvm = featureTable->flags.ftrSVM;
 
-    GfxCoreHelper &gfxCoreHelper = GfxCoreHelper::get(platform->eRenderCoreFamily);
+    GfxCoreHelper &gfxCoreHelper = rootDeviceEnvironemnt.getHelper<GfxCoreHelper>();
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     gfxCoreHelper.adjustDefaultEngineType(outHwInfo);
