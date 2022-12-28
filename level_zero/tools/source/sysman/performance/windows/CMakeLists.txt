@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,6 +7,7 @@
 set(L0_SRCS_TOOLS_SYSMAN_PERFORMANCE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/os_performance_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_performance_imp.h
 )
 
 if(WIN32)

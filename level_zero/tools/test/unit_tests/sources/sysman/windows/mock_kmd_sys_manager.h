@@ -98,6 +98,11 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
     }
 
+    MOCKABLE_VIRTUAL void getPerformanceProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+        pResponse->outDataSize = 0;
+        pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+    }
+
     MOCKABLE_VIRTUAL void setActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
         pResponse->outDataSize = 0;
         pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
@@ -119,6 +124,11 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
     }
 
     MOCKABLE_VIRTUAL void setTemperatureProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+        pResponse->outDataSize = 0;
+        pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+    }
+
+    MOCKABLE_VIRTUAL void setPerformanceProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
         pResponse->outDataSize = 0;
         pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
     }
@@ -358,6 +368,9 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         case KmdSysman::Component::GlobalOperationsComponent: {
             setGlobalOperationsProperty(pRequest, pResponse);
         } break;
+        case KmdSysman::Component::PerformanceComponent: {
+            setPerformanceProperty(pRequest, pResponse);
+        } break;
         default: {
             pResponse->outDataSize = 0;
             pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
@@ -399,6 +412,9 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         } break;
         case KmdSysman::Component::GlobalOperationsComponent: {
             getGlobalOperationsProperty(pRequest, pResponse);
+        } break;
+        case KmdSysman::Component::PerformanceComponent: {
+            getPerformanceProperty(pRequest, pResponse);
         } break;
         default: {
             pResponse->outDataSize = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,6 +86,8 @@ enum Component {
     MemoryComponent,
     PciComponent,
     GlobalOperationsComponent,
+    StandbyComponent,
+    PerformanceComponent,
 
     MaxComponents,
 };
@@ -145,6 +147,13 @@ enum Activity {
     CurrentActivityCounter,
 
     MaxActivityRequests,
+};
+
+enum Performance {
+    NumPerformanceDomains = 0,
+    SupportedDomains,
+    Factor,
+    MaxPerformanceRequests
 };
 
 enum Temperature {
