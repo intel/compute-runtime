@@ -235,12 +235,14 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
 TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDeviceCreatesCorrectNumberOfEngines) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    auto &gpgpuEngines = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
     auto executionEnvironment = new MockExecutionEnvironment;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     MockDevice device(executionEnvironment, 0);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+
     EXPECT_EQ(0u, device.allEngines.size());
     device.createEngines();
     EXPECT_EQ(gpgpuEngines.size(), device.allEngines.size());
@@ -367,7 +369,8 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
     template <typename MockDeviceT>
     bool hasAllEngines(MockDeviceT *device) {
         auto &hwInfo = device->getHardwareInfo();
-        auto gpgpuEngines = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
 
         for (size_t i = 0; i < gpgpuEngines.size(); i++) {
             if (device->allEngines[i].getEngineType() != gpgpuEngines[i].first) {
@@ -586,7 +589,8 @@ TEST_F(EngineInstancedDeviceTests, givenEngineInstancedSubDeviceWhenEngineCreati
     auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(0));
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    auto gpgpuEngines = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
+    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
 
     subDevice->engineInstanced = true;
     subDevice->failOnCreateEngine = true;

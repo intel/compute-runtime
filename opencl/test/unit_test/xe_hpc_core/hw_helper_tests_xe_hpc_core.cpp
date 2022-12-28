@@ -102,7 +102,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenRet
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     EXPECT_EQ(0u, gfxCoreHelper.getBarriersCountFromHasBarriers(0u));
     EXPECT_EQ(1u, gfxCoreHelper.getBarriersCountFromHasBarriers(1u));
@@ -649,10 +649,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFen
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
-    auto &helper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_NE(nullptr, &helper);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    auto &configs = helper.getThreadsPerEUConfigs();
+    auto &configs = gfxCoreHelper.getThreadsPerEUConfigs();
 
     EXPECT_EQ(2U, configs.size());
     EXPECT_EQ(4U, configs[0]);
@@ -729,7 +728,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportI
     DebugManagerStateRestore restore;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto productHelper = ProductHelper::get(productFamily);
 
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
@@ -767,7 +766,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZ
     DebugManagerStateRestore restore;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto productHelper = ProductHelper::get(productFamily);
 
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
@@ -809,7 +808,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZ
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExtraAllocationDataThenUseSystemLocalMemoryOnlyForImplicitScalingCommandBuffers) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     constexpr DeviceBitfield singleTileBitfield = 0b0100;
     constexpr DeviceBitfield allTilesBitfield = 0b1111;

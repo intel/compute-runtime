@@ -141,7 +141,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
         auto gmmHelper = pDevice->getGmmHelper();
-        auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eDisplayCoreFamily);
+        auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
         auto mocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
 
         commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex;

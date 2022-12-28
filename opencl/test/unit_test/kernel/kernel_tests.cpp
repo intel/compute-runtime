@@ -2650,7 +2650,8 @@ TEST(KernelTest, whenNullAllocationThenAssignNullPointerToCacheFlushVector) {
 
 TEST(KernelTest, givenKernelCompiledWithSimdSizeLowerThanExpectedWhenInitializingThenReturnError) {
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    auto minSimd = GfxCoreHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).getMinimalSIMDSize();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
     MockKernelWithInternals kernel(*device);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 8;
 
@@ -2964,7 +2965,7 @@ TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaul
     MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0], sPatchExecEnv};
 
     auto &mockKernel = *mockKernelWithInternals.mockKernel;
-    auto &gfxCoreHelper = GfxCoreHelper::get(deviceFactory.rootDevices[0]->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = deviceFactory.rootDevices[0]->getGfxCoreHelper();
     EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(), mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
 }
 

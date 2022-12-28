@@ -202,7 +202,7 @@ TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
         EXPECT_GT(imgInfo.qPitch, 0u);
     }
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwinfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
 
     EXPECT_EQ(queryGmm->resourceParams.Type, GMM_RESOURCE_TYPE::RESOURCE_3D);
     EXPECT_EQ(queryGmm->resourceParams.NoGfxMemory, 1u);

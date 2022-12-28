@@ -657,7 +657,8 @@ struct WddmContextSchedulingPriorityTests : public Wddm20WithMockGdiDllTestsWith
         wddm->wddmInterface.reset(wddmMockInterface);
 
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto engine = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto engine = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0];
 
         auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode);
         engineDescriptor.engineTypeUsage.second = lowPriority ? EngineUsage::LowPriority : EngineUsage::Regular;
@@ -1534,7 +1535,7 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSi
     uint64_t bytesToTrim = 0;
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
-    //2 - one for open log, second for allocation size
+    // 2 - one for open log, second for allocation size
     EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_TRUE(logger->makeResidentCall);
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
@@ -1562,7 +1563,7 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimR
 
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
-    //3 - one for open log, second for report allocations, 3rd for trim size
+    // 3 - one for open log, second for report allocations, 3rd for trim size
     EXPECT_EQ(3u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_FALSE(logger->makeResidentCall);
 }
@@ -1618,7 +1619,7 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenEx
     uint64_t bytesToTrim = 0;
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
-    //2 - one for open log, second for allocation size
+    // 2 - one for open log, second for allocation size
     EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_TRUE(logger->makeResidentCall);
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
