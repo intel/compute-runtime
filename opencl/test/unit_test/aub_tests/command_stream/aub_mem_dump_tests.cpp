@@ -88,7 +88,8 @@ HWTEST_F(AubMemDumpTests, GivenReserveMaxAddressThenExpectationsAreMet) {
     auto gAddress = static_cast<uintptr_t>(-1) - 4096;
     auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
 
-    auto enableLocalMemory = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getEnableLocalMemory(hwInfo);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto enableLocalMemory = gfxCoreHelper.getEnableLocalMemory(hwInfo);
     NEO::AubHelperHw<FamilyType> aubHelperHw(enableLocalMemory);
     AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw);
 

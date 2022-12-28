@@ -98,7 +98,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     bool isCooperativeDispatchSupported() {
-        auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                                 commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
         return gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());

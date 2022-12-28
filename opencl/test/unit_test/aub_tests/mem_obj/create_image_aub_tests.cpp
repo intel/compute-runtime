@@ -22,7 +22,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
 using namespace NEO;
 
 static const unsigned int testImageDimensions = 17;
-auto const elementSize = 4; //sizeof CL_RGBA * CL_UNORM_INT8
+auto const elementSize = 4; // sizeof CL_RGBA * CL_UNORM_INT8
 
 struct AUBCreateImage
     : public CommandDeviceFixture,
@@ -81,7 +81,7 @@ struct AUBCreateImageArray : public AUBCreateImage,
 };
 
 HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
     imageDesc.image_height = 1;
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
@@ -91,7 +91,7 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
     imgInfo.linearStorage = gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imageDesc), false);
     auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmHelper(), imgInfo, false);
 
-    //allocate host_ptr
+    // allocate host_ptr
     auto pixelSize = 4;
     auto storageSize = imageDesc.image_array_size * pixelSize * imageDesc.image_width * imageDesc.image_height;
 
@@ -160,7 +160,7 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
 }
 
 HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
 
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
@@ -170,7 +170,7 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
     imgInfo.linearStorage = gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imageDesc), false);
     auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmHelper(), imgInfo, false);
 
-    //allocate host_ptr
+    // allocate host_ptr
     auto pixelSize = 4;
     auto storageSize = imageDesc.image_array_size * pixelSize * imageDesc.image_width * imageDesc.image_height;
 
@@ -319,7 +319,7 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
     EXPECT_EQ(image->getQPitch(), imgInfo.qPitch);
     EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
 
-    //now check if data is properly propagated to image
+    // now check if data is properly propagated to image
 
     heightToCopy = imageDesc.image_height;
     auto imageStorage = static_cast<uint8_t *>(image->getCpuAddress());
@@ -388,7 +388,7 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
         retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    //now check if data is properly propagated to image
+    // now check if data is properly propagated to image
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {imageDesc.image_width, imageDesc.image_height, 1};

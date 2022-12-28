@@ -693,7 +693,9 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
         Buffer::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice()),
                        0, 0, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
-    auto compressionSupported = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, hwInfo) &&
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto compressionSupported = gfxCoreHelper.isBufferSizeSuitableForCompression(size, hwInfo) &&
                                 GfxCoreHelper::compressedBuffersSupported(hwInfo);
     if (compressionSupported) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
@@ -720,11 +722,14 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
     auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
     std::unique_ptr<Buffer> buffer;
     bool isCompressed = true;
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+
     if (context->getMemoryManager()) {
         isCompressed = MemObjHelper::isSuitableForCompression(
                            GfxCoreHelper::compressedBuffersSupported(hwInfo),
                            memoryProperties, *context,
-                           GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, hwInfo)) &&
+                           gfxCoreHelper.isBufferSizeSuitableForCompression(size, hwInfo)) &&
                        !is32bit && !context->isSharedContext &&
                        (!memoryProperties.flags.useHostPtr || context->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex())) &&
                        !memoryProperties.flags.forceHostMemory;

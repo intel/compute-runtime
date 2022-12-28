@@ -155,8 +155,8 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
 
     {
         DebugManager.flags.EnableTimestampWaitForQueues.set(-1);
-        const auto &gfxCoreHelper = GfxCoreHelper::get(mockDevice->getHardwareInfo().platform.eRenderCoreFamily);
-        const auto &productHelper = *ProductHelper::get(mockDevice->getHardwareInfo().platform.eProductFamily);
+        const auto &gfxCoreHelper = mockDevice->getGfxCoreHelper();
+        const auto &productHelper = mockDevice->getProductHelper();
         EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), gfxCoreHelper.isTimestampWaitSupportedForQueues() && !productHelper.isDcFlushAllowed());
     }
 
@@ -321,8 +321,8 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto internalUsage = true;
     auto expectedEngineType = EngineHelpers::linkCopyEnginesSupported(device->getRootDeviceEnvironment(), device->getDeviceBitfield())
                                   ? aub_stream::EngineType::ENGINE_BCS2
@@ -1489,7 +1489,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
 
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     cmdQ.setupDebugSurface(kernel.get());
 
@@ -1510,7 +1510,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress);
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     commandStreamReceiver.allocateDebugSurface(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
     ASSERT_NE(nullptr, debugSurface);
