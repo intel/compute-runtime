@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ ze_result_t DeviceImp::queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLu
     }
     return ZE_RESULT_ERROR_UNINITIALIZED;
 }
+
 uint32_t DeviceImp::queryDeviceNodeMask() {
     NEO::Device *activeDevice = getActiveDevice();
     if (activeDevice->getRootDeviceEnvironment().osInterface) {
@@ -44,6 +45,27 @@ uint32_t DeviceImp::queryDeviceNodeMask() {
         }
     }
     return 1;
+}
+
+ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) {
+    NEO::Device *activeDevice = getActiveDevice();
+    if (activeDevice->getRootDeviceEnvironment().osInterface) {
+        NEO::DriverModelType driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
+        if (driverType == NEO::DriverModelType::WDDM) {
+            pExternalMemoryProperties->imageExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+            pExternalMemoryProperties->imageImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+            pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+            pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+        } else {
+            pExternalMemoryProperties->imageExportTypes = 0u;
+            pExternalMemoryProperties->imageImportTypes = 0u;
+            pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+            pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+        }
+
+        return ZE_RESULT_SUCCESS;
+    }
+    return ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
 } // namespace L0

@@ -854,15 +854,6 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) {
-    pExternalMemoryProperties->imageExportTypes = 0u;
-    pExternalMemoryProperties->imageImportTypes = 0u;
-    pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-    pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
     NEO::TimeStampData queueTimeStamp;
     bool retVal = this->neoDevice->getOSTime()->getCpuGpuTime(&queueTimeStamp);

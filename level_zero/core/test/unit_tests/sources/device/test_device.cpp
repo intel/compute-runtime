@@ -1458,20 +1458,6 @@ TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitiali
         EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
     }
 }
-TEST_F(DeviceTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedAndNoPropertiesAreReturned) {
-    ze_device_external_memory_properties_t externalMemoryProperties;
-
-    ze_result_t result = device->getExternalMemoryProperties(&externalMemoryProperties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_FALSE(externalMemoryProperties.imageExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD);
-    EXPECT_FALSE(externalMemoryProperties.imageExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
-    EXPECT_FALSE(externalMemoryProperties.imageImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD);
-    EXPECT_FALSE(externalMemoryProperties.imageImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
-    EXPECT_FALSE(externalMemoryProperties.memoryAllocationExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD);
-    EXPECT_TRUE(externalMemoryProperties.memoryAllocationExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
-    EXPECT_FALSE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD);
-    EXPECT_TRUE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
-}
 
 TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledThenSuccessIsReturnedAndValuesSetCorrectly) {
     uint64_t hostTs = 0u;

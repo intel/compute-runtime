@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,15 @@ uint32_t DeviceImp::queryDeviceNodeMask() {
     NEO::CommandStreamReceiver *csr = activeDevice->getDefaultEngine().commandStreamReceiver;
     NEO::OsContextWin *context = static_cast<NEO::OsContextWin *>(&csr->getOsContext());
     return context->getDeviceNodeMask();
+}
+
+ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) {
+    pExternalMemoryProperties->imageExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    pExternalMemoryProperties->imageImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0
