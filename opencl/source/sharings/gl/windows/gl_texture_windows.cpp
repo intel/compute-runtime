@@ -151,7 +151,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     if (texInfo.isAuxEnabled && alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
         const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-        const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        const auto &productHelper = context->getDevice(0)->getProductHelper();
         alloc->getDefaultGmm()->isCompressionEnabled = productHelper.isPageTableManagerSupported(hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
                                                                                                          : true;
     }

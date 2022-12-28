@@ -142,7 +142,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                                 sizeCrossThreadData, sizePerThreadData, hardwareInfo);
-    auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    auto &productHelper = device.getProductHelper();
     productHelper.updateIddCommand(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                    kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 

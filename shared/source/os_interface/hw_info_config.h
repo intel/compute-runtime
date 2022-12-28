@@ -76,7 +76,7 @@ class ProductHelper {
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
     virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
     virtual void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
-    virtual void updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) = 0;
+    virtual void updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
@@ -222,7 +222,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
     void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) override;
     void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) override;
-    void updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) override;
+    void updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) const override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
     bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;

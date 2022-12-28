@@ -49,7 +49,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::PRINTF_SURFACE, device.getDeviceBitfield()});
 
     auto &hwInfo = device.getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = device.getProductHelper();
 
     MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
                                                      device, printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),
@@ -80,7 +80,7 @@ bool PrintfHandler::printEnqueueOutput() {
     auto &hwInfo = device.getHardwareInfo();
 
     auto usesStringMap = kernel->getDescriptor().kernelAttributes.usesStringMap();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = device.getProductHelper();
     auto printfOutputBuffer = reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer());
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
     std::unique_ptr<uint8_t[]> printfOutputDecompressed;

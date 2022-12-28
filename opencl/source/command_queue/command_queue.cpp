@@ -86,9 +86,9 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
     if (device) {
         auto &hwInfo = device->getHardwareInfo();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = device->getProductHelper();
 
-        bcsAllowed = productHelper->isBlitterFullySupported(hwInfo) &&
+        bcsAllowed = productHelper.isBlitterFullySupported(hwInfo) &&
                      gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
 
         if (bcsAllowed || device->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
@@ -182,7 +182,7 @@ void CommandQueue::initializeGpgpu() const {
 
 void CommandQueue::initializeGpgpuInternals() const {
     auto &hwInfo = device->getDevice().getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device->getProductHelper();
 
     if (device->getDevice().getDebugger() && !this->gpgpuEngine->commandStreamReceiver->getDebugSurfaceAllocation()) {
         auto maxDbgSurfaceSize = NEO::SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaSize(&device->getDevice());
@@ -918,9 +918,8 @@ size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &
 bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandType, cl_bool blocking, size_t size, void *ptr,
                                         cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
 
-    const auto &hwInfo = device->getHardwareInfo();
-    const auto &productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    if (CL_COMMAND_READ_BUFFER == commandType && productHelper->isCpuCopyNecessary(ptr, buffer->getMemoryManager())) {
+    auto &productHelper = device->getProductHelper();
+    if (CL_COMMAND_READ_BUFFER == commandType && productHelper.isCpuCopyNecessary(ptr, buffer->getMemoryManager())) {
         return true;
     }
 
@@ -1019,8 +1018,8 @@ bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
 
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {
     const auto &hwInfo = device->getHardwareInfo();
-    const auto &productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    auto blitEnqueueImageAllowed = productHelper->isBlitterForImagesSupported();
+    auto &productHelper = device->getProductHelper();
+    auto blitEnqueueImageAllowed = productHelper.isBlitterForImagesSupported();
 
     if (DebugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
         blitEnqueueImageAllowed = DebugManager.flags.EnableBlitterForEnqueueImageOperations.get();
@@ -1033,7 +1032,7 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
         auto isTile64 = defaultGmm->gmmResourceInfo->getResourceFlags()->Info.Tile64;
         auto imageType = image.getImageDesc().image_type;
         if (isTile64 && (imageType == CL_MEM_OBJECT_IMAGE3D)) {
-            blitEnqueueImageAllowed &= productHelper->isTile64With3DSurfaceOnBCSSupported(hwInfo);
+            blitEnqueueImageAllowed &= productHelper.isTile64With3DSurfaceOnBCSSupported(hwInfo);
         }
     }
 
@@ -1185,7 +1184,7 @@ void CommandQueue::assignDataToOverwrittenBcsNode(TagNodeBase *node) {
 
 bool CommandQueue::isWaitForTimestampsEnabled() const {
     const auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
-    const auto &productHelper = *ProductHelper::get(getDevice().getHardwareInfo().platform.eProductFamily);
+    auto &productHelper = getDevice().getProductHelper();
     auto enabled = CommandQueue::isTimestampWaitEnabled();
     enabled &= gfxCoreHelper.isTimestampWaitSupportedForQueues();
     enabled &= !productHelper.isDcFlushAllowed();

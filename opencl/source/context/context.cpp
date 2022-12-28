@@ -478,8 +478,7 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
     bool isSupportedForSingleDeviceContexts = false;
     bool isSupportedForAllContexts = false;
     if (context->getNumDevices() > 0) {
-        auto &hwInfo = context->getDevices()[0]->getHardwareInfo();
-        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = context->getDevices()[0]->getProductHelper();
         isSupportedForSingleDeviceContexts = productHelper.isBufferPoolAllocatorSupported();
     }
 

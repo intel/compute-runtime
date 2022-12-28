@@ -84,7 +84,7 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
     }
 
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = pClDevice->getProductHelper();
     if (productHelper.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }

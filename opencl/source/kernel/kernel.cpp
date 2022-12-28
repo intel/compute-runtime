@@ -73,7 +73,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     imageTransformer.reset(new ImageTransformer);
     auto &deviceInfo = getDevice().getDevice().getDeviceInfo();
     if (kernelInfoArg.kernelDescriptor.kernelAttributes.simdSize == 1u) {
-        auto &productHelper = *ProductHelper::get(getHardwareInfo().platform.eProductFamily);
+        auto &productHelper = getDevice().getProductHelper();
         maxKernelWorkGroupSize = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
     } else {
         maxKernelWorkGroupSize = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize);
@@ -1949,7 +1949,7 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
             }
         }
     }
-    const auto &productHelper = *ProductHelper::get(getDevice().getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = getDevice().getProductHelper();
     if (productHelper.allowStatelessCompression(getDevice().getHardwareInfo())) {
         for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
             if (gfxAllocation->isCompressionEnabled()) {
@@ -2273,7 +2273,7 @@ bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
 }
 
 void Kernel::updateAuxTranslationRequired() {
-    const auto &productHelper = *ProductHelper::get(getDevice().getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = getDevice().getProductHelper();
     if (productHelper.allowStatelessCompression(getDevice().getHardwareInfo())) {
         if (hasDirectStatelessAccessToHostMemory() ||
             hasIndirectStatelessAccessToHostMemory() ||

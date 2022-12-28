@@ -169,6 +169,8 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     size_t expectedSizeCS = 0;
     auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     auto &gfxCoreHelper = commandQueue.getDevice().getGfxCoreHelper();
+    auto &productHelper = commandQueue.getDevice().getProductHelper();
+
     auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
 
     if (blitEnqueue) {
@@ -189,7 +191,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
-        if (ProductHelper::get(hwInfo.platform.eProductFamily)->isResolveDependenciesByPipeControlsSupported(hwInfo, commandQueue.isOOQEnabled())) {
+        if (productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, commandQueue.isOOQEnabled())) {
             expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
         }
         if (isMarkerWithProfiling) {

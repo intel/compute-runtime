@@ -144,7 +144,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
             auto &kernHeapInfo = kernelInfo->heapInfo;
             auto segmentId = &kernelInfo - &kernelInfoArray[0];
             auto &hwInfo = pDevice->getHardwareInfo();
-            const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+            const auto &productHelper = pDevice->getProductHelper();
             MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelInfo->getGraphicsAllocation()),
                                                              *pDevice, kernelInfo->getGraphicsAllocation(), 0, isaSegmentsForPatching[segmentId].hostPointer,
                                                              static_cast<size_t>(kernHeapInfo.KernelHeapSize));
