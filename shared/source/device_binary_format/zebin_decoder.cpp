@@ -887,7 +887,11 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceImage: {
-            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(true);
+            auto &argAsImage = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(true);
+            if (src.imageType != NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageTypeMax) {
+                argAsImage.imageType = static_cast<NEOImageType>(src.imageType);
+            }
+
             auto &extendedInfo = dst.payloadMappings.explicitArgs[src.argIndex].getExtendedTypeInfo();
             extendedInfo.isMediaImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::ImageType2DMedia);
             extendedInfo.isMediaBlockImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::ImageType2DMediaBlock);

@@ -3482,3 +3482,81 @@ kernels_misc_info:
     buildInfo.kernelInfoArray.clear();
     buildInfo.unpackedDeviceBinary.release();
 }
+
+TEST(ProgramGenerateDefaultArgsMetadataTests, givenNativeBinaryWhenCallingGenerateDefaultExtendedArgsMetadataThenGenerateMetadataForEachExplicitArgForEachKernel) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    program.callBaseGenerateDefaultMetadataOnce = true;
+
+    const auto &rootDeviceIndex = device.getRootDeviceIndex();
+    auto &buildInfo = program.buildInfos[rootDeviceIndex];
+
+    KernelInfo kernelInfo1, kernelInfo2;
+    kernelInfo1.kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+    kernelInfo2.kernelDescriptor.kernelMetadata.kernelName = "another_kernel";
+    buildInfo.kernelInfoArray.push_back(&kernelInfo1);
+    buildInfo.kernelInfoArray.push_back(&kernelInfo2);
+
+    kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.resize(2);
+    kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTPointer;
+    kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(1).type = ArgDescriptor::ArgTImage;
+    auto &img = kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(1).as<ArgDescImage>();
+    img.imageType = NEOImageType::ImageType2D;
+
+    kernelInfo2.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    kernelInfo2.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTSampler;
+
+    program.callGenerateDefaultExtendedArgsMetadataOnce(rootDeviceIndex);
+    EXPECT_EQ(2u, kernelInfo1.kernelDescriptor.explicitArgsExtendedMetadata.size());
+    EXPECT_EQ(1u, kernelInfo2.kernelDescriptor.explicitArgsExtendedMetadata.size());
+
+    const auto &argMetadata1 = kernelInfo1.kernelDescriptor.explicitArgsExtendedMetadata[0];
+    EXPECT_STREQ("arg0", argMetadata1.argName.c_str());
+    EXPECT_STREQ("void*", argMetadata1.type.c_str());
+
+    const auto &argMetadata2 = kernelInfo1.kernelDescriptor.explicitArgsExtendedMetadata[1];
+    EXPECT_STREQ("arg1", argMetadata2.argName.c_str());
+    EXPECT_STREQ("image2d_t", argMetadata2.type.c_str());
+
+    const auto &argMetadata3 = kernelInfo2.kernelDescriptor.explicitArgsExtendedMetadata[0];
+    EXPECT_STREQ("arg0", argMetadata3.argName.c_str());
+    EXPECT_STREQ("sampler_t", argMetadata3.type.c_str());
+
+    buildInfo.kernelInfoArray.clear();
+    buildInfo.unpackedDeviceBinary.release();
+}
+
+TEST(ProgramGenerateDefaultArgsMetadataTests, whenGeneratingDefaultMetadataForArgByValueWithManyElementsThenGenerateProperTypeName) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    program.callBaseGenerateDefaultMetadataOnce = true;
+
+    const auto &rootDeviceIndex = device.getRootDeviceIndex();
+    auto &buildInfo = program.buildInfos[rootDeviceIndex];
+
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+    buildInfo.kernelInfoArray.push_back(&kernelInfo);
+
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTValue;
+    auto &argAsVal = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).as<ArgDescValue>();
+    argAsVal.elements.resize(3u);
+
+    argAsVal.elements[0].sourceOffset = 0u;
+    argAsVal.elements[0].size = 8u;
+    argAsVal.elements[1].sourceOffset = 8u;
+    argAsVal.elements[1].size = 8u;
+    argAsVal.elements[2].sourceOffset = 16u;
+    argAsVal.elements[2].size = 8u;
+
+    program.callGenerateDefaultExtendedArgsMetadataOnce(rootDeviceIndex);
+    EXPECT_EQ(1u, kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.size());
+
+    const auto &argMetadata = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata[0];
+    EXPECT_STREQ("arg0", argMetadata.argName.c_str());
+    EXPECT_STREQ("char[24]", argMetadata.type.c_str());
+
+    buildInfo.kernelInfoArray.clear();
+    buildInfo.unpackedDeviceBinary.release();
+}
