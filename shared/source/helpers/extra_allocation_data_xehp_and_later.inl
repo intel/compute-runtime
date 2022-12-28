@@ -46,7 +46,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         }
     }
 
-    if (ProductHelper::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
+    if (productHelper.isStorageInfoAdjustmentRequired()) {
         if (properties.allocationType == AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
             allocationData.storageInfo.isLockable = true;
         }

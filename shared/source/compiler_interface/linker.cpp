@@ -480,7 +480,7 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
 
     if (isAnySymbolRelocated) {
         auto &hwInfo = pDevice->getHardwareInfo();
-        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = pDevice->getProductHelper();
         if (globalConstantsSeg) {
             bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *globalConstantsSeg);
             MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalConstantsSeg, 0, constantsInitDataCopy.data(), constantsInitDataCopy.size());

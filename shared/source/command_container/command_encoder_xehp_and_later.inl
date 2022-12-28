@@ -77,7 +77,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData,
                                              sizePerThreadData, hwInfo);
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = args.device->getProductHelper();
     productHelper.updateIddCommand(&idd, kernelDescriptor.kernelAttributes.numGrfRequired,
                                    kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
@@ -552,7 +552,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
 template <typename Family>
 size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container, bool isRcs) {
     auto &hwInfo = device.getHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device.getProductHelper();
 
     size_t size = sizeof(typename Family::STATE_BASE_ADDRESS);
     if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {

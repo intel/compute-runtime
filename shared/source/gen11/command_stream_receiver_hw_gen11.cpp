@@ -24,7 +24,8 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
     using PWR_CLK_STATE_REGISTER = Family::PWR_CLK_STATE_REGISTER;
 
     const auto &hwInfo = peekHwInfo();
-    if (ProductHelper::get(hwInfo.platform.eProductFamily)->isAdditionalMediaSamplerProgrammingRequired()) {
+    auto &productHelper = this->getProductHelper();
+    if (productHelper.isAdditionalMediaSamplerProgrammingRequired()) {
         if (dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 PipeControlArgs args;
@@ -105,7 +106,8 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
 template <>
 bool CommandStreamReceiverHw<Family>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
     bool flag = DebugManager.flags.ForceCsrReprogramming.get();
-    if (ProductHelper::get(peekHwInfo().platform.eProductFamily)->isInitialFlagsProgrammingRequired()) {
+    auto &productHelper = this->getProductHelper();
+    if (productHelper.isInitialFlagsProgrammingRequired()) {
         if (!dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (lastVmeSubslicesConfig) {
                 flag = true;
@@ -119,8 +121,8 @@ template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForMediaSampler(bool mediaSamplerRequired) const {
     typedef typename Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename Family::PIPE_CONTROL PIPE_CONTROL;
-
-    if (ProductHelper::get(peekHwInfo().platform.eProductFamily)->isReturnedCmdSizeForMediaSamplerAdjustmentRequired()) {
+    auto &productHelper = this->getProductHelper();
+    if (productHelper.isReturnedCmdSizeForMediaSamplerAdjustmentRequired()) {
         if (mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 return sizeof(MI_LOAD_REGISTER_IMM) + 2 * sizeof(PIPE_CONTROL);

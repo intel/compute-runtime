@@ -42,7 +42,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     hwInfo = inputParams.rootDeviceEnvironment.getHardwareInfo();
     memoryOperationHandler = inputParams.rootDeviceEnvironment.memoryOperationsInterface.get();
 
-    auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
+    auto &productHelper = inputParams.rootDeviceEnvironment.getHelper<ProductHelper>();
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
@@ -55,7 +55,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
     }
 
-    miMemFenceRequired = productHelper->isGlobalFenceInDirectSubmissionRequired(*hwInfo);
+    miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
     if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0) {
         miMemFenceRequired = false;
     }
@@ -68,7 +68,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         disableCpuCacheFlush = disableCacheFlushKey == 1 ? true : false;
     }
 
-    isDisablePrefetcherRequired = productHelper->isPrefetcherDisablingInDirectSubmissionRequired();
+    isDisablePrefetcherRequired = productHelper.isPrefetcherDisablingInDirectSubmissionRequired();
     if (DebugManager.flags.DirectSubmissionDisablePrefetcher.get() != -1) {
         isDisablePrefetcherRequired = !!DebugManager.flags.DirectSubmissionDisablePrefetcher.get();
     }
