@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -382,6 +382,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
     bool blitEnqueueAllowed(const CsrSelectionArgs &args) const;
+    MOCKABLE_VIRTUAL void migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr);
 
     inline bool shouldFlushDC(uint32_t commandType, PrintfHandler *printfHandler) const {
         return (commandType == CL_COMMAND_READ_BUFFER ||

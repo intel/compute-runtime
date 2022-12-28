@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1287,6 +1287,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         }
     }
     processBarrierTimestampForBcsEngine(bcsCsr.getOsContext().getEngineType(), timestampPacketDependencies);
+
+    if (!blockQueue && this->getContext().getRootDeviceIndices().size() > 1) {
+        migrateMultiGraphicsAllocationsIfRequired(multiDispatchInfo.peekBuiltinOpParams(), bcsCsr);
+    }
 
     auto gpgpuSubmission = isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies);
     if (isCacheFlushForBcsRequired() && gpgpuSubmission) {

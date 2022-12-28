@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::gpgpuEngine;
     using CommandQueue::isCopyOnly;
     using CommandQueue::isTextureCacheFlushNeeded;
+    using CommandQueue::migrateMultiGraphicsAllocationsIfRequired;
     using CommandQueue::obtainNewTimestampPacketNodes;
     using CommandQueue::overrideEngine;
     using CommandQueue::queueCapabilities;

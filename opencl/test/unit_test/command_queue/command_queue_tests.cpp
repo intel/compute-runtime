@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -30,6 +31,7 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
@@ -1691,18 +1693,96 @@ TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenR
     EXPECT_FALSE(queue.blitEnqueueAllowed(args));
 }
 
-TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWhenMultiRootDeviceContextIsCreatedThenWhenBlitEnqueueIsNotAllowed) {
+TEST(CommandQueue, whenDontAllocateBuffersInLocalMemoryForMultiRootDeviceContextsThenMultiGraphicsAllocationsDontRequireMigrations) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(0);
+
+    MockDefaultContext context{true};
+    MockCommandQueue queue(&context, context.getDevice(1), 0, false);
+    MockCommandStreamReceiver csr(*context.getDevice(1)->getExecutionEnvironment(), context.getDevice(1)->getRootDeviceIndex(), 1);
+
+    ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
+
+    std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create(&context));
+    size_t size = MemoryConstants::kiloByte;
+    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+
+    BuiltinOpParams operationParams;
+    operationParams.srcMemObj = srcBuffer.get();
+    operationParams.dstPtr = dstPtr;
+    operationParams.size = {size, 0, 0};
+
+    EXPECT_FALSE(srcBuffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    queue.migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+
+    alignedFree(dstPtr);
+}
+
+TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWhenMultiStorageIsNotSetThenDontRequireMigrations) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
 
     MockDefaultContext context{true};
-    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    MockGraphicsAllocation alloc{};
+    MockCommandQueue queue(&context, context.getDevice(1), 0, false);
+    MockCommandStreamReceiver csr(*context.getDevice(1)->getExecutionEnvironment(), context.getDevice(1)->getRootDeviceIndex(), 1);
 
     ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
 
-    CsrSelectionArgs args{CL_COMMAND_READ_BUFFER, &alloc, &alloc, 0u, nullptr};
-    EXPECT_FALSE(queue.blitEnqueueAllowed(args));
+    std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create(&context));
+    const_cast<MultiGraphicsAllocation &>(srcBuffer->getMultiGraphicsAllocation()).setMultiStorage(false);
+    size_t size = MemoryConstants::kiloByte;
+    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+
+    BuiltinOpParams operationParams;
+    operationParams.srcMemObj = srcBuffer.get();
+    operationParams.dstPtr = dstPtr;
+    operationParams.size = {size, 0, 0};
+
+    EXPECT_FALSE(srcBuffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    queue.migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+
+    alignedFree(dstPtr);
+}
+
+TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWhenMultiGraphicsAllocationsRequireMigrationsThenMigrateTheAllocations) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
+
+    MockDefaultContext context{true};
+    ASSERT_TRUE(context.getNumDevices() > 1);
+    ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
+
+    auto sourceRootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
+    EXPECT_EQ(0u, sourceRootDeviceIndex);
+
+    auto targetRootDeviceIndex = context.getDevice(1)->getRootDeviceIndex();
+    EXPECT_EQ(1u, targetRootDeviceIndex);
+
+    MockCommandQueue queue(&context, context.getDevice(1), 0, false);
+    MockCommandStreamReceiver csr(*context.getDevice(1)->getExecutionEnvironment(), targetRootDeviceIndex, 1);
+
+    std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create(&context));
+    size_t size = MemoryConstants::kiloByte;
+    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+
+    BuiltinOpParams operationParams;
+    operationParams.srcMemObj = srcBuffer.get();
+    operationParams.dstPtr = dstPtr;
+    operationParams.size = {size, 0, 0};
+
+    EXPECT_TRUE(srcBuffer->getMultiGraphicsAllocation().requiresMigrations());
+    ASSERT_NE(nullptr, srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData());
+
+    srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->setCurrentLocation(sourceRootDeviceIndex);
+    EXPECT_EQ(sourceRootDeviceIndex, srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+
+    queue.migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+
+    EXPECT_EQ(targetRootDeviceIndex, srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+
+    alignedFree(dstPtr);
 }
 
 template <bool blitter, bool selectBlitterWithQueueFamilies>

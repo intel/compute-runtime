@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
@@ -877,4 +878,85 @@ HWTEST_F(UltCommandStreamReceiverTest, givenDebugDisablingCacheFlushWhenAddingPi
     EXPECT_FALSE(pipeControl->getVfCacheInvalidationEnable());
     EXPECT_FALSE(pipeControl->getConstantCacheInvalidationEnable());
     EXPECT_FALSE(pipeControl->getStateCacheInvalidationEnable());
+}
+
+struct BcsCrossDeviceMigrationTests : public ::testing::Test {
+
+    template <typename FamilyType>
+    class MockCmdQToTestMigration : public CommandQueueHw<FamilyType> {
+      public:
+        MockCmdQToTestMigration(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
+
+        void migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) override {
+            migrateMultiGraphicsAllocationsIfRequiredCalled = true;
+            migrateMultiGraphicsAllocationsReceivedOperationParams = &operationParams;
+            migrateMultiGraphicsAllocationsReceivedCsr = &csr;
+            CommandQueueHw<FamilyType>::migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+        }
+
+        bool migrateMultiGraphicsAllocationsIfRequiredCalled = false;
+        const BuiltinOpParams *migrateMultiGraphicsAllocationsReceivedOperationParams = nullptr;
+        CommandStreamReceiver *migrateMultiGraphicsAllocationsReceivedCsr = nullptr;
+    };
+
+    void SetUp() override {
+        VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        REQUIRE_FULL_BLITTER_OR_SKIP(defaultHwInfo.get());
+
+        DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
+        DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(true);
+
+        deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
+        auto device1 = deviceFactory->rootDevices[0];
+        auto device2 = deviceFactory->rootDevices[1];
+        cl_device_id devices[] = {device1, device2};
+
+        context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);
+    }
+
+    void TearDown() override {
+    }
+
+    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    std::unique_ptr<MockContext> context;
+    DebugManagerStateRestore restorer;
+
+    template <typename FamilyType>
+    std::unique_ptr<MockCmdQToTestMigration<FamilyType>> createCommandQueue(uint32_t rooDeviceIndex) {
+        if (rooDeviceIndex < 2) {
+            return std::make_unique<MockCmdQToTestMigration<FamilyType>>(context.get(), deviceFactory->rootDevices[rooDeviceIndex]);
+        }
+        return nullptr;
+    }
+};
+
+HWTEST_F(BcsCrossDeviceMigrationTests, givenBufferWithMultiStorageWhenEnqueueReadBufferIsCalledThenMigrateBufferToRootDeviceAssociatedWithCommandQueue) {
+    uint32_t targetRootDeviceIndex = 1;
+    auto cmdQueue = createCommandQueue<FamilyType>(targetRootDeviceIndex);
+    ASSERT_NE(nullptr, cmdQueue);
+
+    cl_int retVal = CL_INVALID_VALUE;
+    constexpr size_t size = MemoryConstants::pageSize;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), 0, size, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    EXPECT_TRUE(buffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    char hostPtr[size]{};
+
+    retVal = cmdQueue->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cmdQueue->finish();
+
+    EXPECT_TRUE(cmdQueue->migrateMultiGraphicsAllocationsIfRequiredCalled);
+
+    auto bcsCsr = cmdQueue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
+    EXPECT_EQ(bcsCsr, cmdQueue->migrateMultiGraphicsAllocationsReceivedCsr);
+    EXPECT_EQ(targetRootDeviceIndex, bcsCsr->getRootDeviceIndex());
+
+    EXPECT_EQ(buffer.get(), cmdQueue->migrateMultiGraphicsAllocationsReceivedOperationParams->srcMemObj);
 }

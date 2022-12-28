@@ -38,6 +38,7 @@
 #include "opencl/source/helpers/queue_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/source/memory_manager/migration_controller.h"
 #include "opencl/source/program/printf_handler.h"
 
 #include "CL/cl_ext.h"
@@ -982,9 +983,6 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
     bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
-    if (this->getContext().getRootDeviceIndices().size() > 1) {
-        blitEnqueueAllowed &= !DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.get();
-    }
     if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
         blitEnqueueAllowed = DebugManager.flags.EnableBlitterForEnqueueOperations.get();
     }
@@ -1305,6 +1303,22 @@ void CommandQueue::fillCsrDependenciesWithLastBcsPackets(CsrDependencies &csrDep
 void CommandQueue::clearLastBcsPackets() {
     for (BcsTimestampPacketContainers &bcsContainers : bcsTimestampPacketContainers) {
         bcsContainers.lastSignalledPacket.moveNodesToNewContainer(*deferredTimestampPackets);
+    }
+}
+
+void CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) {
+    if (!DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.get()) {
+        return;
+    }
+
+    for (auto argMemObj : {operationParams.srcMemObj, operationParams.dstMemObj}) {
+        if (argMemObj) {
+            auto memObj = argMemObj->getHighestRootMemObj();
+            auto migrateRequiredForArg = memObj->getMultiGraphicsAllocation().requiresMigrations();
+            if (migrateRequiredForArg) {
+                MigrationController::handleMigration(*this->context, csr, memObj);
+            }
+        }
     }
 }
 
