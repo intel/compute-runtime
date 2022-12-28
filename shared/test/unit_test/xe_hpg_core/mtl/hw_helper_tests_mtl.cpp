@@ -20,7 +20,7 @@ using namespace NEO;
 using GfxCoreHelperTestMtl = GfxCoreHelperTest;
 
 MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreCorrectlyReported) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto hwInfo = *defaultHwInfo;
     unsigned int gmdReleases[] = {70, 71, 72, 73};
     hwInfo.ipVersion.architecture = 12;
@@ -60,9 +60,9 @@ MTLTEST_F(ProductHelperTestMtl, givenPatIndexAndAllocationTypeWhenCallOverridePa
 }
 
 MTLTEST_F(GfxCoreHelperTestMtl, givenAllocationThenCheckResourceCompatibilityReturnsTrue) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto allocation = std::make_unique<GraphicsAllocation>(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, 3u, 0llu);
-    EXPECT_TRUE(helper.checkResourceCompatibility(*allocation));
+    EXPECT_TRUE(gfxCoreHelper.checkResourceCompatibility(*allocation));
 }
 
 MTLTEST_F(GfxCoreHelperTestMtl, givenisCompressionEnabledAndWaAuxTable64KGranularWhenCheckIs1MbAlignmentSupportedThenReturnCorrectValue) {

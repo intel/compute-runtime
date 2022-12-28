@@ -16,7 +16,8 @@ struct OsContextWinTest : public WddmTestWithMockGdiDll {
     void SetUp() override {
         WddmTestWithMockGdiDll::SetUp();
         preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
-        engineTypeUsage = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0];
+        auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        engineTypeUsage = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0];
 
         init();
     }
@@ -72,7 +73,9 @@ struct OsContextWinTestNoCleanup : public WddmTestWithMockGdiDllNoCleanup {
     void SetUp() override {
         WddmTestWithMockGdiDllNoCleanup::SetUp();
         preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
-        engineTypeUsage = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0];
+
+        auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        engineTypeUsage = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0];
 
         init();
     }

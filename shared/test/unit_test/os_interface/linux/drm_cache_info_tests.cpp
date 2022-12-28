@@ -21,7 +21,7 @@ TEST(DrmCacheInfoTest, givenCacheRegionsExistsWhenCallingSetUpCacheInfoThenCache
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(drm.context.hwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
     drm.setupCacheInfo(*defaultHwInfo.get());
 

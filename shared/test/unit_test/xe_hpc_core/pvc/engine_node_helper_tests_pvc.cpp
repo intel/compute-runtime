@@ -153,7 +153,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledWhenGetGpgpuEnginesCalledTh
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispatchSupportedThenTrueIsReturned) {
-    const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
@@ -165,7 +165,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispat
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCCSEngineAndRevisionBWhenCallingIsCooperativeDispatchSupportedThenFalseIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
-    const auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
 

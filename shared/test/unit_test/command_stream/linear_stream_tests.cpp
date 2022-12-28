@@ -169,8 +169,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenOn
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenNewCmdBufferAllocated) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
-    auto &hwInfo = pDevice->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
     stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
@@ -182,8 +181,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenLinearStreamHasNewAllocation) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
-    auto &hwInfo = pDevice->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
     stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
@@ -196,8 +194,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenGetSpaceReturnPtrFromNewAllocation) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
-    auto &hwInfo = pDevice->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
     stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);
@@ -209,8 +206,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsSpaceForCommandAndBBEndThenNewCmdBufferIsNotAllocated) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
-    auto &hwInfo = pDevice->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
     stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize);
@@ -222,8 +218,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenBBEndAddedAtEndOfStream) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
-    auto &hwInfo = pDevice->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
     stream->sizeUsed = stream->getMaxAvailableSpace() - gfxCoreHelper.getBatchBufferEndSize() - (dummyCommandSize - 1);

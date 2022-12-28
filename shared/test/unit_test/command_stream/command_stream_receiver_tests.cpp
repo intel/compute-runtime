@@ -698,7 +698,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckTaskCou
 
 HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckIfEnabledThenCanBeEnabledOnlyWithDirectSubmission) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto &gfxCoreHelper = GfxCoreHelper::get(csr.peekHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
 
     {
         csr.directSubmissionAvailable = true;
@@ -719,7 +719,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDevic
     SetUp();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(csr.peekHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
 
     {
         csr.directSubmissionAvailable = true;

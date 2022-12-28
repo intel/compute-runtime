@@ -276,7 +276,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTimestampPacketTests, givenInvalidDebugFlagSe
 HWTEST_F(DeviceTimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenGpuAddressIsAligned) {
     auto csr = executionEnvironment->memoryManager->getRegisteredEngines()[0].commandStreamReceiver;
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
 
     auto allocator = csr->getTimestampPacketAllocator();
 

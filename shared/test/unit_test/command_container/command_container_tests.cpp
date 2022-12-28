@@ -140,7 +140,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
     EXPECT_EQ(cmdContainer.getIddBlock(), nullptr);
     EXPECT_EQ(cmdContainer.getNumIddPerBlock(), defaultNumIddsPerBlock);
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
 
     EXPECT_EQ(cmdContainer.getInstructionHeapBaseAddress(),
               pDevice->getMemoryManager()->getInternalHeapBaseAddress(0, !gfxCoreHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())));
@@ -722,8 +722,8 @@ TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenIn
     auto device0 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
-    auto &gfxCoreHelper0 = GfxCoreHelper::get(device0->getHardwareInfo().platform.eRenderCoreFamily);
-    auto &gfxCoreHelper1 = GfxCoreHelper::get(device1->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper0 = device0->getGfxCoreHelper();
+    auto &gfxCoreHelper1 = device1->getGfxCoreHelper();
 
     CommandContainer cmdContainer0;
     cmdContainer0.initialize(device0.get(), nullptr, true);
@@ -836,8 +836,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAlocatingNextCmdBufferThenStre
 TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBufferCalledThenBBEndPlacedAtEndOfLinearStream) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
-    auto &hwInfo = pDevice->getHardwareInfo();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto ptr = cmdContainer.getCommandStream()->getSpace(0u);
     cmdContainer.closeAndAllocateNextCommandBuffer();
     EXPECT_EQ(memcmp(ptr, gfxCoreHelper.getBatchBufferEndReference(), gfxCoreHelper.getBatchBufferEndSize()), 0);

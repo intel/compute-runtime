@@ -96,7 +96,7 @@ XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMm
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     for (int type = 0; type < static_cast<int>(AllocationType::COUNT); type++) {
         AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
@@ -138,10 +138,9 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSize
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
-    auto &helper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_NE(nullptr, &helper);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    auto &configs = helper.getThreadsPerEUConfigs();
+    auto &configs = gfxCoreHelper.getThreadsPerEUConfigs();
 
     EXPECT_EQ(2U, configs.size());
     EXPECT_EQ(4U, configs[0]);
@@ -201,7 +200,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabl
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenXeHpgCoreWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnTrue) {
-    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isEngineTypeRemappingToHwSpecificRequired());
 }
 
@@ -288,6 +287,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse) {
-    const auto &gfxCoreHelper = GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
 }

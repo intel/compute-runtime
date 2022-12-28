@@ -453,7 +453,9 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
 
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
             auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-            if (++allocateGraphicsMemoryCount > GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo).size() - 1) {
+            auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->template getHelper<GfxCoreHelper>();
+
+            if (++allocateGraphicsMemoryCount > gfxCoreHelper.getGpgpuEngineInstances(*hwInfo).size() - 1) {
                 return nullptr;
             }
             return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);

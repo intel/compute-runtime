@@ -253,7 +253,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
 
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto engineInstance = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto engineInstance = gfxCoreHelper.getGpgpuEngineInstances(hwInfo)[0];
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(engineInstance));
 
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

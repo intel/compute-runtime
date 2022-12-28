@@ -57,7 +57,7 @@ DG1TEST_F(GfxCoreHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkarou
 }
 
 DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledThenIsLockableIsSet) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     AllocationData allocData{};
     allocData.flags.useSystemMemory = true;
     AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
@@ -68,7 +68,7 @@ DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationD
 }
 
 DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledWithShareableSetThenIsLockableIsFalse) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(renderCoreFamily);
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     AllocationData allocData{};
     allocData.flags.useSystemMemory = true;
     AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
