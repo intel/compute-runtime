@@ -111,7 +111,7 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
                                                                       bool isReadOnly,
                                                                       uint32_t surfaceType,
                                                                       bool forceNonAuxMode,
-                                                                      bool useL1Cache) {
+                                                                      bool useL1Cache) const {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -174,7 +174,7 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
 }
 
 template <typename GfxFamily>
-void NEO::GfxCoreHelperHw<GfxFamily>::setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {}
+void NEO::GfxCoreHelperHw<GfxFamily>::setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const {}
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const {

@@ -55,7 +55,7 @@ uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, u
 }
 
 template <>
-void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
+void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const {
 }
 
 template <>

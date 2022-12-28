@@ -1228,7 +1228,7 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     device->getProperties(&deviceProperties);
     EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto expectedSize = this->neoDevice->getDeviceInfo().globalMemSize;
     if (!this->neoDevice->areSharedSystemAllocationsAllowed()) {
         expectedSize = std::min(expectedSize, gfxCoreHelper.getMaxMemAllocSize());

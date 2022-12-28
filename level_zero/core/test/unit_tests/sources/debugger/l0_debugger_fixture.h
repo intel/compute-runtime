@@ -31,16 +31,17 @@ struct L0DebuggerFixture {
         memoryOperationsHandler = new NEO::MockMemoryOperations();
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
         executionEnvironment->setDebuggingEnabled();
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
 
-        hwInfo = *NEO::defaultHwInfo.get();
+        hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo.featureTable.flags.ftrLocalMemory = true;
 
-        auto isHexadecimalArrayPreferred = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+        auto isHexadecimalArrayPreferred = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred();
         if (isHexadecimalArrayPreferred) {
             MockSipData::useMockSip = true;
         }
 
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->initializeMemoryManager();
 
@@ -61,7 +62,7 @@ struct L0DebuggerFixture {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    NEO::HardwareInfo hwInfo;
+    NEO::HardwareInfo hwInfo = *defaultHwInfo;
     MockMemoryOperations *memoryOperationsHandler = nullptr;
     VariableBackup<bool> mockSipCalled{&NEO::MockSipData::called};
     VariableBackup<NEO::SipKernelType> mockSipCalledType{&NEO::MockSipData::calledType};

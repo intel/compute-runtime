@@ -87,21 +87,11 @@ HWTEST_F(GfxCoreHelperTest, givenForceExtendedKernelIsaSizeSetWhenGettingISAPadd
     }
 }
 
-HWTEST_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet) {
+HWTEST2_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    class MockGfxCoreHelperHw : public GfxCoreHelperHw<FamilyType> {
-      public:
-        bool called = false;
-        using GfxCoreHelperHw<FamilyType>::GfxCoreHelperHw;
-        MockGfxCoreHelperHw() {}
-        void setL1CachePolicy(bool useL1Cache, typename FamilyType::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) override {
-            GfxCoreHelperHw<FamilyType>::setL1CachePolicy(useL1Cache, surfaceState, hwInfo);
-            called = true;
-        }
-    };
 
-    MockGfxCoreHelperHw helper;
+    auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
@@ -116,14 +106,16 @@ HWTEST_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePol
     uint32_t pitch = 0x40;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
 
-    helper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, false,
-                                                   false);
-    ASSERT_EQ(helper.called, true);
-    helper.called = false;
+    gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, false,
+                                                          false);
 
-    helper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, false,
-                                                   true);
-    ASSERT_EQ(helper.called, true);
+    EXPECT_NE(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceState->getL1CachePolicyL1CacheControl());
+
+    gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, false,
+                                                          true);
+
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceState->getL1CachePolicyL1CacheControl());
+
     alignedFree(stateBuffer);
 }
 

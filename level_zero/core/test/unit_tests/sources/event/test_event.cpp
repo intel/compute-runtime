@@ -1695,7 +1695,7 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenOverflowingTimeStampDataOnTwoKer
     ze_kernel_timestamp_result_t results;
     event->queryKernelTimestamp(&results);
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     if (gfxCoreHelper.useOnlyGlobalTimestamps() == false) {
         EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue - 2), results.context.kernelStart);
         EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue + 2), results.context.kernelEnd);

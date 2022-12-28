@@ -190,7 +190,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, commandList->csr->getCS().getCpuBase(), commandList->csr->getCS().getUsed()));
 
-    const auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
 
         auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());

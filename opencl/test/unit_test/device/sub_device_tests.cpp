@@ -335,7 +335,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
         gfxCoreHelper.adjustDefaultEngineType(hwInfo);
 
-        if (!multiCcsDevice(*hwInfo, numCcs)) {
+        if (!multiCcsDevice(rootDeviceEnvironment, numCcs)) {
             return false;
         }
         executionEnvironment->parseAffinityMask();
@@ -378,8 +378,10 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         return true;
     }
 
-    bool multiCcsDevice(const HardwareInfo &hwInfo, uint32_t expectedNumCcs) {
-        auto gpgpuEngines = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    bool multiCcsDevice(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t expectedNumCcs) {
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
 
         uint32_t numCcs = 0;
 

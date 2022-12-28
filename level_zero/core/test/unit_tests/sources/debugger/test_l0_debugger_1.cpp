@@ -45,7 +45,8 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIs
     ASSERT_NE(nullptr, systemRoutine);
 
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
-    auto isHexadecimalArrayPreferred = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto isHexadecimalArrayPreferred = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred();
 
     auto expectedSipAllocation = isHexadecimalArrayPreferred
                                      ? NEO::MockSipData::mockSipKernel->getSipAllocation()

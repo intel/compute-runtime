@@ -705,7 +705,7 @@ HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledTh
 
     auto result = sessionMock->readSbaRegisters(EuThread::ThreadId(0, thread), 0, 9, sba);
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     EXPECT_TRUE(gfxCoreHelper.isScratchSpaceSurfaceStateAccessible());
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
@@ -1924,7 +1924,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
         session->stateSaveAreaHeader.resize(size);
     }
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     ze_device_thread_t thread = {0, 0, 0, 0};
     ze_device_thread_t thread1 = {0, 0, 0, 1};
     EuThread::ThreadId threadId(0, thread);
@@ -2429,7 +2429,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
     retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 
-    desc.address = 0x1000000f; //force a read
+    desc.address = 0x1000000f; // force a read
     retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
     sessionMock->slmCmdRegisterAccessReadyCount = 2;
