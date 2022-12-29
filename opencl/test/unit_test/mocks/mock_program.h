@@ -221,14 +221,6 @@ class MockProgram : public Program {
         }
     }
 
-    void callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) override {
-        wasGenerateDefaultMetadataOnceCalled = true;
-
-        if (callBaseGenerateDefaultMetadataOnce) {
-            return Program::callGenerateDefaultExtendedArgsMetadataOnce(rootDeviceIndex);
-        }
-    }
-
     std::vector<NEO::ExternalFunctionInfo> externalFunctions;
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
@@ -241,9 +233,6 @@ class MockProgram : public Program {
     bool wasDebuggerNotified = false;
     bool wasPopulateZebinExtendedArgsMetadataOnceCalled = false;
     bool callBasePopulateZebinExtendedArgsMetadataOnce = false;
-
-    bool wasGenerateDefaultMetadataOnceCalled = false;
-    bool callBaseGenerateDefaultMetadataOnce = false;
 };
 
 class MockProgramAppendKernelDebugOptions : public Program {
