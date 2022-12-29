@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"

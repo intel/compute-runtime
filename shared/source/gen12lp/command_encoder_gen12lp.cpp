@@ -12,6 +12,8 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/preamble.h"
 
+#include "encode_surface_state_args.h"
+
 using Family = NEO::Gen12LpFamily;
 
 #include "shared/source/command_container/command_encoder.inl"

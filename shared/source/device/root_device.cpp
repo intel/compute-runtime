@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"

@@ -12,6 +12,8 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "encode_surface_state_args.h"
+
 using IsBetweenSklAndTgllp = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsBetweenSklAndTgllp) {

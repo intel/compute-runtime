@@ -13,6 +13,8 @@
 
 namespace NEO {
 
+struct HardwareInfo;
+
 class MemoryPropertiesHelper {
   public:
     enum class ObjType {

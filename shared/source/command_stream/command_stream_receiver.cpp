@@ -17,6 +17,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"

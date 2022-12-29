@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"

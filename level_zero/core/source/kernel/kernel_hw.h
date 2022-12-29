@@ -18,6 +18,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
 
+#include "encode_surface_state_args.h"
 #include "igfxfmid.h"
 
 namespace L0 {

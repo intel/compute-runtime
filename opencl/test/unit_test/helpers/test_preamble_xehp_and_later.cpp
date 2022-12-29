@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
+#include "encode_surface_state_args.h"
 #include "reg_configs_common.h"
 #include "test_traits_common.h"
 

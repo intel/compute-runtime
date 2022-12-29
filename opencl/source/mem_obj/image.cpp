@@ -8,6 +8,7 @@
 #include "opencl/source/mem_obj/image.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"

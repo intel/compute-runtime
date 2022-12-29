@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 using namespace NEO;

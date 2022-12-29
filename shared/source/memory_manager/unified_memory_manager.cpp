@@ -8,6 +8,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"

@@ -10,19 +10,19 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/encode_alu_helper.h"
 #include "shared/source/debugger/debugger.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/definitions/mi_flush_args.h"
-#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/register_offsets.h"
-#include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
-
-#include "encode_surface_state_args.h"
 
 #include <list>
 
 namespace NEO {
+struct EncodeSurfaceStateArgs;
+struct MiFlushArgs;
+struct PipeControlArgs;
+enum class SlmPolicy;
+struct DispatchKernelEncoderI;
+struct RootDeviceEnvironment;
 
 class BindlessHeapsHelper;
 class GmmHelper;

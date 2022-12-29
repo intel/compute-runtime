@@ -10,6 +10,8 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/xe_hpg_core/hw_cmds.h"
 
+#include "encode_surface_state_args.h"
+
 namespace NEO {
 
 template <>

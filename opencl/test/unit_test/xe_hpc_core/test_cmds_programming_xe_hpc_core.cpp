@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "encode_surface_state_args.h"
 #include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;

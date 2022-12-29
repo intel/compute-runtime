@@ -18,6 +18,8 @@
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "encode_surface_state_args.h"
+
 using namespace NEO;
 using CmdsProgrammingTestsXeHpgCore = UltCommandStreamReceiverTest;
 

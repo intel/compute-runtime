@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"

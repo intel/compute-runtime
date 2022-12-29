@@ -22,6 +22,8 @@
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
+#include "encode_surface_state_args.h"
+
 #include <algorithm>
 
 namespace L0 {

@@ -13,6 +13,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "encode_surface_state_args.h"
+
 using namespace NEO;
 using CommandEncoderXeHpgCorePlusTests = Test<DeviceFixture>;
 

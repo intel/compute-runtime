@@ -9,6 +9,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/source/cl_device/cl_device.h"

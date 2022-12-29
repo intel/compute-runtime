@@ -13,6 +13,8 @@
 
 #include "opencl/source/mem_obj/buffer.h"
 
+#include "encode_surface_state_args.h"
+
 namespace NEO {
 
 union SURFACE_STATE_BUFFER_LENGTH {

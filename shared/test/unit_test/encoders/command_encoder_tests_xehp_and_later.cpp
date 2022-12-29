@@ -14,6 +14,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
 
+#include "encode_surface_state_args.h"
 #include "test_traits_common.h"
 
 using namespace NEO;

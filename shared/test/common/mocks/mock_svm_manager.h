@@ -6,9 +6,11 @@
  */
 
 #pragma once
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+
 namespace NEO {
 struct MockSVMAllocsManager : public SVMAllocsManager {
   public:

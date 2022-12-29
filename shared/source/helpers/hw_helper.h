@@ -8,14 +8,12 @@
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/commands/bxml_generator_glue.h"
-#include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/options.h"
 
 #include "aubstream/aubstream.h"
 #include "igfxfmid.h"
-#include "sku_info.h"
 
 #include <cstdint>
 #include <memory>
@@ -26,6 +24,8 @@ struct LrcaHelper;
 }
 
 namespace NEO {
+enum class AuxTranslationMode;
+struct FeatureTable;
 enum class PostSyncMode : uint32_t;
 enum class CachePolicy : uint32_t;
 enum class CacheRegion : uint16_t;

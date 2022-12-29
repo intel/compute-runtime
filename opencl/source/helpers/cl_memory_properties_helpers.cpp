@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/device/device.h"
+
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers_base.inl"

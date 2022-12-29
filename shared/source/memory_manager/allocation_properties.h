@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "shared/source/device/sub_device.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
+class OsContext;
 struct ImageInfo;
 struct AllocationProperties {
     union {

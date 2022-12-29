@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/sub_device.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_time.h"

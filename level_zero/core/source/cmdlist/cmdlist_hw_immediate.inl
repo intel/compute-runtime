@@ -23,6 +23,8 @@
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
 
+#include "encode_surface_state_args.h"
+
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>

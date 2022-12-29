@@ -20,6 +20,7 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/fixtures/front_window_fixture.h"
 
+#include "encode_surface_state_args.h"
 #include "test_traits_common.h"
 
 using namespace NEO;

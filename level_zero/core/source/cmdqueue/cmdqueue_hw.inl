@@ -20,6 +20,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/logical_state_helper.h"

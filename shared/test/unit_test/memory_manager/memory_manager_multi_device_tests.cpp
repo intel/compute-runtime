@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"

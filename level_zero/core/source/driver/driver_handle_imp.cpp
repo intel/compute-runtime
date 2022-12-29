@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"

@@ -17,6 +17,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"

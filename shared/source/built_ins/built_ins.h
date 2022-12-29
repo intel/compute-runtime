@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/built_ins/builtinops/built_in_ops.h"
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/debug_helpers.h"

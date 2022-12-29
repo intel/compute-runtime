@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
+#include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
