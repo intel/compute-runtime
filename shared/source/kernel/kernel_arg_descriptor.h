@@ -45,6 +45,26 @@ struct ArgDescPointer final {
     }
 };
 
+enum class NEOImageType : uint8_t {
+    ImageTypeUnknown,
+    ImageTypeBuffer,
+    ImageType1D,
+    ImageType1DArray,
+    ImageType2D,
+    ImageType2DArray,
+    ImageType3D,
+    ImageTypeCube,
+    ImageTypeCubeArray,
+    ImageType2DDepth,
+    ImageType2DArrayDepth,
+    ImageType2DMSAA,
+    ImageType2DMSAADepth,
+    ImageType2DArrayMSAA,
+    ImageType2DArrayMSAADepth,
+    ImageType2DMedia,
+    ImageType2DMediaBlock,
+};
+
 struct ArgDescImage final {
     SurfaceStateHeapOffset bindful = undefined<SurfaceStateHeapOffset>; // stateful with BTI
     CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>;
@@ -64,6 +84,7 @@ struct ArgDescImage final {
         CrossThreadDataOffset flatHeight = undefined<CrossThreadDataOffset>;
         CrossThreadDataOffset flatPitch = undefined<CrossThreadDataOffset>;
     } metadataPayload;
+    NEOImageType imageType;
 };
 
 struct ArgDescSampler final {
@@ -182,7 +203,7 @@ struct ArgDescriptor final {
 
 namespace {
 constexpr auto ArgSize = sizeof(ArgDescriptor);
-static_assert(ArgSize <= 64, "Keep it small");
+static_assert(ArgSize <= 72, "Keep it small");
 } // namespace
 
 template <>
