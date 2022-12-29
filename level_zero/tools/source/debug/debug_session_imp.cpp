@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -320,7 +320,6 @@ DebugSession *DebugSessionImp::attachTileDebugSession(Device *device) {
 }
 
 void DebugSessionImp::detachTileDebugSession(DebugSession *tileSession) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
 
     uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(tileSession->getConnectedDevice()->getNEODevice()->getDeviceBitfield().to_ulong()));
 
