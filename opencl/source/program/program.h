@@ -282,6 +282,7 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
     Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
@@ -376,6 +377,7 @@ class Program : public BaseObject<_cl_program> {
     size_t exportedFunctionsKernelId = std::numeric_limits<size_t>::max();
 
     std::once_flag extractAndDecodeMetadataOnce;
+    std::once_flag generateDefaultMetadataOnce;
 };
 
 } // namespace NEO

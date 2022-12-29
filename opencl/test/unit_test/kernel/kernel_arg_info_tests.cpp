@@ -61,12 +61,6 @@ TEST_F(KernelArgInfoTest, GivenValidArgIndexThenExplicitArgsMetadataIsPopulated)
     EXPECT_TRUE(program->wasPopulateZebinExtendedArgsMetadataOnceCalled);
 }
 
-TEST_F(KernelArgInfoTest, GivenEmptyExplicitArgsMetadataThenAppropriateErrorIsReturned) {
-    kernelDescriptor->explicitArgsExtendedMetadata.resize(0);
-    auto retVal = kernel->getArgInfo(0, 0, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_KERNEL_ARG_INFO_NOT_AVAILABLE, retVal);
-}
-
 TEST_F(KernelArgInfoTest, GivenInvalidParametersWhenGettingKernelArgInfoThenValueSizeRetIsNotUpdated) {
     auto retVal = kernel->getArgInfo(0, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
