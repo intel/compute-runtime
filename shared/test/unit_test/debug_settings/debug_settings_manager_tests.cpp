@@ -206,7 +206,7 @@ TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAre
 }
 
 TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringPrintedToFile) {
-    if (NEO::DebugManager.disabled()) {
+    if (!NEO::fileLoggerInstance().enabled()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
