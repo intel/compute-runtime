@@ -322,7 +322,6 @@ DebugSession *DebugSessionImp::attachTileDebugSession(Device *device) {
 }
 
 void DebugSessionImp::detachTileDebugSession(DebugSession *tileSession) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
 
     uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(tileSession->getConnectedDevice()->getNEODevice()->getDeviceBitfield().to_ulong()));
 
