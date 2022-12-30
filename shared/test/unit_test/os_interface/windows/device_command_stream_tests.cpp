@@ -341,8 +341,10 @@ TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIs
     auto csr = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0, 1);
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
     csr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     OsContextWin osContext(*wddm, csr->getRootDeviceIndex(), 0u,
-                           EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                           EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                         PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
     csr->setupContext(osContext);
 
@@ -366,8 +368,10 @@ TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIs
     auto csr = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0, 1);
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
     csr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     OsContextWin osContext(*wddm, csr->getRootDeviceIndex(), 0u,
-                           EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                           EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                         PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
     csr->setupContext(osContext);
 

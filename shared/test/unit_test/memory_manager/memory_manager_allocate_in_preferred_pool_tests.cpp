@@ -1022,7 +1022,9 @@ TEST(MemoryManagerTest, givenPropertiesWithOsContextWhenGetAllocationDataIsCalle
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{0, 1, AllocationType::DEBUG_CONTEXT_SAVE_AREA, mockDeviceBitfield};
 
-    MockOsContext osContext(0u, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0]));
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    MockOsContext osContext(0u, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0]));
 
     properties.osContext = &osContext;
 

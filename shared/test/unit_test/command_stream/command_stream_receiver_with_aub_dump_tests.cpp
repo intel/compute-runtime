@@ -188,7 +188,8 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSett
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment, 0, deviceBitfield);
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                             PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
 
     csrWithAubDump.setupContext(osContext);
@@ -370,7 +371,8 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
     bool isTimestampPacketNodeReleasable(Args &&...args) {
         CsrT csr(std::forward<Args>(args)...);
         auto hwInfo = csr.peekExecutionEnvironment().rootDeviceEnvironments[0]->getHardwareInfo();
-        MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                 PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         csr.setupContext(osContext);
 

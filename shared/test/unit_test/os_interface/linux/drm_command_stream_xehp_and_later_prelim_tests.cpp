@@ -295,8 +295,10 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         executionEnvironment.rootDeviceEnvironments[0]->initGmm();
 
         mock->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo));
+
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0,
-                                                     EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(3)));
         osContext->ensureContextInitialized();
 
@@ -405,8 +407,9 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         osContext = std::make_unique<OsContextLinux>(*drm, 0, 0u,
-                                                     EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), DeviceBitfield(0b11)));
         osContext->ensureContextInitialized();
 
@@ -502,8 +505,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
         uint32_t execCalled = 0;
     };
 
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto osContext = std::make_unique<OsContextLinux>(*drm, 0, 0u,
-                                                      EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     osContext->ensureContextInitialized();
     auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),

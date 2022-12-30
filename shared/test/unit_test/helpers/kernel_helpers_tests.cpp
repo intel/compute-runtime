@@ -95,7 +95,7 @@ TEST_F(KernelHelperTest, GivenScratchSizeGreaterThanGlobalSizeWhenCheckingIfTher
     auto globalSize = pDevice->getDeviceInfo().globalMemSize;
     KernelDescriptor::KernelAttributes attributes = {};
     attributes.perThreadScratchSize[0] = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     if (attributes.perThreadScratchSize[0] > gfxCoreHelper.getMaxScratchSize()) {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::INVALID_KERNEL);
     } else {
@@ -107,7 +107,7 @@ TEST_F(KernelHelperTest, GivenScratchPrivateSizeGreaterThanGlobalSizeWhenCheckin
     auto globalSize = pDevice->getDeviceInfo().globalMemSize;
     KernelDescriptor::KernelAttributes attributes = {};
     attributes.perThreadScratchSize[1] = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     if (attributes.perThreadScratchSize[1] > gfxCoreHelper.getMaxScratchSize()) {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::INVALID_KERNEL);
     } else {

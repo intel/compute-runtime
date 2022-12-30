@@ -65,15 +65,17 @@ TEST(Debugger, givenSourceLevelDebuggerWhenGettingL0DebuggerThenNullptrIsReturne
 TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
 
-    auto isHexadecimalArrayPreferred = NEO::GfxCoreHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto isHexadecimalArrayPreferred = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred();
     if (!isHexadecimalArrayPreferred) {
         auto mockBuiltIns = new NEO::MockBuiltins();
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     }
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.flags.ftrLocalMemory = true;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 

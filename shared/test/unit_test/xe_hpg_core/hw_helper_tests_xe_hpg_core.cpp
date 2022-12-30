@@ -120,21 +120,23 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocati
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
-    EXPECT_EQ(0u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(0));
-    EXPECT_EQ(1024u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1));
-    EXPECT_EQ(1024u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1024));
-    EXPECT_EQ(2048u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1025));
-    EXPECT_EQ(2048u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(2048));
-    EXPECT_EQ(4096u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(2049));
-    EXPECT_EQ(4096u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(4096));
-    EXPECT_EQ(8192u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(4097));
-    EXPECT_EQ(8192u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(8192));
-    EXPECT_EQ(16384u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(8193));
-    EXPECT_EQ(16384u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(16384));
-    EXPECT_EQ(32768u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(16385));
-    EXPECT_EQ(32768u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(32768));
-    EXPECT_EQ(65536u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(32769));
-    EXPECT_EQ(65536u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(65536));
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSize(0));
+    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1));
+    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1024));
+    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(1025));
+    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(2048));
+    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(2049));
+    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(4096));
+    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(4097));
+    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(8192));
+    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(8193));
+    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(16384));
+    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(16385));
+    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768));
+    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769));
+    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
@@ -148,22 +150,24 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenGettingThrea
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, WhenCheckingSipWAThenFalseIsReturned) {
-    EXPECT_FALSE(GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily).isSipWANeeded(pDevice->getHardwareInfo()));
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    EXPECT_FALSE(gfxCoreHelper.isSipWANeeded(pDevice->getHardwareInfo()));
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
-    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
 }
 
 XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimestampWaitSupportForEventsThenReturnFalse) {
-    auto &helper = getHelper<ProductHelper>();
-    EXPECT_FALSE(helper.isTimestampWaitSupportedForEvents());
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.isTimestampWaitSupportedForEvents());
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCheckTimestampWaitSupportForQueuesThenReturnFalse) {
-    auto &helper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(helper.isTimestampWaitSupportedForQueues());
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isTimestampWaitSupportedForQueues());
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {

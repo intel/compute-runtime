@@ -42,7 +42,7 @@ struct ComputeModeRequirements : public ::testing::Test {
                                     uint32_t numGrfRequired = 128u) {
         overrideComputeModeRequest<FamilyType>(reqestChanged, requireCoherency, hasSharedHandles, numGrfRequiredChanged, numGrfRequired);
         if (modifyThreadArbitrationPolicy) {
-            auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+            auto &gfxCoreHelper = device->getGfxCoreHelper();
             auto csrHw = getCsrHw<FamilyType>();
             csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.value = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
             csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;

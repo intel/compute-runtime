@@ -315,7 +315,7 @@ HWTEST_F(TbxCommandStreamTests, givenNoDbgDeviceIdFlagWhenTbxCsrIsCreatedThenUse
 
 HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThenUseDebugDeviceId) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
+    DebugManager.flags.OverrideAubDeviceId.set(9); // this is Hsw, not used
     std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield())));
     EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }
@@ -563,7 +563,8 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxSt
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareContext) {
     auto hwInfo = pDevice->getHardwareInfo();
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0], pDevice->getDeviceBitfield()));
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(hwInfo)[0], pDevice->getDeviceBitfield()));
     std::string fileName = "";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::CSR_TBX);
