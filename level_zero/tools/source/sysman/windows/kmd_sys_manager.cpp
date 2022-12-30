@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ ze_result_t KmdSysManager::requestSingle(KmdSysman::RequestProperty &inputReques
     auto status = escape(KmdSysman::PcEscapeOperation, inPointerToLongInt, sizeof(KmdSysman::GfxSysmanMainHeaderIn),
                          outPointerToLongInt, sizeof(KmdSysman::GfxSysmanMainHeaderOut));
 
-    if (status) {
+    if (status == STATUS_SUCCESS) {
         std::vector<KmdSysman::ResponseProperty> vecOutput;
         if (!parseBufferOut(&outMainHeader, vecOutput)) {
             return ZE_RESULT_ERROR_INVALID_SIZE;
@@ -83,9 +83,11 @@ ze_result_t KmdSysManager::requestSingle(KmdSysman::RequestProperty &inputReques
         }
 
         return (outputResponse.returnCode == KmdSysman::KmdSysmanSuccess) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
+    } else if (status == STATUS_DEVICE_REMOVED) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    return (status) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 ze_result_t KmdSysManager::requestMultiple(std::vector<KmdSysman::RequestProperty> &inputRequest, std::vector<KmdSysman::ResponseProperty> &outputResponse) {
@@ -115,7 +117,7 @@ ze_result_t KmdSysManager::requestMultiple(std::vector<KmdSysman::RequestPropert
     auto status = escape(KmdSysman::PcEscapeOperation, inPointerToLongInt, sizeof(KmdSysman::GfxSysmanMainHeaderIn),
                          outPointerToLongInt, sizeof(KmdSysman::GfxSysmanMainHeaderOut));
 
-    if (status) {
+    if (status == STATUS_SUCCESS) {
         if (!parseBufferOut(&outMainHeader, outputResponse)) {
             return ZE_RESULT_ERROR_INVALID_SIZE;
         }
@@ -123,12 +125,16 @@ ze_result_t KmdSysManager::requestMultiple(std::vector<KmdSysman::RequestPropert
         if (outputResponse.size() == 0) {
             return ZE_RESULT_ERROR_INVALID_SIZE;
         }
+        return ZE_RESULT_SUCCESS;
+    } else if (status == STATUS_DEVICE_REMOVED) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    return (status) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
-bool KmdSysManager::escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInSize, uint64_t pDataOut, uint32_t dataOutSize) {
+NTSTATUS KmdSysManager::escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInSize, uint64_t pDataOut, uint32_t dataOutSize) {
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     if (pWddmAccess) {
         D3DKMT_ESCAPE escapeCommand = {0};
         PcEscapeInfo pcEscape = {0};
@@ -155,13 +161,10 @@ bool KmdSysManager::escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInS
         pBuffer = reinterpret_cast<uint8_t *>(pBuffer) + sizeof(pcEscape.headerGfx);
         pcEscape.headerGfx.CheckSum = sumOfBufferData(pBuffer, pcEscape.headerGfx.Size);
 
-        auto status = pWddmAccess->escape(escapeCommand);
-        if (status == STATUS_SUCCESS) {
-            return true;
-        }
+        status = pWddmAccess->escape(escapeCommand);
     }
 
-    return false;
+    return status;
 }
 
 bool KmdSysManager::parseBufferIn(KmdSysman::GfxSysmanMainHeaderIn *pInMainHeader, std::vector<KmdSysman::RequestProperty> &vectorInput) {

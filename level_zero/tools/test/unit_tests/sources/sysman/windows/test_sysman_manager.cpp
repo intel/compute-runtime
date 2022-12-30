@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -216,6 +216,51 @@ TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsTrueAndCorruptedDataWhenReques
     result = pKmdSysManager->requestSingle(request, response);
 
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsFalseAndTDROccuredWhenRequestSingleIsCalledThenErrorDeviceLostIsReturned) {
+    pKmdSysManager->allowSetCalls = false;
+    pKmdSysManager->mockEscapeResult = STATUS_DEVICE_REMOVED;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+    uint32_t value = 0;
+
+    request.commandId = KmdSysman::Command::Set;
+    request.componentId = KmdSysman::Component::PowerComponent;
+    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit1;
+    request.dataSize = 0;
+    memcpy_s(request.dataBuffer, sizeof(uint32_t), &value, sizeof(uint32_t));
+
+    result = pKmdSysManager->requestSingle(request, response);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+}
+
+TEST_F(SysmanKmdManagerFixture, GivenAllowSetCallsFalseAndTDROccuredWhenRequestMultipleIsCalledThenErrorDeviceLostIsReturned) {
+    pKmdSysManager->allowSetCalls = false;
+    pKmdSysManager->mockEscapeResult = STATUS_DEVICE_REMOVED;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
+
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::MemoryComponent;
+
+    request.requestId = KmdSysman::Requests::Memory::MaxBandwidth;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Memory::CurrentBandwidthRead;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Memory::CurrentBandwidthWrite;
+    vRequests.push_back(request);
+
+    result = pKmdSysManager->requestMultiple(vRequests, vResponses);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
 } // namespace ult

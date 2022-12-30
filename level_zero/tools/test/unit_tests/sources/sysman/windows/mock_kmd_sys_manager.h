@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
     ze_bool_t allowSetCalls = false;
     ze_bool_t fanSupported = false;
     uint32_t mockPowerLimit1 = 2500;
-    bool mockEscapeResult = true;
+    NTSTATUS mockEscapeResult = STATUS_SUCCESS;
     bool mockRequestSingle = false;
     bool mockRequestMultiple = false;
     bool requestMultipleSizeDiff = false;
@@ -407,23 +407,23 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         }
     }
 
-    bool escape(uint32_t escapeOp, uint64_t pInPtr, uint32_t dataInSize, uint64_t pOutPtr, uint32_t dataOutSize) {
-        if (mockEscapeResult == false) {
+    NTSTATUS escape(uint32_t escapeOp, uint64_t pInPtr, uint32_t dataInSize, uint64_t pOutPtr, uint32_t dataOutSize) {
+        if (mockEscapeResult != STATUS_SUCCESS) {
             return mockEscapeResult;
         }
         void *pDataIn = reinterpret_cast<void *>(pInPtr);
         void *pDataOut = reinterpret_cast<void *>(pOutPtr);
 
         if (pDataIn == nullptr || pDataOut == nullptr) {
-            return false;
+            return STATUS_UNSUCCESSFUL;
         }
 
         if (dataInSize != sizeof(KmdSysman::GfxSysmanMainHeaderIn) || dataOutSize != sizeof(KmdSysman::GfxSysmanMainHeaderOut)) {
-            return false;
+            return STATUS_UNSUCCESSFUL;
         }
 
         if (escapeOp != KmdSysman::PcEscapeOperation) {
-            return false;
+            return STATUS_UNSUCCESSFUL;
         }
 
         KmdSysman::GfxSysmanMainHeaderIn *pSysmanMainHeaderIn = reinterpret_cast<KmdSysman::GfxSysmanMainHeaderIn *>(pDataIn);
@@ -435,21 +435,21 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         if (versionSysman.majorVersion != KmdSysman::KmdMajorVersion) {
             if (versionSysman.majorVersion == 0) {
                 retrieveCorrectVersion(pSysmanMainHeaderOut);
-                return true;
+                return STATUS_SUCCESS;
             }
-            return false;
+            return STATUS_UNSUCCESSFUL;
         }
 
         if (pSysmanMainHeaderIn->inTotalsize == 0) {
-            return false;
+            return STATUS_UNSUCCESSFUL;
         }
 
         if (pSysmanMainHeaderIn->inNumElements == 0) {
-            return false;
+            return STATUS_UNSUCCESSFUL;
         }
 
         if (!validateInputBuffer(pSysmanMainHeaderIn)) {
-            return false;
+            return STATUS_UNSUCCESSFUL;
         }
 
         uint8_t *pBufferIn = pSysmanMainHeaderIn->inBuffer;
@@ -482,7 +482,7 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
                 responseOffset = sizeof(KmdSysman::GfxSysmanReqHeaderOut);
             } break;
             default: {
-                return false;
+                return STATUS_UNSUCCESSFUL;
             } break;
             }
 
@@ -496,7 +496,7 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         pSysmanMainHeaderOut->outNumElements = pSysmanMainHeaderIn->inNumElements;
         pSysmanMainHeaderOut->outStatus = KmdSysman::KmdSysmanSuccess;
 
-        return true;
+        return STATUS_SUCCESS;
     }
 
     Mock() = default;

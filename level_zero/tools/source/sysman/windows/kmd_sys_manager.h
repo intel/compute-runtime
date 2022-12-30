@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ class KmdSysManager {
     NEO::Wddm *GetWddmAccess() { return pWddmAccess; }
 
   private:
-    virtual bool escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInSize, uint64_t pDataOut, uint32_t dataOutSize);
+    virtual NTSTATUS escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInSize, uint64_t pDataOut, uint32_t dataOutSize);
 
     bool parseBufferIn(KmdSysman::GfxSysmanMainHeaderIn *pIn, std::vector<KmdSysman::RequestProperty> &vIn);
     bool parseBufferOut(KmdSysman::GfxSysmanMainHeaderOut *pOut, std::vector<KmdSysman::ResponseProperty> &vOut);
