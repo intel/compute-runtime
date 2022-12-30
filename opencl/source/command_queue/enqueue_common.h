@@ -94,7 +94,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
         }
     }
 
-    if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
+    if constexpr (commandType == CL_COMMAND_NDRANGE_KERNEL) {
         if (!multiDispatchInfo.empty()) {
             for (auto &dispatchInfo : multiDispatchInfo) {
                 auto nwgs = dispatchInfo.getNumberOfWorkgroups();
