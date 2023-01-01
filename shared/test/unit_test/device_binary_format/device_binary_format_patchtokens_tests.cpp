@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 TEST(IsDeviceBinaryFormatPatchtokens, GivenValidBinaryThenReturnTrue) {
@@ -129,11 +130,13 @@ TEST(UnpackSingleDeviceBinaryPatchtokens, WhenValidBinaryWithUnsupportedPointerS
 }
 
 TEST(DecodeSingleDeviceBinaryPatchtokens, GivenInvalidBinaryThenReturnError) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     std::string decodeErrors;
     std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_FALSE(decodeErrors.empty());
@@ -141,6 +144,8 @@ TEST(DecodeSingleDeviceBinaryPatchtokens, GivenInvalidBinaryThenReturnError) {
 }
 
 TEST(DecodeSingleDeviceBinaryPatchtokens, GivenValidBinaryThenOutputIsProperlyPopulated) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     PatchTokensTestData::ValidProgramWithKernel programTokens;
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
@@ -148,7 +153,7 @@ TEST(DecodeSingleDeviceBinaryPatchtokens, GivenValidBinaryThenOutputIsProperlyPo
     singleBinary.targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
     std::string decodeErrors;
     std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_TRUE(decodeErrors.empty());

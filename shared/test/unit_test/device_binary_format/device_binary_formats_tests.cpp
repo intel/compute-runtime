@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -238,6 +239,8 @@ TEST(IsAnySingleDeviceBinaryFormat, GivenZebinFormatThenReturnsTrue) {
 }
 
 TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     const uint8_t data[] = "none of known formats";
     NEO::ProgramInfo programInfo;
     std::string decodeErrors;
@@ -246,7 +249,7 @@ TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
     bin.deviceBinary = data;
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
-    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, format);
     EXPECT_TRUE(decodeWarnings.empty());
@@ -254,6 +257,8 @@ TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
 }
 
 TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
     NEO::ProgramInfo programInfo;
     std::string decodeErrors;
@@ -263,7 +268,7 @@ TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
     bin.targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(patchtokensProgram.header->Device);
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
-    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, format);
     EXPECT_TRUE(decodeWarnings.empty());
@@ -271,6 +276,8 @@ TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
 }
 
 TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     ZebinTestData::ValidEmptyProgram zebinElf;
     NEO::ProgramInfo programInfo;
     std::string decodeErrors;
@@ -279,7 +286,7 @@ TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
     bin.deviceBinary = zebinElf.storage;
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
-    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
@@ -287,6 +294,8 @@ TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
 }
 
 TEST(DecodeSingleDeviceBinary, GivenZebinWithExternalFunctionsThenDecodingSucceedsAndLinkerInputIsSet) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     ZebinTestData::ZebinWithExternalFunctionsInfo zebinElf;
     NEO::ProgramInfo programInfo;
     std::string decodeErrors;
@@ -295,7 +304,7 @@ TEST(DecodeSingleDeviceBinary, GivenZebinWithExternalFunctionsThenDecodingSuccee
     bin.deviceBinary = zebinElf.storage;
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
-    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
@@ -304,6 +313,8 @@ TEST(DecodeSingleDeviceBinary, GivenZebinWithExternalFunctionsThenDecodingSuccee
 }
 
 TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
 
     NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEnc;
@@ -318,7 +329,7 @@ TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {
     bin.deviceBinary = elfData;
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
-    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::OclElf, format);
     EXPECT_TRUE(decodeWarnings.empty());
@@ -326,6 +337,8 @@ TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {
 }
 
 TEST(DecodeSingleDeviceBinary, GivenArFormatThenDecodingFails) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     NEO::Ar::ArEncoder arEnc;
     auto arData = arEnc.encode();
     NEO::ProgramInfo programInfo;
@@ -335,7 +348,7 @@ TEST(DecodeSingleDeviceBinary, GivenArFormatThenDecodingFails) {
     bin.deviceBinary = arData;
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
-    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Archive, format);
     EXPECT_TRUE(decodeWarnings.empty());

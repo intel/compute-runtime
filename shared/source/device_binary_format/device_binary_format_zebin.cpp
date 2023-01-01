@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,7 +115,7 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
 }
 
 template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     return Elf::isElf<Elf::EI_CLASS_32>(src.deviceBinary)
                ? decodeSingleZebin<Elf::EI_CLASS_32>(dst, src, outErrReason, outWarning)
                : decodeSingleZebin<Elf::EI_CLASS_64>(dst, src, outErrReason, outWarning);

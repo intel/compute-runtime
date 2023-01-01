@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(co
 }
 
 template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     // packed binary format
     outErrReason = "Device binary format is packed";
     return DecodeError::InvalidBinary;

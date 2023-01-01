@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -348,7 +348,8 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
 
     NEO::DecodeError decodeError;
     NEO::DeviceBinaryFormat singleDeviceBinaryFormat;
-    std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings, gfxCoreHelper);
     if (decodeWarnings.empty() == false) {
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }

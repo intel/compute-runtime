@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens
 }
 
 template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram = {};
     NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(src.deviceBinary, decodedProgram);
     DBG_LOG(LogPatchTokens, NEO::PatchTokenBinary::asString(decodedProgram).c_str());
@@ -62,8 +62,7 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(Progr
     NEO::populateProgramInfo(dst, decodedProgram);
 
     // set barrierCount to number of barriers decoded from hasBarriers token
-    UNRECOVERABLE_IF(src.targetDevice.coreFamily == IGFX_UNKNOWN_CORE);
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(src.targetDevice.coreFamily);
+
     for (auto &ki : dst.kernelInfos) {
         auto &kd = ki->kernelDescriptor;
         kd.kernelAttributes.barrierCount = gfxCoreHelper.getBarriersCountFromHasBarriers(kd.kernelAttributes.barrierCount);

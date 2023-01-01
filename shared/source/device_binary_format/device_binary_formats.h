@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 namespace NEO {
 struct ProgramInfo;
 struct RootDeviceEnvironment;
+class GfxCoreHelper;
 
 enum class DeviceBinaryFormat : uint8_t {
     Unknown,
@@ -160,33 +161,33 @@ inline bool isAnySingleDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) 
 }
 
 template <DeviceBinaryFormat Format>
-DecodeError decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning);
+DecodeError decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper);
 
 template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 
-inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     std::pair<DecodeError, DeviceBinaryFormat> ret;
     ret.first = DecodeError::InvalidBinary;
     ret.second = DeviceBinaryFormat::Unknown;
     if (isDeviceBinaryFormat<DeviceBinaryFormat::OclElf>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::OclElf;
-        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(dst, src, outErrReason, outWarning);
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Patchtokens>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::Patchtokens;
-        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(dst, src, outErrReason, outWarning);
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Archive>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::Archive;
-        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(dst, src, outErrReason, outWarning);
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::Zebin;
-        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(dst, src, outErrReason, outWarning);
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else {
         outErrReason = "Unknown format";
     }
