@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,8 +45,9 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         wddmMockInterface = static_cast<WddmMockInterface23 *>(wddm->wddmInterface.release());
         wddm->init();
         wddm->wddmInterface.reset(wddmMockInterface);
+        auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
-                                                   EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0], preemptionMode));
+                                                   EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0], preemptionMode));
         osContext->ensureContextInitialized();
     }
 
@@ -78,7 +79,8 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 }
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
-    auto defaultEngine = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0];
+    auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto defaultEngine = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0];
     OsContextWin osContextWithoutPreemption(*wddm, 0, 0u,
                                             EngineDescriptorHelper::getDefaultDescriptor(defaultEngine, PreemptionMode::Disabled));
     OsContextWin osContextWithPreemption(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor(defaultEngine, PreemptionMode::MidBatch));

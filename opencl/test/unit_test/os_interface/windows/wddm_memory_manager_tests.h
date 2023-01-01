@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,8 @@ class MockWddmMemoryManagerFixture {
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         osContext->ensureContextInitialized();
 
@@ -116,11 +117,12 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
         memoryManager = new (std::nothrow) MockWddmMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        //assert we have memory manager
+        // assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
         csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       preemptionMode));
         osContext->incRefInternal();
     }

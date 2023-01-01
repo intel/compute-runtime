@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,8 +42,8 @@ struct UltCommandStreamReceiverTest
         ASSERT_NE(nullptr, sshBuffer);
 
         initHeaps();
-
-        flushTaskFlags.threadArbitrationPolicy = NEO::GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily).getDefaultThreadArbitrationPolicy();
+        auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+        flushTaskFlags.threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
         pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -724,7 +724,8 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenEngineTypeWhenCreatingContextThenPassCorrectNodeOrdinal) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();
-    UINT expected = WddmEngineMapper::engineNodeMap(GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first);
+    auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+    UINT expected = WddmEngineMapper::engineNodeMap(gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0].first);
     EXPECT_EQ(expected, createContextParams->NodeOrdinal);
 }
 

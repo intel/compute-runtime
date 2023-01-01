@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -214,7 +214,8 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
     void SetUp() override {
         PerformanceCountersMetricsLibraryFixture::setUp();
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                     PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         queue->getGpgpuCommandStreamReceiver().setupContext(*osContext);
     }
@@ -658,7 +659,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, GivenPerformanceCountersObjectIsNo
 }
 
 TEST_F(PerformanceCountersTest, givenRenderCoreFamilyWhenGettingGenIdThenMetricsLibraryGenIdentifierAreValid) {
-    const auto &hwInfo = device->getHardwareInfo();
-    const auto gen = hwInfo.platform.eRenderCoreFamily;
-    EXPECT_NE(ClientGen::Unknown, static_cast<ClientGen>(GfxCoreHelper::get(gen).getMetricsLibraryGenId()));
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_NE(ClientGen::Unknown, static_cast<ClientGen>(gfxCoreHelper.getMetricsLibraryGenId()));
 }

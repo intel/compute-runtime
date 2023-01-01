@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -996,7 +996,7 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
     if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
@@ -1042,7 +1042,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
     if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
@@ -1091,7 +1091,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
     if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
@@ -1138,7 +1138,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
     if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
@@ -1186,7 +1186,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenEnableCmdQRoundRobindEngineAssignDisab
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
     if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();

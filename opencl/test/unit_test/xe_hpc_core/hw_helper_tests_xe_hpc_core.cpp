@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -721,7 +721,8 @@ XE_HPC_CORETEST_F(LriHelperTestsXeHpcCore, whenProgrammingLriCommandThenExpectMm
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, WhenCheckingSipWAThenFalseIsReturned) {
-    EXPECT_FALSE(GfxCoreHelper::get(renderCoreFamily).isSipWANeeded(*defaultHwInfo));
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isSipWANeeded(*defaultHwInfo));
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsCheckedThenReturnFalse) {

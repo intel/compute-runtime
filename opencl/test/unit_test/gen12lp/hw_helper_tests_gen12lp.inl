@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,8 +62,9 @@ HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrect
 }
 
 GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
-    EXPECT_EQ(expectedCapabilities, ClGfxCoreHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities(hardwareInfo));
+    EXPECT_EQ(expectedCapabilities, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hardwareInfo));
 }
 
 using GfxCoreHelperTestGen12Lp = GfxCoreHelperTest;

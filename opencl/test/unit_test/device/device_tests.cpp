@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -303,7 +303,9 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines();
 
     auto &hwInfo = device1->getHardwareInfo();
-    const auto &numGpgpuEngines = static_cast<uint32_t>(GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size());
+    auto &gfxCoreHelper = device1->getGfxCoreHelper();
+
+    const auto &numGpgpuEngines = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(hwInfo).size());
 
     size_t numExpectedGenericEnginesPerDevice = numGpgpuEngines;
     size_t numExpectedEngineInstancedEnginesPerDevice = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,7 +133,8 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
 
         csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       preemptionMode));
         osContext->ensureContextInitialized();
 
@@ -171,7 +172,8 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
         osContext->ensureContextInitialized();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,10 +159,12 @@ TEST(KernelInfo, whenGetKernelNamesStringIsCalledThenNamesAreProperlyConcatenate
 }
 
 TEST(KernelInfo, givenNumbersOfSamplerWhenCheckSamplerStateCountAndSamplerStateArraySizeThenCorrectValueAreReturned) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     KernelInfo kernel = {};
     uint8_t numSamplers = 5u;
     kernel.kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
-    auto samplerSize = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getSamplerStateSize();
+    auto samplerSize = gfxCoreHelper.getSamplerStateSize();
     EXPECT_EQ(kernel.getSamplerStateArrayCount(), numSamplers);
     EXPECT_EQ(kernel.getSamplerStateArraySize(*defaultHwInfo), static_cast<size_t>(numSamplers * samplerSize));
 }
