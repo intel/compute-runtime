@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,8 +71,8 @@ uint64_t DeviceTimeWddm::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) 
     return retVal;
 }
 
-void DeviceTimeWddm::convertTimestampsFromOaToCsDomain(HardwareInfo const &hwInfo, uint64_t &timestampData, uint64_t freqOA, uint64_t freqCS) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+void DeviceTimeWddm::convertTimestampsFromOaToCsDomain(const GfxCoreHelper &gfxCoreHelper, uint64_t &timestampData, uint64_t freqOA, uint64_t freqCS) {
+
     if (gfxCoreHelper.isTimestampShiftRequired() && freqCS > 0 && freqOA > 0) {
         auto freqRatio = static_cast<double>(freqOA) / static_cast<double>(freqCS);
         timestampData = static_cast<uint64_t>(timestampData / freqRatio);

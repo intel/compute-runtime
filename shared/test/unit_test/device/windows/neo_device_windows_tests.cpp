@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,47 +95,48 @@ HWTEST_F(MockOSTimeWinTest, whenConvertingTimestampsToCsDomainThenTimestampDataA
     wddmMock->init();
     auto hwInfo = wddmMock->getRootDeviceEnvironment().getHardwareInfo();
     RAIIGfxCoreHelperFactory<TestMockGfxCoreHelper<FamilyType>> gfxCoreHelperBackup{hwInfo->platform.eRenderCoreFamily};
+    auto &gfxCoreHelper = gfxCoreHelperBackup.mockGfxCoreHelper;
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock));
     uint64_t timestampData = 0x1234;
     uint64_t freqOA = 5;
     uint64_t freqCS = 2;
     double ratio = static_cast<double>(freqOA) / static_cast<double>(freqCS);
     auto expectedGpuTicksWhenOAfreqBiggerThanCSfreq = static_cast<uint64_t>(timestampData / ratio);
-    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    timeWin->convertTimestampsFromOaToCsDomain(gfxCoreHelper, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenOAfreqBiggerThanCSfreq, timestampData);
     freqOA = 2;
     freqCS = 5;
     ratio = static_cast<double>(freqCS) / static_cast<double>(freqOA);
     auto expectedGpuTicksWhenCSfreqBiggerThanOAfreq = static_cast<uint64_t>(timestampData * ratio);
-    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    timeWin->convertTimestampsFromOaToCsDomain(gfxCoreHelper, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenCSfreqBiggerThanOAfreq, timestampData);
 
     freqOA = 1;
     freqCS = 0;
     auto expectedGpuTicksWhenNotChange = timestampData;
-    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    timeWin->convertTimestampsFromOaToCsDomain(gfxCoreHelper, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
     freqOA = 1;
     freqCS = 1;
-    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    timeWin->convertTimestampsFromOaToCsDomain(gfxCoreHelper, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
     freqOA = 0;
     freqCS = 1;
-    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    timeWin->convertTimestampsFromOaToCsDomain(gfxCoreHelper, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
 
     gfxCoreHelperBackup.mockGfxCoreHelper.shiftRequired = false;
     freqOA = 1;
     freqCS = 0;
     expectedGpuTicksWhenNotChange = timestampData;
-    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    timeWin->convertTimestampsFromOaToCsDomain(gfxCoreHelper, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
     freqOA = 0;
     freqCS = 1;
-    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    timeWin->convertTimestampsFromOaToCsDomain(gfxCoreHelper, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
     freqOA = 2;
     freqCS = 1;
-    timeWin->convertTimestampsFromOaToCsDomain(*hwInfo, timestampData, freqOA, freqCS);
+    timeWin->convertTimestampsFromOaToCsDomain(gfxCoreHelper, timestampData, freqOA, freqCS);
     EXPECT_EQ(expectedGpuTicksWhenNotChange, timestampData);
 }

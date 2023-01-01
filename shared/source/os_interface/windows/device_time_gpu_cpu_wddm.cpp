@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,8 @@ bool DeviceTimeWddm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     TimeStampDataHeader escapeInfo = {};
 
     if (runEscape(wddm, escapeInfo)) {
-        auto hwInfo = wddm->getRootDeviceEnvironment().getHardwareInfo();
-        convertTimestampsFromOaToCsDomain(*hwInfo, escapeInfo.m_Data.m_Out.gpuPerfTicks, escapeInfo.m_Data.m_Out.gpuPerfFreq, static_cast<uint64_t>(wddm->getTimestampFrequency()));
+        auto &gfxCoreHelper = wddm->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+        convertTimestampsFromOaToCsDomain(gfxCoreHelper, escapeInfo.m_Data.m_Out.gpuPerfTicks, escapeInfo.m_Data.m_Out.gpuPerfFreq, static_cast<uint64_t>(wddm->getTimestampFrequency()));
         double cpuNanoseconds = escapeInfo.m_Data.m_Out.cpuPerfTicks *
                                 (1000000000.0 / escapeInfo.m_Data.m_Out.cpuPerfFreq);
 
