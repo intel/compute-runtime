@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
                         kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(),
                         static_cast<uint32_t>(kernelInfo.getMaxSimdSize()),
                         static_cast<uint32_t>(dispatchInfo.getKernel()->getSlmTotalSize()),
-                        &device.getHardwareInfo(),
+                        device.getRootDeviceEnvironment(),
                         numThreadsPerSubSlice,
                         static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize),
                         false,

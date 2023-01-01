@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -32,18 +33,18 @@ struct KernelArgumentType {
     uint64_t argTypeQualifierValue;
 };
 
-WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion) {
+WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const RootDeviceEnvironment &rootDeviceEnvironemnt, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion) {
     this->maxWorkGroupSize = maxWorkGroupSize;
     this->hasBarriers = hasBarriers;
     this->simdSize = simdSize;
     this->slmTotalSize = slmTotalSize;
-    this->coreFamily = hwInfo->platform.eRenderCoreFamily;
+    this->coreFamily = rootDeviceEnvironemnt.getHardwareInfo()->platform.eRenderCoreFamily;
     this->numThreadsPerSubSlice = numThreadsPerSubSlice;
     this->localMemSize = localMemSize;
     this->imgUsed = imgUsed;
     this->yTiledSurfaces = yTiledSurface;
 
-    setMinWorkGroupSize(hwInfo, disableEUFusion);
+    setMinWorkGroupSize(rootDeviceEnvironemnt, disableEUFusion);
 }
 
 void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
@@ -56,7 +57,7 @@ void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
     }
 }
 
-void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableEUFusion) {
+void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironemnt, bool disableEUFusion) {
     minWorkGroupSize = 0;
     if (hasBarriers) {
         uint32_t maxBarriersPerHSlice = (coreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
@@ -70,8 +71,8 @@ void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableE
         minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);
     }
 
-    const auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily);
-    if (gfxCoreHelper.isFusedEuDispatchEnabled(*hwInfo, disableEUFusion)) {
+    const auto &gfxCoreHelper = rootDeviceEnvironemnt.getHelper<GfxCoreHelper>();
+    if (gfxCoreHelper.isFusedEuDispatchEnabled(*rootDeviceEnvironemnt.getHardwareInfo(), disableEUFusion)) {
         minWorkGroupSize *= 2;
     }
 }

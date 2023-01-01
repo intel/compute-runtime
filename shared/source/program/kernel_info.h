@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class DispatchInfo;
 struct KernelArgumentType;
 class GraphicsAllocation;
 class MemoryManager;
+struct RootDeviceEnvironemnt;
 
 static const float YTilingRatioValue = 1.3862943611198906188344642429164f;
 
@@ -46,10 +47,10 @@ struct WorkSizeInfo {
     bool useStrictRatio = false;
     float targetRatio = 0;
 
-    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion);
+    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion);
 
     void setIfUseImg(const KernelInfo &kernelInfo);
-    void setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableEUFusion);
+    void setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironemnt, bool disableEUFusion);
     void checkRatio(const size_t workItems[3]);
 };
 

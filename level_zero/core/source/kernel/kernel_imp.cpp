@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -356,7 +356,6 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     if (NEO::DebugManager.flags.EnableComputeWorkSizeND.get()) {
         auto usesImages = getImmutableData()->getDescriptor().kernelAttributes.flags.usesImages;
         auto neoDevice = module->getDevice()->getNEODevice();
-        const auto hwInfo = &neoDevice->getHardwareInfo();
         const auto &deviceInfo = neoDevice->getDeviceInfo();
         uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
         uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
@@ -367,7 +366,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         }
 
         NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelImmData->getDescriptor().kernelAttributes.usesBarriers(), simd, this->getSlmTotalSize(),
-                                 hwInfo, numThreadsPerSubSlice, localMemSize,
+                                 neoDevice->getRootDeviceEnvironment(), numThreadsPerSubSlice, localMemSize,
                                  usesImages, false, kernelImmData->getDescriptor().kernelAttributes.flags.requiresDisabledEUFusion);
         NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
     } else {

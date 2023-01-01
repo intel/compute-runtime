@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -798,7 +798,8 @@ TEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueK
     size_t preferredWorkGroupSize[3];
     auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
     if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
-        WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, 32u, 0u, ::defaultHwInfo.get(), 32u, 0u, false, false, false);
+        auto &rootDeviceEnvironment = pPlatform->getClDevice(0)->getRootDeviceEnvironment();
+        WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, 32u, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
         computeWorkgroupSizeND(wsInfo, preferredWorkGroupSize, globalWorkGroupSize, 2);
     } else
         computeWorkgroupSize2D(maxWorkGroupSize, preferredWorkGroupSize, globalWorkGroupSize, 32);
@@ -817,7 +818,8 @@ TEST_F(PerformanceHintEnqueueTest, GivenKernelWithCoherentPtrWhenEnqueueKernelIs
     Kernel::SimpleKernelArgInfo kernelArgInfo;
 
     if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
-        WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, 32u, 0u, ::defaultHwInfo.get(), 32u, 0u, false, false, false);
+        auto &rootDeviceEnvironment = pPlatform->getClDevice(0)->getRootDeviceEnvironment();
+        WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, 32u, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
         computeWorkgroupSizeND(wsInfo, preferredWorkGroupSize, globalWorkGroupSize, 2);
     } else
         computeWorkgroupSize2D(maxWorkGroupSize, preferredWorkGroupSize, globalWorkGroupSize, 32);
