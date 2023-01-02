@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ DG2TEST_F(AggregatedSmallBuffersDg2DefaultTest, givenDifferentFlagValuesAndSingl
     // Single device context
     {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
-        EXPECT_TRUE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+        EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
     }
     {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
