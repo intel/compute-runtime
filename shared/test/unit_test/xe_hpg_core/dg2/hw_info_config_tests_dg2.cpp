@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -572,5 +572,5 @@ DG2TEST_F(ProductHelperTestDg2, givenDebugFlagWhenCheckingIsResolveDependenciesB
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
 
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
+    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }
