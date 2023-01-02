@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"

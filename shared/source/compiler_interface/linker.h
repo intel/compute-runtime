@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 
 #include <cstdint>
@@ -17,6 +16,9 @@
 #include <vector>
 
 namespace NEO {
+struct ExternalFunctionInfo;
+struct ExternalFunctionUsageExtFunc;
+struct ExternalFunctionUsageKernel;
 
 class Device;
 class GraphicsAllocation;

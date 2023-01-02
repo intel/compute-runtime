@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/linker.h"
 
 #include <cstddef>
@@ -31,11 +29,7 @@ struct ProgramInfo {
         size_t size = 0U;
     };
 
-    void prepareLinkerInputStorage() {
-        if (this->linkerInput == nullptr) {
-            this->linkerInput = std::make_unique<LinkerInput>();
-        }
-    }
+    void prepareLinkerInputStorage();
 
     GlobalSurfaceInfo globalConstants;
     GlobalSurfaceInfo globalVariables;

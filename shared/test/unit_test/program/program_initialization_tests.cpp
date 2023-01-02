@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"

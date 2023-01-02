@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/app_resource_helper.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
@@ -205,5 +206,9 @@ uint32_t StorageInfo::getNumBanks() const {
         return 1u;
     }
     return static_cast<uint32_t>(memoryBanks.count());
+}
+
+uint32_t StorageInfo::getTotalBanksCnt() const {
+    return Math::log2(getMemoryBanks()) + 1;
 }
 } // namespace NEO

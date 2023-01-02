@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/definitions/engine_group_types.h"
-
 #include "igfxfmid.h"
 
 #include <cstddef>
@@ -15,7 +13,7 @@
 #include <vector>
 
 namespace NEO {
-
+enum class EngineGroupType : uint32_t;
 struct HardwareInfo;
 class Device;
 struct DispatchFlags;

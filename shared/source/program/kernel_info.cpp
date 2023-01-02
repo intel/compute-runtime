@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <map>

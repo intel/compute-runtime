@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/program/program_info.h"
 
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
 #include "shared/source/program/kernel_info.h"
 
@@ -17,6 +18,12 @@ ProgramInfo::~ProgramInfo() {
         delete kernelInfo;
     }
     kernelInfos.clear();
+}
+
+void ProgramInfo::prepareLinkerInputStorage() {
+    if (this->linkerInput == nullptr) {
+        this->linkerInput = std::make_unique<LinkerInput>();
+    }
 }
 
 size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo) {

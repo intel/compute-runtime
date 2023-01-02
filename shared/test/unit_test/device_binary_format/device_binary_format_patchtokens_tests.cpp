@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"

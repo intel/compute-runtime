@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+
+#include "shared/source/compiler_interface/external_functions.h"
 
 #include "opencl/source/program/printf_handler.h"
 

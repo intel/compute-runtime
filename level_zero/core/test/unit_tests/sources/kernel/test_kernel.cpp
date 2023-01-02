@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"

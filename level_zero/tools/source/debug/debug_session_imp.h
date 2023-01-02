@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "common/StateSaveAreaHeader.h"
 
 #include <atomic>
+#include <cmath>
 #include <condition_variable>
 #include <mutex>
 #include <queue>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,8 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
+
+#include <cmath>
 
 TEST(DrmQueryTopologyTest, givenDrmWhenQueryTopologyCalledThenPassNoFlags) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

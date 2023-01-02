@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,9 @@
 #include "shared/source/memory_manager/alignment_selector.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
-#include "shared/source/memory_manager/multi_graphics_allocation.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_memory.h"
-#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+
+#include "memory_properties_flags.h"
 
 #include <cstdint>
 #include <cstring>
@@ -25,6 +24,8 @@
 #include <vector>
 
 namespace NEO {
+class MultiGraphicsAllocation;
+class PageFaultManager;
 class GfxPartition;
 struct ImageInfo;
 struct AllocationData;
@@ -202,7 +203,7 @@ class MemoryManager {
     virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy);
     virtual bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask);
     HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useFrontWindow);
-    static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel = DriverModelType::UNKNOWN);
+    static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel);
     virtual void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) { return nullptr; };
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex){};
     void *getReservedMemory(size_t size, size_t alignment);
