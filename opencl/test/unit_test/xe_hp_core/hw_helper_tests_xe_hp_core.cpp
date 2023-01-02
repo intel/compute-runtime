@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenStatelessCompressionEnabledW
     DebugManager.flags.EnableStatelessCompression.set(1);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     for (auto allocType : {AllocationType::CONSTANT_SURFACE, AllocationType::GLOBAL_SURFACE, AllocationType::PRINTF_SURFACE}) {
         AllocationData allocData;
@@ -279,9 +279,7 @@ XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, GivenVariousValuesWhenAlignSlmSiz
 }
 
 XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
-    auto &helper = GfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_NE(nullptr, &helper);
-
+    auto &helper = pDevice->getGfxCoreHelper();
     auto &configs = helper.getThreadsPerEUConfigs();
 
     EXPECT_EQ(2U, configs.size());

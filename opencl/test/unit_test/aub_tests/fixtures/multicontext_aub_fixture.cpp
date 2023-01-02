@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         localHwInfo.capabilityTable.blitterOperationsSupported = !!DebugManager.flags.EnableBlitterOperationsSupport.get();
     }
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(localHwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     auto engineType = getChosenEngineType(localHwInfo);
     auto renderEngine = aub_stream::NUM_ENGINES;
     for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(localHwInfo)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -122,7 +123,9 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
 
     void SetUp() override {
         std::tie(KernelFixture::simd, param) = GetParam();
-        if (KernelFixture::simd < GfxCoreHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
+        MockExecutionEnvironment executionEnvironment{};
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        if (KernelFixture::simd < gfxCoreHelper.getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
         ParentClass::setUp();
@@ -313,7 +316,9 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFa
 
     void SetUp() override {
         std::tie(simd, param) = GetParam();
-        if (simd < GfxCoreHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
+        MockExecutionEnvironment executionEnvironment{};
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        if (simd < gfxCoreHelper.getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
         ParentClass::setUp();
