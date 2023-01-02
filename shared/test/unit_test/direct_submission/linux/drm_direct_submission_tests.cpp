@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -529,8 +529,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThe
 HWTEST_F(DrmDirectSubmissionTest, whenCheckForDirectSubmissionSupportThenProperValueIsReturned) {
     auto directSubmissionSupported = osContext->isDirectSubmissionSupported(device->getHardwareInfo());
 
-    auto productHelper = ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
-    EXPECT_EQ(directSubmissionSupported, productHelper->isDirectSubmissionSupported(device->getHardwareInfo()) && executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>()->isVmBindAvailable());
+    auto &productHelper = device->getProductHelper();
+    EXPECT_EQ(directSubmissionSupported, productHelper.isDirectSubmissionSupported(device->getHardwareInfo()) && executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>()->isVmBindAvailable());
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDispatchCommandBufferThenTlbIsFlushed) {
@@ -566,7 +566,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundWhenDispatchCommandBuffer
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
-    const auto &productHelper = *ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
 

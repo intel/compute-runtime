@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
     DebugManager.flags.UseAubStream.set(true);
 
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     for (auto steppingPair : steppingPairsToTest) {
         auto hwRevId = productHelper.getHwRevIdFromStepping(steppingPair.stepping, hwInfo);
         if (hwRevId == CommonConstants::invalidStepping) {

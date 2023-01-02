@@ -41,8 +41,8 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
     void SetUp() override {
         DirectSubmissionDispatchBufferTest::SetUp();
 
-        auto productHelper = ProductHelper::get(pDevice->getHardwareInfo().platform.eProductFamily);
-        miMemFenceSupported = productHelper->isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo());
+        auto &productHelper = pDevice->getProductHelper();
+        miMemFenceSupported = productHelper.isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo());
     }
 
     template <typename FamilyType>

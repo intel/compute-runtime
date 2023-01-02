@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -267,8 +267,9 @@ TEST(StreamPropertiesTests, givenOtherPipelineSelectPropertiesStructWhenSetPrope
 }
 
 TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     FrontEndPropertiesSupport fePropertiesSupport{};
-    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
     productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, *defaultHwInfo);
 
     MockFrontEndProperties feProperties{};
@@ -295,11 +296,12 @@ TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPro
 }
 
 TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueIsSet) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     StreamProperties properties;
 
     PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
-    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
-    productHelper->fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, *defaultHwInfo);
+    productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, *defaultHwInfo);
 
     for (auto modeSelected : ::testing::Bool()) {
         for (auto mediaSamplerDopClockGate : ::testing::Bool()) {
@@ -422,9 +424,10 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
 }
 
 TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagDefaultValueWhenSettingPropertyAndCheckIfDirtyThenExpectValueSetForSupportedAndCleanForNotSupported) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     StateBaseAddressPropertiesSupport sbaPropertiesSupport = {};
-    auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
-    productHelper->fillStateBaseAddressPropertiesSupportStructure(sbaPropertiesSupport, *defaultHwInfo);
+    productHelper.fillStateBaseAddressPropertiesSupportStructure(sbaPropertiesSupport, *defaultHwInfo);
 
     StateBaseAddressProperties sbaProperties{};
 

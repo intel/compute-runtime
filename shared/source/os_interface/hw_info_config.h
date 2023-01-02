@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ class ProductHelper {
     int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt);
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const = 0;
     virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
-    virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) = 0;
+    virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const = 0;
     virtual void disableRcsExposure(HardwareInfo *hwInfo) const = 0;
     virtual uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const = 0;
     virtual uint64_t getDeviceMemCapabilities() const = 0;
@@ -204,7 +204,7 @@ class ProductHelperHw : public ProductHelper {
     }
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
     void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
-    void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) override;
+    void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const override;
     void disableRcsExposure(HardwareInfo *hwInfo) const override;
     uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override;
     uint64_t getDeviceMemCapabilities() const override;
