@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,9 +48,10 @@ class DrmCommandStreamTest : public ::testing::Test {
         executionEnvironment.rootDeviceEnvironments[0]->initGmm();
         gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         mock->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo));
         osContext = std::make_unique<OsContextLinux>(*mock, 0, 0u,
-                                                     EngineDescriptorHelper::getDefaultDescriptor(GfxCoreHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         osContext->ensureContextInitialized();
 

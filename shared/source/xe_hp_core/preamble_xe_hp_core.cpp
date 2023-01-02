@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,9 @@ using Family = XeHpFamily;
 namespace NEO {
 
 template <>
-void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {
+void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto command = static_cast<typename Family::CFE_STATE *>(cmd);
 
     command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
@@ -35,7 +37,6 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
         command->setSingleSliceDispatchCcsMode(DebugManager.flags.CFESingleSliceDispatchCCSMode.get());
     }
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
     if (!gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, false)) {
         command->setFusedEuDispatch(true);
     }

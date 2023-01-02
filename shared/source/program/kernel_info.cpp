@@ -96,10 +96,6 @@ KernelInfo::~KernelInfo() {
 size_t KernelInfo::getSamplerStateArrayCount() const {
     return kernelDescriptor.payloadMappings.samplerTable.numSamplers;
 }
-size_t KernelInfo::getSamplerStateArraySize(const HardwareInfo &hwInfo) const {
-    size_t samplerStateArraySize = getSamplerStateArrayCount() * GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getSamplerStateSize();
-    return samplerStateArraySize;
-}
 
 size_t KernelInfo::getBorderColorOffset() const {
     size_t borderColorOffset = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ GEN11TEST_F(MemorySynchronizatiopCommandsTestsGen11, WhenProgrammingCacheFlushTh
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
 }
 
-GEN11TEST_F(MemorySynchronizatiopCommandsTestsGen11, givenGen11WhenCallIsPackedSupportedThenReturnTrue) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+GEN11TEST_F(GfxCoreHelperTestGen11, givenGen11WhenCallIsPackedSupportedThenReturnTrue) {
+    auto &helper = pDevice->getGfxCoreHelper();
     EXPECT_TRUE(helper.packedFormatsSupported());
 }

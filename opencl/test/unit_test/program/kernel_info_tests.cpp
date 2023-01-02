@@ -159,12 +159,8 @@ TEST(KernelInfo, whenGetKernelNamesStringIsCalledThenNamesAreProperlyConcatenate
 }
 
 TEST(KernelInfo, givenNumbersOfSamplerWhenCheckSamplerStateCountAndSamplerStateArraySizeThenCorrectValueAreReturned) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     KernelInfo kernel = {};
     uint8_t numSamplers = 5u;
     kernel.kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
-    auto samplerSize = gfxCoreHelper.getSamplerStateSize();
     EXPECT_EQ(kernel.getSamplerStateArrayCount(), numSamplers);
-    EXPECT_EQ(kernel.getSamplerStateArraySize(*defaultHwInfo), static_cast<size_t>(numSamplers * samplerSize));
 }

@@ -83,7 +83,6 @@ struct KernelInfo {
         return kernelDescriptor.explicitArgsExtendedMetadata[index];
     }
     size_t getSamplerStateArrayCount() const;
-    size_t getSamplerStateArraySize(const HardwareInfo &hwInfo) const;
     size_t getBorderColorOffset() const;
     unsigned int getMaxSimdSize() const {
         return kernelDescriptor.kernelAttributes.simdSize;

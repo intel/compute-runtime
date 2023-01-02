@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ GEN9TEST_F(GfxCoreHelperTestGen9, WhenGettingMaxBarriersPerSliceThenCorrectSizeI
 }
 
 GEN9TEST_F(GfxCoreHelperTestGen9, givenGen9WhenCallIsPackedSupportedThenReturnFalse) {
-    auto &helper = GfxCoreHelper::get(renderCoreFamily);
+    auto &helper = pDevice->getGfxCoreHelper();
     EXPECT_FALSE(helper.packedFormatsSupported());
 }
 
@@ -48,7 +48,7 @@ GEN9TEST_F(GfxCoreHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) 
 }
 
 GEN9TEST_F(GfxCoreHelperTestGen9, givenGen9WhenCallIsTimestampShiftRequiredThenFalseIsReturned) {
-    auto &gfxCoreHelper = GfxCoreHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     EXPECT_FALSE(gfxCoreHelper.isTimestampShiftRequired());
 }
 
