@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,11 +41,6 @@ std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipeli
     }
 
     return {isBasicWARequired, isExtendedWARequired};
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired(aub_stream::EngineType engineType) const {
-    return EngineHelpers::isBcs(engineType);
 }
 
 template <>

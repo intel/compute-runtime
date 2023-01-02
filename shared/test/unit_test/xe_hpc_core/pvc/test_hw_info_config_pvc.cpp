@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,11 +25,6 @@ using PvcProductHelper = ProductHelperTest;
 
 PVCTEST_F(PvcProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Pvc, productHelper->getAubStreamProductFamily());
-}
-
-PVCTEST_F(PvcProductHelper, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(aub_stream::EngineType::ENGINE_BCS2));
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(aub_stream::EngineType::ENGINE_CCS1));
 }
 
 PVCTEST_F(PvcProductHelper, givenPVCRevId3AndAboveWhenGettingThreadEuRatioForScratchThen16IsReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,9 +161,8 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
-    const auto &productHelper = *ProductHelper::get(this->hwInfo->platform.eProductFamily);
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    auto newResourcesBound = productHelper.isTlbFlushRequired(osContextLinux->getEngineType()) && osContextLinux->isTlbFlushRequired();
+    auto newResourcesBound = osContextLinux->isTlbFlushRequired();
 
     if (DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get() != -1) {
         newResourcesBound = DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get();

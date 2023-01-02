@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -566,7 +566,6 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundWhenDispatchCommandBuffer
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
-    const auto &productHelper = *ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
@@ -585,12 +584,9 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundWhenDispatchCommandBuffer
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     hwParse.findHardwareCommands<FamilyType>();
     auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
-    if (productHelper.isTlbFlushRequired(osContext->getEngineType())) {
-        auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
-        EXPECT_TRUE(pipeControl->getTlbInvalidate());
-    } else {
-        EXPECT_EQ(pipeControl, nullptr);
-    }
+    EXPECT_TRUE(pipeControl->getTlbInvalidate());
+    EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(osContext->isTlbFlushRequired());
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 }

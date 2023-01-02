@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -657,10 +657,9 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) const {
 }
 
 void Drm::setNewResourceBoundToVM(uint32_t vmHandleId) {
-    const auto &productHelper = *ProductHelper::get(this->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
     const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
     for (const auto &engine : engines) {
-        if (engine.osContext->getDeviceBitfield().test(vmHandleId) && productHelper.isTlbFlushRequired(engine.osContext->getEngineType())) {
+        if (engine.osContext->getDeviceBitfield().test(vmHandleId)) {
             auto osContextLinux = static_cast<OsContextLinux *>(engine.osContext);
 
             if (&osContextLinux->getDrm() == this) {
