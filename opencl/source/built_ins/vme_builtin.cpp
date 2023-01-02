@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "opencl/source/built_ins/vme_builtin.h"
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device/device.h"
 
 #include "opencl/source/built_ins/built_in_ops_vme.h"

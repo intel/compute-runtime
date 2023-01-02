@@ -36,6 +36,17 @@ enum CachingMode {
     PreProcess
 };
 
+void TranslationOutput::makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src) {
+    if ((nullptr == src) || (src->GetSizeRaw() == 0)) {
+        dst.mem.reset();
+        dst.size = 0U;
+        return;
+    }
+
+    dst.size = src->GetSize<char>();
+    dst.mem = ::makeCopy(src->GetMemory<void>(), src->GetSize<char>());
+}
+
 CompilerInterface::CompilerInterface()
     : cache() {
 }

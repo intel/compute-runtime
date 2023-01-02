@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/helpers/string.h"
 
 #include "program.h"
 

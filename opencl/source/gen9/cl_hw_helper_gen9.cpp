@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/populate_factory.h"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/command_queue/resource_barrier.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/range.h"
 

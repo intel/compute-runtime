@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 
 #include "opencl/source/gtpin/gtpin_hw_helper.h"

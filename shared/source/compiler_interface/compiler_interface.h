@@ -6,9 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/compiler_interface/compiler_cache.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/spinlock.h"
 
@@ -22,6 +19,8 @@
 
 namespace NEO {
 enum class SipKernelType : std::uint32_t;
+class OsLibrary;
+class CompilerCache;
 class Device;
 
 using specConstValuesMap = std::unordered_map<uint32_t, uint64_t>;
@@ -78,16 +77,7 @@ struct TranslationOutput {
         dst.assign(src->GetMemory<char>(), src->GetSize<char>());
     }
 
-    static void makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src) {
-        if ((nullptr == src) || (src->GetSizeRaw() == 0)) {
-            dst.mem.reset();
-            dst.size = 0U;
-            return;
-        }
-
-        dst.size = src->GetSize<char>();
-        dst.mem = ::makeCopy(src->GetMemory<void>(), src->GetSize<char>());
-    }
+    static void makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src);
 };
 
 struct SpecConstantInfo {

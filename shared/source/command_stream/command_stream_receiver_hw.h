@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,11 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/dirty_state_helpers.h"
-#include "shared/source/helpers/hw_info.h"
-
-#include <optional>
 
 namespace NEO {
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,12 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/hw_helper.h"
 
 #include <memory>
 
 namespace NEO {
+class MemoryManager;
+struct RootDeviceEnvironment;
 
 #pragma pack(1)
 struct RingSemaphoreData {

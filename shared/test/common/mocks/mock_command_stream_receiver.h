@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"

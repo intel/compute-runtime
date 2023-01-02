@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 

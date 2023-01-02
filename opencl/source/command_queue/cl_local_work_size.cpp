@@ -7,6 +7,7 @@
 
 #include "opencl/source/command_queue/cl_local_work_size.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"

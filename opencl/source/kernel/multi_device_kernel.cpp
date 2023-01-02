@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/source/kernel/multi_device_kernel.h"
+
+#include "shared/source/compiler_interface/compiler_cache.h"
 namespace NEO {
 
 MultiDeviceKernel::~MultiDeviceKernel() {

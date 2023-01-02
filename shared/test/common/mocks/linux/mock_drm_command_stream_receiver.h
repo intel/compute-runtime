@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
