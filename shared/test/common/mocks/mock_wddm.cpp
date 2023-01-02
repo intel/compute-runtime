@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,9 +170,9 @@ bool WddmMock::createContext(OsContextWin &osContext) {
     return createContextResult.success = Wddm::createContext(osContext);
 }
 
-void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext, const HardwareInfo &hwInfo) {
+void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext) {
     applyAdditionalContextFlagsResult.called++;
-    Wddm::applyAdditionalContextFlags(privateData, osContext, hwInfo);
+    Wddm::applyAdditionalContextFlags(privateData, osContext);
 }
 
 bool WddmMock::destroyContext(D3DKMT_HANDLE context) {

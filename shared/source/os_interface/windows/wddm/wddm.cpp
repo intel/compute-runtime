@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -918,8 +918,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
     privateData.pHwContextId = &hwContextId;
     privateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
 
-    auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
-    applyAdditionalContextFlags(privateData, osContext, *rootDeviceEnvironment.getHardwareInfo());
+    applyAdditionalContextFlags(privateData, osContext);
 
     createContext.EngineAffinity = 0;
     createContext.Flags.NullRendering = static_cast<UINT>(DebugManager.flags.EnableNullHardware.get());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -284,7 +284,7 @@ class UltDXCoreAdapterFactory : public IDXCoreAdapterFactory {
     }
 };
 
-HRESULT WINAPI ULTDXCoreCreateAdapterFactory(REFIID riid, void **ppFactory);
-void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo);
+HRESULT WINAPI ultDxCoreCreateAdapterFactory(REFIID riid, void **ppFactory);
+void WINAPI ultGetSystemInfo(SYSTEM_INFO *pSystemInfo);
 
 } // namespace NEO

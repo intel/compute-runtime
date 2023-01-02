@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,10 @@ Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {
 }
 
 Wddm::DXCoreCreateAdapterFactoryFcn getDXCoreCreateAdapterFactory() {
-    return ULTDXCoreCreateAdapterFactory;
+    return ultDxCoreCreateAdapterFactory;
 }
 
 Wddm::GetSystemInfoFcn getGetSystemInfo() {
-    return ULTGetSystemInfo;
+    return ultGetSystemInfo;
 }
 } // namespace NEO

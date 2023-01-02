@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,12 @@
 
 namespace NEO {
 
-HRESULT WINAPI ULTDXCoreCreateAdapterFactory(REFIID riid, void **ppFactory) {
+HRESULT WINAPI ultDxCoreCreateAdapterFactory(REFIID riid, void **ppFactory) {
     *reinterpret_cast<UltDXCoreAdapterFactory **>(ppFactory) = new UltDXCoreAdapterFactory;
     return S_OK;
 }
 
-void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo) {
+void WINAPI ultGetSystemInfo(SYSTEM_INFO *pSystemInfo) {
 #ifdef _WIN32
     pSystemInfo->lpMaximumApplicationAddress = is32bit ? (LPVOID)MemoryConstants::max32BitAppAddress : (LPVOID)MemoryConstants::max64BitAppAddress;
 #endif
