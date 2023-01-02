@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,8 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasTooBigPrivateSizeThenOutOfMemor
 TEST_F(KernelInitTest, givenKernelToInitWhenItHasTooBigScratchSizeThenInvalidBinaryIsRetutned) {
     auto globalSize = device->getNEODevice()->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().to_ulong()));
     uint32_t perHwThreadPrivateMemorySizeRequested = (static_cast<uint32_t>((globalSize + device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch) / device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch)) / 2;
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
     std::unique_ptr<MockImmutableData> mockKernelImmData =
         std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested, maxScratchSize + 1, 0x100);
@@ -1379,7 +1380,7 @@ TEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructToGetProperties
     ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = module->getDevice()->getGfxCoreHelper();
     if (gfxCoreHelper.isFusedEuDispatchEnabled(module->getDevice()->getHwInfo(), false)) {
         EXPECT_EQ(preferredGroupProperties.preferredMultiple, static_cast<uint32_t>(kernel->getImmutableData()->getKernelInfo()->getMaxSimdSize()) * 2);
     } else {
@@ -1855,7 +1856,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
     kernel.module = &mockModule;
     NEO::MockGraphicsAllocation alloc;
     uint32_t bindless = 0x40;
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
     auto expectedSsInHeap = device->getNEODevice()->getBindlessHeapsHelper()->allocateSSInHeap(size, &alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
     auto patchLocation = ptrOffset(kernel.getCrossThreadData(), bindless);
@@ -1887,7 +1888,7 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessT
                                                                                                                              neoDevice->getRootDeviceIndex(),
                                                                                                                              neoDevice->getDeviceBitfield());
 
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -1922,7 +1923,7 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulTh
                                                                                                                              neoDevice->getRootDeviceIndex(),
                                                                                                                              neoDevice->getDeviceBitfield());
 
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -1958,7 +1959,7 @@ HWTEST2_F(KernelImpL3CachingTests, GivenKernelImpWhenSetSurfaceStateWithUnaligne
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
                                                                                                                              neoDevice->getRootDeviceIndex(),
                                                                                                                              neoDevice->getDeviceBitfield());
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(0x20123);
@@ -2284,7 +2285,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfac
     imageArg.bindful = undefined<SurfaceStateHeapOffset>;
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
     auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();

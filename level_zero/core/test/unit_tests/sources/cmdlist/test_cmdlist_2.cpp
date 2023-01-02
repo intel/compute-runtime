@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1297,8 +1297,8 @@ using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
 HWTEST2_F(CommandListCreate, givenCommandListThenSshCorrectlyReserved, SupportedPlatforms) {
     MockCommandListHw<gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::Compute, 0u);
-    auto &helper = NEO::GfxCoreHelper::get(commandList.device->getHwInfo().platform.eRenderCoreFamily);
-    auto size = helper.getRenderSurfaceStateSize();
+    auto &gfxCoreHelper = commandList.device->getGfxCoreHelper();
+    auto size = gfxCoreHelper.getRenderSurfaceStateSize();
     EXPECT_EQ(commandList.getReserveSshSize(), size);
 }
 

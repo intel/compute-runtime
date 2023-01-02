@@ -2642,7 +2642,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
         auto &hwInfo = device->getHwInfo();
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-        auto &gfxCoreHelper = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
 
         ze_event_pool_desc_t eventPoolDesc = {
             ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,7 +94,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
 
-    EXPECT_EQ(NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -160,7 +161,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
 
-    EXPECT_EQ(NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -215,7 +217,8 @@ HWTEST2_F(AppendQueryKernelTimestamps,
     EXPECT_EQ(groupSizeY, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(groupSizeZ, commandList.cmdListHelper.groupSize[2]);
 
-    EXPECT_EQ(NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(static_cast<uint32_t>(eventCount) / groupSizeX, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -269,7 +272,8 @@ HWTEST2_F(AppendQueryKernelTimestamps,
     EXPECT_EQ(groupSizeY, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(groupSizeZ, commandList.cmdListHelper.groupSize[2]);
 
-    EXPECT_EQ(NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(static_cast<uint32_t>(eventCount) / groupSizeX, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -974,7 +974,8 @@ HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandLis
     auto &hwInfo = device->getHwInfo();
     auto &defaultEngine = neoDevice->getDefaultEngine();
 
-    auto engineGroupType = NEO::GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     ze_command_queue_desc_t queueDesc{};
     queueDesc.ordinal = 0u;

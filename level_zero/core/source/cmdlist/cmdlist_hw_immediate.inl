@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -632,7 +632,9 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(N
     if (NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
         d2HThreshold = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
     }
-    if (NEO::GfxCoreHelper::get(this->device->getHwInfo().platform.eRenderCoreFamily).copyThroughLockedPtrEnabled(this->device->getHwInfo())) {
+
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+    if (gfxCoreHelper.copyThroughLockedPtrEnabled(this->device->getHwInfo())) {
         return (!srcFound && isSuitableUSMDeviceAlloc(dstAlloc, dstFound) && size <= h2DThreshold) ||
                (!dstFound && isSuitableUSMDeviceAlloc(srcAlloc, srcFound) && size <= d2HThreshold);
     }

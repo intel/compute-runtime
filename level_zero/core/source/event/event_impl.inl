@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -384,7 +384,8 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
         memcpy_s(&(timestampFieldForWriting), sizeof(uint64_t), static_cast<void *>(&timestampFieldToCopy), sizeof(uint64_t));
     };
 
-    if (!NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+    if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
         eventTsSetFunc(contextStartTS, result.context.kernelStart);
         eventTsSetFunc(globalStartTS, result.global.kernelStart);
         eventTsSetFunc(contextEndTS, result.context.kernelEnd);

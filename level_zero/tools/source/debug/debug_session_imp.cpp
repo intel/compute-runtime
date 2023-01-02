@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1019,7 +1019,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
     uint64_t bindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaBuffer.SurfaceStateBaseAddress;
     uint64_t scratchSpaceBaseAddress = 0;
 
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(connectedDevice->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = connectedDevice->getGfxCoreHelper();
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         auto surfaceStateForScratch = ((r0[5] >> 10) << 6);
 

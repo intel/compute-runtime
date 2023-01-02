@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -537,7 +537,8 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     EXPECT_EQ(0u, tdDebugControlRegisterCount);
     EXPECT_EQ(0u, globalSipFound);
 
-    if (!GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily).isSipWANeeded(hwInfo)) {
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (!gfxCoreHelper.isSipWANeeded(hwInfo)) {
         auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
 
         if (device->getDevicePreemptionMode() != PreemptionMode::MidThread) {

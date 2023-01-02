@@ -719,7 +719,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_RAYTRACING_EXT_PROPERTIES) {
             ze_device_raytracing_ext_properties_t *rtProperties =
                 reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
-            auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+            auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
             if (l0GfxCoreHelper.platformSupportsRayTracing()) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
@@ -1607,7 +1607,7 @@ ze_result_t DeviceImp::getFabricVertex(ze_fabric_vertex_handle_t *phVertex) {
 
 uint32_t DeviceImp::getEventMaxPacketCount() const {
     const auto &hardwareInfo = this->getHwInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     uint32_t basePackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hardwareInfo);
     if (this->isImplicitScalingCapable()) {
@@ -1618,7 +1618,7 @@ uint32_t DeviceImp::getEventMaxPacketCount() const {
 
 uint32_t DeviceImp::getEventMaxKernelCount() const {
     const auto &hardwareInfo = this->getHwInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     return l0GfxCoreHelper.getEventMaxKernelCount(hardwareInfo);
 }

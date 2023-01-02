@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1005,8 +1005,7 @@ HWTEST2_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenPropertie
     EXPECT_NE(37u, rayTracingProperties.maxBVHLevels);
 
     unsigned int expectedMaxBVHLevels = 0;
-    const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     if (l0GfxCoreHelper.platformSupportsRayTracing()) {
         expectedMaxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
@@ -3946,7 +3945,8 @@ struct MultiSubDeviceFixture : public DeviceFixture {
 
 using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1, -1>>;
 TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsImplicitScalingCapable) {
-    if (NEO::GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).platformSupportsImplicitScaling(neoDevice->getHardwareInfo())) {
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    if (gfxCoreHelper.platformSupportsImplicitScaling(neoDevice->getHardwareInfo())) {
         EXPECT_TRUE(device->isImplicitScalingCapable());
         EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
     } else {

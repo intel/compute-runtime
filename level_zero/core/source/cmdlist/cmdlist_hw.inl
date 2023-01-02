@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1775,7 +1775,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                  uint32_t numWaitEvents,
                                                                  ze_event_handle_t *phWaitEvents) {
     auto neoDevice = device->getNEODevice();
-    if (NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).getMaxFillPaternSizeForCopyEngine() < patternSize) {
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    if (gfxCoreHelper.getMaxFillPaternSizeForCopyEngine() < patternSize) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
     } else {
         ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, true);
@@ -2334,7 +2335,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     UNRECOVERABLE_IF(!result);
 
     Kernel *builtinKernel = nullptr;
-    auto useOnlyGlobalTimestamps = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u;
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u;
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     if (pOffsets == nullptr) {

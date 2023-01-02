@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,8 @@ struct DeviceImp;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
-    auto &helper = NEO::GfxCoreHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-    return helper.getRenderSurfaceStateSize();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    return gfxCoreHelper.getRenderSurfaceStateSize();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
