@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,9 +73,9 @@ SubmissionStatus Drm::getSubmissionStatusFromReturnCode(int32_t retCode) {
 }
 
 void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
-    this->vmBindPatIndexProgrammingSupported = ProductHelper::get(hwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    this->vmBindPatIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
 }
 
 int Drm::ioctl(DrmIoctl request, void *arg) {
@@ -657,7 +657,7 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) const {
 }
 
 void Drm::setNewResourceBoundToVM(uint32_t vmHandleId) {
-    const auto &productHelper = *ProductHelper::get(this->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
+    const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
     const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
     for (const auto &engine : engines) {
         if (engine.osContext->getDeviceBitfield().test(vmHandleId) && productHelper.isTlbFlushRequired(engine.osContext->getEngineType())) {
@@ -1312,9 +1312,9 @@ bool Drm::isVmBindAvailable() {
     std::call_once(checkBindOnce, [this]() {
         int ret = ioctlHelper->isVmBindAvailable();
 
-        auto hwInfo = this->getRootDeviceEnvironment().getHardwareInfo();
-        auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
-        ret &= static_cast<int>(productHelper->isNewResidencyModelSupported());
+        const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+        ret &= static_cast<int>(productHelper.isNewResidencyModelSupported());
 
         bindAvailable = ret;
 

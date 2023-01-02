@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,8 +65,9 @@ void OsContextLinux::initializeContext() {
 }
 
 bool OsContextLinux::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    return this->getDrm().isVmBindAvailable() && productHelper->isDirectSubmissionSupported(hwInfo);
+    auto &productHelper = this->getDrm().getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+    return this->getDrm().isVmBindAvailable() && productHelper.isDirectSubmissionSupported(hwInfo);
 }
 
 Drm &OsContextLinux::getDrm() const {

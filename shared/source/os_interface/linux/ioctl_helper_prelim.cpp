@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,8 @@
 namespace NEO {
 
 IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelper(drmArg) {
-    auto gfxCoreHelper = ProductHelper::get(this->drm.getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
-    handleExecBufferInNonBlockMode = gfxCoreHelper && gfxCoreHelper->isNonBlockingGpuSubmissionSupported();
+    const auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    handleExecBufferInNonBlockMode = productHelper.isNonBlockingGpuSubmissionSupported();
     if (DebugManager.flags.ForceNonblockingExecbufferCalls.get() != -1) {
         handleExecBufferInNonBlockMode = DebugManager.flags.ForceNonblockingExecbufferCalls.get();
     }
@@ -748,9 +748,9 @@ bool IoctlHelperPrelim20::initialize() {
     EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::EngineClassRender)), 0};
     int ret = 0;
     bool result = queryHwIpVersion(engineInfo, hwInfo->ipVersion, ret);
-    if (result == false &&
-        ret != 0 &&
-        ProductHelper::get(hwInfo->platform.eProductFamily)->isPlatformQuerySupported()) {
+    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+    if (result == false && ret != 0 && productHelper.isPlatformQuerySupported()) {
         int err = drm.getErrno();
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
                            "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
