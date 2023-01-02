@@ -1267,7 +1267,7 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
     }
 
     auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
 
     auto threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention->bitmask, attention->bitmask_size);
 
@@ -1366,7 +1366,7 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
     auto classInstance = DrmHelper::getEngineInstance(connectedDevice, tile, hwInfo.capabilityTable.defaultEngineType);
     UNRECOVERABLE_IF(!classInstance);
 
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
 
     bitmaskSizeOut = 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -264,7 +264,7 @@ bool MetricsLibrary::createContext() {
     // Create metrics library context.
     DEBUG_BREAK_IF(!contextCreateFunction);
     clientType.Api = ClientApi::OneApi;
-    clientType.Gen = getGenType(device.getPlatformInfo());
+    clientType.Gen = getGenType(device.getGfxCoreHelper());
 
     clientOptions[0].Type = ClientOptionsType::Compute;
     clientOptions[0].Compute.Asynchronous = asyncComputeEngine != asyncComputeEngines.end();
@@ -291,8 +291,7 @@ bool MetricsLibrary::createContext() {
     return result;
 }
 
-ClientGen MetricsLibrary::getGenType(const uint32_t gen) const {
-    auto &gfxCoreHelper = NEO::GfxCoreHelper::get(static_cast<GFXCORE_FAMILY>(gen));
+ClientGen MetricsLibrary::getGenType(const NEO::GfxCoreHelper &gfxCoreHelper) const {
     return static_cast<MetricsLibraryApi::ClientGen>(gfxCoreHelper.getMetricsLibraryGenId());
 }
 

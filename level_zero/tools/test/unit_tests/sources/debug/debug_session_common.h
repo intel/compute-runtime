@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ size_t threadSlotOffset(SIP::StateSaveAreaHeader *pStateSaveAreaHeader, int slic
 
 size_t regOffsetInThreadSlot(const SIP::regset_desc *regdesc, uint32_t start);
 
-void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version);
+void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version, L0::Device *device);
 
 } // namespace ult
 } // namespace L0

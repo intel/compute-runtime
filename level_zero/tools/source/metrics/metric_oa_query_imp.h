@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ class OaMetricSourceImp;
 namespace NEO {
 class OsLibrary;
 class GraphicsAllocation;
+class GfxCoreHelper;
 } // namespace NEO
 
 namespace L0 {
@@ -87,7 +88,7 @@ struct MetricsLibrary {
                                                 const zet_metric_group_properties_t &properties);
     ConfigurationHandle_1_0 addConfiguration(const zet_metric_group_handle_t metricGroup);
 
-    ClientGen getGenType(const uint32_t gen) const;
+    ClientGen getGenType(const NEO::GfxCoreHelper &gfxCoreHelper) const;
 
   protected:
     NEO::OsLibrary *handle = nullptr;

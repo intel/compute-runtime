@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -493,7 +493,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingResumeThenProperIoctlsAreCalled) {
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
@@ -5204,11 +5204,11 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
@@ -5437,7 +5437,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEv
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0},
@@ -5485,7 +5485,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventWithInvalidClientWhenHan
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0},
@@ -5577,7 +5577,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsRai
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0}};
@@ -5682,7 +5682,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEventSeqnoLowerEqualThanSentInterruptWhe
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     std::vector<EuThread::ThreadId> threads{
         {0, 0, 0, 0, 0},
@@ -6222,7 +6222,7 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
         session = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{}, device, 0);
         session->clientHandle = MockDebugSessionLinux::mockClientHandle;
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
-        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
         maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = {stateSaveAreaGpuVa, maxDbgSurfaceSize};
         session->allThreadsStopped = true;
@@ -6253,7 +6253,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidClientHandleWhenReadRegistersCal
 
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenReadRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
@@ -6271,7 +6271,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenReadRegistersCalled
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidRegistersIndicesWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 128, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 127, 2, nullptr));
 }
@@ -6287,7 +6287,7 @@ TEST_F(DebugApiRegistersAccessTest, givenStateSaveAreaNotCapturedWhenReadRegiste
 
 TEST_F(DebugApiRegistersAccessTest, givenReadGpuMemoryFailedWhenReadRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     auto ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapFail = true;
     session->ioctlHandler.reset(ioctlHandler);
@@ -6298,7 +6298,7 @@ TEST_F(DebugApiRegistersAccessTest, givenReadGpuMemoryFailedWhenReadRegistersCal
 
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenReadRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6313,7 +6313,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenReadRegistersCalled
 
 TEST_F(DebugApiRegistersAccessTest, givenReadRegistersCalledCorrectValuesRead) {
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
@@ -6356,7 +6356,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidClientHandleWhenWriteRegistersCa
 
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenWriteRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6369,7 +6369,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenWriteRegistersCalle
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidRegistersIndicesWhenWriteRegistersCalledThenErrorInvalidArgumentIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 128, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 127, 2, nullptr));
@@ -6386,7 +6386,7 @@ TEST_F(DebugApiRegistersAccessTest, givenStateSaveAreaNotCapturedWhenWriteRegist
 
 TEST_F(DebugApiRegistersAccessTest, givenWriteGpuMemoryFailedWhenWriteRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6400,7 +6400,7 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteGpuMemoryFailedWhenWriteRegistersC
 
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenWriteRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6415,7 +6415,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenWriteRegistersCalle
 
 TEST_F(DebugApiRegistersAccessTest, givenWriteRegistersCalledCorrectValuesRead) {
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
@@ -6469,7 +6469,7 @@ TEST_F(DebugApiRegistersAccessTest, givenNoneThreadsStoppedWhenWriteRegistersCal
 
 TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThenCorrectStateSaveAreaLocationIsRead) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6507,7 +6507,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThen
 
 TEST_F(DebugApiRegistersAccessTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFailsGracefully) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6544,7 +6544,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFail
 
 TEST_F(DebugApiRegistersAccessTest, GivenNoVmHandleWhenReadingSystemRoutineIdentThenFalseIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
 
     session->ioctlHandler.reset(ioctlHandler);
@@ -6570,7 +6570,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenNoStatSaveAreaWhenReadingSystemRoutineI
 
 TEST_F(DebugApiRegistersAccessTest, GivenMemReadFailureWhenReadingSystemRoutineIdentThenFalseIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6589,7 +6589,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenMemReadFailureWhenReadingSystemRoutineI
 
 TEST_F(DebugApiRegistersAccessTest, GivenCSSANotBoundWhenReadingSystemRoutineIdentThenFalseIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6630,9 +6630,9 @@ struct MockRenderSurfaceState {
 };
 static_assert(64 == sizeof(MockRenderSurfaceState));
 
-void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaTrackedAddresses &sba, uint32_t r0[8]) {
+void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaTrackedAddresses &sba, uint32_t r0[8], L0::Device *device) {
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     uint64_t surfaceStateBaseAddress = stateSaveAreaGpuVa + maxDbgSurfaceSize + sizeof(SbaTrackedAddresses);
     uint32_t renderSurfaceStateOffset = 256;
@@ -6656,7 +6656,7 @@ void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaT
 TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead) {
 
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6673,7 +6673,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead)
 
     SbaTrackedAddresses sba, sbaExpected;
     uint32_t r0[8];
-    sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0);
+    sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0, device);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaBuffer(session->convertToThreadId(thread), sba));
     EXPECT_EQ(sbaExpected.GeneralStateBaseAddress, sba.GeneralStateBaseAddress);
@@ -6687,7 +6687,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead)
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 9, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 8, 2, nullptr));
@@ -6695,7 +6695,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRe
 
 TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersAreRead) {
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6712,7 +6712,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
 
     SbaTrackedAddresses sbaExpected;
     uint32_t r0[8];
-    sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0);
+    sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0, device);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), thread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0));
 
     uint64_t sba[9];
@@ -6729,7 +6729,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
     uint64_t expectedBindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaExpected.SurfaceStateBaseAddress;
     uint64_t expectedScratchSpaceBaseAddress = 0;
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         expectedScratchSpaceBaseAddress = 0xBA5EBA5E;
     } else {
@@ -6742,7 +6742,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
 
 TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceStateWhenGettingScratchBaseRegThenValueIsZero) {
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6765,7 +6765,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
     r0[4] = 0xAAAAAAAA;
     r0[5] = ((renderSurfaceStateOffset) >> 6) << 10;
 
-    auto &gfxCoreHelper = GfxCoreHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     if (!gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         r0[5] = 0;
     }
@@ -6789,7 +6789,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
 
 TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 1, nullptr));
 }
 
@@ -6908,7 +6908,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThre
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, deviceImp);
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);

@@ -1049,6 +1049,10 @@ const NEO::GfxCoreHelper &DeviceImp::getGfxCoreHelper() {
     return this->neoDevice->getGfxCoreHelper();
 }
 
+const L0GfxCoreHelper &DeviceImp::getL0GfxCoreHelper() {
+    return this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+}
+
 const NEO::ProductHelper &DeviceImp::getProductHelper() {
     return this->neoDevice->getProductHelper();
 }

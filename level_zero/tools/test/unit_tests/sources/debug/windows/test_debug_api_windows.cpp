@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -311,7 +311,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenThreadWhenReadingSystemRoutineIdentThe
     session->stateSaveAreaCaptured = true;
     session->stateSaveAreaVA.store(0x123400000000);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     mockWddm->srcReadBuffer = session->stateSaveAreaHeader.data();
     mockWddm->srcReadBufferBaseAddress = session->stateSaveAreaVA.load();
 
@@ -354,7 +354,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenThreadWhenReadingSystemRoutineIdentAnd
     session->stateSaveAreaCaptured = true;
     session->stateSaveAreaVA.store(0x123400000000);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     mockWddm->srcReadBuffer = session->stateSaveAreaHeader.data();
     mockWddm->srcReadBufferBaseAddress = session->stateSaveAreaVA.load();
 
@@ -380,7 +380,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenThreadWhenReadingSystemRoutineIdentAnd
     session->stateSaveAreaCaptured = true;
     session->stateSaveAreaVA.store(0);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     mockWddm->srcReadBuffer = session->stateSaveAreaHeader.data();
     mockWddm->srcReadBufferBaseAddress = session->stateSaveAreaVA.load();
 
@@ -1645,7 +1645,7 @@ TEST_F(DebugApiWindowsTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFailsGracefu
     ASSERT_NE(nullptr, session);
 
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     session->stateSaveAreaVA = reinterpret_cast<uint64_t>(session->stateSaveAreaHeader.data());
     session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
 
@@ -1840,7 +1840,7 @@ TEST_F(DebugApiWindowsTest, GivenResumeImpCalledThenBitmaskIsCorrect) {
     ASSERT_NE(nullptr, session);
 
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     session->stateSaveAreaVA = reinterpret_cast<uint64_t>(session->stateSaveAreaHeader.data());
     session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
 

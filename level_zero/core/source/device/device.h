@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ struct ExecutionEnvironment;
 class MetricDeviceContext;
 struct SysmanDevice;
 struct DebugSession;
+class L0GfxCoreHelper;
 
 enum class ModuleType;
 
@@ -92,6 +93,7 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getMaxNumHwThreads() const = 0;
 
     virtual const NEO::GfxCoreHelper &getGfxCoreHelper() = 0;
+    virtual const L0GfxCoreHelper &getL0GfxCoreHelper() = 0;
     virtual const NEO::ProductHelper &getProductHelper() = 0;
     bool isImplicitScalingCapable() const {
         return implicitScalingCapable;

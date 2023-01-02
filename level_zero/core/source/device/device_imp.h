@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,7 @@ struct DeviceImp : public Device {
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;
     uint32_t getMOCS(bool l3enabled, bool l1enabled) override;
     const NEO::GfxCoreHelper &getGfxCoreHelper() override;
+    const L0GfxCoreHelper &getL0GfxCoreHelper() override;
     const NEO::ProductHelper &getProductHelper() override;
     const NEO::HardwareInfo &getHwInfo() const override;
     NEO::OSInterface &getOsInterface() override;

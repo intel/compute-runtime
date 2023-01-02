@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -618,7 +618,7 @@ TEST_F(TileAttachTest, givenExecutingThreadWhenInterruptingAndResumingThenCallsA
     rootSession->tileSessions[1].second = true;
 
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(rootSession->stateSaveAreaHeader, version);
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version, deviceImp);
 
     ze_device_thread_t apiThread = {0, 0, 0, 0};
 
@@ -756,7 +756,7 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = L0GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmask, bitmaskSize);
 

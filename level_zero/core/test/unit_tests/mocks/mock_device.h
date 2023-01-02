@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,7 @@ struct Mock<Device> : public Device {
     // Runtime internal methods
     ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());
     ADDMETHOD_NOBASE_REFRETURN(getGfxCoreHelper, NEO::GfxCoreHelper &, ());
+    ADDMETHOD_NOBASE_REFRETURN(getL0GfxCoreHelper, L0GfxCoreHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getProductHelper, NEO::ProductHelper &, ());
     ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltinFunctionsLib *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(getMaxNumHwThreads, uint32_t, 16u, ());

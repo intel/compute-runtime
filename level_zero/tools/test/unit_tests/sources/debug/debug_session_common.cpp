@@ -23,7 +23,7 @@ size_t regOffsetInThreadSlot(const SIP::regset_desc *regdesc, uint32_t start) {
     return regdesc->offset + regdesc->bytes * start;
 };
 
-void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version) {
+void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version, L0::Device *device) {
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(version.major);
     auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
 
@@ -33,7 +33,7 @@ void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version) {
             pStateSaveAreaHeader->regHeader.num_subslices_per_slice * pStateSaveAreaHeader->regHeader.num_eus_per_subslice * pStateSaveAreaHeader->regHeader.num_threads_per_eu * pStateSaveAreaHeader->regHeader.state_save_size);
     } else {
         auto &hwInfo = *NEO::defaultHwInfo.get();
-        auto &gfxCoreHelper = GfxCoreHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
         stateSaveArea.resize(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo) + MemoryConstants::pageSize);
     }
 
