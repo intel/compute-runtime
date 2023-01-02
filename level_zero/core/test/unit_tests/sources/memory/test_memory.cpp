@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"

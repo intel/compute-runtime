@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"

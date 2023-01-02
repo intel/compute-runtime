@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
@@ -22,6 +21,7 @@
 #include <unordered_map>
 
 namespace NEO {
+enum class SipKernelType : std::uint32_t;
 class Device;
 
 using specConstValuesMap = std::unordered_map<uint32_t, uint64_t>;

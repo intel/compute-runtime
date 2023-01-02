@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"

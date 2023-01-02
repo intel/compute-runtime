@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"

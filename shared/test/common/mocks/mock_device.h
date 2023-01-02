@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,10 @@
 #pragma once
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
@@ -126,18 +124,7 @@ class MockDevice : public RootDevice {
         return createDeviceInternals(device);
     }
 
-    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
-        ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
-        auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
-            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
-        }
-        executionEnvironment->calculateMaxOsContextCount();
-        return executionEnvironment;
-    }
+    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex);
 
     template <typename T>
     static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex = 0) {
@@ -166,23 +153,7 @@ class MockDevice : public RootDevice {
 
     bool verifyAdapterLuid() override;
 
-    void finalizeRayTracing() {
-        for (unsigned int i = 0; i < rtDispatchGlobalsInfos.size(); i++) {
-            auto rtDispatchGlobalsInfo = rtDispatchGlobalsInfos[i];
-            if (rtDispatchGlobalsForceAllocation == true && rtDispatchGlobalsInfo != nullptr) {
-                for (unsigned int j = 0; j < rtDispatchGlobalsInfo->rtStacks.size(); j++) {
-                    delete rtDispatchGlobalsInfo->rtStacks[j];
-                    rtDispatchGlobalsInfo->rtStacks[j] = nullptr;
-                }
-                delete rtDispatchGlobalsInfo->rtDispatchGlobalsArray;
-                rtDispatchGlobalsInfo->rtDispatchGlobalsArray = nullptr;
-                delete rtDispatchGlobalsInfos[i];
-                rtDispatchGlobalsInfos[i] = nullptr;
-            }
-        }
-
-        Device::finalizeRayTracing();
-    }
+    void finalizeRayTracing();
 
     void setRTDispatchGlobalsForceAllocation() {
         rtDispatchGlobalsForceAllocation = true;

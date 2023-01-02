@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"

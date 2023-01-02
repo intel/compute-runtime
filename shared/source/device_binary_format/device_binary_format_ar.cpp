@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/string.h"
 
 namespace NEO {

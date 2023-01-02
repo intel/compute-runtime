@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
 
 #include "level_zero/core/source/device/device.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,10 +100,41 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     }
 }
 
+ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
+    ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
+    auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
+    executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+    pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+    executionEnvironment->calculateMaxOsContextCount();
+    return executionEnvironment;
+}
+
 bool MockDevice::verifyAdapterLuid() {
     if (callBaseVerifyAdapterLuid)
         return Device::verifyAdapterLuid();
     return verifyAdapterLuidReturnValue;
+}
+
+void MockDevice::finalizeRayTracing() {
+    for (unsigned int i = 0; i < rtDispatchGlobalsInfos.size(); i++) {
+        auto rtDispatchGlobalsInfo = rtDispatchGlobalsInfos[i];
+        if (rtDispatchGlobalsForceAllocation == true && rtDispatchGlobalsInfo != nullptr) {
+            for (unsigned int j = 0; j < rtDispatchGlobalsInfo->rtStacks.size(); j++) {
+                delete rtDispatchGlobalsInfo->rtStacks[j];
+                rtDispatchGlobalsInfo->rtStacks[j] = nullptr;
+            }
+            delete rtDispatchGlobalsInfo->rtDispatchGlobalsArray;
+            rtDispatchGlobalsInfo->rtDispatchGlobalsArray = nullptr;
+            delete rtDispatchGlobalsInfos[i];
+            rtDispatchGlobalsInfos[i] = nullptr;
+        }
+    }
+
+    Device::finalizeRayTracing();
 }
 
 ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo) {

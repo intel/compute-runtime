@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 
 #include "shared/source/built_ins/sip_kernel_type.h"
 
-#include <cstddef>
 #include <string>
 #include <vector>
 

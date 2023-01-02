@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/utilities/tag_allocator.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 template <typename TagType>

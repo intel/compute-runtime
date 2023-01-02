@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/helpers/aligned_memory.h"
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 

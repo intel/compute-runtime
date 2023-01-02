@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/hw_helper.h"

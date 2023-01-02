@@ -7,11 +7,10 @@
 
 #pragma once
 
-#include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include <cstddef>
 #include <cstdint>
 #include <igfxfmid.h>
 #include <vector>

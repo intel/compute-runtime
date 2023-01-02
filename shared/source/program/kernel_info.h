@@ -20,6 +20,7 @@ typedef struct igc_info_s igc_info_t;
 }
 
 namespace NEO {
+struct HardwareInfo;
 class BuiltinDispatchInfoBuilder;
 class Device;
 class Kernel;

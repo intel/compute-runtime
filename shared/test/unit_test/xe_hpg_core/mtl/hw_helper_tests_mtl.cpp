@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
