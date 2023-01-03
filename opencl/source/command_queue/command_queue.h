@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/sku_info/sku_info_base.h"
 #include "shared/source/utilities/range.h"
 
 #include "opencl/source/command_queue/copy_engine_state.h"

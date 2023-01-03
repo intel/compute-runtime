@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"

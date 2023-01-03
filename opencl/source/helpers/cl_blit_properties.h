@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"

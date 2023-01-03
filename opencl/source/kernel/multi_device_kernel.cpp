@@ -8,6 +8,9 @@
 #include "opencl/source/kernel/multi_device_kernel.h"
 
 #include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
+
 namespace NEO {
 
 MultiDeviceKernel::~MultiDeviceKernel() {

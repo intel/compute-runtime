@@ -8,6 +8,7 @@
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/gen8/hw_cmds_base.h"
+#include "shared/source/kernel/implicit_args.h"
 
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_hw_helper.inl"

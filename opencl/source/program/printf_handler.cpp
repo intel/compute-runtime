@@ -7,12 +7,14 @@
 
 #include "printf_handler.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"

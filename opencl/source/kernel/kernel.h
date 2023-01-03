@@ -1,19 +1,16 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/address_patch.h"
-#include "shared/source/helpers/preamble.h"
-#include "shared/source/helpers/timestamp_packet.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -28,6 +25,9 @@
 #include <vector>
 
 namespace NEO {
+struct ImplicitArgs;
+enum class AllocationType;
+struct PatchInfoData;
 struct CompletionStamp;
 class Buffer;
 class CommandQueue;

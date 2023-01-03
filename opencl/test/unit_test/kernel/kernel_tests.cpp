@@ -13,6 +13,7 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"

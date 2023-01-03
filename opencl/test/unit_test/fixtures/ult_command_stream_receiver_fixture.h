@@ -13,6 +13,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"

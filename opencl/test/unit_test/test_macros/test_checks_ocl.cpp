@@ -12,6 +12,8 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"

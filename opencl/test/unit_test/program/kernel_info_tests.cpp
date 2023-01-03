@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
