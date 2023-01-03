@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,6 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    "ehl",                                         // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,6 @@ struct RuntimeCapabilityTable {
     uint64_t sharedSystemMemCapabilities;
     double defaultProfilingTimerResolution;
     size_t requiredPreemptionSurfaceSize;
-    const char *platformType;
     const char *deviceName;
     PreemptionMode defaultPreemptionMode;
     aub_stream::EngineType defaultEngineType;
@@ -113,7 +112,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.ftrRenderCompressedImages == rhs.ftrRenderCompressedImages);
     result &= (lhs.ftr64KBpages == rhs.ftr64KBpages);
     result &= (lhs.instrumentationEnabled == rhs.instrumentationEnabled);
-    result &= (lhs.platformType == rhs.platformType);
     result &= (lhs.deviceName == rhs.deviceName);
     result &= (lhs.debuggerSupported == rhs.debuggerSupported);
     result &= (lhs.supportsVme == rhs.supportsVme);
@@ -156,7 +154,6 @@ struct GfxFamilyMapper {};
 
 // Global table of hardware prefixes
 extern bool familyEnabled[IGFX_MAX_CORE];
-extern const char *familyName[IGFX_MAX_CORE];
 extern const char *hardwarePrefix[IGFX_MAX_PRODUCT];
 extern uint64_t defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
@@ -167,7 +164,6 @@ template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {
     EnableGfxFamilyHw() {
         familyEnabled[gfxFamily] = true;
-        familyName[gfxFamily] = GfxFamilyMapper<gfxFamily>::name;
     }
 };
 
@@ -175,8 +171,6 @@ bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwIn
 void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfoIn);
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
-const std::string getFamilyNameWithType(const HardwareInfo &hwInfo);
-bool haveSameCore(PRODUCT_FAMILY productFamilyLeft, PRODUCT_FAMILY productFamilyRight);
 
 // Utility conversion
 template <PRODUCT_FAMILY productFamily>

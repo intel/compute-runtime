@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -425,12 +425,6 @@ std::string &OfflineCompiler::getBuildLog() {
     return buildLog;
 }
 
-void OfflineCompiler::setFamilyType() {
-    familyNameWithType.clear();
-    familyNameWithType.append(familyName[hwInfo.platform.eRenderCoreFamily]);
-    familyNameWithType.append(hwInfo.capabilityTable.platformType);
-}
-
 int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId) {
     std::vector<PRODUCT_FAMILY> allSupportedProduct{ALL_SUPPORTED_PRODUCT_FAMILIES};
     std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
@@ -448,7 +442,7 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             setHwInfoValuesFromConfig(config, hwInfo);
             hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
-            setFamilyType();
+            productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
             return SUCCESS;
         }
     }
@@ -474,7 +468,7 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
                 hwInfo.platform.usRevId = revisionId;
             }
             deviceConfig = productConfig;
-            setFamilyType();
+            productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
             return SUCCESS;
         }
         argHelper->printf("Could not determine target based on product config: %s\n", deviceName.c_str());
@@ -831,8 +825,8 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     // Convert binary to cpp
     out << "#include <cstddef>\n";
     out << "#include <cstdint>\n\n";
-    out << "size_t " << builtinName << "BinarySize_" << familyNameWithType << " = " << size << ";\n";
-    out << "uint32_t " << builtinName << "Binary_" << familyNameWithType << "[" << (size + 3) / 4 << "] = {"
+    out << "size_t " << builtinName << "BinarySize_" << productFamilyName << " = " << size << ";\n";
+    out << "uint32_t " << builtinName << "Binary_" << productFamilyName << "[" << (size + 3) / 4 << "] = {"
         << std::endl
         << "    ";
 
@@ -1121,9 +1115,9 @@ void OfflineCompiler::writeOutAllFiles() {
         }
     } else {
         if (outputFile.empty()) {
-            fileBase = fileTrunk + "_" + familyNameWithType;
+            fileBase = fileTrunk + "_" + productFamilyName;
         } else {
-            fileBase = outputFile + "_" + familyNameWithType;
+            fileBase = outputFile + "_" + productFamilyName;
         }
     }
 

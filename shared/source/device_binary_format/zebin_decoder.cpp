@@ -60,10 +60,8 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_
                 return false;
             }
         }
-        if (productFamily != IGFX_UNKNOWN) {
-            if (false == haveSameCore(targetDevice.productFamily, productFamily)) {
-                return false;
-            }
+        if (targetDevice.productFamily != productFamily) {
+            return false;
         }
     }
     if (targetMetadata.validateRevisionId) {

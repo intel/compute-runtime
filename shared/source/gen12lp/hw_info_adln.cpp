@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,6 @@ const RuntimeCapabilityTable ADLN::capabilityTable{
     0,                                              // sharedSystemMemCapabilities
     83.333,                                         // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                      // requiredPreemptionSurfaceSize
-    "adln",                                         // platformType
     "",                                             // deviceName
     PreemptionMode::MidThread,                      // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                         // defaultEngineType

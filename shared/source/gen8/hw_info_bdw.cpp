@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,6 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     0,                                                 // sharedSystemMemCapabilities
     80,                                                // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                         // requiredPreemptionSurfaceSize
-    "bdw",                                             // platformType
     "",                                                // deviceName
     PreemptionMode::Disabled,                          // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                            // defaultEngineType

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,6 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    "bxt",                                         // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType

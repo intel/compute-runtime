@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     0,                                                         // sharedSystemMemCapabilities
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
-    "pvc",                                                     // platformType
     "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                                    // defaultEngineType

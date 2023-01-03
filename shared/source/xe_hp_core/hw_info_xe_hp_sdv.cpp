@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,6 @@ const RuntimeCapabilityTable XE_HP_SDV::capabilityTable{
     0,                                                         // sharedSystemMemCapabilities
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
-    "core",                                                    // platformType
     "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                                    // defaultEngineType

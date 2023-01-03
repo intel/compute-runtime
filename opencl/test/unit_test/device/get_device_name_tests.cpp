@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "gtest/gtest.h"
-
-namespace NEO {
-extern const char *familyName[];
-} // namespace NEO
 
 using namespace NEO;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,7 +84,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
-    const auto platformName = getFamilyNameWithType(hwInfo);
+    const auto platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
     const auto revisionId = std::to_string(hwInfo.platform.usRevId);
     const auto builtinName = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);

@@ -1,14 +1,14 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-function(level_zero_generate_kernels target_list platform_name suffix revision_id options)
+function(level_zero_generate_kernels target_list platform_name revision_id options)
 
   list(APPEND results copy_compiler_files)
 
-  set(relativeDir "level_zero/${suffix}/${revision_id}/test_files/${NEO_ARCH}")
+  set(relativeDir "level_zero/${platform_name}/${revision_id}/test_files/${NEO_ARCH}")
 
   set(outputdir "${TargetDir}/${relativeDir}/")
 
@@ -18,7 +18,7 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
     get_filename_component(workdir ${filepath} DIRECTORY)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
-    set(outputpath_base "${outputdir}${basename}_${suffix}")
+    set(outputpath_base "${outputdir}${basename}_${platform_name}")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(output_files
           ${outputpath_base}.bin
@@ -36,7 +36,7 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
       list(APPEND ${target_list} ${output_files})
     else()
       foreach(extension "bin" "spv")
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${basename}_${suffix}.${extension}")
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${basename}_${platform_name}.${extension}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${extension}
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
@@ -51,11 +51,11 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
   set(${target_list} ${${target_list}} PARENT_SCOPE)
 endfunction()
 
-function(level_zero_generate_kernels_with_internal_options target_list platform_name suffix prefix revision_id options internal_options)
+function(level_zero_generate_kernels_with_internal_options target_list platform_name prefix revision_id options internal_options)
 
   list(APPEND results copy_compiler_files)
 
-  set(relativeDir "level_zero/${suffix}/${revision_id}/test_files/${NEO_ARCH}")
+  set(relativeDir "level_zero/${platform_name}/${revision_id}/test_files/${NEO_ARCH}")
 
   set(outputdir "${TargetDir}/${relativeDir}/")
 
@@ -65,7 +65,7 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
     get_filename_component(workdir ${filepath} DIRECTORY)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
-    set(outputpath_base "${outputdir}${prefix}_${basename}_${suffix}")
+    set(outputpath_base "${outputdir}${prefix}_${basename}_${platform_name}")
 
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(output_files
@@ -86,7 +86,7 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
       list(APPEND ${target_list} ${output_files})
     else()
       foreach(extension "bin" "spv")
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${prefix}_${basename}_${suffix}.${extension}")
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${prefix}_${basename}_${platform_name}.${extension}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${extension}
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}

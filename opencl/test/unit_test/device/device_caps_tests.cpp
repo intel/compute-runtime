@@ -34,10 +34,6 @@
 
 #include <memory>
 
-namespace NEO {
-extern const char *familyName[];
-} // namespace NEO
-
 using namespace NEO;
 
 struct DeviceGetCapsTest : public ::testing::Test {

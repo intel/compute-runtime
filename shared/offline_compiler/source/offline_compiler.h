@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,7 +98,6 @@ All supported acronyms: %s.
   protected:
     OfflineCompiler();
 
-    void setFamilyType();
     int initHardwareInfo(std::string deviceName);
     int initHardwareInfoForProductConfig(std::string deviceName);
     int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId);
@@ -134,7 +133,7 @@ All supported acronyms: %s.
 
     AOT::PRODUCT_CONFIG deviceConfig = {};
     std::string deviceName;
-    std::string familyNameWithType;
+    std::string productFamilyName;
     std::string inputFile;
     std::string outputFile;
     std::string outputDirectory;

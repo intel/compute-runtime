@@ -296,8 +296,7 @@ int main(int argc, char **argv) {
     gtSystemInfo.MaxSubSlicesSupported  = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);
     // clang-format on
 
-    binaryNameSuffix.append(familyName[hwInfoForTests.platform.eRenderCoreFamily]);
-    binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
+    binaryNameSuffix.append(hardwarePrefix[hwInfoForTests.platform.eProductFamily]);
 
     std::string testBinaryFiles = getRunPath(argv[0]);
     testBinaryFiles.append("/");
