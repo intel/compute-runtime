@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler
             long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
             if (NEO::DebugManager.flags.PrintUmdSharedMigration.get()) {
-                printf("UMD transferred shared allocation %llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(allocPtr), pageFaultData.size, elapsedTime / 1e3);
+                printf("UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(allocPtr), pageFaultData.size, elapsedTime / 1e3);
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ inline void PageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultData
         long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
         if (DebugManager.flags.PrintUmdSharedMigration.get()) {
-            printf("UMD transferred shared allocation %llx (%zu B) from CPU to GPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
+            printf("UMD transferred shared allocation 0x%llx (%zu B) from CPU to GPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
         }
 
         this->protectCPUMemoryAccess(ptr, pageFaultData.size);
@@ -128,7 +128,7 @@ inline void PageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultData
         long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
         if (DebugManager.flags.PrintUmdSharedMigration.get()) {
-            printf("UMD transferred shared allocation %llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
+            printf("UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
         }
         pageFaultData.unifiedMemoryManager->nonGpuDomainAllocs.push_back(ptr);
     }
