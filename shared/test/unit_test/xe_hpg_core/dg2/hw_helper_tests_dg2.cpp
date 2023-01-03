@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -83,4 +85,22 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledButDebugVariableSetWhenGetGpgpuE
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[6].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[8].first);
+}
+
+using GfxCoreHelperTests = Test<DeviceFixture>;
+DG2TEST_F(GfxCoreHelperTests, givenAllocationTypeInternalHeapWhenSetExtraAllocationDataThenUseSystemMemory) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    hwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    constexpr DeviceBitfield singleTileBitfield = 0b0100;
+
+    const AllocationProperties singleTileAllocProperties(0, 1, AllocationType::INTERNAL_HEAP, singleTileBitfield);
+
+    AllocationData allocData;
+    allocData.flags.useSystemMemory = false;
+
+    gfxCoreHelper.setExtraAllocationData(allocData, singleTileAllocProperties, hwInfo);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
 }

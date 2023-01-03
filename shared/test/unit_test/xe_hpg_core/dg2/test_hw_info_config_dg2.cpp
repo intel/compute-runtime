@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,7 @@ DG2TEST_F(Dg2ProductHelper, givenDG2WithBSteppingThenMaxThreadsForWorkgroupWAIsN
 }
 
 DG2TEST_F(Dg2ProductHelper, givenSteppingWhenAskingForLocalMemoryAccessModeThenDisallowOnA0) {
+    pInHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
     pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, pInHwInfo);
     EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
@@ -84,4 +85,17 @@ DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_TRUE(productHelper->getPipelineSelectPropertySystolicModeSupport());
+}
+
+DG2TEST_F(Dg2ProductHelper, givenDG2WhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
+
+    pInHwInfo.platform.usRevId = REVISION_A0;
+    pInHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
+    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+
+    pInHwInfo.platform.usDeviceID = dg2G11DeviceIds[0];
+    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+
+    pInHwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
+    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }

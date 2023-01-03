@@ -123,7 +123,7 @@ bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) c
 
 template <>
 LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
         return LocalMemoryAccessMode::CpuAccessDisallowed;
     }
     return LocalMemoryAccessMode::Default;
