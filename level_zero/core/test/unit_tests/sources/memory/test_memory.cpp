@@ -955,7 +955,18 @@ struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
         }
         return SVMAllocsManager::freeSVMAlloc(ptr, blocking);
     }
-    uint32_t blockingCallsMade = 0;
+
+    bool freeSVMAllocDefer(void *ptr) override {
+        deferFreeCallsMade++;
+        return SVMAllocsManager::freeSVMAllocDefer(ptr);
+    }
+
+    uint32_t numDeferFreeAllocs() {
+        return static_cast<uint32_t>(SVMAllocsManager::getNumDeferFreeAllocs());
+    }
+
+    uint32_t blockingCallsMade = 0u;
+    uint32_t deferFreeCallsMade = 0u;
 };
 
 struct FreeExtTests : public ::testing::Test {
@@ -974,7 +985,11 @@ struct FreeExtTests : public ::testing::Test {
         driverHandle->svmAllocsManager = currSvmAllocsManager;
         device = driverHandle->devices[0];
 
-        context = std::make_unique<ContextImp>(driverHandle.get());
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
@@ -983,6 +998,9 @@ struct FreeExtTests : public ::testing::Test {
     }
 
     void TearDown() override {
+        if (context) {
+            context->destroy();
+        }
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
@@ -991,7 +1009,7 @@ struct FreeExtTests : public ::testing::Test {
     std::unique_ptr<DriverHandleImp> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    std::unique_ptr<ContextImp> context;
+    L0::ContextImp *context = nullptr;
 };
 
 TEST_F(FreeExtTests,
@@ -1033,7 +1051,7 @@ TEST_F(FreeExtTests,
 }
 
 TEST_F(FreeExtTests,
-       whenFreeMemExtIsCalledWithDeferFreePolicyThenUnsuportedIsReturned) {
+       whenFreeMemExtIsCalledWithDeferFreePolicyThenBlockingCallIsNotMade) {
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -1047,10 +1065,361 @@ TEST_F(FreeExtTests,
     ze_memory_free_ext_desc_t memFreeDesc = {};
     memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
     result = context->freeMemExt(&memFreeDesc, ptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-
-    result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    EXPECT_EQ(0u, memManager->blockingCallsMade);
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+}
+
+TEST_F(FreeExtTests,
+       whenFreeMemExtIsCalledWithDeferFreePolicyAndInvalidPtrThenReturnInvalidArgument) {
+    void *ptr = nullptr;
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    ze_result_t result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(FreeExtTests,
+       whenFreeMemExtIsCalledWithDeferFreePolicyAndAllocationNotInUseThenMemoryFreeNotDeferred) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+    EXPECT_EQ(0u, memManager->blockingCallsMade);
+}
+
+TEST_F(FreeExtTests,
+       whenFreeMemExtIsCalledWithDeferFreePolicyAndAllocationInUseThenMemoryFreeDeferred) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+    void *ptr2 = nullptr;
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr2);
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+    EXPECT_EQ(1u, memManager->blockingCallsMade);
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(2u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr2);
+    result = context->freeMemExt(&memFreeDesc, ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(3u, memManager->deferFreeCallsMade);
+}
+
+TEST_F(FreeExtTests,
+       whenFreeMemExtIsCalledMultipleTimesForSameAllocationWithDeferFreePolicyAndAllocationInUseThenMemoryFreeDeferredOnlyOnce) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(2u, memManager->deferFreeCallsMade);
+
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(3u, memManager->deferFreeCallsMade);
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(4u, memManager->deferFreeCallsMade);
+}
+
+TEST_F(FreeExtTests,
+       whenFreeMemIsCalledWithDeferredFreeAllocationThenMemoryFreed) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+
+    void *ptr2 = nullptr;
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr2);
+    result = context->freeMem(ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+}
+
+TEST_F(FreeExtTests,
+       whenallocMemFailsWithDeferredFreeAllocationThenMemoryFreed) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+
+    void *ptr2 = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = false;
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(2u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    result = context->allocDeviceMem(device,
+                                     &deviceDesc,
+                                     size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = false;
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(3u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    result = context->allocSharedMem(device->toHandle(),
+                                     &deviceDesc,
+                                     &hostDesc,
+                                     size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+}
+
+TEST_F(FreeExtTests,
+       whenallocMemFailsWithDeferredFreeAllocationThenMemoryFreedAndRetrySucceeds) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInPrimaryAllocation = true;
+
+    void *ptr2 = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr2);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+    result = context->freeMemExt(&memFreeDesc, ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(2u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInPrimaryAllocation = true;
+
+    result = context->allocDeviceMem(device,
+                                     &deviceDesc,
+                                     size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(3u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInPrimaryAllocation = true;
+
+    result = context->allocSharedMem(device->toHandle(),
+                                     &deviceDesc,
+                                     &hostDesc,
+                                     size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr2);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    result = context->freeMemExt(&memFreeDesc, ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(4u, memManager->deferFreeCallsMade);
+}
+
+TEST_F(FreeExtTests,
+       whenDestroyContextAnyRemainingDeferFreeMemoryAllocationsAreFreed) {
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    void *ptr2 = nullptr;
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr2);
+    void *ptr3 = nullptr;
+    result = context->allocHostMem(&hostDesc,
+                                   size, alignment, &ptr3);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr3);
+    SVMAllocsManagerFreeExtMock *memManager = reinterpret_cast<SVMAllocsManagerFreeExtMock *>(currSvmAllocsManager);
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&memFreeDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(1u, memManager->deferFreeCallsMade);
+    result = context->freeMemExt(&memFreeDesc, ptr2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(2u, memManager->deferFreeCallsMade);
+    result = context->freeMemExt(&memFreeDesc, ptr3);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(3u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(3u, memManager->deferFreeCallsMade);
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+    context->destroy();
+    context = nullptr;
+    EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
 }
 
 TEST_F(FreeExtTests,

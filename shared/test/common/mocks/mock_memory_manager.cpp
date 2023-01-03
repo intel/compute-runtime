@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,9 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(cons
     if (isMockHostMemoryManager) {
         allocateGraphicsMemoryWithPropertiesCount++;
         if (forceFailureInPrimaryAllocation) {
+            if (singleFailureInPrimaryAllocation) {
+                forceFailureInPrimaryAllocation = false;
+            }
             return nullptr;
         }
         return NEO::MemoryManager::allocateGraphicsMemoryWithProperties(properties);

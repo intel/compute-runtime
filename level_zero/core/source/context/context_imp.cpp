@@ -28,6 +28,9 @@
 namespace L0 {
 
 ze_result_t ContextImp::destroy() {
+    while (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
+        this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
+    }
     delete this;
 
     return ZE_RESULT_SUCCESS;
@@ -94,6 +97,15 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
     auto usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
                                                                                           unifiedMemoryProperties);
     if (usmPtr == nullptr) {
+        if (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
+            this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
+            usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
+                                                                                             unifiedMemoryProperties);
+            if (usmPtr) {
+                *ptr = usmPtr;
+                return ZE_RESULT_SUCCESS;
+            }
+        }
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
 
@@ -191,6 +203,15 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     void *usmPtr =
         this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (usmPtr == nullptr) {
+        if (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
+            this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
+            usmPtr =
+                this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+            if (usmPtr) {
+                *ptr = usmPtr;
+                return ZE_RESULT_SUCCESS;
+            }
+        }
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     *ptr = usmPtr;
@@ -292,6 +313,16 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                                                                             unifiedMemoryProperties,
                                                                                             static_cast<void *>(neoDevice->getSpecializedDevice<L0::Device>()));
     if (usmPtr == nullptr) {
+        if (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
+            this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
+            usmPtr = this->driverHandle->svmAllocsManager->createSharedUnifiedMemoryAllocation(size,
+                                                                                               unifiedMemoryProperties,
+                                                                                               static_cast<void *>(neoDevice->getSpecializedDevice<L0::Device>()));
+            if (usmPtr) {
+                *ptr = usmPtr;
+                return ZE_RESULT_SUCCESS;
+            }
+        }
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     *ptr = usmPtr;
@@ -349,7 +380,17 @@ ze_result_t ContextImp::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc
         return this->freeMem(ptr, true);
     }
     if (pMemFreeDesc->freePolicy == ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        auto allocation = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+        if (allocation == nullptr) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
+        for (auto pairDevice : this->devices) {
+            this->freePeerAllocations(ptr, false, Device::fromHandle(pairDevice.second));
+        }
+
+        this->driverHandle->svmAllocsManager->freeSVMAllocDefer(const_cast<void *>(ptr));
+        return ZE_RESULT_SUCCESS;
     }
     return this->freeMem(ptr, false);
 }

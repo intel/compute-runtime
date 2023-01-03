@@ -114,6 +114,14 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
     }
 
+    bool allocInUse(GraphicsAllocation &graphicsAllocation) override {
+        allocInUseCalled++;
+        if (deferAllocInUse) {
+            return true;
+        }
+        return false;
+    }
+
     void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) override {
         waitForEnginesCompletionCalled++;
         if (waitAllocations.get()) {
@@ -223,6 +231,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
     uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
+    uint32_t allocInUseCalled = 0u;
     int32_t overrideAllocateAsPackReturn = -1;
     std::vector<GraphicsAllocation *> allocationsFromExistingStorage{};
     AllocationData alignAllocationData;
@@ -252,8 +261,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool cpuCopyRequired = false;
     bool forceCompressed = false;
     bool forceFailureInPrimaryAllocation = false;
+    bool singleFailureInPrimaryAllocation = false;
     bool forceFailureInAllocationWithHostPointer = false;
     bool isMockHostMemoryManager = false;
+    bool deferAllocInUse = false;
     bool isMockEventPoolCreateMemoryManager = false;
     bool limitedGPU = false;
     bool returnFakeAllocation = false;

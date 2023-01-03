@@ -145,6 +145,12 @@ class SVMAllocsManager {
         std::mutex mtx;
     };
 
+    enum class FreePolicyType : uint32_t {
+        POLICY_NONE = 0,
+        POLICY_BLOCKING = 1,
+        POLICY_DEFER = 2
+    };
+
     SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport);
     MOCKABLE_VIRTUAL ~SVMAllocsManager();
     void *createSVMAlloc(size_t size,
@@ -163,13 +169,17 @@ class SVMAllocsManager {
                                              const UnifiedMemoryProperties &unifiedMemoryProperties);
     void setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties);
     SvmAllocationData *getSVMAlloc(const void *ptr);
+    SvmAllocationData *getSVMDeferFreeAlloc(const void *ptr);
     MOCKABLE_VIRTUAL bool freeSVMAlloc(void *ptr, bool blocking);
-    MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationData *svmData);
+    MOCKABLE_VIRTUAL bool freeSVMAllocDefer(void *ptr);
+    MOCKABLE_VIRTUAL void freeSVMAllocDeferImpl();
+    MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData);
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
     void trimUSMDeviceAllocCache();
     void insertSVMAlloc(const SvmAllocationData &svmData);
     void removeSVMAlloc(const SvmAllocationData &svmData);
     size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }
+    MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() const { return SVMDeferFreeAllocs.getNumAllocs(); }
     MapBasedAllocationTracker *getSVMAllocs() { return &SVMAllocs; }
 
     MOCKABLE_VIRTUAL void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
@@ -206,6 +216,7 @@ class SVMAllocsManager {
 
     MapBasedAllocationTracker SVMAllocs;
     MapOperationsTracker svmMapOperations;
+    MapBasedAllocationTracker SVMDeferFreeAllocs;
     MemoryManager *memoryManager;
     std::shared_mutex mtx;
     std::mutex mtxForIndirectAccess;

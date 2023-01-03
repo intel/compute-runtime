@@ -780,6 +780,19 @@ void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocat
     }
 }
 
+bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
+    for (auto &engine : getRegisteredEngines()) {
+        auto osContextId = engine.osContext->getContextId();
+        auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
+        if (graphicsAllocation.isUsedByOsContext(osContextId) &&
+            engine.commandStreamReceiver->getTagAllocation() != nullptr &&
+            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion) {
     for (auto &engine : getRegisteredEngines()) {
         auto csr = engine.commandStreamReceiver;

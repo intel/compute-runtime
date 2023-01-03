@@ -62,7 +62,7 @@ void SVMAllocsManager::SvmAllocationCache::trim(SVMAllocsManager *svmAllocsManag
     for (auto &cachedAllocationInfo : this->allocations) {
         SvmAllocationData *svmData = svmAllocsManager->getSVMAlloc(cachedAllocationInfo.allocation);
         DEBUG_BREAK_IF(nullptr == svmData);
-        svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, false, svmData);
+        svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, FreePolicyType::POLICY_NONE, svmData);
     }
     this->allocations.clear();
 }
@@ -391,6 +391,11 @@ SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
     return SVMAllocs.get(ptr);
 }
 
+SvmAllocationData *SVMAllocsManager::getSVMDeferFreeAlloc(const void *ptr) {
+    std::shared_lock<std::shared_mutex> lock(mtx);
+    return SVMDeferFreeAllocs.get(ptr);
+}
+
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     SVMAllocs.insert(svmAllocData);
@@ -402,6 +407,11 @@ void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
+
+    if (SVMDeferFreeAllocs.allocations.size() > 0) {
+        this->freeSVMAllocDeferImpl();
+    }
+
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
         if (InternalMemoryType::DEVICE_UNIFIED_MEMORY == svmData->memoryType &&
@@ -409,16 +419,39 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
             this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
             return true;
         }
-        this->freeSVMAllocImpl(ptr, blocking, svmData);
+        if (blocking) {
+            this->freeSVMAllocImpl(ptr, FreePolicyType::POLICY_BLOCKING, svmData);
+        } else {
+            this->freeSVMAllocImpl(ptr, FreePolicyType::POLICY_NONE, svmData);
+        }
         return true;
     }
     return false;
 }
 
-void SVMAllocsManager::freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationData *svmData) {
+bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
+
+    if (SVMDeferFreeAllocs.allocations.size() > 0) {
+        this->freeSVMAllocDeferImpl();
+    }
+
+    SvmAllocationData *svmData = getSVMAlloc(ptr);
+    if (svmData) {
+        if (InternalMemoryType::DEVICE_UNIFIED_MEMORY == svmData->memoryType &&
+            this->usmDeviceAllocationsCacheEnabled) {
+            this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
+            return true;
+        }
+        this->freeSVMAllocImpl(ptr, FreePolicyType::POLICY_DEFER, svmData);
+        return true;
+    }
+    return false;
+}
+
+void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) {
     this->prepareIndirectAllocationForDestruction(svmData);
 
-    if (blocking) {
+    if (policy == FreePolicyType::POLICY_BLOCKING) {
         if (svmData->cpuAllocation) {
             this->memoryManager->waitForEnginesCompletion(*svmData->cpuAllocation);
         }
@@ -428,8 +461,26 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationD
                 this->memoryManager->waitForEnginesCompletion(*gpuAllocation);
             }
         }
+    } else if (policy == FreePolicyType::POLICY_DEFER) {
+        if (svmData->cpuAllocation) {
+            if (this->memoryManager->allocInUse(*svmData->cpuAllocation)) {
+                if (getSVMDeferFreeAlloc(svmData) == nullptr) {
+                    this->SVMDeferFreeAllocs.insert(*svmData);
+                }
+                return;
+            }
+        }
+        for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
+            if (gpuAllocation) {
+                if (this->memoryManager->allocInUse(*gpuAllocation)) {
+                    if (getSVMDeferFreeAlloc(svmData) == nullptr) {
+                        this->SVMDeferFreeAllocs.insert(*svmData);
+                    }
+                    return;
+                }
+            }
+        }
     }
-
     auto pageFaultManager = this->memoryManager->getPageFaultManager();
     if (svmData->cpuAllocation && pageFaultManager) {
         pageFaultManager->removeAllocation(svmData->cpuAllocation->getUnderlyingBuffer());
@@ -438,6 +489,22 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationD
         freeZeroCopySvmAllocation(svmData);
     } else {
         freeSvmAllocationWithDeviceStorage(svmData);
+    }
+}
+
+void SVMAllocsManager::freeSVMAllocDeferImpl() {
+
+    std::vector<void *> freedPtr;
+    for (auto iter = SVMDeferFreeAllocs.allocations.begin(); iter != SVMDeferFreeAllocs.allocations.end(); ++iter) {
+        void *ptr = reinterpret_cast<void *>(iter->second.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+        this->freeSVMAllocImpl(ptr, FreePolicyType::POLICY_DEFER, this->getSVMAlloc(ptr));
+
+        if (this->getSVMAlloc(ptr) == nullptr) {
+            freedPtr.push_back(ptr);
+        }
+    }
+    for (uint32_t i = 0; i < freedPtr.size(); ++i) {
+        SVMDeferFreeAllocs.allocations.erase(freedPtr[i]);
     }
 }
 

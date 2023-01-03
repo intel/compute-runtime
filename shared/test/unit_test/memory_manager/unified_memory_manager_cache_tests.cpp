@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -288,20 +288,23 @@ TEST(SvmDeviceAllocationCacheTest, givenDeviceOutOfMemoryWhenAllocatingThenCache
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager, false);
     ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
 
-    memoryManager->capacity = MemoryConstants::pageSize64k * 2;
+    memoryManager->capacity = MemoryConstants::pageSize64k * 3;
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device;
 
     auto allocationInCache = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
     auto allocationInCache2 = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    auto allocationInCache3 = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
     ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
     svmManager->freeSVMAlloc(allocationInCache);
     svmManager->freeSVMAlloc(allocationInCache2);
+    svmManager->freeSVMAllocDefer(allocationInCache3);
 
-    ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 2u);
+    ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 3u);
     ASSERT_NE(svmManager->getSVMAlloc(allocationInCache), nullptr);
     ASSERT_NE(svmManager->getSVMAlloc(allocationInCache2), nullptr);
+    ASSERT_NE(svmManager->getSVMAlloc(allocationInCache3), nullptr);
     auto ptr = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k * 2, unifiedMemoryProperties);
     EXPECT_NE(ptr, nullptr);
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
