@@ -51,7 +51,6 @@ int main(int argc, char **argv) {
     std::string dumpTestStatsFileName = "";
 
     std::string devicePrefix("skl");
-    std::string familyNameWithType("Gen9core");
     std::string revId("0");
     std::string productConfig("");
 
@@ -86,9 +85,6 @@ int main(int argc, char **argv) {
             } else if (strcmp("--device", argv[i]) == 0) {
                 ++i;
                 devicePrefix = argv[i];
-            } else if (strcmp("--family_type", argv[i]) == 0) {
-                ++i;
-                familyNameWithType = argv[i];
             } else if (strcmp("--rev_id", argv[i]) == 0) {
                 ++i;
                 revId = argv[i];
@@ -127,13 +123,13 @@ int main(int argc, char **argv) {
     // working directories
     std::string nTestFiles = getRunPath();
     nTestFiles.append("/");
-    nTestFiles.append(familyNameWithType);
+    nTestFiles.append(devicePrefix);
     nTestFiles.append("/");
     nTestFiles.append(revId);
     nTestFiles.append("/");
     nTestFiles.append(testFiles);
     testFiles = nTestFiles;
-    binaryNameSuffix.append(familyNameWithType);
+    binaryNameSuffix.append(devicePrefix);
 
     std::string nClFiles = NEO_OPENCL_TEST_FILES_DIR;
     nClFiles.append("/");
@@ -141,13 +137,13 @@ int main(int argc, char **argv) {
 
 #ifdef WIN32
 #include <direct.h>
-    if (_chdir(familyNameWithType.c_str())) {
-        std::cout << "chdir into " << familyNameWithType << " directory failed.\nThis might cause test failures." << std::endl;
+    if (_chdir(devicePrefix.c_str())) {
+        std::cout << "chdir into " << devicePrefix << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #elif defined(__linux__)
 #include <unistd.h>
-    if (chdir(familyNameWithType.c_str()) != 0) {
-        std::cout << "chdir into " << familyNameWithType << " directory failed.\nThis might cause test failures." << std::endl;
+    if (chdir(devicePrefix.c_str()) != 0) {
+        std::cout << "chdir into " << devicePrefix << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #endif
 
@@ -161,7 +157,7 @@ int main(int argc, char **argv) {
     }
     listeners.Append(new NEO::VirtualFileSystemListener);
 
-    gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, productConfig, familyNameWithType)));
+    gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, productConfig)));
 
     int sigOut = setAlarm(enableAlarm);
     if (sigOut != 0) {

@@ -24,7 +24,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinDisabledWhenBinExtensionPass
     DebugManager.flags.UseBindlessMode.set(0);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = getFamilyNameWithType(hwInfo);
+    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
     const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
@@ -44,7 +44,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPasse
     DebugManager.flags.UseBindlessMode.set(1);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = getFamilyNameWithType(hwInfo);
+    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
     const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
@@ -88,7 +88,7 @@ HWTEST2_F(BuiltInSharedTest, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceFor
 HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAddressingIsStateless, HasStatefulSupport) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = getFamilyNameWithType(hwInfo);
+    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
     const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
@@ -105,7 +105,7 @@ HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAdd
 
 HWTEST2_F(BuiltInSharedTest, GivenPlatformWithoutStatefulAddresingSupportWhenGettingResourceNamesThenStatelessResourceNameIsReturned, HasNoStatefulSupport) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const std::string platformName = getFamilyNameWithType(hwInfo);
+    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
 
     {
@@ -126,7 +126,7 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
     DebugManager.flags.UseBindlessMode.set(0);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = getFamilyNameWithType(hwInfo);
+    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
     const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 
@@ -152,7 +152,7 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCod
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    const std::string platformName = getFamilyNameWithType(hwInfo);
+    const std::string platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
     const std::string revId = std::to_string(hwInfo.platform.usRevId);
     const std::string defaultRevId = std::to_string(productHelper.getDefaultRevisionId());
 

@@ -193,5 +193,4 @@ inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(Progr
     return ret;
 }
 
-bool haveSameCore(PRODUCT_FAMILY productFamilyLeft, PRODUCT_FAMILY productFamilyRight);
 } // namespace NEO

@@ -17,8 +17,8 @@
 
 class Environment : public ::testing::Environment {
   public:
-    Environment(const std::string &devicePrefix, const std::string productConfig, const std::string &familyNameWithType)
-        : devicePrefix(devicePrefix), productConfig(productConfig), familyNameWithType(familyNameWithType) {
+    Environment(const std::string &devicePrefix, const std::string productConfig)
+        : devicePrefix(devicePrefix), productConfig(productConfig) {
     }
 
     void SetInputFileName( // NOLINT(readability-identifier-naming)
@@ -53,5 +53,4 @@ class Environment : public ::testing::Environment {
 
     const std::string devicePrefix;
     const std::string productConfig;
-    const std::string familyNameWithType;
 };

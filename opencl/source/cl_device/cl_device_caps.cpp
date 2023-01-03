@@ -22,8 +22,6 @@
 #include <sstream>
 
 namespace NEO {
-extern const char *familyName[];
-
 static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";

@@ -320,8 +320,7 @@ int main(int argc, char **argv) {
     listeners.Append(new NEO::MemoryLeakListener);
     listeners.Append(new NEO::BaseUltConfigListener);
 
-    binaryNameSuffix.append(NEO::familyName[hwInfoForTests.platform.eRenderCoreFamily]);
-    binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
+    binaryNameSuffix.append(NEO::hardwarePrefix[hwInfoForTests.platform.eProductFamily]);
 
     std::string testBinaryFiles = getRunPath(argv[0]);
     std::string testBinaryFilesApiSpecific = testBinaryFiles;

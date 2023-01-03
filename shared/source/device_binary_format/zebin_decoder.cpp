@@ -54,16 +54,15 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_
         if (targetDevice.aotConfig.value != productConfig) {
             return false;
         }
-    } else {
-        if (gfxCore != IGFX_UNKNOWN_CORE) {
-            if (targetDevice.coreFamily != gfxCore) {
-                return false;
-            }
+    }
+    if (gfxCore != IGFX_UNKNOWN_CORE) {
+        if (targetDevice.coreFamily != gfxCore) {
+            return false;
         }
-        if (productFamily != IGFX_UNKNOWN) {
-            if (false == haveSameCore(targetDevice.productFamily, productFamily)) {
-                return false;
-            }
+    }
+    if (productFamily != IGFX_UNKNOWN) {
+        if (targetDevice.productFamily != productFamily) {
+            return false;
         }
     }
     if (targetMetadata.validateRevisionId) {

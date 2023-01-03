@@ -6689,6 +6689,32 @@ TEST(ValidateTargetDeviceTests, givenMismatchedProductFamilyWhenValidatingTarget
     EXPECT_FALSE(res);
 }
 
+TEST(ValidateTargetDeviceTests, givenMissingProductFamilyWhenValidatingTargetDeviceThenReturnTrue) {
+    TargetDevice targetDevice{};
+    targetDevice.maxPointerSizeInBytes = 8u;
+    ASSERT_EQ(AOT::UNKNOWN_ISA, targetDevice.aotConfig.value);
+    targetDevice.coreFamily = renderCoreFamily;
+    targetDevice.productFamily = productFamily;
+
+    Elf::ZebinTargetFlags targetMetadata{};
+
+    auto res = validateTargetDevice(targetDevice, Elf::EI_CLASS_64, IGFX_UNKNOWN, targetDevice.coreFamily, AOT::UNKNOWN_ISA, targetMetadata);
+    EXPECT_TRUE(res);
+}
+
+TEST(ValidateTargetDeviceTests, givenMissingGfxCoreFamilyWhenValidatingTargetDeviceThenReturnTrue) {
+    TargetDevice targetDevice{};
+    targetDevice.maxPointerSizeInBytes = 8u;
+    ASSERT_EQ(AOT::UNKNOWN_ISA, targetDevice.aotConfig.value);
+    targetDevice.coreFamily = renderCoreFamily;
+    targetDevice.productFamily = productFamily;
+
+    Elf::ZebinTargetFlags targetMetadata{};
+
+    auto res = validateTargetDevice(targetDevice, Elf::EI_CLASS_64, targetDevice.productFamily, IGFX_UNKNOWN_CORE, AOT::UNKNOWN_ISA, targetMetadata);
+    EXPECT_TRUE(res);
+}
+
 TEST(ValidateTargetDeviceTests, givenMismatchedGfxCoreWhenValidatingTargetDeviceThenReturnFalse) {
     TargetDevice targetDevice;
     targetDevice.maxPointerSizeInBytes = 8u;
