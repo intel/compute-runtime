@@ -136,18 +136,6 @@ struct MockKernelWithCallTracking : Mock<::L0::Kernel> {
         return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation);
     }
     size_t setArgBufferWithAllocCalled = 0u;
-
-    ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY, uint32_t groupSizeZ) override {
-        if (this->groupSize[0] == groupSizeX &&
-            this->groupSize[1] == groupSizeY &&
-            this->groupSize[2] == groupSizeZ) {
-            setGroupSizeSkipCount++;
-        } else {
-            setGroupSizeSkipCount = 0u;
-        }
-        return KernelImp::setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
-    }
-    size_t setGroupSizeSkipCount = 0u;
 };
 
 using SetKernelArgCacheTest = Test<ModuleFixture>;
@@ -322,44 +310,6 @@ TEST_F(KernelImpSetGroupSizeTest, givenZeroGroupSizeWhenSettingGroupSizeThenInva
     uint32_t groupSize[3] = {0, 0, 0};
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
-}
-
-TEST_F(KernelImpSetGroupSizeTest, givenValidGroupSizeWhenSetMultipleTimesThenSetGroupSizeIsOnlyExecutedIfNeeded) {
-    MockKernelWithCallTracking mockKernel;
-    Mock<Module> mockModule(this->device, nullptr);
-    mockKernel.module = &mockModule;
-
-    // First call with {2u, 3u, 5u} group size - don't skip setGroupSize execution
-    auto ret = mockKernel.setGroupSize(2u, 3u, 5u);
-    EXPECT_EQ(2u, mockKernel.groupSize[0]);
-    EXPECT_EQ(3u, mockKernel.groupSize[1]);
-    EXPECT_EQ(5u, mockKernel.groupSize[2]);
-    EXPECT_EQ(0u, mockKernel.setGroupSizeSkipCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-    // Second call with {2u, 3u, 5u} group size - skip setGroupSize execution
-    ret = mockKernel.setGroupSize(2u, 3u, 5u);
-    EXPECT_EQ(2u, mockKernel.groupSize[0]);
-    EXPECT_EQ(3u, mockKernel.groupSize[1]);
-    EXPECT_EQ(5u, mockKernel.groupSize[2]);
-    EXPECT_EQ(1u, mockKernel.setGroupSizeSkipCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-    // First call with {1u, 2u, 3u} group size - don't skip setGroupSize execution
-    ret = mockKernel.setGroupSize(1u, 2u, 3u);
-    EXPECT_EQ(1u, mockKernel.groupSize[0]);
-    EXPECT_EQ(2u, mockKernel.groupSize[1]);
-    EXPECT_EQ(3u, mockKernel.groupSize[2]);
-    EXPECT_EQ(0u, mockKernel.setGroupSizeSkipCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-    // Second call with {1u, 2u, 3u} group size - skip setGroupSize execution
-    ret = mockKernel.setGroupSize(1u, 2u, 3u);
-    EXPECT_EQ(1u, mockKernel.groupSize[0]);
-    EXPECT_EQ(2u, mockKernel.groupSize[1]);
-    EXPECT_EQ(3u, mockKernel.groupSize[2]);
-    EXPECT_EQ(1u, mockKernel.setGroupSizeSkipCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
 using SetKernelArg = Test<ModuleFixture>;
