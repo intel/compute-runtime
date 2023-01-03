@@ -367,7 +367,7 @@ TEST_F(ContextMakeMemoryResidentTests,
 }
 
 TEST_F(ContextMakeMemoryResidentTests,
-       whenMakingASharedMemoryResidentThenIsAddedToVectorOfResidentAllocations) {
+       whenMakingASharedMemoryResidentThenIsAddedToVectorOfResidentAllocationsAndThenRemovedWhenEvicted) {
     const size_t size = 4096;
     void *ptr = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -398,6 +398,38 @@ TEST_F(ContextMakeMemoryResidentTests,
     EXPECT_EQ(previousSize, finalSize);
 
     context->freeMem(ptr);
+}
+
+TEST_F(ContextMakeMemoryResidentTests,
+       whenMakingASharedMemoryResidentThenIsAddedToVectorOfResidentAllocationsAndThenRemovedWhenFreed) {
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t res = context->allocSharedMem(device->toHandle(),
+                                              &deviceDesc,
+                                              &hostDesc,
+                                              size,
+                                              0,
+                                              &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
+    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
+    res = context->makeMemoryResident(device, ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    EXPECT_EQ(previousSize + 1, currentSize);
+
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
+    res = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    size_t finalSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    EXPECT_EQ(previousSize, finalSize);
 }
 
 TEST_F(ContextMakeMemoryResidentTests,
