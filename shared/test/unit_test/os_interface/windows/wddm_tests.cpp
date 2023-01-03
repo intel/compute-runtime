@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,7 +245,7 @@ TEST_F(WddmTests, GivenProperTopologyDataWhenQueryingTopologyThenExpectTrue) {
         defaultHwInfo.get()->gtSystemInfo.SliceInfo[i].Enabled = false;
     }
 
-    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    wddm->rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     EXPECT_TRUE(wddm->buildTopologyMapping());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_EQ(topologyMap.size(), 1u);
@@ -280,7 +280,7 @@ TEST_F(WddmTests, GivenMoreThanOneEnabledSliceWhenQueryingTopologyThenExpectTrue
         defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].Enabled = false;
     }
 
-    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    wddm->rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     EXPECT_TRUE(wddm->buildTopologyMapping());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_EQ(topologyMap.size(), 1u);
@@ -304,7 +304,7 @@ TEST_F(WddmTests, GivenNoSubsliceEnabledWhenQueryingTopologyThenExpectFalse) {
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].Enabled = false;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].Enabled = false;
 
-    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    wddm->rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     EXPECT_FALSE(wddm->buildTopologyMapping());
 }
 
@@ -320,7 +320,7 @@ TEST_F(WddmTests, GivenNoEuThreadsEnabledWhenQueryingTopologyThenExpectFalse) {
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].Enabled = true;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].EuEnabledCount = 0;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].Enabled = false;
-    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    wddm->rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     EXPECT_FALSE(wddm->buildTopologyMapping());
 }
 
@@ -330,7 +330,7 @@ TEST_F(WddmTests, GivenNoSliceEnabledWhenQueryingTopologyThenExpectFalse) {
     for (uint32_t i = 0; i < GT_MAX_SLICE; i++) {
         defaultHwInfo.get()->gtSystemInfo.SliceInfo[i].Enabled = false;
     }
-    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    wddm->rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     EXPECT_FALSE(wddm->buildTopologyMapping());
 }
 

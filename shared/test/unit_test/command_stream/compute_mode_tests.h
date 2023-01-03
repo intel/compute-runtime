@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,7 @@ struct ComputeModeRequirements : public ::testing::Test {
     template <typename FamilyType>
     void setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo));
-        device->executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hardwareInfo);
+        device->executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hardwareInfo);
         device->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         csr = new myCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
 

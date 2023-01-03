@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -490,7 +490,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_DG2;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (const auto &handle : handles) {
@@ -520,7 +520,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_UNKNOWN;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (const auto &handle : handles) {
@@ -533,7 +533,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_DG2;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
@@ -552,7 +552,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_DG2;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (const auto &handle : handles) {
@@ -571,7 +571,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_DG2;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
@@ -590,7 +590,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_DG2;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
@@ -609,7 +609,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_DG2;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
@@ -681,7 +681,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenBothVfid0AndVfid1Are
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_PVC;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
@@ -703,7 +703,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenBothVfid0AndVfid1Are
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_PVC;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
@@ -725,7 +725,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingBandwidthAndI
     setLocalSupportedAndReinit(true);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.platform.eProductFamily = IGFX_XE_HP_SDV;
-    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfo(&hwInfo);
+    pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getRootDeviceEnvironmentRef().setHwInfoAndInitHelpers(&hwInfo);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {

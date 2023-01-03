@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -332,7 +332,7 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
     executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         hwInfo[i] = *NEO::defaultHwInfo.get();
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo[i]);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo[i]);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;

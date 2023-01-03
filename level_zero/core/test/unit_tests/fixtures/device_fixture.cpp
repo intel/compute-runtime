@@ -141,7 +141,7 @@ void MultipleDevicesWithCustomHwInfo::setUp() {
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(numSubDevices));
 
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 

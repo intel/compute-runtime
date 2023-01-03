@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ struct L0DebuggerFixture {
         memoryOperationsHandler = new NEO::MockMemoryOperations();
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
         executionEnvironment->setDebuggingEnabled();
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
 
         hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo.featureTable.flags.ftrLocalMemory = true;

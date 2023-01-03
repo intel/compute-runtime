@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -291,7 +291,7 @@ TEST(Debugger, GivenLegacyDebuggerAndProgramDebuggingEnabledWhenInitializingDriv
 
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockSourceLevelDebugger());
     auto hwInfo = *NEO::defaultHwInfo.get();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 

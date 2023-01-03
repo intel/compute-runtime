@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -215,7 +215,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingS
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->supportedCopyEnginesMask = maxNBitValue(9);
 
@@ -244,7 +244,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainC
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->supportedCopyEnginesMask = maxNBitValue(9);
     drm->supportedCopyEnginesMask.set(0, false);
@@ -293,7 +293,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, giveNotAllLinkBcsEnginesWhenBi
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->supportedCopyEnginesMask = maxNBitValue(9);
     drm->supportedCopyEnginesMask.set(2, false);
@@ -342,7 +342,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingM
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0b1111;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->supportedCopyEnginesMask = maxNBitValue(9);
 
@@ -373,7 +373,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->supportedCopyEnginesMask = maxNBitValue(9);
     drm->queryEngineInfo();
@@ -402,7 +402,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->supportedCopyEnginesMask = maxNBitValue(9);
     drm->queryEngineInfo();
@@ -431,7 +431,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContex
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
     drm->supportedCopyEnginesMask = maxNBitValue(9);
@@ -803,7 +803,7 @@ struct DistanceQueryDrmTests : ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(1);
 
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-        rootDeviceEnvironment->setHwInfo(NEO::defaultHwInfo.get());
+        rootDeviceEnvironment->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
     }
 
     std::unique_ptr<MyDrm> createDrm(bool supportDistanceInfoQuery) {

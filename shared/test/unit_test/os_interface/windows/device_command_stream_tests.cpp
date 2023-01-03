@@ -336,7 +336,7 @@ using WddmPreemptionHeaderTests = ::Test<WddmPreemptionHeaderFixture>;
 
 TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOffWhenWorkloadIsSubmittedThenHeaderDoesntHavePreemptionFieldSet) {
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto csr = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0, 1);
@@ -363,7 +363,7 @@ TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIs
 
 TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOnWhenWorkloadIsSubmittedThenHeaderDoesHavePreemptionFieldSet) {
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto csr = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0, 1);
@@ -391,7 +391,7 @@ TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIs
 
 TEST_F(WddmPreemptionHeaderTests, givenDeviceSupportingPreemptionWhenCommandStreamReceiverIsCreatedThenHeaderContainsPreemptionFieldSet) {
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto commandStreamReceiver = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0, 1);
@@ -402,7 +402,7 @@ TEST_F(WddmPreemptionHeaderTests, givenDeviceSupportingPreemptionWhenCommandStre
 
 TEST_F(WddmPreemptionHeaderTests, givenDevicenotSupportingPreemptionWhenCommandStreamReceiverIsCreatedThenHeaderPreemptionFieldIsNotSet) {
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto commandStreamReceiver = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0, 1);

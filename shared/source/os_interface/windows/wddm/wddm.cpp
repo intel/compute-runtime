@@ -101,6 +101,8 @@ bool Wddm::init() {
 
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     productHelper.adjustPlatformForProductFamily(hardwareInfo);
+    rootDeviceEnvironment.initHelpers();
+
     if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {
         return false;
     }

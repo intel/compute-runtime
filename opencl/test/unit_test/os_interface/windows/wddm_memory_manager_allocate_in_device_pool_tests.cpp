@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevice
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
@@ -90,7 +90,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, *executionEnvironment);
@@ -488,7 +488,7 @@ class WddmMemoryManagerSimpleTestWithLocalMemory : public MockWddmMemoryManagerF
         platformsImpl->clear();
         auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localPlatformDevice);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localPlatformDevice);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         MockWddmMemoryManagerFixture::SetUp();

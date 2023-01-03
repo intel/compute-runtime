@@ -15,9 +15,11 @@
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
+#include "shared/source/helpers/api_gfx_core_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
@@ -75,8 +77,9 @@ HardwareInfo *RootDeviceEnvironment::getMutableHardwareInfo() const {
     return hwInfo.get();
 }
 
-void RootDeviceEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
+void RootDeviceEnvironment::setHwInfoAndInitHelpers(const HardwareInfo *hwInfo) {
     *this->hwInfo = *hwInfo;
+    initHelpers();
 }
 
 bool RootDeviceEnvironment::isFullRangeSvm() const {
@@ -147,6 +150,10 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
         }
     }
     return this->compilerInterface.get();
+}
+
+void RootDeviceEnvironment::initHelpers() {
+    initApiGfxCoreHelper();
 }
 
 BuiltIns *RootDeviceEnvironment::getBuiltIns() {

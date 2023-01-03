@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -196,7 +196,7 @@ TEST(DrmPrelimTest, givenContextDebugAvailableWhenCheckedForSupportThenTrueIsRet
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -220,7 +220,7 @@ TEST(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIs
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -315,7 +315,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -337,7 +337,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();

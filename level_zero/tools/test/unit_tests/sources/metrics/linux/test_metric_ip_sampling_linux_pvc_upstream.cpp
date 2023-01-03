@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class DrmTipMock : public DrmMock {
   public:
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmTipMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment, HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(inputHwInfo);
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(inputHwInfo);
         setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     }
 

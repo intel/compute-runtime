@@ -175,7 +175,7 @@ TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdC
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     const size_t numDevices = 1;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
@@ -199,7 +199,7 @@ TEST_F(CommandContainerTest, givenForceDefaultHeapSizeWhenCmdContainerIsInitiali
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     const size_t numDevices = 1;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -661,7 +661,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenHe
 
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     for (auto i = 0u; i < numDevices; i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->calculateMaxOsContextCount();
@@ -691,7 +691,7 @@ TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenCm
 
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     for (auto i = 0u; i < numDevices; i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->calculateMaxOsContextCount();
@@ -716,7 +716,7 @@ TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenIn
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     for (auto i = 0u; i < numDevices; i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->calculateMaxOsContextCount();

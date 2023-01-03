@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ struct L0DebuggerSharedLinuxFixture {
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingEnabled();
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo ? hwInfo : defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo ? hwInfo : defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();
         drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);

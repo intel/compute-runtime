@@ -442,7 +442,7 @@ HWTEST_F(SimulatedCsrTest, givenHwWithAubDumpCsrTypeWhenCreateCommandStreamRecei
     executionEnvironment.initializeMemoryManager();
 
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex].get());
-    rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
 
     EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex]->aubCenter.get());
     EXPECT_FALSE(rootDeviceEnvironment->initAubCenterCalled);
@@ -458,7 +458,7 @@ HWTEST_F(SimulatedCsrTest, givenTbxWithAubDumpCsrTypeWhenCreateCommandStreamRece
 
     auto rootDeviceEnvironment = new MockRootDeviceEnvironment(executionEnvironment);
     executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex].reset(rootDeviceEnvironment);
-    rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
 
     EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex]->aubCenter.get());
     EXPECT_FALSE(rootDeviceEnvironment->initAubCenterCalled);

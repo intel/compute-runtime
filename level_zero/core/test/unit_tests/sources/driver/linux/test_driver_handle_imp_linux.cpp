@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ class DriverLinuxFixture : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         }
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<NEO::DrmMemoryOperationsHandlerBind>(*executionEnvironment->rootDeviceEnvironments[i], i);
@@ -146,7 +146,7 @@ class DriverPciOrderWithSimilarBusLinuxFixture : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         }
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<NEO::DrmMemoryOperationsHandlerBind>(*executionEnvironment->rootDeviceEnvironments[i], i);
@@ -224,7 +224,7 @@ class DriverPciOrderWithDifferentDeviceLinuxFixture : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         }
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<NEO::DrmMemoryOperationsHandlerBind>(*executionEnvironment->rootDeviceEnvironments[i], i);
@@ -302,7 +302,7 @@ class DriverPciOrderWithSimilarBusAndDeviceLinuxFixture : public ::testing::Test
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         }
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<NEO::DrmMemoryOperationsHandlerBind>(*executionEnvironment->rootDeviceEnvironments[i], i);
@@ -413,7 +413,7 @@ class DriverPciOrderSortDoesNothing : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         }
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<NEO::DrmMemoryOperationsHandlerBind>(*executionEnvironment->rootDeviceEnvironments[i], i);
@@ -489,7 +489,7 @@ class DriverQueryPeerTest : public ::testing::Test {
 
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface =
                 std::make_unique<NEO::DrmMemoryOperationsHandlerBind>(*executionEnvironment->rootDeviceEnvironments[i], i);
         }
@@ -723,7 +723,7 @@ class DriverQueryPeerTestOsInterfaceFail : public ::testing::Test {
 
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface =
                 std::make_unique<NEO::DrmMemoryOperationsHandlerBind>(*executionEnvironment->rootDeviceEnvironments[i], i);
         }
@@ -798,7 +798,7 @@ class DriverQueryPeerTestFail : public ::testing::Test {
 
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface =
                 std::make_unique<NEO::DrmMemoryOperationsHandlerBind>(*executionEnvironment->rootDeviceEnvironments[i], i);
         }
@@ -881,7 +881,7 @@ class DriverWDDMLinuxFixture : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         }
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {

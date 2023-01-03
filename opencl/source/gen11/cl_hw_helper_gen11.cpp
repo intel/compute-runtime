@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,7 @@ namespace NEO {
 using Family = Gen11Family;
 static auto gfxCore = IGFX_GEN11_CORE;
 
-template <>
-void populateFactoryTable<ClGfxCoreHelperHw<Family>>() {
-    extern ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE];
-    clGfxCoreHelperFactory[gfxCore] = &ClGfxCoreHelperHw<Family>::get();
-}
+#include "opencl/source/helpers/cl_hw_helper_factory_init.inl"
 
 template <>
 cl_version ClGfxCoreHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {

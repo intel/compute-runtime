@@ -422,7 +422,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     auto deviceId = hwInfo->platform.usDeviceID;
     auto revisionId = hwInfo->platform.usRevId;
 
-    rootDeviceEnvironment.setHwInfo(device->pHwInfo);
+    rootDeviceEnvironment.setHwInfoAndInitHelpers(device->pHwInfo);
 
     hwInfo->platform.usDeviceID = deviceId;
     hwInfo->platform.usRevId = revisionId;

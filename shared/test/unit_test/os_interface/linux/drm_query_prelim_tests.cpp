@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -313,7 +313,7 @@ TEST(DrmBufferObjectTestPrelim, givenLocalMemoryEnabledWhenCreateDrmVirtualMemor
     testHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
     testHwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
     testHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0b1;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&testHwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&testHwInfo);
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     uint32_t vmId = 0;

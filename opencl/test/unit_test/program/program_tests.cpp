@@ -2041,7 +2041,7 @@ TEST_F(ProgramTests, GivenNoCompilerInterfaceRootDeviceEnvironmentWhenRebuilding
     auto pDevice = pContext->getDevice(0);
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
-    rootDeviceEnvironment->setHwInfo(&pDevice->getHardwareInfo());
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(&pDevice->getHardwareInfo());
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
     auto program = std::make_unique<MockProgram>(toClDeviceVector(*pDevice));
     EXPECT_NE(nullptr, program);
@@ -2796,7 +2796,7 @@ TEST_F(setProgramSpecializationConstantTests, givenInvalidGetSpecConstantsInfoRe
 TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWhenSetProgramSpecializationConstantThenErrorIsReturned) {
     auto executionEnvironment = new MockExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0] = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     MockClDevice mockDevice(new MockDevice{executionEnvironment, 0});

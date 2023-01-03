@@ -322,7 +322,7 @@ class DrmMockEngine : public DrmMock {
     uint32_t queryEngineInfoSuccessCount = std::numeric_limits<uint32_t>::max();
 
     DrmMockEngine(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     }
 
     int handleRemainingRequests(DrmIoctl request, void *arg) override;

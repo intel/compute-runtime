@@ -22,7 +22,7 @@ extern std::vector<void *> mmapVector;
 
 void DrmMemoryManagerBasic::SetUp() {
     for (auto i = 0u; i < numRootDevices; i++) {
-        executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]);
         executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -49,7 +49,7 @@ void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled
     this->mock = mock;
     for (auto i = 0u; i < numRootDevices; i++) {
         auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
-        rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
+        rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
         rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i);
@@ -128,7 +128,7 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(bool enableLocal
     executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
     uint32_t i = 0;
     for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
-        rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
+        rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
         rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i);

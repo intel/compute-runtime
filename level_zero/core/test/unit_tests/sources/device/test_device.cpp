@@ -146,7 +146,7 @@ TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddD
     auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->parseAffinityMask();
     auto deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, numSubDevices, *executionEnvironment.release());
@@ -200,7 +200,7 @@ TEST(L0DeviceTest, givenDebuggerEnabledButIGCNotReturnsSSAHThenSSAHIsNotCopied) 
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
@@ -768,7 +768,7 @@ struct DeviceHostPointerTest : public ::testing::Test {
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0; i < numRootDevices; i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
@@ -1357,7 +1357,7 @@ struct DeviceHwInfoTest : public ::testing::Test {
 TEST_F(DeviceHwInfoTest, givenDeviceWithNoPageFaultSupportThenFlagIsNotSet) {
     NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
     hardwareInfo.capabilityTable.supportsOnDemandPageFaults = false;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     setDriverAndDevice();
 
@@ -1369,7 +1369,7 @@ TEST_F(DeviceHwInfoTest, givenDeviceWithNoPageFaultSupportThenFlagIsNotSet) {
 TEST_F(DeviceHwInfoTest, givenDeviceWithPageFaultSupportThenFlagIsSet) {
     NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
     hardwareInfo.capabilityTable.supportsOnDemandPageFaults = true;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     setDriverAndDevice();
 
@@ -1988,7 +1988,7 @@ struct MultipleDevicesFixture : public ::testing::Test {
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
@@ -2287,12 +2287,12 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
 
         hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccessDevice0;
         hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice0;
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccessDevice1;
         hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice1;
-        executionEnvironment->rootDeviceEnvironments[1]->setHwInfo(&hardwareInfo);
+        executionEnvironment->rootDeviceEnvironments[1]->setHwInfoAndInitHelpers(&hardwareInfo);
         executionEnvironment->rootDeviceEnvironments[1]->initGmm();
 
         memoryManager = new MockMemoryManagerMultiDevice(*executionEnvironment);

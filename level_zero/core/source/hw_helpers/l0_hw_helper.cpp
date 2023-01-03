@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,4 +88,7 @@ template <>
 L0::L0GfxCoreHelper &NEO::RootDeviceEnvironment::getHelper<L0::L0GfxCoreHelper>() const {
     auto &apiHelper = L0::L0GfxCoreHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
     return apiHelper;
+}
+
+void NEO::RootDeviceEnvironment::initApiGfxCoreHelper() {
 }

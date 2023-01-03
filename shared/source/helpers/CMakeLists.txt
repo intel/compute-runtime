@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/addressing_mode_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/affinity_mask.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/api_gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_defines.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.cpp

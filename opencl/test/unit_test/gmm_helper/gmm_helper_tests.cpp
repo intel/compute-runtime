@@ -1145,7 +1145,7 @@ TEST(GmmHelperTest, givenGmmHelperAndForceAllResourcesUncachedDebugVariableSetTh
 struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
     void SetUp() override {
         MockExecutionEnvironmentGmmFixtureTest::SetUp();
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         localPlatformDevice = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
@@ -1426,7 +1426,7 @@ struct GmmLocalMemoryTests : public ::testing::Test, MockExecutionEnvironmentGmm
     }
     void SetUp() override {
         MockExecutionEnvironmentGmmFixture::setUp();
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localPlatformDevice);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localPlatformDevice);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     }
 

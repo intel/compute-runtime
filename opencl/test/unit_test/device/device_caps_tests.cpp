@@ -1475,28 +1475,32 @@ HWTEST_F(QueueFamilyNameTest, givenInvalidEngineGroupWhenGettingQueueFamilyNameT
     verify(EngineGroupType::MaxEngineGroups, "");
 }
 
-HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNameThenExceptionIsThrown) {
-    struct MockClGfxCoreHelper : NEO::ClGfxCoreHelperHw<FamilyType> {
-        bool getQueueFamilyName(std::string &name, EngineGroupType type) const override {
-            name = familyNameOverride;
-            return true;
-        }
-        std::string familyNameOverride = "";
-    };
+template <typename FamilyType>
+struct MyMockClGfxCoreHelper : NEO::ClGfxCoreHelperHw<FamilyType> {
+    bool getQueueFamilyName(std::string &name, EngineGroupType type) const override {
+        name = familyNameOverride;
+        return true;
+    }
+    std::string familyNameOverride = "";
+};
 
-    MockClGfxCoreHelper clGfxCoreHelper{};
-    VariableBackup<ClGfxCoreHelper *> clGfxCoreHelperFactoryBackup{
-        &NEO::clGfxCoreHelperFactory[static_cast<size_t>(defaultHwInfo->platform.eRenderCoreFamily)]};
-    clGfxCoreHelperFactoryBackup = &clGfxCoreHelper;
+HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNameThenExceptionIsThrown) {
+
+    MyMockClGfxCoreHelper<FamilyType> mockClGfxCoreHelper{};
+    std::unique_ptr<ApiGfxCoreHelper> clGfxCoreHelper(static_cast<ApiGfxCoreHelper *>(&mockClGfxCoreHelper));
+    device->executionEnvironment->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(clGfxCoreHelper);
 
     char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL] = "";
 
-    clGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL - 1, 'a');
+    mockClGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL - 1, 'a');
     device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups);
-    EXPECT_EQ(0, std::strcmp(name, clGfxCoreHelper.familyNameOverride.c_str()));
+    EXPECT_EQ(0, std::strcmp(name, mockClGfxCoreHelper.familyNameOverride.c_str()));
 
-    clGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, 'a');
+    mockClGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, 'a');
     EXPECT_ANY_THROW(device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups));
+
+    device->executionEnvironment->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(clGfxCoreHelper);
+    clGfxCoreHelper.release();
 }
 
 using isPreGen12 = IsBeforeGfxCore<IGFX_GEN12_CORE>;

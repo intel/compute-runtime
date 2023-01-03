@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ void UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
         if (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo() == nullptr ||
             (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eProductFamily == IGFX_UNKNOWN &&
              executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE)) {
-            executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         }
     }
     executionEnvironment.parseAffinityMask();

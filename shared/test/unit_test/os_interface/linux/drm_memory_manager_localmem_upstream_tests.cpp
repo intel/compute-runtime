@@ -61,7 +61,7 @@ class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
         const bool localMemoryEnabled = true;
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         mock->memoryInfo.reset(new MockMemoryInfo(*mock));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
@@ -88,7 +88,7 @@ class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
         const bool localMemoryEnabled = true;
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
@@ -146,7 +146,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         std::vector<MemoryRegion> regionInfo(2);
@@ -192,7 +192,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         std::vector<MemoryRegion> regionInfo(2);
@@ -252,7 +252,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
     auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     std::vector<MemoryRegion> regionInfo(2);
@@ -288,7 +288,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemo
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         mock->memoryInfo.reset(nullptr);
@@ -460,7 +460,7 @@ class DrmMemoryManagerLocalMemoryMemoryBankTest : public ::testing::Test {
         const bool localMemoryEnabled = true;
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         mock->memoryInfo.reset(new MockMemoryInfo(*mock));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();

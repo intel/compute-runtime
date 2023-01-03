@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ using namespace NEO;
 
 void MemoryManagerWithCsrFixture::setUp() {
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
     csr = std::make_unique<MockCommandStreamReceiver>(this->executionEnvironment, 0, 1);
     memoryManager = new MockMemoryManager(executionEnvironment);

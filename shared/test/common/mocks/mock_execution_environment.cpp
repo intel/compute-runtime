@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,9 +36,9 @@ MockExecutionEnvironment::MockExecutionEnvironment(const HardwareInfo *hwInfo, b
         rootDeviceEnvironments[rootDeviceIndex].reset(rootDeviceEnvironment);
 
         if (hwInfo) {
-            rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(hwInfo);
+            rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(hwInfo);
         } else {
-            rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+            rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         }
         if (useMockGmm) {
             rootDeviceEnvironments[rootDeviceIndex]->initGmm();

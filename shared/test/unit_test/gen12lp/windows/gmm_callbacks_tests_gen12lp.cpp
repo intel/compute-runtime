@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsEnabledhenWriteL3CalledThenSetRe
     localHwInfo.featureTable.flags.ftrCCSNode = true;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1u);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
     UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1);
     uint8_t buffer[128] = {};
@@ -103,7 +103,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsDisabledhenWriteL3CalledThenSetR
     localHwInfo.featureTable.flags.ftrCCSNode = false;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1u);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
     UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1);
     uint8_t buffer[128] = {};

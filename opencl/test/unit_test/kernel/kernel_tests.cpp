@@ -519,7 +519,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment), 0, 1) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
         executionEnvironment.prepareRootDeviceEnvironments(1);
-        executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment.initializeMemoryManager();
     }
 
@@ -1139,7 +1139,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenExportedFun
     kernel->getResidency(residencySurfaces);
     std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv = std::make_unique<ExecutionEnvironment>();
     mockCsrExecEnv->prepareRootDeviceEnvironments(1);
-    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     mockCsrExecEnv->initializeMemoryManager();
     {
         CommandStreamReceiverMock csrMock(*mockCsrExecEnv.get(), 0, 1);
@@ -1179,7 +1179,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBuffe
     kernel->getResidency(residencySurfaces);
     std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv = std::make_unique<ExecutionEnvironment>();
     mockCsrExecEnv->prepareRootDeviceEnvironments(1);
-    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     mockCsrExecEnv->initializeMemoryManager();
     {
         CommandStreamReceiverMock csrMock(*mockCsrExecEnv.get(), 0, 1);

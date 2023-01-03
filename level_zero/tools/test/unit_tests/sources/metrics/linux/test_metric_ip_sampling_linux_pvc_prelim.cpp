@@ -45,7 +45,7 @@ class DrmPrelimMock : public DrmMock {
         customHwInfo = std::make_unique<NEO::HardwareInfo>(&inputHwInfo->platform, &inputHwInfo->featureTable,
                                                            &inputHwInfo->workaroundTable, &inputHwInfo->gtSystemInfo, inputHwInfo->capabilityTable);
         customHwInfo->gtSystemInfo.MaxDualSubSlicesSupported = 64;
-        rootDeviceEnvironment.setHwInfo(customHwInfo.get());
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(customHwInfo.get());
         this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);
         if (invokeQueryEngineInfo) {
             queryEngineInfo(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)

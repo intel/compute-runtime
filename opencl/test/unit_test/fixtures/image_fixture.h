@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,7 +133,7 @@ struct ImageClearColorFixture : ::testing::Test {
 
         NEO::platformsImpl->clear();
         NEO::constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
-        NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+        NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
         NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->initGmm();
     }
 

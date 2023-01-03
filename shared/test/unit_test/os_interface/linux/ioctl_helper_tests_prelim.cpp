@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -358,7 +358,7 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorre
 class DrmMockIoctl : public DrmMock {
   public:
     DrmMockIoctl(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     }
     int handleRemainingRequests(DrmIoctl request, void *arg) override {
         if (request == DrmIoctl::Query) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -664,7 +664,7 @@ TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewS
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -688,7 +688,7 @@ TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenCreatedThenUseDedicatedSou
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));

@@ -1528,7 +1528,7 @@ using OsAgnosticMemoryManagerWithParams = ::testing::TestWithParam<bool>;
 TEST_P(OsAgnosticMemoryManagerWithParams, givenReducedGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithoutFragmentsIsCreated) {
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     if (executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm() || is32bit) {
         return;
     }
@@ -1547,7 +1547,7 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenReducedGpuAddressSpaceWhenAllocat
 TEST_P(OsAgnosticMemoryManagerWithParams, givenFullGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithFragmentsIsCreated) {
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     if ((!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) || !defaultHwInfo->capabilityTable.hostPtrTrackingEnabled) {
         GTEST_SKIP();
     }
@@ -1573,7 +1573,7 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenDisabledHostPtrTrackingWhenAlloca
 
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     if (!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
         return;
     }
@@ -1830,7 +1830,7 @@ TEST(MemoryManager, givenBufferHostMemoryAndHostPtrTrackingDisabledWhenAllocatin
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     HardwareInfo hwInfoLocal = *defaultHwInfo;
     hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
-    executionEnvironment->rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+    executionEnvironment->rootDeviceEnvironments[0u]->setHwInfoAndInitHelpers(&hwInfoLocal);
     executionEnvironment->rootDeviceEnvironments[0u]->initGmm();
 
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
@@ -1853,7 +1853,7 @@ TEST(MemoryManager, givenBufferHostMemoryAndHostPtrTrackingDisabledAndForce32bit
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     HardwareInfo hwInfoLocal = *defaultHwInfo;
     hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
-    executionEnvironment->rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+    executionEnvironment->rootDeviceEnvironments[0u]->setHwInfoAndInitHelpers(&hwInfoLocal);
     executionEnvironment->rootDeviceEnvironments[0u]->initGmm();
 
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
@@ -2872,7 +2872,7 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSv
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSvmBufferIsNotSet) {
     HardwareInfo hwInfoLocal = *defaultHwInfo;
     hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = true;
-    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfoAndInitHelpers(&hwInfoLocal);
     int buffer = 0;
     EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::EXTERNAL_HOST_PTR, 0u));
     EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::BUFFER_HOST_MEMORY, 0u));
@@ -2881,7 +2881,7 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSv
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingDisabledAnd64bitsThenNonSvmBufferIsSetForBufferHostMemory) {
     HardwareInfo hwInfoLocal = *defaultHwInfo;
     hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
-    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfoAndInitHelpers(&hwInfoLocal);
     int buffer = 0;
     EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::EXTERNAL_HOST_PTR, 0u));
     EXPECT_EQ(!is32bit, memoryManager->isNonSvmBuffer(&buffer, AllocationType::BUFFER_HOST_MEMORY, 0u));
@@ -2904,7 +2904,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
@@ -2954,7 +2954,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
@@ -2988,7 +2988,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThr
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
@@ -3018,7 +3018,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenRetur
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
@@ -3045,7 +3045,7 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);

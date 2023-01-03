@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -355,7 +355,7 @@ void PerformanceCountersMetricsLibraryFixture::tearDown() {
 PerformanceCountersFixture::PerformanceCountersFixture() {
     executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
-    rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
 }
 
 //////////////////////////////////////////////////////

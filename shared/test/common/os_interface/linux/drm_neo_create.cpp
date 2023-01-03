@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ Drm **pDrmToReturnFromCreateFunc = nullptr;
 bool disableBindDefaultInTests = true;
 
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     if (pDrmToReturnFromCreateFunc) {
         return *pDrmToReturnFromCreateFunc;
     }

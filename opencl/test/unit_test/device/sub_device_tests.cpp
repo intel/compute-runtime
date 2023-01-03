@@ -237,7 +237,7 @@ TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDevic
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     auto executionEnvironment = new MockExecutionEnvironment;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     MockDevice device(executionEnvironment, 0);
     auto &gfxCoreHelper = device.getGfxCoreHelper();

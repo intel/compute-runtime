@@ -52,7 +52,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
         getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
     }
     auto &hwInfo = getHardwareInfo();
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
 
     initializeCaps();
@@ -106,7 +106,7 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
     pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(pHwInfo);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->calculateMaxOsContextCount();
@@ -143,7 +143,7 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
 
     auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
 
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
 
     MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->initializeMemoryManager();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct L0DebuggerLinuxFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingEnabled();
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo ? hwInfo : defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo ? hwInfo : defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();
         drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -415,7 +415,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenC
 
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);

@@ -7,12 +7,14 @@
 
 #pragma once
 
+#include "shared/source/helpers/api_gfx_core_helper.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 
 #include "igfxfmid.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -26,10 +28,14 @@ struct KernelInfo;
 struct MultiDispatchInfo;
 struct RootDeviceEnvironment;
 
-class ClGfxCoreHelper {
-  public:
-    static ClGfxCoreHelper &get(GFXCORE_FAMILY gfxCore);
+class ClGfxCoreHelper;
+using createClGfxCoreHelperFunctionType = std::unique_ptr<ClGfxCoreHelper> (*)();
 
+class ClGfxCoreHelper : public ApiGfxCoreHelper {
+  public:
+    static std::unique_ptr<ClGfxCoreHelper> create(GFXCORE_FAMILY gfxCore);
+
+    ~ClGfxCoreHelper() override = default;
     virtual bool requiresNonAuxMode(const ArgDescPointer &argAsPtr) const = 0;
     virtual bool requiresAuxResolves(const KernelInfo &kernelInfo) const = 0;
     virtual bool allowCompressionForContext(const ClDevice &clDevice, const Context &context) const = 0;
@@ -56,9 +62,9 @@ class ClGfxCoreHelper {
 template <typename GfxFamily>
 class ClGfxCoreHelperHw : public ClGfxCoreHelper {
   public:
-    static ClGfxCoreHelper &get() {
-        static ClGfxCoreHelperHw<GfxFamily> clGfxCoreHelper;
-        return clGfxCoreHelper;
+    ~ClGfxCoreHelperHw() override = default;
+    static std::unique_ptr<ClGfxCoreHelper> create() {
+        return std::unique_ptr<ClGfxCoreHelper>(new ClGfxCoreHelperHw<GfxFamily>());
     }
 
     bool requiresNonAuxMode(const ArgDescPointer &argAsPtr) const override;
@@ -80,6 +86,6 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
     ClGfxCoreHelperHw() = default;
 };
 
-extern ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE];
+extern createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[IGFX_MAX_CORE];
 
 } // namespace NEO

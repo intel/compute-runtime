@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -197,7 +197,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     DeviceBitfield deviceBitfield(1);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     uint32_t rootDeviceIndex = 0u;
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(new AubCenter());
 

@@ -499,7 +499,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSingleEngineRegister
 TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegisteredWhenHandleFenceCompletionIsCalledThenWaitOnCpuForEachEngine) {
     executionEnvironment->prepareRootDeviceEnvironments(2u);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     const uint32_t rootDeviceIndex = 1;
@@ -537,7 +537,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     const uint32_t rootDeviceIndex = 1;
     executionEnvironment->prepareRootDeviceEnvironments(2u);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     DeviceBitfield deviceBitfield(2);
@@ -862,7 +862,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     auto size = MemoryConstants::pageSize;
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    rootDeviceEnvironment->setHwInfo(&hwInfo);
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(&hwInfo);
 
     auto memoryManager = std::make_unique<MockWddmMemoryManager>(true, false, *executionEnvironment);
     if (memoryManager->isLimitedGPU(0)) {
@@ -929,7 +929,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     auto size = MemoryConstants::pageSize;
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    rootDeviceEnvironment->setHwInfo(&hwInfo);
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(&hwInfo);
 
     auto memoryManager = std::make_unique<MockWddmMemoryManager>(false, false, *executionEnvironment);
     memoryManager->allocateGraphicsMemoryInNonDevicePool = true;
@@ -1920,7 +1920,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerAnd32bitBuildThenSvmPartitio
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
     executionEnvironment->prepareRootDeviceEnvironments(3u);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->initializeMemoryManager();
@@ -1945,7 +1945,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenC
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithExhaustedMemoryBudgetWhenCallingIsMemoryBudgetExhaustedThenReturnTrue) {
     executionEnvironment->prepareRootDeviceEnvironments(3u);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->initializeMemoryManager();

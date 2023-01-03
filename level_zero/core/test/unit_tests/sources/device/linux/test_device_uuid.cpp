@@ -100,7 +100,7 @@ HWTEST2_F(TestDeviceUuid, GivenCorrectTelemetryNodesAreAvailableWhenRetrievingDe
     auto mockBuiltIns = new MockBuiltins();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     auto osInterface = new OSInterface();
     drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);

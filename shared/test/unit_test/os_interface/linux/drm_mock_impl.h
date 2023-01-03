@@ -19,7 +19,7 @@ class DrmTipMock : public DrmMock {
   public:
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmTipMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(inputHwInfo);
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(inputHwInfo);
         ioctlHelper.reset();
         setupIoctlHelper(inputHwInfo->platform.eProductFamily);
     }

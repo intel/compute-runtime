@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenKernelArgIsSetA
         const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
         auto stepping = (isA0Stepping ? REVISION_A0 : REVISION_A1);
         hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
-        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&hardwareInfo);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->initGmm();
 
         CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
@@ -220,7 +220,7 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenAllocationRequi
         const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
         auto stepping = (isA0Stepping ? REVISION_A0 : REVISION_A1);
         hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
-        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&hardwareInfo);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->initGmm();
 
         MockKernelWithInternals mockKernel(*pClDevice, context, true);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,7 +137,7 @@ class SysmanGlobalOperationsIntegratedFixture : public SysmanGlobalOperationsFix
         SysmanGlobalOperationsFixture::SetUp();
         auto mockHardwareInfo = neoDevice->getHardwareInfo();
         mockHardwareInfo.capabilityTable.isIntegratedDevice = true;
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfo(&mockHardwareInfo);
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
     }
 
     void TearDown() override {

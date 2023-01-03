@@ -135,7 +135,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
         device->resetCommandStreamReceiver(csr);
@@ -216,7 +216,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
         device->resetCommandStreamReceiver(csr);

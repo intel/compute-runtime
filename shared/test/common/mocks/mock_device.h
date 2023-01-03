@@ -119,7 +119,7 @@ class MockDevice : public RootDevice {
     template <typename T>
     static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) {
         pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(pHwInfo);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(pHwInfo);
         T *device = new T(executionEnvironment, rootDeviceIndex);
         return createDeviceInternals(device);
     }

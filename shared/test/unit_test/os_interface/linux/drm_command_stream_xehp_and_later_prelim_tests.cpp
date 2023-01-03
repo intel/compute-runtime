@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -394,14 +394,14 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
         hwInfo.reset(new HardwareInfo(*defaultHwInfo));
         hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = true;
         hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 0b11;
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         constexpr int mockFd = 33;
         drm = new DrmMock(mockFd, *executionEnvironment->rootDeviceEnvironments[0]);
         drm->setupIoctlHelper(hwInfo->platform.eProductFamily);
         drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo.get()));
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);

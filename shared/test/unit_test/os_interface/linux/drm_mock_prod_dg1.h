@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ class DrmMockProdDg1 : public DrmTipMock {
   public:
     DrmMockProdDg1(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockProdDg1(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmMockProdDg1(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmTipMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(inputHwInfo);
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(inputHwInfo);
     }
 
     void handleQueryItem(QueryItem *queryItem) override {

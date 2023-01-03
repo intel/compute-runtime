@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,12 @@
 
 namespace NEO {
 
-ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
-ClGfxCoreHelper &ClGfxCoreHelper::get(GFXCORE_FAMILY gfxCore) {
-    return *clGfxCoreHelperFactory[gfxCore];
+std::unique_ptr<ClGfxCoreHelper> ClGfxCoreHelper::create(GFXCORE_FAMILY gfxCore) {
+    auto createClGfxCoreHelperFunc = clGfxCoreHelperFactory[gfxCore];
+    auto clGfxCoreHelper = createClGfxCoreHelperFunc();
+    return clGfxCoreHelper;
 }
 
 uint8_t ClGfxCoreHelper::makeDeviceRevision(const HardwareInfo &hwInfo) {
@@ -28,8 +30,12 @@ cl_version ClGfxCoreHelper::makeDeviceIpVersion(uint16_t major, uint8_t minor, u
 
 template <>
 ClGfxCoreHelper &RootDeviceEnvironment::getHelper<ClGfxCoreHelper>() const {
-    auto &apiHelper = ClGfxCoreHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
-    return apiHelper;
+    return *static_cast<ClGfxCoreHelper *>(apiGfxCoreHelper.get());
+}
+
+void RootDeviceEnvironment::initApiGfxCoreHelper() {
+
+    apiGfxCoreHelper = ClGfxCoreHelper::create(this->getHardwareInfo()->platform.eRenderCoreFamily);
 }
 
 } // namespace NEO

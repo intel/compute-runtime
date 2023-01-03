@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class ImageInLocalMemoryTest : public testing::Test {
         platformsImpl->clear();
         auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&inputPlatformDevice);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&inputPlatformDevice);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         mockMemoryManager = new MockMemoryManagerFailFirstAllocation(true, *executionEnvironment);

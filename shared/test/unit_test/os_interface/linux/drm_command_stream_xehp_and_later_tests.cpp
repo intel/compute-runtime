@@ -51,7 +51,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
                                              *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
 
         VariableBackup<UltHwConfig> backup(&ultHwConfig);

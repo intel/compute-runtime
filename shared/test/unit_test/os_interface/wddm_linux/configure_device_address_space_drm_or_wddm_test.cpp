@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -692,7 +692,7 @@ TEST(OSTimeWinLinuxTests, givenOSInterfaceWhenGetCpuGpuTimeThenGetCpuTimeFromOsT
 
     std::unique_ptr<MockWddmLinux> wddm = std::make_unique<MockWddmLinux>(std::move(hwDeviceIdIn), mockRootDeviceEnvironment);
     *wddm->gfxPlatform = NEO::defaultHwInfo->platform;
-    mockRootDeviceEnvironment.setHwInfo(NEO::defaultHwInfo.get());
+    mockRootDeviceEnvironment.setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
     auto mockDeviceTimeWddm = std::make_unique<MockDeviceTimeWddm>(wddm.get());
     osInterface->setDriverModel(std::move(wddm));
     std::unique_ptr<NEO::DeviceTime> deviceTime = std::unique_ptr<NEO::DeviceTime>(mockDeviceTimeWddm.release());

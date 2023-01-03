@@ -65,7 +65,7 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0u; i < numRootDevices; i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         executionEnvironment->calculateMaxOsContextCount();
@@ -164,7 +164,7 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0u; i < numRootDevices; i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         executionEnvironment->calculateMaxOsContextCount();

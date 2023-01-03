@@ -22,11 +22,7 @@ namespace NEO {
 using Family = XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
-template <>
-void populateFactoryTable<ClGfxCoreHelperHw<Family>>() {
-    extern ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE];
-    clGfxCoreHelperFactory[gfxCore] = &ClGfxCoreHelperHw<Family>::get();
-}
+#include "opencl/source/helpers/cl_hw_helper_factory_init.inl"
 
 template <>
 bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) const {
