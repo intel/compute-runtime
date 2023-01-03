@@ -20,6 +20,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -170,17 +171,21 @@ bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
 
 template <typename HelperType>
 HelperType &RootDeviceEnvironment::getHelper() const {
-    if constexpr (std::is_same_v<HelperType, ProductHelper>) {
+    if constexpr (std::is_same_v<HelperType, CompilerProductHelper>) {
+        auto &compilerProductHelper = *CompilerProductHelper::get(this->getHardwareInfo()->platform.eProductFamily);
+        return compilerProductHelper;
+    } else if constexpr (std::is_same_v<HelperType, ProductHelper>) {
         auto &productHelper = *ProductHelper::get(this->getHardwareInfo()->platform.eProductFamily);
         return productHelper;
     } else {
-        static_assert(std::is_same_v<HelperType, GfxCoreHelper>, "Only ProductHelper and GfxCoreHelper are supported");
+        static_assert(std::is_same_v<HelperType, GfxCoreHelper>, "Only CompilerProductHelper, ProductHelper and GfxCoreHelper are supported");
         auto &gfxCoreHelper = GfxCoreHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
         return gfxCoreHelper;
     }
 }
 
 template ProductHelper &RootDeviceEnvironment::getHelper() const;
+template CompilerProductHelper &RootDeviceEnvironment::getHelper() const;
 template GfxCoreHelper &RootDeviceEnvironment::getHelper() const;
 
 } // namespace NEO

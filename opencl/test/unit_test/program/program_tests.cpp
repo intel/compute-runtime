@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1091,7 +1091,7 @@ TEST_F(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHave
     EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::fastRelaxedMath)) << cip->buildOptions;
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
 
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (!compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
     }
@@ -1554,7 +1554,7 @@ TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenG
 TEST_F(ProgramTests, whenGetInternalOptionsThenLSCPolicyIsSet) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     auto expectedPolicy = compilerProductHelper.getCachingPolicyOptions(false);
     if (expectedPolicy != nullptr) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, expectedPolicy));
@@ -1615,7 +1615,7 @@ TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterTha
         const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
         MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptions = program.getInternalOptions();
-        const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+        const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
         if (compilerProductHelper.isForceToStatelessRequired()) {
             EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
         } else {
@@ -1631,7 +1631,7 @@ TEST_F(ProgramTests, Given32bitSupportWhenProgramIsCreatedThenGreaterThan4gbBuff
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 
     if (compilerProductHelper.isForceToStatelessRequired() || is32bit) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
@@ -1660,7 +1660,7 @@ TEST_F(ProgramTests, Force32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbB
     const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (is32bit || compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
     } else {
@@ -1694,7 +1694,7 @@ TEST_F(ProgramTests, whenContainsStatefulAccessIsCalledThenReturnCorrectResult) 
 
 TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledThenCorrectResultIsReturned) {
     DebugManagerStateRestore restorer;
-    const auto &compilerProductHelper = *CompilerProductHelper::get(pClDevice->getHardwareInfo().platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 
     class MyMockProgram : public Program {
       public:

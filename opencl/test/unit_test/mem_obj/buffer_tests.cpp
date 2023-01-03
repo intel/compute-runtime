@@ -1958,7 +1958,8 @@ class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
 };
 
 HWTEST_P(BufferL3CacheTests, DISABLED_givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto device = ctx.getDevice(0);
+    const auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !ctx.getDevice(0)->getHardwareInfo().capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
@@ -1995,7 +1996,8 @@ HWTEST_P(BufferL3CacheTests, DISABLED_givenMisalignedAndAlignedBufferWhenClEnque
 }
 
 HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteBufferRectThenL3CacheIsOn) {
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto device = ctx.getDevice(0);
+    const auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }

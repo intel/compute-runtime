@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -169,7 +169,7 @@ INSTANTIATE_TEST_CASE_P(,
 
 HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
 
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
@@ -723,7 +723,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
 }
 
 HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
@@ -780,7 +780,7 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
 }
 
 HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
@@ -1686,7 +1686,7 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr3
     EXPECT_NE(nullptr, program.get());
     auto builtinInternalOptions = program->getInternalOptions();
 
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || is32bit) {
         EXPECT_TRUE(hasSubstr(builtinInternalOptions, std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
     } else {
@@ -1740,7 +1740,7 @@ TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreate
     EXPECT_EQ(std::string::npos, it);
 
     it = builtinInternalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 
     if (is32bit || compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_NE(std::string::npos, it);

@@ -140,7 +140,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
 
-    const auto &compilerProductHelper = *NEO::CompilerProductHelper::get(neoDevice.getHardwareInfo().platform.eProductFamily);
+    const auto &compilerProductHelper = neoDevice.getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
     auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
     auto statelessToStatefulOptimizationDisabled = NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 

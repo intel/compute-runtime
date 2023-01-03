@@ -2511,7 +2511,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenInternalOptionsThenLSCCachePolicyIsSet)
     MockModuleTranslationUnit moduleTu(this->device);
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = rootDeviceEnvironment->getHelper<CompilerProductHelper>();
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto expectedPolicy = compilerProductHelper.getCachingPolicyOptions(false);
     if (expectedPolicy != nullptr) {
@@ -2570,7 +2570,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = rootDeviceEnvironment->getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_NE(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
     } else {
@@ -3003,7 +3003,7 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
         ze_result_t createFromNativeBinary(const char *input, size_t inputSize) override { return ZE_RESULT_SUCCESS; }
     };
 
-    const auto &compilerProductHelper = *CompilerProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &compilerProductHelper = neoDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (!compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }

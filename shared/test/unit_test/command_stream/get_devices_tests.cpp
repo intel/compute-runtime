@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -260,7 +260,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
                 hardwareInfoSetup[expectedHwInfo.platform.eProductFamily](&expectedHwInfo, true, 0x0);
                 productHelper.configureHardwareCustom(&expectedHwInfo, nullptr);
 
-                const auto &compilerProductHelper = *NEO::CompilerProductHelper::get(expectedHwInfo.platform.eProductFamily);
+                const auto &compilerProductHelper = exeEnv.rootDeviceEnvironments[i]->getHelper<CompilerProductHelper>();
                 compilerProductHelper.setProductConfigForHwInfo(expectedHwInfo, deviceAot.aotConfig);
                 expectedHwInfo.platform.usDeviceID = deviceAot.deviceIds->front();
 

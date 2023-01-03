@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ std::string Program::getInternalOptions() const {
     }
 
     auto &hwInfo = pClDevice->getHardwareInfo();
-    const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &compilerProductHelper = pClDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
     auto disableStatelessToStatefulOptimization = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
