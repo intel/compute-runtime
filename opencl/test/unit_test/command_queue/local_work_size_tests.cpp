@@ -947,3 +947,31 @@ TEST_F(LocalWorkSizeTest, givenMaxWorkgroupSizeEqualToSimdSizeWhenLwsIsCalculate
     EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
+
+TEST_F(LocalWorkSizeTest, givenGwsWithSmallXAndBigYWhenLwsIsCalculatedThenDescendingOrderIsNotEnforced) {
+    WorkSizeInfo wsInfo(256u, true, 32u, 0u, rootDeviceEnvironment, 0u, 0u, false, false, false);
+
+    uint32_t workDim = 3;
+    size_t workGroup[3] = {2, 1024, 1};
+    size_t workGroupSize[3];
+
+    NEO::choosePrefferedWorkgroupSize(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 2u);
+    EXPECT_EQ(workGroupSize[1], 128u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+
+    // Enforce strict ratio requirement
+    wsInfo.yTiledSurfaces = true;
+    NEO::choosePrefferedWorkgroupSize(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 2u);
+    EXPECT_EQ(workGroupSize[1], 128u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+
+    // Enforce ratio requirement
+    wsInfo.yTiledSurfaces = false;
+    wsInfo.slmTotalSize = 128U;
+    NEO::choosePrefferedWorkgroupSize(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 2u);
+    EXPECT_EQ(workGroupSize[1], 128u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,8 @@ void computeWorkgroupSizeSquared(
     const size_t workItems[3],
     size_t simdSize,
     const uint32_t workDim);
+
+void choosePrefferedWorkgroupSize(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const size_t workItems[3], const uint32_t workDim);
 
 Vec3<size_t> computeWorkgroupsNumber(
     const Vec3<size_t> &gws,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,18 +124,16 @@ void computePowerOfTwoLWS(const size_t workItems[3], WorkSizeInfo &workGroupInfo
     }
 }
 
-void choosePreferredWorkGroupSizeWithRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo &wsInfo) {
-    float ratioDiff = 0;
-    float localRatio = float(0xffffffff);
-    uint64_t localWkgs = 0xffffffff;
-    uint64_t workGroups;
+void choosePreferredWorkGroupSizeWithRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo &wsInfo, bool enforceDescendingOrder) {
+    float localRatio = std::numeric_limits<float>::max();
+    uint64_t localNumWorkgroups = std::numeric_limits<uint64_t>::max();
     for (uint32_t xFactorsIdx = 0; xFactorsIdx < xyzFactorsLen[0]; ++xFactorsIdx) {
         for (uint32_t yFactorsIdx = 0; yFactorsIdx < xyzFactorsLen[1]; ++yFactorsIdx) {
 
             uint32_t xdim = xyzFactors[0][xyzFactorsLen[0] - 1 - xFactorsIdx];
             uint32_t ydim = xyzFactors[1][yFactorsIdx];
 
-            if (ydim > xdim) {
+            if (enforceDescendingOrder && ydim > xdim) {
                 break;
             }
 
@@ -146,65 +144,57 @@ void choosePreferredWorkGroupSizeWithRatio(uint32_t xyzFactors[3][1024], uint32_
                 continue;
             }
 
-            workGroups = Math::divideAndRoundUp(workItems[0], xdim);
-            workGroups *= Math::divideAndRoundUp(workItems[1], ydim);
+            uint64_t numWorkGroups = Math::divideAndRoundUp(workItems[0], xdim);
+            numWorkGroups *= Math::divideAndRoundUp(workItems[1], ydim);
 
-            ratioDiff = log((float)xdim) - log((float)ydim);
+            float ratioDiff = log(static_cast<float>(xdim)) - log(static_cast<float>(ydim));
             ratioDiff = fabs(wsInfo.targetRatio - ratioDiff);
 
-            if (wsInfo.useStrictRatio == true) {
-                if (ratioDiff < localRatio) {
-                    workGroupSize[0] = xdim;
-                    workGroupSize[1] = ydim;
-                    localRatio = ratioDiff;
-                    localWkgs = workGroups;
-                }
-            } else {
-                if ((workGroups < localWkgs) ||
-                    ((workGroups == localWkgs) && (ratioDiff < localRatio))) {
-                    workGroupSize[0] = xdim;
-                    workGroupSize[1] = ydim;
-                    localRatio = ratioDiff;
-                    localWkgs = workGroups;
-                }
+            bool setWorkGroupSize = wsInfo.useStrictRatio
+                                        ? (ratioDiff < localRatio)
+                                        : (numWorkGroups < localNumWorkgroups) || ((numWorkGroups == localNumWorkgroups) && (ratioDiff < localRatio));
+            if (setWorkGroupSize) {
+                workGroupSize[0] = xdim;
+                workGroupSize[1] = ydim;
+                localRatio = ratioDiff;
+                localNumWorkgroups = numWorkGroups;
             }
         }
     }
 }
-void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo &wsInfo, uint32_t workdim) {
-    uint64_t localEuThrdsDispatched = 0xffffffffffffffff;
-    uint64_t workGroups;
+
+void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo &wsInfo, bool enforceDescendingOrder) {
+    uint64_t localEuThrdsDispatched = std::numeric_limits<uint64_t>::max();
 
     for (uint32_t xFactorsIdx = 0; xFactorsIdx < xyzFactorsLen[0]; ++xFactorsIdx) {
-        for (uint32_t zFactorsIdx = 0; zFactorsIdx < xyzFactorsLen[2]; ++zFactorsIdx) {
-            for (uint32_t yFactorsIdx = 0; yFactorsIdx < xyzFactorsLen[1]; ++yFactorsIdx) {
+        for (uint32_t yFactorsIdx = 0; yFactorsIdx < xyzFactorsLen[1]; ++yFactorsIdx) {
+            for (uint32_t zFactorsIdx = 0; zFactorsIdx < xyzFactorsLen[2]; ++zFactorsIdx) {
 
                 uint32_t xdim = xyzFactors[0][xyzFactorsLen[0] - 1 - xFactorsIdx];
-                uint32_t ydim = xyzFactors[1][yFactorsIdx];
-                uint32_t zdim = xyzFactors[2][zFactorsIdx];
+                uint32_t ydim = xyzFactors[1][xyzFactorsLen[1] - 1 - yFactorsIdx];
+                uint32_t zdim = xyzFactors[2][xyzFactorsLen[2] - 1 - zFactorsIdx];
 
-                if (zdim > ydim) {
+                if (enforceDescendingOrder) {
+                    if (ydim > xdim) {
+                        break;
+                    } else if (zdim > ydim) {
+                        continue;
+                    }
+                }
+
+                uint32_t numItemsInWorkGroup = xdim * ydim * zdim;
+                if (numItemsInWorkGroup > wsInfo.maxWorkGroupSize) {
                     continue;
                 }
-                if (ydim > xdim) {
+                if (numItemsInWorkGroup < wsInfo.minWorkGroupSize) {
                     break;
                 }
 
-                if ((xdim * ydim * zdim) > wsInfo.maxWorkGroupSize) {
-                    break;
-                }
-                if ((xdim * ydim * zdim) < wsInfo.minWorkGroupSize) {
-                    continue;
-                }
-
-                workGroups = Math::divideAndRoundUp(workItems[0], xdim);
-                workGroups *= Math::divideAndRoundUp(workItems[1], ydim);
-                workGroups *= Math::divideAndRoundUp(workItems[2], zdim);
-                uint64_t euThrdsDispatched;
-
-                euThrdsDispatched = Math::divideAndRoundUp(xdim * ydim * zdim, wsInfo.simdSize);
-                euThrdsDispatched *= workGroups;
-
+                uint64_t numWorkGroups = Math::divideAndRoundUp(workItems[0], xdim);
+                numWorkGroups *= Math::divideAndRoundUp(workItems[1], ydim);
+                numWorkGroups *= Math::divideAndRoundUp(workItems[2], zdim);
+                uint64_t numThreadsPerWorkGroup = Math::divideAndRoundUp(numItemsInWorkGroup, wsInfo.simdSize);
+                uint64_t euThrdsDispatched = numThreadsPerWorkGroup * numWorkGroups;
                 if (euThrdsDispatched < localEuThrdsDispatched) {
                     localEuThrdsDispatched = euThrdsDispatched;
                     workGroupSize[0] = xdim;
@@ -216,10 +206,7 @@ void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint
     }
 }
 
-void computeWorkgroupSize1D(uint32_t maxWorkGroupSize,
-                            size_t workGroupSize[3],
-                            const size_t workItems[3],
-                            size_t simdSize) {
+void computeWorkgroupSize1D(uint32_t maxWorkGroupSize, size_t workGroupSize[3], const size_t workItems[3], size_t simdSize) {
     auto items = workItems[0];
 
     // Determine the LSB set to quickly handle factors of 2
@@ -238,6 +225,42 @@ void computeWorkgroupSize1D(uint32_t maxWorkGroupSize,
     workGroupSize[0] = workSize;
     workGroupSize[1] = 1;
     workGroupSize[2] = 1;
+}
+
+void choosePreferredWorkgroupSize(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo &wsInfo, bool enforceDescendingOrder) {
+    // check if algorithm should use ratio
+    wsInfo.checkRatio(workItems);
+
+    if (wsInfo.useRatio) {
+        choosePreferredWorkGroupSizeWithRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo, enforceDescendingOrder);
+        if (wsInfo.useStrictRatio && workGroupSize[0] * workGroupSize[1] * 2 <= wsInfo.simdSize) {
+            wsInfo.useStrictRatio = false;
+            choosePreferredWorkGroupSizeWithRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo, enforceDescendingOrder);
+        }
+    } else {
+        choosePreferredWorkGroupSizeWithOutRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo, enforceDescendingOrder);
+    }
+}
+
+void choosePrefferedWorkgroupSize(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const size_t workItems[3], const uint32_t workDim) {
+    // find all divisors for all dimensions
+    uint32_t xyzFactors[3][1024];
+    uint32_t xyzFactorsLen[3] = {};
+    for (int i = 0; i < 3; i++)
+        xyzFactors[i][xyzFactorsLen[i]++] = 1;
+    for (auto i = 0u; i < workDim; i++) {
+        for (auto j = 2u; j < wsInfo.maxWorkGroupSize; ++j) {
+            if ((workItems[i] % j) == 0) {
+                xyzFactors[i][xyzFactorsLen[i]++] = j;
+            }
+        }
+    }
+
+    choosePreferredWorkgroupSize(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo, true);
+    size_t wgs = workGroupSize[0] * workGroupSize[1] * workGroupSize[2];
+    if (wgs * 2 <= wsInfo.simdSize) {
+        choosePreferredWorkgroupSize(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo, false);
+    }
 }
 
 void computeWorkgroupSize2D(uint32_t maxWorkGroupSize, size_t workGroupSize[3], const size_t workItems[3], size_t simdSize) {
@@ -336,15 +359,12 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
     for (int i = 0; i < 3; i++)
         workGroupSize[i] = 1;
 
-    uint64_t totalNuberOfItems = workItems[0] * workItems[1] * workItems[2];
-
     UNRECOVERABLE_IF(wsInfo.simdSize == 0);
 
     // Find biggest power of two which devide each dimension size
     if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers) {
         if (DebugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2 && !wsInfo.imgUsed) {
-            computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
-            return;
+            return computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
         }
 
         size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
@@ -363,8 +383,7 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
         // bigger than maxWorkGroupSize or this group would create more than optimal hardware threads then downsize it
         uint64_t allItems = itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] * itemsPowerOfTwoDivisors[2];
         if (allItems > wsInfo.simdSize && (allItems > wsInfo.maxWorkGroupSize || allItems > wsInfo.simdSize * optimalHardwareThreadCountGeneric[0])) {
-            computePowerOfTwoLWS(itemsPowerOfTwoDivisors, wsInfo, workGroupSize, workDim, canUseNx4);
-            return;
+            return computePowerOfTwoLWS(itemsPowerOfTwoDivisors, wsInfo, workGroupSize, workDim, canUseNx4);
         }
         // If coputed workgroup is at this point in correct size
         else if (allItems >= wsInfo.simdSize) {
@@ -374,41 +393,20 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
             return;
         }
     }
+
+    uint64_t totalNuberOfItems = workItems[0] * workItems[1] * workItems[2];
     // If dimensions are not powers of two but total number of items is less than max work group size
     if (totalNuberOfItems <= wsInfo.maxWorkGroupSize) {
         for (auto i = 0u; i < workDim; i++)
             workGroupSize[i] = workItems[i];
         return;
-    } else {
-        if (workDim == 1)
-            computeWorkgroupSize1D(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize);
-        else {
-            uint32_t xyzFactors[3][1024];
-            uint32_t xyzFactorsLen[3] = {};
-
-            // check if algorithm should use ratio
-            wsInfo.checkRatio(workItems);
-
-            // find all divisors for all dimensions
-            for (int i = 0; i < 3; i++)
-                xyzFactors[i][xyzFactorsLen[i]++] = 1;
-            for (auto i = 0u; i < workDim; i++) {
-                for (auto j = 2u; j < wsInfo.maxWorkGroupSize; ++j) {
-                    if ((workItems[i] % j) == 0) {
-                        xyzFactors[i][xyzFactorsLen[i]++] = j;
-                    }
-                }
-            }
-            if (wsInfo.useRatio) {
-                choosePreferredWorkGroupSizeWithRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo);
-                if (wsInfo.useStrictRatio && workGroupSize[0] * workGroupSize[1] * 2 <= wsInfo.simdSize) {
-                    wsInfo.useStrictRatio = false;
-                    choosePreferredWorkGroupSizeWithRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo);
-                }
-            } else
-                choosePreferredWorkGroupSizeWithOutRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo, workDim);
-        }
     }
+
+    if (workDim == 1) {
+        return computeWorkgroupSize1D(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize);
+    }
+
+    choosePrefferedWorkgroupSize(wsInfo, workGroupSize, workItems, workDim);
 }
 
 Vec3<size_t> computeWorkgroupsNumber(const Vec3<size_t> &gws, const Vec3<size_t> &lws) {
