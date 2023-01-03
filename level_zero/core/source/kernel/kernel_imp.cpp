@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -268,12 +268,6 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                     uint32_t groupSizeZ) {
     if ((0 == groupSizeX) || (0 == groupSizeY) || (0 == groupSizeZ)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    if (this->groupSize[0] == groupSizeX &&
-        this->groupSize[1] == groupSizeY &&
-        this->groupSize[2] == groupSizeZ) {
-        return ZE_RESULT_SUCCESS;
     }
 
     auto numChannels = kernelImmData->getDescriptor().kernelAttributes.numLocalIdChannels;
