@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/elf/zeinfo_enum_lookup.h"

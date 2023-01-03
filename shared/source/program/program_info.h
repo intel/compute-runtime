@@ -6,14 +6,18 @@
  */
 
 #pragma once
-#include "shared/source/compiler_interface/linker.h"
+#include "shared/source/utilities/arrayref.h"
 
 #include <cstddef>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace NEO {
+class Device;
+struct ExternalFunctionInfo;
+struct LinkerInput;
 struct KernelInfo;
 
 struct ProgramInfo {

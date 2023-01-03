@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/command_stream/csr_deps.h"
 
-#include "opencl/source/api/cl_types.h"
+#include "CL/cl.h"
 
 #include <array>
 

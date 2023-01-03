@@ -8,6 +8,7 @@
 #include "shared/source/program/program_info.h"
 
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device/device.h"
 #include "shared/source/program/kernel_info.h"
 

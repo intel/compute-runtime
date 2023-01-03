@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,20 +8,23 @@
 #pragma once
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device_info.h"
 #include "opencl/source/helpers/base_object.h"
 
-#include "aubstream/engine_node.h"
 #include "igfxfmid.h"
 
 #include <mutex>
 #include <vector>
 
+namespace aub_stream {
+enum EngineType : uint32_t;
+}
+
 namespace NEO {
+enum class EngineUsage : uint32_t;
 class Debugger;
 class Device;
 class DriverInfo;

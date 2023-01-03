@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/linker.h"
 #include "shared/source/helpers/string.h"
 
 #include "program.h"

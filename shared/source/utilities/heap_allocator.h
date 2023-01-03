@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,9 @@
 #pragma once
 
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/utilities/logger.h"
 
 #include <cstdint>
+#include <mutex>
 #include <vector>
 
 namespace NEO {
@@ -45,27 +44,7 @@ class HeapAllocator {
 
     uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment);
 
-    void free(uint64_t ptr, size_t size) {
-        if (ptr == 0llu)
-            return;
-
-        std::lock_guard<std::mutex> lock(mtx);
-        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
-
-        if (ptr == pRightBound) {
-            pRightBound = ptr + size;
-            mergeLastFreedSmall();
-        } else if (ptr == pLeftBound - size) {
-            pLeftBound = ptr;
-            mergeLastFreedBig();
-        } else if (ptr < pLeftBound) {
-            DEBUG_BREAK_IF(size <= sizeThreshold);
-            storeInFreedChunks(ptr, size, freedChunksBig);
-        } else {
-            storeInFreedChunks(ptr, size, freedChunksSmall);
-        }
-        availableSize += size;
-    }
+    void free(uint64_t ptr, size_t size);
 
     uint64_t getLeftSize() const {
         return availableSize;
@@ -75,10 +54,7 @@ class HeapAllocator {
         return size - availableSize;
     }
 
-    NO_SANITIZE
-    double getUsage() const {
-        return static_cast<double>(size - availableSize) / size;
-    }
+    double getUsage() const;
 
   protected:
     const uint64_t size;
@@ -143,38 +119,6 @@ class HeapAllocator {
         }
     }
 
-    void defragment() {
-
-        if (freedChunksSmall.size() > 1) {
-            std::sort(freedChunksSmall.rbegin(), freedChunksSmall.rend());
-            size_t maxSize = freedChunksSmall.size();
-            for (size_t i = maxSize - 1; i > 0; --i) {
-                auto ptr = freedChunksSmall[i].ptr;
-                size_t chunkSize = freedChunksSmall[i].size;
-
-                if (freedChunksSmall[i - 1].ptr == ptr + chunkSize) {
-                    freedChunksSmall[i - 1].ptr = ptr;
-                    freedChunksSmall[i - 1].size += chunkSize;
-                    freedChunksSmall.erase(freedChunksSmall.begin() + i);
-                }
-            }
-        }
-        mergeLastFreedSmall();
-        if (freedChunksBig.size() > 1) {
-            std::sort(freedChunksBig.begin(), freedChunksBig.end());
-
-            size_t maxSize = freedChunksBig.size();
-            for (size_t i = maxSize - 1; i > 0; --i) {
-                auto ptr = freedChunksBig[i].ptr;
-                size_t chunkSize = freedChunksBig[i].size;
-                if ((freedChunksBig[i - 1].ptr + freedChunksBig[i - 1].size) == ptr) {
-                    freedChunksBig[i - 1].size += chunkSize;
-                    freedChunksBig.erase(freedChunksBig.begin() + i);
-                }
-            }
-        }
-        mergeLastFreedBig();
-        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
-    }
+    void defragment();
 };
 } // namespace NEO

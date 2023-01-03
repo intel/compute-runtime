@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"

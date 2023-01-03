@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include <limits>
@@ -16,6 +15,10 @@
 #include <vector>
 
 namespace NEO {
+namespace Elf {
+enum RELOC_TYPE_ZEBIN : uint32_t;
+}
+
 class GraphicsAllocation;
 namespace Debug {
 struct Segments {

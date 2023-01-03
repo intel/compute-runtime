@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"

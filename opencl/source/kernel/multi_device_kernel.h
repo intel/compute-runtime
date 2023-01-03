@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
+
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {

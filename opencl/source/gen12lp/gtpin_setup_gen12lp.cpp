@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 
 #include "opencl/source/gtpin/gtpin_hw_helper.h"

@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
