@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,6 +145,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
         case CommandList::CommandToPatch::FrontEndState: {
+            UNRECOVERABLE_IF(scratchAddress == 0u);
             uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
             CFE_STATE *cfeStateCmd = nullptr;
             cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
@@ -175,7 +176,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = this->csr->getDcFlushSupport();
+            args.dcFlushEnable = csr->getDcFlushSupport();
 
             auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
             NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
@@ -191,7 +192,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = this->csr->getDcFlushSupport();
+            args.dcFlushEnable = csr->getDcFlushSupport();
 
             auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
             NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(

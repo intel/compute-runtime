@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -262,27 +262,30 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     commandQueue2->destroy();
 }
 
-struct PauseOnGpuTests : public Test<ModuleFixture> {
-    void SetUp() override {
+struct PauseOnGpuFixture : public Test<ModuleFixture> {
+    void setUp() {
         ModuleFixture::setUp();
 
         auto &csr = neoDevice->getGpgpuCommandStreamReceiver();
         debugPauseStateAddress = csr.getDebugPauseStateGPUAddress();
 
         createKernel();
-        ze_command_queue_desc_t queueDesc = {};
-        ze_result_t returnValue;
-        commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-        ASSERT_NE(nullptr, commandQueue);
-
-        commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
-        commandListHandle = commandList->toHandle();
     }
 
     void TearDown() override {
         commandList->destroy();
         commandQueue->destroy();
         ModuleFixture::tearDown();
+    }
+
+    void createImmediateCommandList() {
+        commandList->destroy();
+
+        ze_command_queue_desc_t queueDesc = {};
+        ze_result_t returnValue;
+        commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue);
+        ASSERT_NE(nullptr, commandList);
+        commandListHandle = commandList->toHandle();
     }
 
     template <typename MI_SEMAPHORE_WAIT>
@@ -396,6 +399,32 @@ struct PauseOnGpuTests : public Test<ModuleFixture> {
     uint32_t pipeControlAfterWalkerFound = 0;
 };
 
+struct PauseOnGpuTests : public PauseOnGpuFixture {
+    void SetUp() override {
+        PauseOnGpuFixture::setUp();
+
+        ze_command_queue_desc_t queueDesc = {};
+        ze_result_t returnValue;
+        commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+        ASSERT_NE(nullptr, commandQueue);
+
+        commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
+        ASSERT_NE(nullptr, commandList);
+        commandListHandle = commandList->toHandle();
+    }
+
+    void enqueueKernel() {
+        auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        result = commandList->close();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        result = commandQueue->executeCommandLists(1u, &commandListHandle, nullptr, false);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+};
+
 HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInsertPauseCommandsAroundSpecifiedEnqueue) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -507,6 +536,164 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertP
 }
 
 HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenInsertPauseAroundEnqueue) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManager.flags.PauseOnEnqueue.set(0);
+    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeAndAfterWorkload);
+
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    enqueueKernel();
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
+
+    findPipeControls<FamilyType>(cmdList);
+
+    EXPECT_EQ(1u, semaphoreBeforeWalkerFound);
+    EXPECT_EQ(1u, semaphoreAfterWalkerFound);
+    EXPECT_EQ(1u, pipeControlBeforeWalkerFound);
+    EXPECT_EQ(1u, pipeControlAfterWalkerFound);
+}
+
+struct PauseOnGpuWithImmediateCommandListTests : public PauseOnGpuFixture {
+    void SetUp() override {
+        PauseOnGpuFixture::setUp();
+
+        ze_command_queue_desc_t queueDesc = {};
+        ze_result_t returnValue;
+        commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+        ASSERT_NE(nullptr, commandQueue);
+
+        commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue);
+        ASSERT_NE(nullptr, commandList);
+        commandListHandle = commandList->toHandle();
+    }
+
+    void enqueueKernel() {
+        auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+};
+
+HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInsertPauseCommandsAroundSpecifiedEnqueue) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManager.flags.PauseOnEnqueue.set(1);
+
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    enqueueKernel();
+    enqueueKernel();
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
+    findPipeControls<FamilyType>(cmdList);
+
+    EXPECT_EQ(1u, semaphoreBeforeWalkerFound);
+    EXPECT_EQ(1u, semaphoreAfterWalkerFound);
+    EXPECT_EQ(1u, pipeControlBeforeWalkerFound);
+    EXPECT_EQ(1u, pipeControlAfterWalkerFound);
+}
+
+HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseOnEnqueueFlagSetToAlwaysWhenDispatchWalkersThenInsertPauseCommandsAroundEachEnqueue) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManager.flags.PauseOnEnqueue.set(-2);
+
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    enqueueKernel();
+    enqueueKernel();
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
+    findPipeControls<FamilyType>(cmdList);
+
+    EXPECT_EQ(2u, semaphoreBeforeWalkerFound);
+    EXPECT_EQ(2u, semaphoreAfterWalkerFound);
+    EXPECT_EQ(2u, pipeControlBeforeWalkerFound);
+    EXPECT_EQ(2u, pipeControlAfterWalkerFound);
+}
+
+HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsertPauseOnlyBeforeEnqueue) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManager.flags.PauseOnEnqueue.set(0);
+    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeWorkload);
+
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    enqueueKernel();
+    enqueueKernel();
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
+
+    findPipeControls<FamilyType>(cmdList);
+
+    EXPECT_EQ(1u, semaphoreBeforeWalkerFound);
+    EXPECT_EQ(0u, semaphoreAfterWalkerFound);
+    EXPECT_EQ(1u, pipeControlBeforeWalkerFound);
+    EXPECT_EQ(0u, pipeControlAfterWalkerFound);
+}
+
+HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertPauseOnlyAfterEnqueue) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManager.flags.PauseOnEnqueue.set(0);
+    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::AfterWorkload);
+
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    enqueueKernel();
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
+    findPipeControls<FamilyType>(cmdList);
+
+    EXPECT_EQ(0u, semaphoreBeforeWalkerFound);
+    EXPECT_EQ(1u, semaphoreAfterWalkerFound);
+    EXPECT_EQ(0u, pipeControlBeforeWalkerFound);
+    EXPECT_EQ(1u, pipeControlAfterWalkerFound);
+}
+
+HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenInsertPauseAroundEnqueue) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 

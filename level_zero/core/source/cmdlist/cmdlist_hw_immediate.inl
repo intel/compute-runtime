@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
@@ -20,6 +21,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
 
@@ -199,6 +201,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
     this->cmdQImmediate->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
 
+    static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u);
+
     if (performMigration) {
         this->migrateSharedAllocations();
     }
@@ -238,6 +242,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
     this->containsAnyKernel = false;
 
     this->handlePostSubmissionState();
+
+    if (NEO::DebugManager.flags.PauseOnEnqueue.get() != -1) {
+        this->device->getNEODevice()->debugExecutionCounter++;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

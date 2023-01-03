@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,7 +148,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = this->csr->getDcFlushSupport();
+            args.dcFlushEnable = csr->getDcFlushSupport();
 
             auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
             NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
@@ -164,7 +164,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = this->csr->getDcFlushSupport();
+            args.dcFlushEnable = csr->getDcFlushSupport();
 
             auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
             NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
