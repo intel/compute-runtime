@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -851,14 +851,14 @@ HWTEST_F(GfxCoreHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForCompr
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(0);
-    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(0, *defaultHwInfo));
-    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB, *defaultHwInfo));
-    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB + 1, *defaultHwInfo));
+    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(0));
+    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB));
+    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB + 1));
 
     DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
-    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(0, *defaultHwInfo));
-    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB, *defaultHwInfo));
-    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB + 1, *defaultHwInfo));
+    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(0));
+    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB));
+    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB + 1));
 }
 
 HWTEST_F(GfxCoreHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturned) {

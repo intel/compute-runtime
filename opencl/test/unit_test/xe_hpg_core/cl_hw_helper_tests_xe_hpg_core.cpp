@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenKernelArgumen
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr));
     }
 }
 
@@ -52,7 +52,7 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenEnableStatele
     for (auto isPureStateful : ::testing::Bool()) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_FALSE(clGfxCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
+        EXPECT_FALSE(clGfxCoreHelper.requiresNonAuxMode(argAsPtr));
     }
 }
 
@@ -63,7 +63,7 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenCheckAuxTrans
         KernelInfo kernelInfo{};
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_EQ(!isPureStateful, clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+        EXPECT_EQ(!isPureStateful, clGfxCoreHelper.requiresAuxResolves(kernelInfo));
     }
 }
 
@@ -74,7 +74,7 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenEnableStatele
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     KernelInfo kernelInfo{};
 
-    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 }
 
 XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenDifferentCLImageFormatsWhenCallingAllowImageCompressionThenCorrectValueReturned) {

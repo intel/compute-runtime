@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -289,22 +289,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProductHelperTest, givenProductHelperWhenAdditionalK
 HWTEST_F(ProductHelperTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned) {
 
     EXPECT_TRUE(productHelper->allowCompression(pInHwInfo));
-}
-
-HWTEST_F(ProductHelperTest, WhenAllowStatelessCompressionIsCalledThenReturnCorrectValue) {
-    DebugManagerStateRestore restore;
-
-    EXPECT_FALSE(productHelper->allowStatelessCompression(pInHwInfo));
-
-    for (auto enable : {-1, 0, 1}) {
-        DebugManager.flags.EnableStatelessCompression.set(enable);
-
-        if (enable > 0) {
-            EXPECT_TRUE(productHelper->allowStatelessCompression(pInHwInfo));
-        } else {
-            EXPECT_FALSE(productHelper->allowStatelessCompression(pInHwInfo));
-        }
-    }
 }
 
 HWTEST_F(ProductHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {

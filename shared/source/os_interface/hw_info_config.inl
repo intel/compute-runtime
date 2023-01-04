@@ -239,17 +239,6 @@ bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) c
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::allowStatelessCompression(const HardwareInfo &hwInfo) const {
-    if (!NEO::ApiSpecificConfig::isStatelessCompressionSupported()) {
-        return false;
-    }
-    if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
-        return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
-    }
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     return LocalMemoryAccessMode::Default;
 }

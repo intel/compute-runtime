@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -226,7 +226,7 @@ class CommandStreamReceiver {
 
     virtual bool isMultiOsContextCapable() const = 0;
 
-    virtual MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const = 0;
+    virtual MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const = 0;
 
     void setLatestSentTaskCount(TaskCountType latestSentTaskCount) {
         this->latestSentTaskCount = latestSentTaskCount;

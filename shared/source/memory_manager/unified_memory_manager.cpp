@@ -15,6 +15,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
@@ -668,8 +669,7 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             allocationType = AllocationType::WRITE_COMBINED;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
-            const auto &productHelper = *ProductHelper::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eProductFamily);
-            if (productHelper.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
+            if (CompressionSelector::allowStatelessCompression()) {
                 compressionEnabled = true;
             }
             allocationType = AllocationType::BUFFER;

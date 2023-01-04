@@ -342,9 +342,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
     UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
 
-    auto &rootDeviceEnvironments = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
-    auto &hwInfo = *rootDeviceEnvironments.getHardwareInfo();
-    auto &helper = rootDeviceEnvironments.getHelper<GfxCoreHelper>();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
     bool allow64KbPages = false;
     bool allow32Bit = false;
@@ -477,7 +477,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.flushL3 =
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferCompressed = properties.flags.preferCompressed;
-    allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties, hwInfo);
+    allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
 

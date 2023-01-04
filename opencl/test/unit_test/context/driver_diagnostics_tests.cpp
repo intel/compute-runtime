@@ -696,7 +696,7 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto compressionSupported = gfxCoreHelper.isBufferSizeSuitableForCompression(size, hwInfo) &&
+    auto compressionSupported = gfxCoreHelper.isBufferSizeSuitableForCompression(size) &&
                                 GfxCoreHelper::compressedBuffersSupported(hwInfo);
     if (compressionSupported) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
@@ -730,7 +730,7 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
         isCompressed = MemObjHelper::isSuitableForCompression(
                            GfxCoreHelper::compressedBuffersSupported(hwInfo),
                            memoryProperties, *context,
-                           gfxCoreHelper.isBufferSizeSuitableForCompression(size, hwInfo)) &&
+                           gfxCoreHelper.isBufferSizeSuitableForCompression(size)) &&
                        !is32bit && !context->isSharedContext &&
                        (!memoryProperties.flags.useHostPtr || context->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex())) &&
                        !memoryProperties.flags.forceHostMemory;

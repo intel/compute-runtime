@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,7 +178,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
 
     const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
 
-    auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired(), commandQueue.getDevice().getHardwareInfo());
+    auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired());
 
     DispatchFlags dispatchFlags(
         {},                                                                               // csrDependencies

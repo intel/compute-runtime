@@ -626,7 +626,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCallingGetMemo
     CommandStreamReceiverHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     for (bool auxTranslationRequired : {false, true}) {
-        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired, *defaultHwInfo);
+        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
         EXPECT_EQ(MemoryCompressionState::NotApplicable, memoryCompressionState);
     }
 }

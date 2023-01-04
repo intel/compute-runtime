@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,12 @@
 namespace NEO {
 
 template <typename GfxFamily>
-inline bool ClGfxCoreHelperHw<GfxFamily>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+inline bool ClGfxCoreHelperHw<GfxFamily>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) const {
     return !argAsPtr.isPureStateful();
 }
 
 template <typename GfxFamily>
-inline bool ClGfxCoreHelperHw<GfxFamily>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+inline bool ClGfxCoreHelperHw<GfxFamily>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
     return hasStatelessAccessToBuffer(kernelInfo);
 }
 

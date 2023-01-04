@@ -42,5 +42,5 @@ bool TestChecks::supportsAuxResolves(const RootDeviceEnvironment &rootDeviceEnvi
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
 
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
-    return clGfxCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
+    return clGfxCoreHelper.requiresAuxResolves(kernelInfo);
 }

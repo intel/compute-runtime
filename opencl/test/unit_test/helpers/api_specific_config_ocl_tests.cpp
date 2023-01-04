@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmG
                                     AllocationType::SVM_GPU,
                                     deviceBitfield);
 
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 
 TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingPrintfSurfaceThenPreferCompressedBuffer) {
@@ -72,6 +72,6 @@ TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingPrin
                                     AllocationType::PRINTF_SURFACE,
                                     deviceBitfield);
 
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 } // namespace NEO

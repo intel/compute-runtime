@@ -962,7 +962,7 @@ bool ContextImp::isAllocationSuitableForCompression(const StructuresLookupTable 
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto &l0GfxCoreHelper = device.getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    if (!l0GfxCoreHelper.usmCompressionSupported(hwInfo) || !gfxCoreHelper.isBufferSizeSuitableForCompression(allocSize, hwInfo) || structuresLookupTable.uncompressedHint) {
+    if (!l0GfxCoreHelper.usmCompressionSupported(hwInfo) || !gfxCoreHelper.isBufferSizeSuitableForCompression(allocSize) || structuresLookupTable.uncompressedHint) {
         return false;
     }
 

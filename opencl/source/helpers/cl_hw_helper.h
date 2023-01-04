@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,8 +30,8 @@ class ClGfxCoreHelper {
   public:
     static ClGfxCoreHelper &get(GFXCORE_FAMILY gfxCore);
 
-    virtual bool requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual bool requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual bool requiresNonAuxMode(const ArgDescPointer &argAsPtr) const = 0;
+    virtual bool requiresAuxResolves(const KernelInfo &kernelInfo) const = 0;
     virtual bool allowCompressionForContext(const ClDevice &clDevice, const Context &context) const = 0;
     virtual cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const = 0;
     virtual bool getQueueFamilyName(std::string &name, EngineGroupType type) const = 0;
@@ -40,7 +40,7 @@ class ClGfxCoreHelper {
     virtual bool isSupportedKernelThreadArbitrationPolicy() const = 0;
     virtual std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const = 0;
     virtual cl_version getDeviceIpVersion(const HardwareInfo &hwInfo) const = 0;
-    virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const = 0;
+    virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool allowImageCompression(cl_image_format format) const = 0;
     virtual bool isFormatRedescribable(cl_image_format format) const = 0;
 
@@ -61,8 +61,8 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
         return clGfxCoreHelper;
     }
 
-    bool requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
-    bool requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
+    bool requiresNonAuxMode(const ArgDescPointer &argAsPtr) const override;
+    bool requiresAuxResolves(const KernelInfo &kernelInfo) const override;
     bool allowCompressionForContext(const ClDevice &clDevice, const Context &context) const override;
     cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const override;
     bool getQueueFamilyName(std::string &name, EngineGroupType type) const override;
@@ -71,7 +71,7 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
     bool isSupportedKernelThreadArbitrationPolicy() const override;
     std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const override;
     cl_version getDeviceIpVersion(const HardwareInfo &hwInfo) const override;
-    cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const override;
+    cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool allowImageCompression(cl_image_format format) const override;
     bool isFormatRedescribable(cl_image_format format) const override;
 

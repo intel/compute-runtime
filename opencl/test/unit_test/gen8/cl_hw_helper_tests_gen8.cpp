@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,5 +25,5 @@ GEN8TEST_F(ClGfxCoreHelperTestGen8, WhenGettingDeviceIpVersionThenMakeCorrectDev
 
 GEN8TEST_F(ClGfxCoreHelperTestGen8, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(0u, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(*defaultHwInfo));
+    EXPECT_EQ(0u, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(getRootDeviceEnvironment()));
 }

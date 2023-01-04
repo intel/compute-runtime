@@ -1235,11 +1235,6 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
 }
 
-TEST_F(DeviceTest, whenCheckingIfStatelessCompressionIsSupportedThenReturnFalse) {
-    auto &productHelper = device->getProductHelper();
-    EXPECT_FALSE(productHelper.allowStatelessCompression(*defaultHwInfo));
-}
-
 TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalProperlySet) {
     DebugManagerStateRestore restore;
     auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, neoDevice->getRootDeviceEnvironment());

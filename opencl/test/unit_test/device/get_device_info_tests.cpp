@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1125,9 +1125,8 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         }
         case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
             auto pCapabilities = reinterpret_cast<cl_device_feature_capabilities_intel *>(object.get());
-            auto &hwInfo = device.getHardwareInfo();
             auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-            EXPECT_EQ(clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hwInfo), *pCapabilities);
+            EXPECT_EQ(clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(device.getRootDeviceEnvironment()), *pCapabilities);
             EXPECT_EQ(sizeof(cl_device_feature_capabilities_intel), sizeReturned);
             break;
         }

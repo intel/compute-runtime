@@ -90,7 +90,6 @@ class ProductHelper {
     virtual std::string getDeviceMemoryName() const = 0;
     virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowCompression(const HardwareInfo &hwInfo) const = 0;
-    virtual bool allowStatelessCompression(const HardwareInfo &hwInfo) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const = 0;
@@ -235,7 +234,6 @@ class ProductHelperHw : public ProductHelper {
     std::string getDeviceMemoryName() const override;
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
     bool allowCompression(const HardwareInfo &hwInfo) const override;
-    bool allowStatelessCompression(const HardwareInfo &hwInfo) const override;
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const override;

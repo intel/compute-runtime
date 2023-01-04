@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/xe_hpg_core/aub_mapper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
@@ -112,12 +113,12 @@ std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) c
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size) const {
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
 
-    if (ProductHelper::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
+    if (CompressionSelector::allowStatelessCompression()) {
         return true;
     } else {
         return false;

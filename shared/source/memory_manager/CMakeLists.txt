@@ -15,6 +15,7 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/alignment_selector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/allocation_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compression_selector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/compression_selector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_allocation_deletion.h
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_allocation_deletion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion.h

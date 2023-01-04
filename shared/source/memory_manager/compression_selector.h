@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,11 +10,11 @@
 namespace NEO {
 
 struct AllocationProperties;
-struct HardwareInfo;
 
 class CompressionSelector {
   public:
-    static bool preferCompressedAllocation(const AllocationProperties &properties, const HardwareInfo &hwInfo);
+    static bool preferCompressedAllocation(const AllocationProperties &properties);
+    static bool allowStatelessCompression();
 };
 
 } // namespace NEO

@@ -89,7 +89,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         }
     }
 
-    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const override {
+    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
         return MemoryCompressionState::NotApplicable;
     };
 

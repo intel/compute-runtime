@@ -1425,7 +1425,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::updateTagFromWait() {
 }
 
 template <typename GfxFamily>
-inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const {
+inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompressionState(bool auxTranslationRequired) const {
     return MemoryCompressionState::NotApplicable;
 }
 

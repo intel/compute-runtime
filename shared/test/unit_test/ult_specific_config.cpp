@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 namespace ImplicitScaling {
 bool apiSupport = false;
 } // namespace ImplicitScaling
-bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties, const HardwareInfo &hwInfo) {
+bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties) {
     return false;
 }
 void PageFaultManager::transferToCpu(void *ptr, size_t size, void *cmdQ) {

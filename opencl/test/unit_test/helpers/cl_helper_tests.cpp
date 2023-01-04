@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,12 +114,12 @@ HWTEST_F(ClGfxCoreHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThen
 
     ArgDescriptor argDescriptorValue(ArgDescriptor::ArgType::ArgTValue);
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorValue);
-    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 
     ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
     argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
-    EXPECT_TRUE(clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+    EXPECT_TRUE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 }
 
 TEST_F(ClGfxCoreHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
@@ -129,7 +129,7 @@ TEST_F(ClGfxCoreHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThe
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr));
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
@@ -37,7 +38,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         allocationData.flags.requiresCpuAccess = true;
     }
 
-    if (productHelper.allowStatelessCompression(hwInfo)) {
+    if (CompressionSelector::allowStatelessCompression()) {
         if (properties.allocationType == AllocationType::GLOBAL_SURFACE ||
             properties.allocationType == AllocationType::CONSTANT_SURFACE ||
             properties.allocationType == AllocationType::PRINTF_SURFACE) {

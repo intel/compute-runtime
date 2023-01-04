@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1108,7 +1108,7 @@ HWTEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenGr
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
 
-    allocData.flags.preferCompressed = CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo);
+    allocData.flags.preferCompressed = CompressionSelector::preferCompressedAllocation(properties);
     auto buffer = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(0u, buffer->getDefaultGmm()->resourceParams.Flags.Info.RenderCompressed);

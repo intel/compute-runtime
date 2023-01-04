@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ class GfxCoreHelper {
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
     virtual bool preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const = 0;
-    virtual bool isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBufferSizeSuitableForCompression(const size_t size) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const = 0;
     static bool compressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool compressedImagesSupported(const HardwareInfo &hwInfo);
@@ -221,7 +221,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool hvAlign4Required() const override;
 
-    bool isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const override;
+    bool isBufferSizeSuitableForCompression(const size_t size) const override;
 
     bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const override;
 

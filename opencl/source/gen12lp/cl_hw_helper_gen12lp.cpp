@@ -24,7 +24,7 @@ void populateFactoryTable<ClGfxCoreHelperHw<Family>>() {
 }
 
 template <>
-cl_device_feature_capabilities_intel ClGfxCoreHelperHw<Family>::getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const {
+cl_device_feature_capabilities_intel ClGfxCoreHelperHw<Family>::getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
 }
 

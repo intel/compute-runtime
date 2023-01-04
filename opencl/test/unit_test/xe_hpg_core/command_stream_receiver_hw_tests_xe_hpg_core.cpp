@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,13 +36,13 @@ XE_HPG_CORETEST_F(CommandStreamReceiverHwTestXeHpgCore, givenEnableStatelessComp
 
     DebugManager.flags.EnableStatelessCompression.set(0);
     for (bool auxTranslationRequired : {false, true}) {
-        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired, pDevice->getHardwareInfo());
+        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
         EXPECT_EQ(MemoryCompressionState::NotApplicable, memoryCompressionState);
     }
 
     DebugManager.flags.EnableStatelessCompression.set(1);
     for (bool auxTranslationRequired : {false, true}) {
-        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired, pDevice->getHardwareInfo());
+        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
         if (auxTranslationRequired) {
             EXPECT_EQ(MemoryCompressionState::Disabled, memoryCompressionState);
         } else {

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/memory_management.h"
 
 #include "gtest/gtest.h"
@@ -43,6 +45,22 @@ TEST(allocation, GivenFailingAllocationOneWhenCreatingAllocationsThenOnlyOneAllo
     EXPECT_EQ(nullptr, ptr2); // NOLINT(clang-analyzer-cplusplus.NewDelete)
     EXPECT_EQ(previousAllocations, currentAllocations);
     MemoryManagement::detailedAllocationLoggingActive = false;
+}
+
+TEST(CompressionSelector, WhenAllowStatelessCompressionIsCalledThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    EXPECT_FALSE(CompressionSelector::allowStatelessCompression());
+
+    for (auto enable : {-1, 0, 1}) {
+        DebugManager.flags.EnableStatelessCompression.set(enable);
+
+        if (enable > 0) {
+            EXPECT_TRUE(CompressionSelector::allowStatelessCompression());
+        } else {
+            EXPECT_FALSE(CompressionSelector::allowStatelessCompression());
+        }
+    }
 }
 
 struct MemoryManagementTest : public MemoryManagementFixture,

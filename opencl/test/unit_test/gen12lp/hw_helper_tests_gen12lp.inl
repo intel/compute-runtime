@@ -32,7 +32,7 @@ GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, givenTglLpThenAuxTranslationIsRequire
         arg.as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = accessedUsingStatelessAddressingMode;
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(std::move(arg));
 
-        EXPECT_EQ(accessedUsingStatelessAddressingMode, clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
+        EXPECT_EQ(accessedUsingStatelessAddressingMode, clGfxCoreHelper.requiresAuxResolves(kernelInfo));
     }
 }
 
@@ -64,7 +64,7 @@ HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrect
 GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
-    EXPECT_EQ(expectedCapabilities, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hardwareInfo));
+    EXPECT_EQ(expectedCapabilities, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(getRootDeviceEnvironment()));
 }
 
 using GfxCoreHelperTestGen12Lp = GfxCoreHelperTest;
@@ -98,7 +98,7 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheck
 
     const size_t sizesToCheck[] = {128, 256, 512, 1023, 1024, 1025};
     for (size_t size : sizesToCheck) {
-        EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+        EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(size));
     }
 }
 

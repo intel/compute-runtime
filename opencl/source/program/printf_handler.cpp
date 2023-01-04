@@ -16,6 +16,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/program/print_formatter.h"
@@ -88,7 +89,7 @@ bool PrintfHandler::printEnqueueOutput() {
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
     std::unique_ptr<uint8_t[]> printfOutputDecompressed;
 
-    if (productHelper.allowStatelessCompression(hwInfo) || productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface)) {
+    if (CompressionSelector::allowStatelessCompression() || productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface)) {
         printfOutputDecompressed = std::make_unique<uint8_t[]>(printfOutputSize);
         printfOutputBuffer = printfOutputDecompressed.get();
         auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(device.getRootDeviceEnvironment(), device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);

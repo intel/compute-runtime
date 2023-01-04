@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,9 +282,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     }
     case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
-        auto &hwInfo = getHardwareInfo();
         auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-        param.bitfield = clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hwInfo);
+        param.bitfield = clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(this->getRootDeviceEnvironment());
         src = &param.bitfield;
         retSize = srcSize = sizeof(cl_device_feature_capabilities_intel);
         break;

@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
@@ -28,11 +29,9 @@ void populateFactoryTable<ClGfxCoreHelperHw<Family>>() {
 }
 
 template <>
-bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) const {
 
-    if (productHelper.allowStatelessCompression(hwInfo)) {
+    if (CompressionSelector::allowStatelessCompression()) {
         return false;
     } else {
         return !argAsPtr.isPureStateful();
@@ -40,11 +39,9 @@ bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPt
 }
 
 template <>
-bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
 
-    if (productHelper.allowStatelessCompression(hwInfo)) {
+    if (CompressionSelector::allowStatelessCompression()) {
         return false;
     } else {
         return hasStatelessAccessToBuffer(kernelInfo);

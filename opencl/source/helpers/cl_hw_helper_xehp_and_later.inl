@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
@@ -23,8 +24,9 @@ cl_ulong ClGfxCoreHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelInfo 
 }
 
 template <typename GfxFamily>
-cl_device_feature_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const {
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+cl_device_feature_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (productHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
         return CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
     }

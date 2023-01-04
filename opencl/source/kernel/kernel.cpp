@@ -26,6 +26,7 @@
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/local_ids_cache.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -255,7 +256,7 @@ cl_int Kernel::initialize() {
 
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
-    auxTranslationRequired = !program->getIsBuiltIn() && GfxCoreHelper::compressedBuffersSupported(hwInfo) && clGfxCoreHelper.requiresAuxResolves(kernelInfo, rootDeviceEnvironment);
+    auxTranslationRequired = !program->getIsBuiltIn() && GfxCoreHelper::compressedBuffersSupported(hwInfo) && clGfxCoreHelper.requiresAuxResolves(kernelInfo);
 
     if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
         auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
@@ -935,7 +936,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             forceNonAuxMode = true;
         }
         disableL3 = (argIndex == 0);
-    } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clGfxCoreHelper.requiresNonAuxMode(argAsPtr, rootDeviceEnvironment)) {
+    } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clGfxCoreHelper.requiresNonAuxMode(argAsPtr)) {
         forceNonAuxMode = true;
     }
 
@@ -1492,7 +1493,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                 forceNonAuxMode = true;
             }
             disableL3 = (argIndex == 0);
-        } else if (graphicsAllocation->isCompressionEnabled() && clGfxCoreHelper.requiresNonAuxMode(argAsPtr, rootDeviceEnvironment)) {
+        } else if (graphicsAllocation->isCompressionEnabled() && clGfxCoreHelper.requiresNonAuxMode(argAsPtr)) {
             forceNonAuxMode = true;
         }
 
@@ -1949,8 +1950,8 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
             }
         }
     }
-    const auto &productHelper = getDevice().getProductHelper();
-    if (productHelper.allowStatelessCompression(getDevice().getHardwareInfo())) {
+
+    if (CompressionSelector::allowStatelessCompression()) {
         for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
             if (gfxAllocation->isCompressionEnabled()) {
                 kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
@@ -2273,8 +2274,7 @@ bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
 }
 
 void Kernel::updateAuxTranslationRequired() {
-    const auto &productHelper = getDevice().getProductHelper();
-    if (productHelper.allowStatelessCompression(getDevice().getHardwareInfo())) {
+    if (CompressionSelector::allowStatelessCompression()) {
         if (hasDirectStatelessAccessToHostMemory() ||
             hasIndirectStatelessAccessToHostMemory() ||
             hasDirectStatelessAccessToSharedBuffer()) {

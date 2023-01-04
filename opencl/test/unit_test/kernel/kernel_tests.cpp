@@ -512,7 +512,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     bool isMultiOsContextCapable() const override { return false; }
 
-    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const override {
+    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
         return MemoryCompressionState::NotApplicable;
     }
 
@@ -2542,11 +2542,11 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
 
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment), kernel.mockKernel->isAuxTranslationRequired());
+    EXPECT_EQ(clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(-1);
     kernel.mockKernel->initialize();
-    EXPECT_EQ(clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment), kernel.mockKernel->isAuxTranslationRequired());
+    EXPECT_EQ(clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(0);
     kernel.mockKernel->initialize();
@@ -2572,7 +2572,7 @@ TEST(KernelTest, WhenAuxTranslationIsRequiredThenKernelSetsRequiredResolvesInCon
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
-    if (clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment)) {
+    if (clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo)) {
         EXPECT_TRUE(context->getResolvesRequiredInKernels());
     } else {
         EXPECT_FALSE(context->getResolvesRequiredInKernels());
@@ -2618,7 +2618,7 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
-    if (clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo, rootDeviceEnvironment)) {
+    if (clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo)) {
         EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
     } else {
         EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
