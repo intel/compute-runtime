@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -475,11 +475,12 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
                                                       allocationType,
                                                       neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
+    bool isHostIpcAllocation = (allocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ? true : false;
     NEO::GraphicsAllocation *alloc =
         this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandle,
                                                                            unifiedMemoryProperties,
                                                                            false,
-                                                                           false,
+                                                                           isHostIpcAllocation,
                                                                            false);
     if (alloc == nullptr) {
         return nullptr;
@@ -489,7 +490,8 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
     allocData.gpuAllocations.addAllocation(alloc);
     allocData.cpuAllocation = nullptr;
     allocData.size = alloc->getUnderlyingBufferSize();
-    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.memoryType =
+        isHostIpcAllocation ? InternalMemoryType::HOST_UNIFIED_MEMORY : InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData.device = neoDevice;
     allocData.isImportedAllocation = true;
     if (flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
@@ -617,6 +619,8 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
 void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
+    bool isHostIpcAllocation = (allocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ? true : false;
+
     auto alloc = this->getMemoryManager()->createGraphicsAllocationFromNTHandle(handle, neoDevice->getRootDeviceIndex(), NEO::AllocationType::SHARED_BUFFER);
 
     if (alloc == nullptr) {
@@ -627,7 +631,8 @@ void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, 
     allocData.gpuAllocations.addAllocation(alloc);
     allocData.cpuAllocation = nullptr;
     allocData.size = alloc->getUnderlyingBufferSize();
-    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.memoryType =
+        isHostIpcAllocation ? InternalMemoryType::HOST_UNIFIED_MEMORY : InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData.device = neoDevice;
 
     this->getSvmAllocsManager()->insertSVMAlloc(allocData);

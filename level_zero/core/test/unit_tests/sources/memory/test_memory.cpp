@@ -3813,6 +3813,34 @@ TEST_F(ImportFdUncachedTests,
     context->freeMem(ptr);
 }
 
+TEST_F(ImportFdUncachedTests,
+       givenCallToImportFdHandleWithHostBufferMemoryAllocationTypeThenHostUnifiedMemoryIsSet) {
+    ze_ipc_memory_flags_t flags = {};
+    uint64_t handle = 1;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER_HOST_MEMORY, nullptr);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+
+    context->freeMem(ptr);
+}
+
+TEST_F(ImportFdUncachedTests,
+       givenCallToImportFdHandleWithBufferMemoryAllocationTypeThenDeviceUnifiedMemoryIsSet) {
+    ze_ipc_memory_flags_t flags = {};
+    uint64_t handle = 1;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+
+    context->freeMem(ptr);
+}
+
 struct SVMAllocsManagerSharedAllocFailMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerSharedAllocFailMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createSharedUnifiedMemoryAllocation(size_t size,

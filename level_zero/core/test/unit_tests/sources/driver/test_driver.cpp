@@ -172,6 +172,50 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
     }
 };
 
+HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithHostBufferMemoryAllocationTypeThenHostUnifiedMemoryIsSet) {
+    ze_device_mem_alloc_desc_t devProperties = {};
+    devProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
+
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
+
+    uint64_t imageHandle = 0x1;
+    NEO::AllocationType allocationType = NEO::AllocationType::BUFFER_HOST_MEMORY;
+    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType);
+    EXPECT_NE(ptr, nullptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+
+    ze_result_t result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithBufferMemoryAllocationTypeThenDeviceUnifiedMemoryIsSet) {
+    ze_device_mem_alloc_desc_t devProperties = {};
+    devProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
+
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
+
+    uint64_t imageHandle = 0x1;
+    NEO::AllocationType allocationType = NEO::AllocationType::BUFFER;
+    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType);
+    EXPECT_NE(ptr, nullptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_NE(allocData, nullptr);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+
+    ze_result_t result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsReturned) {
     ze_device_mem_alloc_desc_t devProperties = {};
     devProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
