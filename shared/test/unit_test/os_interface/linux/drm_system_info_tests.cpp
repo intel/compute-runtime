@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -173,6 +173,43 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_GT(gtSystemInfo.MaxSubSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MemoryType, 0u);
+}
+
+TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSystemInfoIsCreatedAndHardwareInfoSetProperlyBasedOnBlobData) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 0u;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 0u;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 0u;
+    drm.storedSVal = 0u;
+    drm.storedSSVal = 1u;
+    drm.storedEUVal = 1u;
+
+    auto expectedMaxSlicesSupported = dummyDeviceBlobData[2];
+    auto expectedMaxSubslicesSupported = dummyDeviceBlobData[5];
+    auto expectedMaxEusPerSubsliceSupported = dummyDeviceBlobData[8];
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, 0);
+    EXPECT_NE(nullptr, drm.getSystemInfo());
+    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
+
+    EXPECT_EQ(expectedMaxSlicesSupported, gtSystemInfo.MaxSlicesSupported);
+    EXPECT_NE(0u, gtSystemInfo.MaxSlicesSupported);
+
+    EXPECT_EQ(expectedMaxSubslicesSupported, gtSystemInfo.MaxSubSlicesSupported);
+    EXPECT_NE(0u, gtSystemInfo.MaxSubSlicesSupported);
+
+    EXPECT_EQ(expectedMaxEusPerSubsliceSupported, gtSystemInfo.MaxEuPerSubSlice);
+    EXPECT_NE(0u, gtSystemInfo.MaxEuPerSubSlice);
 }
 
 TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubslicesToCalculateL3Size) {

@@ -460,18 +460,15 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     status = querySystemInfo();
+    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     if (status) {
+        systemInfo->checkSysInfoMismatch(hwInfo);
         setupSystemInfo(hwInfo, systemInfo.get());
 
         uint32_t bankCount = (hwInfo->gtSystemInfo.L3BankCount > 0) ? hwInfo->gtSystemInfo.L3BankCount : hwInfo->gtSystemInfo.MaxDualSubSlicesSupported;
 
         hwInfo->gtSystemInfo.L3CacheSizeInKb = systemInfo->getL3BankSizeInKb() * bankCount;
-    }
-
-    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-
-    if (systemInfo) {
-        systemInfo->checkSysInfoMismatch(hwInfo);
     }
 
     setupCacheInfo(*hwInfo);
