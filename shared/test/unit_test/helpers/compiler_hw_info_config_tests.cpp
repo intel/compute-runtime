@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThe
     aotConfig.value = productConfig;
     CompilerProductHelper::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
     EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.revision);
+    EXPECT_EQ(hwInfo.ipVersion.value, aotConfig.value);
 }
 
 HWTEST2_F(CompilerProductHelperFixture, givenAtMostXeHPWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtMostXeHpCore) {
