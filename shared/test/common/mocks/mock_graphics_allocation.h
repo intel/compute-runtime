@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #pragma once
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {
 

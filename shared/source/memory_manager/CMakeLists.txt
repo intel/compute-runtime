@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -35,6 +35,7 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_banks.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.h

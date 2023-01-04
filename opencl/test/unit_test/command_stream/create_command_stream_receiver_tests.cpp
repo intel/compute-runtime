@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"

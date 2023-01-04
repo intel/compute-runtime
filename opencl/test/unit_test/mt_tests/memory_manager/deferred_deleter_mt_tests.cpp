@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/mocks/mock_deferrable_deletion.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 

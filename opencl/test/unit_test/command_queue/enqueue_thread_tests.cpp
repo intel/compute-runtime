@@ -8,7 +8,6 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"

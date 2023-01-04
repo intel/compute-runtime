@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "common/StateSaveAreaHeader.h"

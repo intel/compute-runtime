@@ -15,7 +15,6 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/allocations_list.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"

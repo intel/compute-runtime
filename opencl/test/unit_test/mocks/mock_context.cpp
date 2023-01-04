@@ -11,7 +11,6 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"

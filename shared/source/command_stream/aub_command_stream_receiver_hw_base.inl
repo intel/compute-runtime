@@ -31,7 +31,7 @@
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_banks.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include "aubstream/aubstream.h"

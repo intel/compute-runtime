@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/arrayref.h"
 

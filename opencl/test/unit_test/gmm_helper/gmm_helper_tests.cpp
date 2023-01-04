@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
