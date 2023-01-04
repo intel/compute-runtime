@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,6 +76,11 @@ bool ProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const Hard
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
     return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
+    return MemoryConstants::pageSize2Mb;
 }
 
 } // namespace NEO

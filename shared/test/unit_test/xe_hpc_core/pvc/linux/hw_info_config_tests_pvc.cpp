@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,15 @@ PVCTEST_F(PvcProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
 }
 
 PVCTEST_F(PvcProductHelperLinux, WhenGetSvmCpuAlignmentThenProperValueIsReturned) {
-    EXPECT_EQ(MemoryConstants::pageSize64k, productHelper->getSvmCpuAlignment());
+    DebugManagerStateRestore restorer;
+    {
+        DebugManager.flags.NEO_CAL_ENABLED.set(true);
+        EXPECT_EQ(MemoryConstants::pageSize64k, productHelper->getSvmCpuAlignment());
+    }
+    {
+        DebugManager.flags.NEO_CAL_ENABLED.set(false);
+        EXPECT_EQ(MemoryConstants::pageSize2Mb, productHelper->getSvmCpuAlignment());
+    }
 }
 
 PVCTEST_F(PvcProductHelperLinux, given57bAddressSpaceWhenConfiguringHwInfoThenSetFtrFlag) {
