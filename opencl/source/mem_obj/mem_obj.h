@@ -161,6 +161,9 @@ class MemObj : public BaseObject<_cl_mem> {
     MemObj *getAssociatedMemObject() {
         return associatedMemObject;
     }
+    void setSizeInPoolAllocator(size_t size) {
+        this->sizeInPoolAllocator = size;
+    }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
@@ -173,6 +176,7 @@ class MemObj : public BaseObject<_cl_mem> {
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     size_t size;
+    size_t sizeInPoolAllocator = 0;
     size_t hostPtrMinSize = 0;
     void *memoryStorage;
     void *hostPtr;

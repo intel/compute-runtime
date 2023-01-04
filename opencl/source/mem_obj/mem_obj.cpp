@@ -108,7 +108,7 @@ MemObj::~MemObj() {
         }
         if (associatedMemObject) {
             associatedMemObject->decRefInternal();
-            context->getBufferPoolAllocator().tryFreeFromPoolBuffer(associatedMemObject, this->offset, this->size);
+            context->getBufferPoolAllocator().tryFreeFromPoolBuffer(associatedMemObject, this->offset, this->sizeInPoolAllocator);
         }
         if (!associatedMemObject) {
             releaseAllocatedMapPtr();

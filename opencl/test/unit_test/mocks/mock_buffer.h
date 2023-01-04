@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using MemObj::isZeroCopy;
     using MemObj::memObjectType;
     using MemObj::memoryStorage;
+    using MemObj::sizeInPoolAllocator;
     using MockBufferStorage::device;
 
     void setAllocationType(uint32_t rootDeviceIndex, bool compressed) {

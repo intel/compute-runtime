@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,8 +167,23 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
     EXPECT_NE(buffer, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
+}
 
-    EXPECT_NE(poolAllocator->mainStorage, nullptr);
+TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLowerThenChunkAlignmentWhenBufferCreatedAndDestroyedThenSizeIsAsRequestedAndCorrectSizeIsFreed) {
+    ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
+    ASSERT_NE(poolAllocator->mainStorage, nullptr);
+    ASSERT_EQ(poolAllocator->chunkAllocator->getUsedSize(), 0u);
+    size = PoolAllocator::chunkAlignment / 2;
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
+    EXPECT_NE(buffer, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(buffer->getSize(), size);
+    EXPECT_EQ(poolAllocator->chunkAllocator->getUsedSize(), PoolAllocator::chunkAlignment);
+    auto mockBuffer = static_cast<MockBuffer *>(buffer.get());
+    EXPECT_EQ(mockBuffer->sizeInPoolAllocator, PoolAllocator::chunkAlignment);
+
+    buffer.reset(nullptr);
+    EXPECT_EQ(poolAllocator->chunkAllocator->getUsedSize(), 0u);
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeEqualToThresholdWhenBufferCreateCalledThenUsePool) {

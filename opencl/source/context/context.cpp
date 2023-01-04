@@ -523,23 +523,25 @@ void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) 
 Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryProperties &memoryProperties,
                                                              cl_mem_flags flags,
                                                              cl_mem_flags_intel flagsIntel,
-                                                             size_t size,
+                                                             size_t requestedSize,
                                                              void *hostPtr,
                                                              cl_int &errcodeRet) {
     errcodeRet = CL_MEM_OBJECT_ALLOCATION_FAILURE;
     if (this->mainStorage &&
-        this->isSizeWithinThreshold(size) &&
+        this->isSizeWithinThreshold(requestedSize) &&
         this->flagsAllowBufferFromPool(flags, flagsIntel)) {
         auto lock = std::unique_lock<std::mutex>(this->mutex);
         cl_buffer_region bufferRegion{};
-        bufferRegion.origin = static_cast<size_t>(this->chunkAllocator->allocate(size));
+        size_t actualSize = requestedSize;
+        bufferRegion.origin = static_cast<size_t>(this->chunkAllocator->allocate(actualSize));
         if (bufferRegion.origin == 0) {
             return nullptr;
         }
         bufferRegion.origin -= BufferPoolAllocator::startingOffset;
-        bufferRegion.size = size;
+        bufferRegion.size = requestedSize;
         auto bufferFromPool = this->mainStorage->createSubBuffer(flags, flagsIntel, &bufferRegion, errcodeRet);
         bufferFromPool->createFunction = this->mainStorage->createFunction;
+        bufferFromPool->setSizeInPoolAllocator(actualSize);
         return bufferFromPool;
     }
     return nullptr;
@@ -553,6 +555,7 @@ void Context::BufferPoolAllocator::tryFreeFromPoolBuffer(MemObj *possiblePoolBuf
     if (this->isPoolBuffer(possiblePoolBuffer)) {
         auto lock = std::unique_lock<std::mutex>(this->mutex);
         DEBUG_BREAK_IF(!this->mainStorage);
+        DEBUG_BREAK_IF(size == 0);
         auto internalBufferAddress = offset + BufferPoolAllocator::startingOffset;
         this->chunkAllocator->free(internalBufferAddress, size);
     }

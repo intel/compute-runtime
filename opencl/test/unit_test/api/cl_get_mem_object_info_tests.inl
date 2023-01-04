@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,23 +21,22 @@ typedef api_tests clGetMemObjectInfoTests;
 namespace ULT {
 
 TEST_F(clGetMemObjectInfoTests, givenValidBufferWhenGettingMemObjectInfoThenCorrectBufferSizeIsReturned) {
-    size_t requestedBufferSize = 16;
+    size_t bufferSize = 16;
     cl_mem buffer = nullptr;
 
     buffer = clCreateBuffer(
         pContext,
         0,
-        requestedBufferSize,
+        bufferSize,
         NULL,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, buffer);
 
-    size_t createdBufferSize = 0;
-    auto asBuffer = static_cast<Buffer *>(buffer);
-    retVal = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(createdBufferSize), &createdBufferSize, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(createdBufferSize, asBuffer->getSize());
+    size_t paramValue = 0;
+    retVal = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(paramValue), &paramValue, nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(bufferSize, paramValue);
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);

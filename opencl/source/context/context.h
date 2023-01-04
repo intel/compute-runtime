@@ -50,7 +50,7 @@ class Context : public BaseObject<_cl_context> {
       public:
         static constexpr auto aggregatedSmallBuffersPoolSize = 64 * KB;
         static constexpr auto smallBufferThreshold = 4 * KB;
-        static constexpr auto chunkAlignment = 256u;
+        static constexpr auto chunkAlignment = 512u;
         static constexpr auto startingOffset = chunkAlignment;
 
         static_assert(aggregatedSmallBuffersPoolSize > smallBufferThreshold, "Largest allowed buffer needs to fit in pool");
