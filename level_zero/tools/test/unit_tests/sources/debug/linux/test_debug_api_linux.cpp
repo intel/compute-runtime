@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3911,6 +3911,59 @@ TEST_F(DebugApiLinuxVmBindTest, GivenTwoPendingEventsWhenAcknowledgeEventCalledT
     EXPECT_EQ(1u, session->eventsToAck.size());
 }
 
+TEST_F(DebugApiLinuxVmBindTest, GivenNoIsaUUIDAndZebinModuleForDataSegmentWhenHandlingVmBindEventThenModuleLoadAndUnloadEventsAreTriggered) {
+    setupVmToTile(session.get());
+
+    uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + 2 * sizeof(typeOfUUID) + sizeof(uint64_t)) / sizeof(uint64_t)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.flags |= PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 2 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 10;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+
+    DebugSessionLinux::UuidData zebinModuleUuidData = {
+        .handle = zebinModuleUUID,
+        .classHandle = zebinModuleClassHandle,
+        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .data = std::make_unique<char[]>(sizeof(1)),
+        .dataSize = sizeof(1)};
+
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 1;
+
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vm0;
+    vmBindIsa->num_uuids = 2;
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidsTemp[2];
+    uuidsTemp[0] = static_cast<typeOfUUID>(elfUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(zebinModuleUUID);
+
+    memcpy_s(uuids, 2 * sizeof(typeOfUUID), uuidsTemp, sizeof(uuidsTemp));
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(1u, session->eventsToAck.size());
+
+    zet_debug_event_t event0 = {};
+    auto result = session->readEvent(0, &event0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event0.type);
+
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, session->apiEvents.size());
+    result = session->readEvent(0, &event0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event0.type);
+}
+
 TEST_F(DebugApiLinuxVmBindTest, GivenBlockOnFenceAndTwoPendingEventsWhenAcknowledgeEventCalledThenCorrectEventIsAcked) {
     session->blockOnFenceMode = true;
     setupVmToTile(session.get());
@@ -4668,6 +4721,61 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleSegmentsInL0ZebinModuleWhenLoadAddr
     session->handleEvent(&vmBindIsa->base);
 
     EXPECT_EQ(0u, session->apiEvents.size());
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenMultipleSegmentsInL0ZebinModuleWhenLoadAddressCountReachesSegmentsCountThenModuleLoadEventIsTriggered) {
+    const uint64_t isaGpuVa = 0x345000;
+    const uint64_t dataGpuVa = 0x333000;
+    const uint64_t isaSize = 0x2000;
+    const uint64_t dataSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    const uint32_t segmentCount = 2;
+    DebugSessionLinux::UuidData zebinModuleUuidData = {
+        .handle = zebinModuleUUID,
+        .classHandle = zebinModuleClassHandle,
+        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .data = std::make_unique<char[]>(sizeof(segmentCount)),
+        .dataSize = sizeof(segmentCount)};
+
+    memcpy(zebinModuleUuidData.data.get(), &segmentCount, sizeof(segmentCount));
+
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = segmentCount;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].ptr = 0x1000;
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vmHandleForVmBind;
+    vmBindIsa->num_uuids = 4;
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidsTemp[4];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
+    uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
+    uuidsTemp[3] = static_cast<typeOfUUID>(zebinModuleUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+    session->handleEvent(&vmBindIsa->base);
+
+    vmBindIsa->num_uuids = 1;
+    vmBindIsa->va_start = dataGpuVa;
+    vmBindIsa->va_length = dataSize;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 1 * sizeof(typeOfUUID);
+    uuidsTemp[0] = static_cast<typeOfUUID>(zebinModuleUUID); // only module UUID attached
+
+    memcpy(uuids, uuidsTemp, sizeof(typeOfUUID));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, session->apiEvents.front().type);
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandlingEventsThenModuleLoadIsReportedOnceOnly) {

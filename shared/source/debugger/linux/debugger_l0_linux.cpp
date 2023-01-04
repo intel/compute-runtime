@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,8 @@ bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::Graph
 
     for (auto &allocation : allocs) {
         auto drmAllocation = static_cast<NEO::DrmAllocation *>(allocation);
+
+        DEBUG_BREAK_IF(allocation->getAllocationType() == AllocationType::KERNEL_ISA_INTERNAL);
         drmAllocation->linkWithRegisteredHandle(elfHandle);
         drmAllocation->linkWithRegisteredHandle(moduleHandle);
     }

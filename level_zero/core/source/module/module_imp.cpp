@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -613,6 +613,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     }
 
     registerElfInDebuggerL0();
+
     this->maxGroupSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().maxWorkGroupSize);
 
     checkIfPrivateMemoryPerDispatchIsNeeded();
@@ -1276,7 +1277,7 @@ ze_result_t ModuleImp::destroy() {
 void ModuleImp::registerElfInDebuggerL0() {
     auto debuggerL0 = device->getL0Debugger();
 
-    if (!debuggerL0) {
+    if (this->type != ModuleType::User || !debuggerL0) {
         return;
     }
 
