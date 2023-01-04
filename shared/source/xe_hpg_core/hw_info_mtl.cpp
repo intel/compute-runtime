@@ -38,6 +38,7 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
+    "mtl",                                         // platformType
     "",                                            // deviceName
     PreemptionMode::ThreadGroup,                   // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                        // defaultEngineType

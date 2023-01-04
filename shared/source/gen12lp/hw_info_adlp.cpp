@@ -37,6 +37,7 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     0,                                              // sharedSystemMemCapabilities
     83.333,                                         // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                      // requiredPreemptionSurfaceSize
+    "adlp",                                         // platformType
     "",                                             // deviceName
     PreemptionMode::MidThread,                      // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                         // defaultEngineType

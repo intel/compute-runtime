@@ -12,6 +12,10 @@
 
 #include "gtest/gtest.h"
 
+namespace NEO {
+extern const char *familyName[];
+} // namespace NEO
+
 using namespace NEO;
 
 using DeviceNameTest = ::testing::Test;

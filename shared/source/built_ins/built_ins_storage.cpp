@@ -84,7 +84,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
-    const auto platformName = hardwarePrefix[hwInfo.platform.eProductFamily];
+    const auto platformName = getFamilyNameWithType(hwInfo);
     const auto revisionId = std::to_string(hwInfo.platform.usRevId);
     const auto builtinName = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);

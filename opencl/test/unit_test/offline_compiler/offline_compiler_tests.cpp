@@ -69,7 +69,7 @@ void MultiCommandTests::deleteOutFileList() {
 std::string getCompilerOutputFileName(const std::string &fileName, const std::string &type) {
     std::string fName(fileName);
     fName.append("_");
-    fName.append(gEnvironment->devicePrefix);
+    fName.append(gEnvironment->familyNameWithType);
     fName.append(".");
     fName.append(type);
     return fName;
@@ -1955,17 +1955,17 @@ TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectFileIsGenerated
     };
     // clang-format on
 
-    std::string devicePrefix = gEnvironment->devicePrefix;
+    std::string familyNameWithType = gEnvironment->familyNameWithType;
     std::string fileName = "scheduler";
     std::string retArray = pOfflineCompiler->parseBinAsCharArray(binary, sizeof(binary), fileName);
     std::string target = "#include <cstddef>\n"
                          "#include <cstdint>\n\n"
                          "size_t SchedulerBinarySize_" +
-                         devicePrefix + " = 37;\n"
-                                        "uint32_t SchedulerBinary_" +
-                         devicePrefix + "[10] = {\n"
-                                        "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
-                                        "    0x66097860, 0xff000000};\n";
+                         familyNameWithType + " = 37;\n"
+                                              "uint32_t SchedulerBinary_" +
+                         familyNameWithType + "[10] = {\n"
+                                              "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
+                                              "    0x66097860, 0xff000000};\n";
     EXPECT_EQ(retArray, target);
 
     delete pOfflineCompiler;

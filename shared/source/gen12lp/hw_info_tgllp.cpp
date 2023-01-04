@@ -37,6 +37,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     0,                                               // sharedSystemMemCapabilities
     83.333,                                          // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                       // requiredPreemptionSurfaceSize
+    "tgllp",                                         // platformType
     "",                                              // deviceName
     PreemptionMode::MidThread,                       // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                          // defaultEngineType

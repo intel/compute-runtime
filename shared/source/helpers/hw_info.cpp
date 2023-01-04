@@ -30,6 +30,10 @@ uint64_t defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT] = {
 };
 
 // Global table of family names
+const char *familyName[IGFX_MAX_CORE] = {
+    nullptr,
+};
+// Global table of family names
 bool familyEnabled[IGFX_MAX_CORE] = {
     false,
 };
@@ -119,5 +123,19 @@ aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
     return DebugManager.flags.NodeOrdinal.get() == -1
                ? hwInfo.capabilityTable.defaultEngineType
                : static_cast<aub_stream::EngineType>(DebugManager.flags.NodeOrdinal.get());
+}
+
+const std::string getFamilyNameWithType(const HardwareInfo &hwInfo) {
+    std::string platformName = familyName[hwInfo.platform.eRenderCoreFamily];
+    platformName.append(hwInfo.capabilityTable.platformType);
+    return platformName;
+}
+
+bool haveSameCore(PRODUCT_FAMILY productFamilyLeft, PRODUCT_FAMILY productFamilyRight) {
+    UNRECOVERABLE_IF(productFamilyLeft >= IGFX_MAX_PRODUCT || productFamilyRight >= IGFX_MAX_PRODUCT);
+    auto hwInfoLeft = NEO::hardwareInfoTable[productFamilyLeft];
+    auto hwInfoRight = NEO::hardwareInfoTable[productFamilyRight];
+    UNRECOVERABLE_IF(hwInfoLeft == nullptr || hwInfoRight == nullptr);
+    return hwInfoLeft->platform.eRenderCoreFamily == hwInfoRight->platform.eRenderCoreFamily;
 }
 } // namespace NEO
