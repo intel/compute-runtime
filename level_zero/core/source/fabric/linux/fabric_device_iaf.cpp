@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,6 +111,7 @@ ze_result_t FabricSubDeviceIaf::enumerate() {
     auto pDrm = osInterface->getDriverModel()->as<NEO::Drm>();
     std::optional<std::string> rootPciPath = NEO::getPciLinkPath(pDrm->getFileDescriptor());
     if (!rootPciPath.has_value()) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "PCI Path not found%s\n", "");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -167,7 +168,12 @@ ze_result_t FabricSubDeviceIaf::getConnection(IafPort &port, FabricPortConnectio
 
     IafPortState iafPortState = {};
     ze_result_t result = pIafNlApi->fPortStatusQuery(port.portId, iafPortState);
-    if (ZE_RESULT_SUCCESS != result || iafPortState.healthStatus != IAF_FPORT_HEALTH_HEALTHY) {
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "fPortStatusQuery Unsuccessful: %s\n", result);
+        return result;
+    }
+    if (iafPortState.healthStatus != IAF_FPORT_HEALTH_HEALTHY) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "IAF PORT not Healthy%s\n", "");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 

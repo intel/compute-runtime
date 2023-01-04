@@ -597,18 +597,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     uint32_t groupSizeY = pDstRegion->height;
     uint32_t groupSizeZ = pDstRegion->depth;
 
-    if (builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
-                                        &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ze_result_t ret = builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
+                                                      &groupSizeX, &groupSizeY, &groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
-    if (builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ret = builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
     if (pDstRegion->width % groupSizeX || pDstRegion->height % groupSizeY || pDstRegion->depth % groupSizeZ) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d, %d} specified\n",
+                           groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -685,6 +689,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     switch (bytesPerPixel) {
     default:
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "invalid bytesPerPixel of size: %u\n", bytesPerPixel);
         UNRECOVERABLE_IF(true);
         break;
     case 1u:
@@ -726,18 +731,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     uint32_t groupSizeY = pSrcRegion->height;
     uint32_t groupSizeZ = pSrcRegion->depth;
 
-    if (builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
-                                        &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ze_result_t ret = builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
+                                                      &groupSizeX, &groupSizeY, &groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
-    if (builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ret = builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
     if (pSrcRegion->width % groupSizeX || pSrcRegion->height % groupSizeY || pSrcRegion->depth % groupSizeZ) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d, %d} specified\n",
+                           groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -751,8 +760,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &kernelArgs,
-                                                                        event, numWaitEvents, phWaitEvents, launchParams);
+    ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &kernelArgs,
+                                                                   event, numWaitEvents, phWaitEvents, launchParams);
 
     addFlushRequiredCommand(allocationStruct.needsFlush, event);
 
@@ -840,18 +849,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
 
-    if (kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
-                                 &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ze_result_t ret = kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
+                                               &groupSizeY, &groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
-    if (kernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ret = kernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
     if (srcRegion.width % groupSizeX || srcRegion.height % groupSizeY || srcRegion.depth % groupSizeZ) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d, %d} specified\n",
+                           groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -971,9 +984,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
     uint32_t groupSizeY = 1u;
     uint32_t groupSizeZ = 1u;
 
-    if (builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ)) {
+    ze_result_t ret = builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
     builtinKernel->setArgBufferWithAlloc(0u, *reinterpret_cast<uintptr_t *>(dstPtr), dstPtrAlloc);
@@ -1149,7 +1163,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
             }
         }
     }
-
     return ret;
 }
 
@@ -1418,18 +1431,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     uint32_t groupSizeY = srcRegion->height;
     uint32_t groupSizeZ = srcRegion->depth;
 
-    if (builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
-                                        &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ze_result_t ret = builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
+                                                      &groupSizeX, &groupSizeY, &groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
-    if (builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ret = builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
     if (srcRegion->width % groupSizeX || srcRegion->height % groupSizeY || srcRegion->depth % groupSizeZ) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d, %d} specified\n",
+                           groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -1481,18 +1498,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     uint32_t groupSizeY = srcRegion->height;
     uint32_t groupSizeZ = 1u;
 
-    if (builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
-                                        &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ze_result_t ret = builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
+                                                      &groupSizeY, &groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
-    if (builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ret = builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
     if (srcRegion->width % groupSizeX || srcRegion->height % groupSizeY) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d}\n",
+                           groupSizeX, groupSizeY);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -1657,9 +1678,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             }
         }
 
-        if (builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1u, 1u)) {
+        ze_result_t ret = builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1u, 1u);
+        if (ret != ZE_RESULT_SUCCESS) {
             DEBUG_BREAK_IF(true);
-            return ZE_RESULT_ERROR_UNKNOWN;
+            return ret;
         }
 
         ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
@@ -1887,6 +1909,7 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
 
     switch (imageType) {
     default:
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "invalid imageType: %d\n", imageType);
         UNRECOVERABLE_IF(true);
         break;
     case NEO::ImageType::Image1D:
@@ -2359,15 +2382,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     uint32_t groupSizeY = 1u;
     uint32_t groupSizeZ = 1u;
 
-    if (builtinKernel->suggestGroupSize(numEvents, 1u, 1u,
-                                        &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ze_result_t ret = builtinKernel->suggestGroupSize(numEvents, 1u, 1u,
+                                                      &groupSizeX, &groupSizeY, &groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
-    if (builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+    ret = builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    if (ret != ZE_RESULT_SUCCESS) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ret;
     }
 
     ze_group_count_t dispatchKernelArgs{numEvents / groupSizeX, 1u, 1u};
