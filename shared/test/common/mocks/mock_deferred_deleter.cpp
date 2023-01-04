@@ -18,7 +18,6 @@ namespace NEO {
 MockDeferredDeleter::MockDeferredDeleter() {
     shouldStopCalled = 0;
     clearCalled = 0;
-    clearCalledWithBreakTillFailure = 0;
 }
 
 void MockDeferredDeleter::deferDeletion(DeferrableDeletion *deletion) {
@@ -41,11 +40,6 @@ void MockDeferredDeleter::drain(bool blocking) {
     }
     DeferredDeleter::drain(blocking);
     drainCalled++;
-}
-
-void MockDeferredDeleter::clearQueueTillFirstFailure() {
-    DeferredDeleter::clearQueueTillFirstFailure();
-    clearQueueTillFirstFailureCalled++;
 }
 
 void MockDeferredDeleter::drain() {
@@ -71,12 +65,9 @@ bool MockDeferredDeleter::shouldStop() {
     return shouldStopCalled > 1;
 }
 
-void MockDeferredDeleter::clearQueue(bool breakOnFailure) {
-    DeferredDeleter::clearQueue(breakOnFailure);
+void MockDeferredDeleter::clearQueue() {
+    DeferredDeleter::clearQueue();
     clearCalled++;
-    if (breakOnFailure) {
-        clearCalledWithBreakTillFailure++;
-    }
 }
 
 int MockDeferredDeleter::getClientsNum() {
@@ -142,17 +133,10 @@ MockDeferredDeleter::~MockDeferredDeleter() {
     if (expectDrainCalled) {
         EXPECT_NE(0, drainCalled);
     }
-    if (expectClearQueueTillFirstFailureCalled) {
-        EXPECT_NE(0, clearQueueTillFirstFailureCalled);
-    }
 }
 
 void MockDeferredDeleter::expectDrainBlockingValue(bool value) {
     expectedDrainValue = value;
     expectDrainCalled = true;
-}
-
-void MockDeferredDeleter::expectClearQueueTillFirstFailure() {
-    expectClearQueueTillFirstFailureCalled = true;
 }
 } // namespace NEO

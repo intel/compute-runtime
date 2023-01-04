@@ -2204,7 +2204,7 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByManyOsContextsWhenCheckin
     auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto multiContextDestructor = new MockDeferredDeleter();
-    multiContextDestructor->expectClearQueueTillFirstFailure();
+    multiContextDestructor->expectDrainBlockingValue(false);
     memoryManager->multiContextResourceDestructor.reset(multiContextDestructor);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));

@@ -215,7 +215,7 @@ class MemoryManager {
     static HeapIndex selectExternalHeap(bool useLocalMemory);
 
     static uint32_t maxOsContextCount;
-    virtual void commonCleanup();
+    virtual void commonCleanup(){};
     virtual bool isCpuCopyRequired(const void *ptr) { return false; }
     virtual bool isWCMemory(const void *ptr) { return false; }
 
