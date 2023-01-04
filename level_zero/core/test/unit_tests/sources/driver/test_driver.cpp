@@ -235,6 +235,31 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingHostMemoryThenSuccessIsReturned) {
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+
+    uint64_t imageHandle = 0x1;
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    hostDesc.pNext = &importNTHandle;
+
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
+
+    void *ptr = nullptr;
+    auto result = context->allocHostMem(&hostDesc, 100, 1, &ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    auto alloc = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_EQ(alloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
+    result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
@@ -273,6 +298,24 @@ HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingDeviceMemoryThenErr
     void *ptr = nullptr;
 
     auto result = context->allocDeviceMem(device, &devDesc, 100, 1, &ptr);
+
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingHostMemoryThenErrorIsReturned) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = reinterpret_cast<void *>(invalidHandle);
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    hostDesc.pNext = &importNTHandle;
+
+    void *ptr = nullptr;
+    auto result = context->allocHostMem(&hostDesc, 100, 1, &ptr);
 
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }

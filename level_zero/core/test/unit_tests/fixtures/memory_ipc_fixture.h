@@ -67,6 +67,18 @@ struct ContextFdMock : public L0::ContextImp {
         return res;
     }
 
+    ze_result_t allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
+                             size_t size,
+                             size_t alignment, void **ptr) override {
+        ze_result_t res = L0::ContextImp::allocHostMem(hostDesc, size, alignment, ptr);
+        if (ZE_RESULT_SUCCESS == res) {
+            driverHandle->allocationMap.first = *ptr;
+            driverHandle->allocationMap.second = driverHandle->mockFd;
+        }
+
+        return res;
+    }
+
     ze_result_t getMemAllocProperties(const void *ptr,
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
                                       ze_device_handle_t *phDevice) override {

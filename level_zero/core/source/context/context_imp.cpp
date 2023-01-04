@@ -84,6 +84,37 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
 
+    StructuresLookupTable lookupTable = {};
+
+    lookupTable.relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, hostDesc->pNext);
+
+    if (parseResult != ZE_RESULT_SUCCESS) {
+        return parseResult;
+    }
+
+    if (lookupTable.isSharedHandle) {
+        if (lookupTable.sharedHandleType.isDMABUFHandle) {
+            ze_ipc_memory_flags_t flags = {};
+            *ptr = getMemHandlePtr(this->devices.begin()->second,
+                                   lookupTable.sharedHandleType.fd,
+                                   NEO::AllocationType::BUFFER_HOST_MEMORY,
+                                   flags);
+            if (nullptr == *ptr) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else {
+            UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
+            *ptr = this->driverHandle->importNTHandle(this->devices.begin()->second,
+                                                      lookupTable.sharedHandleType.ntHnadle,
+                                                      NEO::AllocationType::BUFFER_HOST_MEMORY);
+            if (*ptr == nullptr) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
                                                                            this->rootDeviceIndices,
                                                                            this->deviceBitfields);
@@ -625,7 +656,7 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
             if (extendedMemoryExportProperties->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
-            if (type != ZE_MEMORY_TYPE_DEVICE) {
+            if (type == ZE_MEMORY_TYPE_SHARED) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
             uint64_t handle = 0;

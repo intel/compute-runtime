@@ -2328,7 +2328,39 @@ TEST_F(MemoryExportImportTest,
 }
 
 TEST_F(MemoryExportImportTest,
-       givenCallToMemAllocPropertiesWithExtendedExportPropertiesForNonDeviceAllocationThenUnsupportedFeatureIsReturned) {
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesForSharedAllocationThenUnsupportedFeatureIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size,
+                                                 alignment,
+                                                 &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_external_memory_export_fd_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    extendedProperties.fd = std::numeric_limits<int>::max();
+    memoryProperties.pNext = &extendedProperties;
+
+    result = context->getMemAllocProperties(ptr, &memoryProperties, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(extendedProperties.fd, std::numeric_limits<int>::max());
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesForHostAllocationThenSuccessIsReturned) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2346,8 +2378,8 @@ TEST_F(MemoryExportImportTest,
     memoryProperties.pNext = &extendedProperties;
 
     result = context->getMemAllocProperties(ptr, &memoryProperties, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-    EXPECT_EQ(extendedProperties.fd, std::numeric_limits<int>::max());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(extendedProperties.fd, 57);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
