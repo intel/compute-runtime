@@ -1798,7 +1798,7 @@ bool DebugSessionLinux::ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) {
 
     if (isa != connection->isaMap[deviceIndex].end()) {
 
-        //zebin modules do not store ackEvents per ISA
+        // zebin modules do not store ackEvents per ISA
         UNRECOVERABLE_IF(isa->second->ackEvents.size() > 0 && isa->second->perKernelModule == false);
 
         for (auto &event : isa->second->ackEvents) {
@@ -1849,7 +1849,7 @@ void DebugSessionLinux::cleanRootSessionAfterDetach(uint32_t deviceIndex) {
 
     for (const auto &isa : connection->isaMap[deviceIndex]) {
 
-        //zebin modules do not store ackEvents per ISA
+        // zebin modules do not store ackEvents per ISA
         UNRECOVERABLE_IF(isa.second->ackEvents.size() > 0 && isa.second->perKernelModule == false);
 
         for (auto &event : isa.second->ackEvents) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -175,7 +175,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEmptyQueueWhenFinishingThenTa
     mockCmdQueue.finish();
     EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
     mockCmdQueue.finish();
-    //nothings sent to the HW, no need to bump tags
+    // nothings sent to the HW, no need to bump tags
     EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
     EXPECT_EQ(0u, mockCmdQueue.latestTaskCountWaited);
 }
@@ -270,7 +270,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskC
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
 
-    //cleanup
+    // cleanup
     retVal = mockCmdQueue.enqueueUnmapMemObject(buffer, ptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
@@ -291,7 +291,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenPowerOfTwo
     ASSERT_NE(itorCmd, cmdList.end());
     auto cmdGpGpuWalker = genCmdCast<GPGPU_WALKER *>(*itorCmd);
 
-    //execution masks should be all active
+    // execution masks should be all active
     EXPECT_EQ(0xffffffffu, cmdGpGpuWalker->getBottomExecutionMask());
     EXPECT_EQ(0xffffffffu, cmdGpGpuWalker->getRightExecutionMask());
 }
@@ -778,7 +778,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
         }
     }
 
-    //now re-try to see if SBA is not programmed
+    // now re-try to see if SBA is not programmed
     scratchSize *= 2;
     kernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
@@ -1229,7 +1229,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDi
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 
-    //surfaces are non resident
+    // surfaces are non resident
     auto &surfacesForResidency = mockCsr->getResidencyAllocations();
     EXPECT_EQ(0u, surfacesForResidency.size());
 }
@@ -1290,16 +1290,16 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
     EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
     EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               //dstAllocation
-                                                                     graphicsAllocation,               //srcAllocation
-                                                                     0,                                //dstOffset
-                                                                     0,                                //srcOffset
-                                                                     0,                                //copySize
-                                                                     0,                                //srcRowPitch
-                                                                     0,                                //srcSlicePitch
-                                                                     0,                                //dstRowPitch
-                                                                     0,                                //dstSlicePitch
-                                                                     bcsCsr->getClearColorAllocation() //clearColorAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               // dstAllocation
+                                                                     graphicsAllocation,               // srcAllocation
+                                                                     0,                                // dstOffset
+                                                                     0,                                // srcOffset
+                                                                     0,                                // copySize
+                                                                     0,                                // srcRowPitch
+                                                                     0,                                // srcSlicePitch
+                                                                     0,                                // dstRowPitch
+                                                                     0,                                // dstSlicePitch
+                                                                     bcsCsr->getClearColorAllocation() // clearColorAllocation
     );
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
@@ -1335,16 +1335,16 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
 
     EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               //dstAllocation
-                                                                     graphicsAllocation,               //srcAllocation
-                                                                     0,                                //dstOffset
-                                                                     0,                                //srcOffset
-                                                                     0,                                //copySize
-                                                                     0,                                //srcRowPitch
-                                                                     0,                                //srcSlicePitch
-                                                                     0,                                //dstRowPitch
-                                                                     0,                                //dstSlicePitch
-                                                                     bcsCsr->getClearColorAllocation() //clearColorAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               // dstAllocation
+                                                                     graphicsAllocation,               // srcAllocation
+                                                                     0,                                // dstOffset
+                                                                     0,                                // srcOffset
+                                                                     0,                                // copySize
+                                                                     0,                                // srcRowPitch
+                                                                     0,                                // srcSlicePitch
+                                                                     0,                                // dstRowPitch
+                                                                     0,                                // dstSlicePitch
+                                                                     bcsCsr->getClearColorAllocation() // clearColorAllocation
     );
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
@@ -1376,16 +1376,16 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNullPageTableManagerWhenCallB
     EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
     EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               //dstAllocation
-                                                                     graphicsAllocation,               //srcAllocation
-                                                                     0,                                //dstOffset
-                                                                     0,                                //srcOffset
-                                                                     0,                                //copySize
-                                                                     0,                                //srcRowPitch
-                                                                     0,                                //srcSlicePitch
-                                                                     0,                                //dstRowPitch
-                                                                     0,                                //dstSlicePitch
-                                                                     bcsCsr->getClearColorAllocation() //clearColorAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               // dstAllocation
+                                                                     graphicsAllocation,               // srcAllocation
+                                                                     0,                                // dstOffset
+                                                                     0,                                // srcOffset
+                                                                     0,                                // copySize
+                                                                     0,                                // srcRowPitch
+                                                                     0,                                // srcSlicePitch
+                                                                     0,                                // dstRowPitch
+                                                                     0,                                // dstSlicePitch
+                                                                     bcsCsr->getClearColorAllocation() // clearColorAllocation
     );
     BlitPropertiesContainer container;
     container.push_back(blitProperties);

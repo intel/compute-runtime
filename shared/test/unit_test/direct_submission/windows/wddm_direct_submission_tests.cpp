@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -188,7 +188,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
     }
 
     EXPECT_EQ(0u, wddmMockInterface->createMonitoredFenceCalled);
-    //expect 2 makeResident calls, due to fail on 1st and then retry (which also fails)
+    // expect 2 makeResident calls, due to fail on 1st and then retry (which also fails)
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
     EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }

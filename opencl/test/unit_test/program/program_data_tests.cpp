@@ -162,7 +162,7 @@ void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
     pCurPtr += programPatchListSize;
 
     auto rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
-    //as we use mock compiler in unit test, replace the genBinary here.
+    // as we use mock compiler in unit test, replace the genBinary here.
     pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(pProgramData, headerSize + programBinaryHeader.PatchListSize);
     pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = headerSize + programBinaryHeader.PatchListSize;
 

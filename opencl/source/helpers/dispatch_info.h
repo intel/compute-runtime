@@ -75,14 +75,14 @@ class DispatchInfo {
     Kernel *kernel = nullptr;
     uint32_t dim = 0;
 
-    Vec3<size_t> gws{0, 0, 0};    //global work size
-    Vec3<size_t> elws{0, 0, 0};   //enqueued local work size
-    Vec3<size_t> offset{0, 0, 0}; //global offset
-    Vec3<size_t> agws{0, 0, 0};   //actual global work size
-    Vec3<size_t> lws{0, 0, 0};    //local work size
-    Vec3<size_t> twgs{0, 0, 0};   //total number of work groups
-    Vec3<size_t> nwgs{0, 0, 0};   //number of work groups
-    Vec3<size_t> swgs{0, 0, 0};   //start of work groups
+    Vec3<size_t> gws{0, 0, 0};    // global work size
+    Vec3<size_t> elws{0, 0, 0};   // enqueued local work size
+    Vec3<size_t> offset{0, 0, 0}; // global offset
+    Vec3<size_t> agws{0, 0, 0};   // actual global work size
+    Vec3<size_t> lws{0, 0, 0};    // local work size
+    Vec3<size_t> twgs{0, 0, 0};   // total number of work groups
+    Vec3<size_t> nwgs{0, 0, 0};   // number of work groups
+    Vec3<size_t> swgs{0, 0, 0};   // start of work groups
 };
 
 struct MultiDispatchInfo {

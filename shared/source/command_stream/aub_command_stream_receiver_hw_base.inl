@@ -607,7 +607,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
     const uint32_t mask = getMaskAndValueForPollForCompletion();
     const uint32_t value = mask;
     stream->registerPoll(
-        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS
+        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), // EXECLIST_STATUS
         mask,
         value,
         pollNotEqual,
@@ -712,7 +712,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMMIO(uint32_t offset, uint32_t 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
     if (hardwareContextController) {
-        //Add support for expectMMIO to AubStream
+        // Add support for expectMMIO to AubStream
         return;
     }
     this->getAubStream()->expectMMIO(mmioRegister, expectedValue);

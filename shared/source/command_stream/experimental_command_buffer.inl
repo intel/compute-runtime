@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,15 +38,15 @@ size_t ExperimentalCommandBuffer::programExperimentalCommandBuffer() {
 
     size_t returnOffset = currentStream->getUsed();
 
-    //begin timestamp
+    // begin timestamp
     addTimeStampPipeControl<GfxFamily>();
 
     addExperimentalCommands<GfxFamily>();
 
-    //end timestamp
+    // end timestamp
     addTimeStampPipeControl<GfxFamily>();
 
-    //end
+    // end
     auto pCmd = currentStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
     *pCmd = GfxFamily::cmdInitBatchBufferEnd;
 
@@ -80,7 +80,7 @@ void ExperimentalCommandBuffer::addTimeStampPipeControl() {
         *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo(),
         args);
 
-    //moving to next chunk
+    // moving to next chunk
     timestampsOffset += sizeof(uint64_t);
 
     DEBUG_BREAK_IF(timestamps->getUnderlyingBufferSize() < timestampsOffset);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -206,13 +206,13 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return submittedCmd != nullptr;
     }
 
-    //commands blocked by user event depencies
+    // commands blocked by user event depencies
     bool isReadyForSubmission();
 
     // adds a callback (execution state change listener) to this event's list of callbacks
     void addCallback(Callback::ClbFuncT fn, cl_int type, void *data);
 
-    //if(blocking==false), will return with WaitStatus::NotReady instead of blocking while waiting for completion
+    // if(blocking==false), will return with WaitStatus::NotReady instead of blocking while waiting for completion
     virtual WaitStatus wait(bool blocking, bool useQuickKmdSleep);
 
     bool isUserEvent() const {
@@ -347,7 +347,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // guarantees that newStatus <= oldStatus
     void transitionExecutionStatus(int32_t newExecutionStatus) const;
 
-    //vector storing events that needs to be notified when this event is ready to go
+    // vector storing events that needs to be notified when this event is ready to go
     IFRefList<Event, true, true> childEventsToNotify;
     void unblockEventsBlockedByThis(int32_t transitionStatus);
     void submitCommand(bool abortBlockedTasks);
@@ -387,9 +387,9 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     TagNodeBase *timeStampNode = nullptr;
     TagNodeBase *perfCounterNode = nullptr;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
-    //number of events this event depends on
+    // number of events this event depends on
     std::atomic<int> parentCount;
-    //event parents
+    // event parents
     std::vector<Event *> parentEvents;
 
   private:

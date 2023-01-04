@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,7 +148,7 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
     // Poll until HW complete
     using AubMemDump::CmdServicesMemTraceRegisterPoll;
     aubFile.registerPoll(
-        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS
+        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), // EXECLIST_STATUS
         0x100,
         0x100,
         false,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ void executeGpuKernelAndValidate(ze_driver_handle_t &driverHandle, ze_context_ha
     pFnzexDriverGetHostPointerBaseAddress zexDriverGetHostPointerBaseAddress = nullptr;
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverGetHostPointerBaseAddress", reinterpret_cast<void **>(&zexDriverGetHostPointerBaseAddress)));
 
-    //Import memory
+    // Import memory
     SUCCESS_OR_TERMINATE(zexDriverImportExternalPointer(driverHandle, srcBuffer, allocSize));
     SUCCESS_OR_TERMINATE(zexDriverImportExternalPointer(driverHandle, dstBuffer, allocSize));
 

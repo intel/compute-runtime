@@ -53,13 +53,13 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     ~CommandStreamReceiverMock() override {
         EXPECT_FALSE(pClDevice->hasOwnership());
         if (expectedToFreeCount == (size_t)-1) {
-            EXPECT_GT(toFree.size(), 0u); //make sure flush was called
+            EXPECT_GT(toFree.size(), 0u); // make sure flush was called
         } else {
             EXPECT_EQ(toFree.size(), expectedToFreeCount);
         }
 
         auto memoryManager = this->getMemoryManager();
-        //Now free memory. if CQ/CSR did the same, we will hit double-free
+        // Now free memory. if CQ/CSR did the same, we will hit double-free
         for (auto p : toFree)
             memoryManager->freeGraphicsMemory(p);
     }

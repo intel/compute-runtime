@@ -129,16 +129,16 @@ void applyWorkarounds() {
         mockObj.method(2);
     }
 
-    //intialize rand
+    // intialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 
-    //Create at least on thread to prevent false memory leaks in tests using threads
+    // Create at least on thread to prevent false memory leaks in tests using threads
     std::thread t([&]() {
     });
     tempThreadID = t.get_id();
     t.join();
 
-    //Create FileLogger to prevent false memory leaks
+    // Create FileLogger to prevent false memory leaks
     {
         NEO::fileLoggerInstance();
     }

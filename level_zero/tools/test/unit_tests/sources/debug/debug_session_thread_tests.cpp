@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -571,7 +571,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsli
     auto sessionMock = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
 
-    //fuse off first slice
+    // fuse off first slice
     sessionMock->topologyMap[0].sliceIndices.erase(sessionMock->topologyMap[0].sliceIndices.begin());
     hwInfo.gtSystemInfo.SliceCount = 1;
     sessionMock->topologyMap[0].subsliceIndices.push_back(2);
@@ -608,7 +608,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSub
     auto sessionMock = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
 
-    //fuse off first slice
+    // fuse off first slice
     sessionMock->topologyMap[0].sliceIndices.erase(sessionMock->topologyMap[0].sliceIndices.begin());
     hwInfo.gtSystemInfo.SliceCount = 7;
 

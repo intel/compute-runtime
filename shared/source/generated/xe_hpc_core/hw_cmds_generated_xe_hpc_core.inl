@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -6011,7 +6011,7 @@ typedef struct tagMI_ARB_CHECK {
     }
     inline void setPreParserDisable(const bool value) {
         TheStructure.Common.PreParserDisable = value;
-        TheStructure.Common.MaskBits = 1 << 0; //PreParserDisable is at bit0, so set bit0 of mask to 1
+        TheStructure.Common.MaskBits = 1 << 0; // PreParserDisable is at bit0, so set bit0 of mask to 1
     }
     inline bool getPreParserDisable() const {
         return TheStructure.Common.PreParserDisable;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,7 +163,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
 
     volatile TagAddressType *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
     completionAddress += (TagAllocationLayout::completionFenceOffset / sizeof(TagAddressType));
-    *completionAddress = 2; //1st context is ready
+    *completionAddress = 2; // 1st context is ready
     completionAddress += (postSyncOffset / sizeof(TagAddressType));
     *completionAddress = 1;
 

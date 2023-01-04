@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@
 
 namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
-} //namespace NEO
+} // namespace NEO
 using namespace NEO;
 
 template <typename GfxFamily>

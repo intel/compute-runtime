@@ -117,8 +117,8 @@ bool AubFileStream::init(uint32_t stepping, uint32_t device) {
     header.metal = 0;
     header.device = device;
     header.csxSwizzling = CmdServicesMemTraceVersion::CsxSwizzlingValues::Disabled;
-    //Which recording method used:
-    // Phys is required for GGTT memory to be written directly to phys vs through aperture.
+    // Which recording method used:
+    //  Phys is required for GGTT memory to be written directly to phys vs through aperture.
     header.recordingMethod = CmdServicesMemTraceVersion::RecordingMethodValues::Phy;
     header.pch = CmdServicesMemTraceVersion::PchValues::Default;
     header.captureTool = CmdServicesMemTraceVersion::CaptureToolValues::GenKmdCapture;
@@ -141,7 +141,7 @@ void AubFileStream::writeMemory(uint64_t physAddress, const void *memory, size_t
 
     auto sizeRemainder = size % sizeof(uint32_t);
     if (sizeRemainder) {
-        //if input size is not 4 byte aligned, write extra zeros to AUB
+        // if input size is not 4 byte aligned, write extra zeros to AUB
         uint32_t zero = 0;
         write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - sizeRemainder);
     }
@@ -263,7 +263,7 @@ void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_
 
         auto remainder = sizeThisIteration & (sizeof(uint32_t) - 1);
         if (remainder) {
-            //if size is not 4 byte aligned, write extra zeros to AUB
+            // if size is not 4 byte aligned, write extra zeros to AUB
             uint32_t zero = 0;
             write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - remainder);
         }
@@ -289,7 +289,7 @@ bool AubFileStream::addComment(const char *message) {
     write(message, messageLen);
     auto remainder = messageLen & (sizeof(uint32_t) - 1);
     if (remainder) {
-        //if size is not 4 byte aligned, write extra zeros to AUB
+        // if size is not 4 byte aligned, write extra zeros to AUB
         uint32_t zero = 0;
         write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - remainder);
     }

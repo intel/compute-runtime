@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ bool SingleMetricStreamerCollector::start() {
                                        &streamerProperties,
                                        notificationEvent,
                                        &metricStreamer));
-    //Initial pause
+    // Initial pause
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     return true;
 }

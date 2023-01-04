@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -215,11 +215,11 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     uint32_t data = ((1 << 1) | (1 << 2)) << 16;
     EXPECT_EQ(data, lriCmd->getDataDword());
 
-    //next should be BB_START to 1st Mid-Thread Cmd List
+    // next should be BB_START to 1st Mid-Thread Cmd List
     auto itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
 
-    //next should be PIPE_CONTROL and LRI switching to thread-group
+    // next should be PIPE_CONTROL and LRI switching to thread-group
     auto itorPipeControl = find<PIPE_CONTROL *>(itorBBStart, cmdList.end());
     EXPECT_NE(itorPipeControl, cmdList.end());
 
@@ -230,11 +230,11 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
     data = (1 << 1) | (((1 << 1) | (1 << 2)) << 16);
     EXPECT_EQ(data, lriCmd->getDataDword());
-    //start of thread-group command list
+    // start of thread-group command list
     itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
 
-    //next should be PIPE_CONTROL and LRI switching to mid-thread again
+    // next should be PIPE_CONTROL and LRI switching to mid-thread again
     itorPipeControl = find<PIPE_CONTROL *>(itorBBStart, cmdList.end());
     EXPECT_NE(itorPipeControl, cmdList.end());
 
@@ -245,7 +245,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
     data = ((1 << 1) | (1 << 2)) << 16;
     EXPECT_EQ(data, lriCmd->getDataDword());
-    //start of thread-group command list
+    // start of thread-group command list
     itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
 

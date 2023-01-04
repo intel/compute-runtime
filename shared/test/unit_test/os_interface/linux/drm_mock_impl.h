@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,13 +27,13 @@ class DrmTipMock : public DrmMock {
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryMemoryRegionInfoSuccessCount = std::numeric_limits<uint32_t>::max();
 
-    //DRM_IOCTL_I915_GEM_CREATE_EXT
+    // DRM_IOCTL_I915_GEM_CREATE_EXT
     drm_i915_gem_create_ext createExt{};
     MemoryClassInstance memRegions{};
     uint32_t numRegions = 0;
     int gemCreateExtRetVal = 0;
 
-    //DRM_IOCTL_I915_GEM_MMAP_OFFSET
+    // DRM_IOCTL_I915_GEM_MMAP_OFFSET
     __u64 mmapOffsetFlagsReceived = 0;
     __u64 offset = 0;
     int mmapOffsetRetVal = 0;

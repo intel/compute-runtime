@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,11 +106,11 @@ inline uint16_t float2Half(float f) {
     uint32_t fsign = (u.u >> 16) & 0x8000;
     float x = std::fabs(f);
 
-    //Nan
+    // Nan
     if (x != x) {
         u.u >>= (24 - 11);
         u.u &= 0x7fff;
-        u.u |= 0x0200; //silence the NaN
+        u.u |= 0x0200; // silence the NaN
         return u.u | fsign;
     }
 

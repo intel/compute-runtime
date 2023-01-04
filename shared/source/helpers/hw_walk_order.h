@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace NEO {
 namespace HwWalkOrderHelper {
-//make sure table below matches Hardware Spec
+// make sure table below matches Hardware Spec
 inline constexpr uint32_t walkOrderPossibilties = 6u;
 inline constexpr uint8_t X = 0;
 inline constexpr uint8_t Y = 1;

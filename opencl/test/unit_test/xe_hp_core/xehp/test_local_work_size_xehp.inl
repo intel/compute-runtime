@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpA0WhenKernelIsaIsBelowThreshold
     }
 
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 0u;
-    //on B0 algorithm is disabled
+    // on B0 algorithm is disabled
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     {
         auto expectedLws = computeWorkgroupSize(dispatchInfo);

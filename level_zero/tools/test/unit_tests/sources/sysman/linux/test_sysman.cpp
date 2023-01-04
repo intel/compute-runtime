@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,7 +163,7 @@ TEST_F(SysmanDeviceFixture, GivenSetValidDrmHandleForDeviceWhenDoingOsSysmanDevi
 
 TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallinggetFsAccessThenCreatedFsAccessHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pFsAccess != nullptr) {
-        //delete previously allocated pFsAccess
+        // delete previously allocated pFsAccess
         delete pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = nullptr;
     }
@@ -260,7 +260,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingFsAccessExistsThenErr
 
 TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAccessThenCreatedSysfsAccessHandleHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pSysfsAccess != nullptr) {
-        //delete previously allocated pSysfsAccess
+        // delete previously allocated pSysfsAccess
         delete pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = nullptr;
     }
@@ -270,7 +270,7 @@ TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAcces
 
 TEST_F(SysmanDeviceFixture, GivenCreateProcfsAccessHandleWhenCallinggetProcfsAccessThenCreatedProcfsAccessHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pProcfsAccess != nullptr) {
-        //delete previously allocated pProcfsAccess
+        // delete previously allocated pProcfsAccess
         delete pLinuxSysmanImp->pProcfsAccess;
         pLinuxSysmanImp->pProcfsAccess = nullptr;
     }
@@ -296,7 +296,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleThenSameHandleIsRetrievedFromO
 
 TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThenCreatedPmuInterfaceHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pPmuInterface != nullptr) {
-        //delete previously allocated pPmuInterface
+        // delete previously allocated pPmuInterface
         delete pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = nullptr;
     }

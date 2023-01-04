@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,14 +55,14 @@ TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhen
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingTilingThenCallSucceeds) {
-    mock->ioctl_expected.total = 1; //set_tiling
+    mock->ioctl_expected.total = 1; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     auto ret = bo->setTiling(tilingY, 0);
     EXPECT_TRUE(ret);
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingSameTilingThenCallSucceeds) {
-    mock->ioctl_expected.total = 0; //set_tiling
+    mock->ioctl_expected.total = 0; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     bo->tilingMode = tilingY;
     auto ret = bo->setTiling(tilingY, 0);
@@ -70,7 +70,7 @@ TEST_F(DrmBufferObjectTest, WhenSettingSameTilingThenCallSucceeds) {
 }
 
 TEST_F(DrmBufferObjectTest, GivenInvalidTilingWhenSettingTilingThenCallFails) {
-    mock->ioctl_expected.total = 1; //set_tiling
+    mock->ioctl_expected.total = 1; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     mock->ioctl_res = -1;
     auto ret = bo->setTiling(tilingY, 0);
@@ -91,7 +91,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedCrosses32BitBoundaryW
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0x1000);
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
-    //base address + size > size of 32bit address space
+    // base address + size > size of 32bit address space
     EXPECT_TRUE(execObject.has48BAddressSupportFlag());
 }
 
@@ -102,7 +102,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWh
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0xFFF);
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
-    //base address + size < size of 32bit address space
+    // base address + size < size of 32bit address space
     EXPECT_TRUE(execObject.has48BAddressSupportFlag());
 }
 

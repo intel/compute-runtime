@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ bool testEventsDeviceSignalDeviceWait(ze_context_handle_t &context, ze_device_ha
                              ZE_EVENT_SCOPE_FLAG_HOST,
                              (ze_event_scope_flag_t)0);
 
-    //Initialize memory
+    // Initialize memory
     uint8_t dstValue = 0;
     uint8_t srcValue = 55;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, dstBuffer, reinterpret_cast<void *>(&dstValue),

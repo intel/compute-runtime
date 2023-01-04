@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -284,7 +284,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 }
 
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
-    //param_value_size < sizeof(size_t)
+    // param_value_size < sizeof(size_t)
     retVal = clGetKernelSubGroupInfoKHR(
         pMultiDeviceKernel,
         pClDevice,

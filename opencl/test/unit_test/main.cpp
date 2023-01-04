@@ -90,16 +90,16 @@ void applyWorkarounds() {
         ss >> val;
     }
 
-    //intialize rand
+    // intialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 
-    //Create at least on thread to prevent false memory leaks in tests using threads
+    // Create at least on thread to prevent false memory leaks in tests using threads
     std::thread t([&]() {
     });
     tempThreadID = t.get_id();
     t.join();
 
-    //Create FileLogger to prevent false memory leaks
+    // Create FileLogger to prevent false memory leaks
     {
         NEO::fileLoggerInstance();
     }
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
             dumpTestStats = true;
             ++i;
             dumpTestStatsFileName = std::string(argv[i]);
-        } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { //disable tests which raise page fault signal during execution
+        } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { // disable tests which raise page fault signal during execution
             NEO::PagaFaultManagerTestConfig::disabled = true;
         } else if (!strcmp("--tbx", argv[i])) {
             if (testMode == TestMode::AubTests) {

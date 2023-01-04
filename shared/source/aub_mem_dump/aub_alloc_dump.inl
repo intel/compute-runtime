@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,7 +168,7 @@ void dumpImageInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFile
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto gmm = gfxAllocation.getDefaultGmm();
     if ((gmm->gmmResourceInfo->getNumSamples() > 1) || (gfxAllocation.isCompressionEnabled())) {
-        DEBUG_BREAK_IF(true); //unsupported
+        DEBUG_BREAK_IF(true); // unsupported
         return;
     }
 

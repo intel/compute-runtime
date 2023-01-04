@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,9 +16,9 @@ TEST(StringHelpers, GivenParamsWhenUsingStrncpyThenReturnIsCorrect) {
     char dst[1024] = "";
     char src[1024] = "HelloWorld";
 
-    //preconditions
+    // preconditions
     ASSERT_EQ(sizeof(dst), sizeof(src));
-    //String must be smaller than array capacity
+    // String must be smaller than array capacity
     ASSERT_LT(strlen(src), sizeof(src));
 
     auto ret = strncpy_s(nullptr, 1024, src, 1024);
@@ -147,9 +147,9 @@ TEST(StringHelpers, GivenParamsWhenUsingMemcpyThenReturnIsCorrect) {
     char dst[1024] = "";
     char src[1024] = "HelloWorld";
 
-    //preconditions
+    // preconditions
     ASSERT_EQ(sizeof(dst), sizeof(src));
-    //String must be smaller than array capacity
+    // String must be smaller than array capacity
     ASSERT_LT(strlen(src), sizeof(src));
 
     auto ret = memcpy_s(nullptr, sizeof(dst), src, sizeof(src));

@@ -360,7 +360,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     mockCsr.getCS(1024u);
     auto &csrCommandStream = mockCsr.commandStream;
 
-    //we do level change that will emit PPC, fill all the space so only BB end fits.
+    // we do level change that will emit PPC, fill all the space so only BB end fits.
     taskLevel++;
     auto ppcSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     auto fillSize = MemoryConstants::cacheLineSize - ppcSize - sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
@@ -659,7 +659,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 
-    //surfaces are non resident
+    // surfaces are non resident
     auto &surfacesForResidency = mockCsr->getResidencyAllocations();
     EXPECT_EQ(0u, surfacesForResidency.size());
 }
@@ -705,7 +705,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_FALSE(cmdBufferList.peekIsEmpty());
     auto cmdBuffer = cmdBufferList.peekHead();
 
-    //preemption allocation + sip kernel
+    // preemption allocation + sip kernel
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
@@ -714,7 +714,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     EXPECT_EQ(4u + csrSurfaceCount, cmdBuffer->surfaces.size());
 
-    //copy those surfaces
+    // copy those surfaces
     std::vector<GraphicsAllocation *> residentSurfaces = cmdBuffer->surfaces;
 
     for (auto &graphicsAllocation : residentSurfaces) {

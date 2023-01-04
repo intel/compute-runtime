@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,7 +166,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenApplyDeletion
     EXPECT_FALSE(allocation->isUsed());
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
     while (!asyncDeleter->doWorkInBackground)
-        std::this_thread::yield(); //wait for start async thread work
+        std::this_thread::yield(); // wait for start async thread work
     std::unique_lock<std::mutex> lock(asyncDeleter->queueMutex);
     asyncDeleter->allowExit = true;
     lock.unlock();

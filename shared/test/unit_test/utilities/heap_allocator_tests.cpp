@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -771,7 +771,7 @@ TEST(HeapAllocatorTest, WhenMemoryIsAllocatedThenAllocationsDoNotOverlap) {
         }
     }
 
-    //at this point we should be able to allocate full size
+    // at this point we should be able to allocate full size
     size_t totalSize = (size_t)(allocatorSize - reqAlignment);
     auto finalPtr = heapAllocator->allocate(totalSize);
     EXPECT_NE(0llu, finalPtr);

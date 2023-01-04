@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,16 +29,16 @@ TEST_F(clCreateUserEventMtTests, GivenClCompleteEventWhenWaitingForEventThenWait
         waitForEventsCompleted = true;
     });
 
-    //wait for the thread to start
+    // wait for the thread to start
     while (!threadStarted)
         ;
-    //now wait a while.
+    // now wait a while.
     while (!waitForEventsCompleted && counter++ < deadline)
         ;
 
     ASSERT_EQ(waitForEventsCompleted, false) << "WaitForEvents returned while user event is not signaled!";
 
-    //set event to CL_COMPLETE
+    // set event to CL_COMPLETE
     retVal = clSetUserEventStatus(userEvent, CL_COMPLETE);
     t.join();
 

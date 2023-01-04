@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,7 +103,7 @@ TEST_F(GlSharingTextureTests, givenMockGlWhen1dGlTextureIsCreatedThenMemObjectHa
     EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(textureId, glSharing->dllParam->getTextureInfo().name); //input
+    EXPECT_EQ(textureId, glSharing->dllParam->getTextureInfo().name); // input
 
     auto handler = glTexture->peekSharingHandler();
     ASSERT_NE(nullptr, handler);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class PciKmdSysManager : public Mock<MockKmdSysManager> {};
 
 template <>
 struct Mock<PciKmdSysManager> : public PciKmdSysManager {
-    //PciCurrentDevice, PciParentDevice, PciRootPort
+    // PciCurrentDevice, PciParentDevice, PciRootPort
     uint32_t mockDomain[3] = {0, 0, 0};
     uint32_t mockBus[3] = {0, 0, 3};
     uint32_t mockDevice[3] = {2, 0, 0};

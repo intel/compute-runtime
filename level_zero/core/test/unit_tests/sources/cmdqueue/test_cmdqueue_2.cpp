@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -466,7 +466,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
-    //1st execute provides all preamble commands
+    // 1st execute provides all preamble commands
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ using namespace NEO;
 static const unsigned int testImageDimensions = 45;
 auto channelType = CL_UNORM_INT8;
 auto channelOrder = CL_RGBA;
-auto const elementSize = 4; //sizeof CL_RGBA * CL_UNORM_INT8
+auto const elementSize = 4; // sizeof CL_RGBA * CL_UNORM_INT8
 
 class CreateImageTest : public ClDeviceFixture,
                         public testing::TestWithParam<uint64_t /*cl_mem_flags*/>,
@@ -579,7 +579,7 @@ TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemory
     imageDesc.image_height = height;
     imageDesc.image_depth = 0;
     imageDesc.image_array_size = 0;
-    imageDesc.image_row_pitch = alignUp(alignUp(width, 4) * 4, 0x80); //row pitch for tiled img
+    imageDesc.image_row_pitch = alignUp(alignUp(width, 4) * 4, 0x80); // row pitch for tiled img
     imageDesc.image_slice_pitch = 0;
 
     void *pageAlignedPointer = alignedMalloc(imageDesc.image_row_pitch * height * 1 * 4 + 256, 4096);
@@ -765,7 +765,7 @@ TEST_P(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelati
     }
 
     if (flags & CL_MEM_USE_HOST_PTR) {
-        //if size fits within a page then zero copy can be applied, if not RT needs to do a copy of image
+        // if size fits within a page then zero copy can be applied, if not RT needs to do a copy of image
         auto computedSize = imageDesc.image_width * elementSize * alignUp(imageDesc.image_height, 4) * imageDesc.image_array_size;
         auto ptrSize = imageDesc.image_width * elementSize * imageDesc.image_height * imageDesc.image_array_size;
         auto alignedRequiredSize = alignSizeWholePage(static_cast<void *>(pHostPtr), computedSize);

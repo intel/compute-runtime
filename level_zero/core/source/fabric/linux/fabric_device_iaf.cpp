@@ -24,7 +24,7 @@ FabricDeviceIaf::FabricDeviceIaf(Device *device) : device(device) {
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
     if (deviceImp->numSubDevices == 0) {
-        //Add one sub-device
+        // Add one sub-device
         subDeviceIafs.push_back(std::make_unique<FabricSubDeviceIaf>(device));
     } else {
         for (const auto &subDevice : deviceImp->subDevices) {

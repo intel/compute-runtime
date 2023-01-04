@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ void CommandStreamReceiverSimulatedCommonHw<Family>::initGlobalMMIO() {
     }
 
     if (this->isLocalMemoryEnabled()) {
-        MMIOPair lmemCfg = {0x0000cf58, 0x80000000}; //LMEM_CFG
+        MMIOPair lmemCfg = {0x0000cf58, 0x80000000}; // LMEM_CFG
         stream->writeMMIO(lmemCfg.first, lmemCfg.second);
     }
 }

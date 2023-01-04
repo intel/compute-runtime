@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ void CommandQueueHwFixture::setUp(
 }
 
 void CommandQueueHwFixture::tearDown() {
-    //resolve event dependencies
+    // resolve event dependencies
     if (pCmdQ) {
         auto blocked = pCmdQ->isQueueBlocked();
         UNRECOVERABLE_IF(blocked);

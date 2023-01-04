@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -256,12 +256,12 @@ int main(int argc, char *argv[]) {
 
     bool outputValidationSuccessful = true;
     if (outputValidationSuccessful || aubMode) {
-        //Sync mode with Compute queue
+        // Sync mode with Compute queue
         std::cout << "Test case: Sync mode compute queue with Kernel launch \n";
         executeGpuKernelAndValidate(context, device, true, outputValidationSuccessful);
     }
     if (outputValidationSuccessful || aubMode) {
-        //Async mode with Compute queue
+        // Async mode with Compute queue
         std::cout << "\nTest case: Async mode compute queue with Kernel launch \n";
         executeGpuKernelAndValidate(context, device, false, outputValidationSuccessful);
     }
@@ -318,12 +318,12 @@ int main(int argc, char *argv[]) {
         std::cout << "No Copy queue group found. Skipping further test runs\n";
     } else {
         if (outputValidationSuccessful || aubMode) {
-            //Sync mode with Copy queue
+            // Sync mode with Copy queue
             std::cout << "\nTest case: Sync mode copy queue for memory copy\n";
             testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, true, copyQueueGroup, outputValidationSuccessful);
         }
         if (outputValidationSuccessful || aubMode) {
-            //Async mode with Copy queue
+            // Async mode with Copy queue
             std::cout << "\nTest case: Async mode copy queue for memory copy\n";
             testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, false, copyQueueGroup, outputValidationSuccessful);
         }

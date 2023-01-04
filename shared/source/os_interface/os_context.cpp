@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,7 +121,7 @@ bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProper
             startOnInit = renderOverrideKey == 1 ? true : false;
         }
     } else {
-        //assume else is CCS
+        // assume else is CCS
         int32_t computeOverrideKey = DebugManager.flags.DirectSubmissionOverrideComputeSupport.get();
         if (computeOverrideKey != -1) {
             supported = computeOverrideKey == 0 ? false : true;
@@ -129,7 +129,7 @@ bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProper
         }
     }
 
-    //enable start in context only when default support is overridden and enabled
+    // enable start in context only when default support is overridden and enabled
     if (supported && !directSubmissionProperty.engineSupported) {
         startInContext = true;
     }

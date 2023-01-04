@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,7 +94,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTwoBatchedEnqueuesWhen
     std::fill(writePattern2, writePattern2 + sizeof(writePattern2), 1);
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_COPY_HOST_PTR, bufferSize, initialMemory, retVal));
-    //make sure that GPU copy is used
+    // make sure that GPU copy is used
     buffer->forceDisallowCPUCopy = true;
     cl_event outEvent1, outEvent2;
 

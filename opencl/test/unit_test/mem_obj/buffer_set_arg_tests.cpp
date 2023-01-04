@@ -217,7 +217,7 @@ TEST_F(BufferSetArgTest, givenCurbeTokenThatSizeIs4BytesWhenStatelessArgIsPatche
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
                                 pKernelInfo->argAsPtr(0).stateless);
 
-    //fill 8 bytes with 0xffffffffffffffff;
+    // fill 8 bytes with 0xffffffffffffffff;
     uint64_t fillValue = -1;
     uint64_t *pointer64bytes = (uint64_t *)pKernelArg;
     *pointer64bytes = fillValue;
@@ -227,7 +227,7 @@ TEST_F(BufferSetArgTest, givenCurbeTokenThatSizeIs4BytesWhenStatelessArgIsPatche
 
     buffer->setArgStateless(pKernelArg, sizeOf4Bytes, pClDevice->getRootDeviceIndex(), false);
 
-    //make sure only 4 bytes are patched
+    // make sure only 4 bytes are patched
     auto bufferAddress = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress();
     uint32_t address32bits = static_cast<uint32_t>(bufferAddress);
     uint64_t curbeValue = *pointer64bytes;

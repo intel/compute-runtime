@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -321,12 +321,12 @@ struct LrcaHelper {
 
     uint32_t numNoops0 = 3;
 
-    uint32_t offsetLRI1 = offsetLRI0 + (1 + numRegsLRI0 * 2 + numNoops0) * sizeof(uint32_t); //offsetLRI == 0x21 * sizeof(uint32_t);
+    uint32_t offsetLRI1 = offsetLRI0 + (1 + numRegsLRI0 * 2 + numNoops0) * sizeof(uint32_t); // offsetLRI == 0x21 * sizeof(uint32_t);
     uint32_t numRegsLRI1 = 9;
 
     uint32_t numNoops1 = 13;
 
-    uint32_t offsetLRI2 = offsetLRI1 + (1 + numRegsLRI1 * 2 + numNoops1) * sizeof(uint32_t); //offsetLR2 == 0x41 * sizeof(uint32_t);
+    uint32_t offsetLRI2 = offsetLRI1 + (1 + numRegsLRI1 * 2 + numNoops1) * sizeof(uint32_t); // offsetLR2 == 0x41 * sizeof(uint32_t);
     uint32_t numRegsLRI2 = 1;
 
     uint32_t offsetRingRegisters = offsetLRI0 + (3 * sizeof(uint32_t));

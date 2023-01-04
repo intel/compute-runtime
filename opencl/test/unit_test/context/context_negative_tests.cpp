@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ typedef Test<MemoryManagementFixture> ContextFailureInjection;
 
 TEST_F(ContextFailureInjection, GivenFailedAllocationInjectionWhenCreatingContextThenOutOfHostMemoryErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0); //failing to allocate pool buffer is non-critical
+    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0); // failing to allocate pool buffer is non-critical
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
 

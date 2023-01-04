@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,14 +61,14 @@ uint64_t ScratchSpaceControllerBase::calculateNewGSH() {
     return gsh;
 }
 uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
-    //for 32 bit scratch space pointer is being programmed in Media VFE State and is relative to 0 as General State Base Address
-    //for 64 bit, scratch space pointer is being programmed as "General State Base Address - scratchSpaceOffsetFor64bit"
-    //            and "0 + scratchSpaceOffsetFor64bit" is being programmed in Media VFE state
+    // for 32 bit scratch space pointer is being programmed in Media VFE State and is relative to 0 as General State Base Address
+    // for 64 bit, scratch space pointer is being programmed as "General State Base Address - scratchSpaceOffsetFor64bit"
+    //             and "0 + scratchSpaceOffsetFor64bit" is being programmed in Media VFE state
     uint64_t scratchAddress = 0;
     if (scratchAllocation) {
         scratchAddress = scratchAllocation->getGpuAddressToPatch();
         if (is64bit && !getMemoryManager()->peekForce32BitAllocations()) {
-            //this is to avoid scractch allocation offset "0"
+            // this is to avoid scractch allocation offset "0"
             scratchAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
         }
     }

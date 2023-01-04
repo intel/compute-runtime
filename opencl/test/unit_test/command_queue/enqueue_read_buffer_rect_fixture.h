@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
         context.reset(new MockContext(pCmdQ->getDevice().getSpecializedDevice<ClDevice>()));
         BufferDefaults::context = context.get();
 
-        //For 3D
+        // For 3D
         hostPtr = ::alignedMalloc(slicePitch * rowPitch, 4096);
 
         auto retVal = CL_INVALID_VALUE;
@@ -57,7 +57,7 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
         size_t region[] = {50, 50, 1};
         auto retVal = pCmdQ->enqueueReadBufferRect(
             buffer.get(),
-            blocking, //non-blocking
+            blocking, // non-blocking
             bufferOrigin,
             hostOrigin,
             region,

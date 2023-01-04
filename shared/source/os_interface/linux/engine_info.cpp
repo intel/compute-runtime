@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -143,7 +143,7 @@ void EngineInfo::setSupportedEnginesInfo(const RootDeviceEnvironment &rootDevice
 uint32_t EngineInfo::getEngineTileIndex(const EngineClassInstance &engine) {
     uint32_t tile = 0;
     if (tileToEngineMap.empty()) {
-        return tile; //Empty map
+        return tile; // Empty map
     }
 
     for (auto itr = tileToEngineMap.begin(); itr != tileToEngineMap.end(); itr++) {

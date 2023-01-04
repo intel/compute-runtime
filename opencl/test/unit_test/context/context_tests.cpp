@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -188,7 +188,7 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextAutoDelet
     context.overrideSpecialQueueAndDecrementRefCount(cmdQ, 0u);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    //special queue is to be deleted implicitly by context
+    // special queue is to be deleted implicitly by context
 }
 
 TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {

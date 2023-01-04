@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ struct MockElfEncoder : public NEO::Elf::ElfEncoder<NumBits> {
 
         auto symTabSectionHeader = elfEncoder.getSectionHeader(symTabSectionIndex);
         symTabSectionHeader->info = 2;
-        symTabSectionHeader->link = elfEncoder.getLastSectionHeaderIndex() + 1; //strtab section added as last
+        symTabSectionHeader->link = elfEncoder.getLastSectionHeaderIndex() + 1; // strtab section added as last
         return elfEncoder.encode();
     }
 };

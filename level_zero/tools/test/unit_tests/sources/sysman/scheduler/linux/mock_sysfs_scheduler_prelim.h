@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,7 +245,7 @@ class MockSchedulerProcfsAccess : public ProcfsAccess {
     ADDMETHOD_NOBASE_VOIDRETURN(kill, (const ::pid_t pid));
 };
 
-//class SchedulerSysfsAccess : public SysfsAccess {};
+// class SchedulerSysfsAccess : public SysfsAccess {};
 
 typedef struct SchedulerConfigValues {
     uint64_t defaultVal;

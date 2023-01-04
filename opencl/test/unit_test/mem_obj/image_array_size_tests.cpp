@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -232,7 +232,7 @@ TEST_P(CheckImageType, GivenImageTypeWhenImageTypeIsCheckedThenProperValueIsRetu
 }
 
 static cl_mem_object_type AllImageTypes[] = {
-    0, //negative scenario
+    0, // negative scenario
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE1D_BUFFER,
     CL_MEM_OBJECT_IMAGE2D,
@@ -246,7 +246,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(AllImageTypes));
 
 static cl_mem_object_type AllImageTypesWithBadOne[] = {
-    0, //negative scenario
+    0, // negative scenario
     CL_MEM_OBJECT_BUFFER,
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE1D_BUFFER,

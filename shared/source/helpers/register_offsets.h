@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ inline constexpr uint32_t L3SQC_REG4 = 0xB118;
 inline constexpr uint32_t GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER = 0xFFFFFFFF;
 inline constexpr uint32_t GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER = 0x00000000;
 
-//Threads Dimension X/Y/Z
+// Threads Dimension X/Y/Z
 inline constexpr uint32_t GPUGPU_DISPATCHDIMX = 0x2500;
 inline constexpr uint32_t GPUGPU_DISPATCHDIMY = 0x2504;
 inline constexpr uint32_t GPUGPU_DISPATCHDIMZ = 0x2508;
@@ -42,7 +42,7 @@ inline constexpr uint32_t CS_PREDICATE_RESULT = 0x2418;
 inline constexpr uint32_t CS_PREDICATE_RESULT_2 = 0x23BC;
 
 inline constexpr uint32_t SEMA_WAIT_POLL = 0x0224c;
-//Alu opcodes
+// Alu opcodes
 inline constexpr uint32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 
 enum class AluRegisters : uint32_t {

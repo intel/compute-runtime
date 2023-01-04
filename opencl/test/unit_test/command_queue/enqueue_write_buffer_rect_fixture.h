@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
         context.reset(new MockContext(pClDevice));
         BufferDefaults::context = context.get();
 
-        //For 3D
+        // For 3D
         hostPtr = ::alignedMalloc(slicePitch * rowPitch, 4096);
 
         auto retVal = CL_INVALID_VALUE;

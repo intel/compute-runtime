@@ -753,7 +753,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
         program.setGlobalSurface(nullptr);
         program.setConstantSurface(nullptr);
 
-        //exhaust space to trigger reload
+        // exhaust space to trigger reload
         ssh.getSpace(ssh.getAvailableSpace());
         dsh.getSpace(dsh.getAvailableSpace());
     }
@@ -866,7 +866,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
 
-    //Undefined Offset, Defined BorderColorOffset
+    // Undefined Offset, Defined BorderColorOffset
     mockKernelWithInternal->kernelInfo.setSamplerTable(0, 2, undefined<uint16_t>);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
@@ -891,7 +891,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
     EXPECT_EQ(0U, interfaceDescriptor->getSamplerStatePointer());
     EXPECT_EQ(0U, interfaceDescriptor->getSamplerCount());
 
-    //Defined Offset, Undefined BorderColorOffset
+    // Defined Offset, Undefined BorderColorOffset
     mockKernelWithInternal->kernelInfo.setSamplerTable(undefined<uint16_t>, 2, 0);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(

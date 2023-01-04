@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -215,34 +215,34 @@ class DrmMock : public Drm {
 
     bool queryPageFaultSupportCalled = false;
 
-    //DRM_IOCTL_I915_GEM_EXECBUFFER2
+    // DRM_IOCTL_I915_GEM_EXECBUFFER2
     std::vector<MockExecBuffer> execBuffers{};
     std::vector<MockExecObject> receivedBos{};
     int execBufferResult = 0;
-    //DRM_IOCTL_I915_GEM_CREATE
+    // DRM_IOCTL_I915_GEM_CREATE
     uint64_t createParamsSize = 0;
     uint32_t createParamsHandle = 0;
-    //DRM_IOCTL_I915_GEM_SET_TILING
+    // DRM_IOCTL_I915_GEM_SET_TILING
     uint32_t setTilingMode = 0;
     uint32_t setTilingHandle = 0;
     uint32_t setTilingStride = 0;
-    //DRM_IOCTL_PRIME_FD_TO_HANDLE
+    // DRM_IOCTL_PRIME_FD_TO_HANDLE
     uint32_t outputHandle = 0;
     int32_t inputFd = 0;
     int fdToHandleRetVal = 0;
-    //DRM_IOCTL_HANDLE_TO_FD
+    // DRM_IOCTL_HANDLE_TO_FD
     int32_t outputFd = 0;
     bool incrementOutputFdAfterCall = false;
-    //DRM_IOCTL_I915_GEM_USERPTR
+    // DRM_IOCTL_I915_GEM_USERPTR
     uint32_t returnHandle = 0;
     uint64_t gpuMemSize = 3u * MemoryConstants::gigaByte;
-    //DRM_IOCTL_I915_QUERY
+    // DRM_IOCTL_I915_QUERY
     QueryItem storedQueryItem = {};
-    //DRM_IOCTL_I915_GEM_WAIT
+    // DRM_IOCTL_I915_GEM_WAIT
     GemWait receivedGemWait = {};
-    //DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT
+    // DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT
     uint32_t storedDrmContextId{};
-    //DRM_IOCTL_GEM_CLOSE
+    // DRM_IOCTL_GEM_CLOSE
     int storedRetValForGemClose = 0;
 
     GemVmControl receivedGemVmControl{};

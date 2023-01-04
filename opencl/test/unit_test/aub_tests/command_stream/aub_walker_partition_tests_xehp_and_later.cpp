@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,7 +116,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
         for (auto partitionId = 0; partitionId < DebugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
             expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(postSyncAddress), &notExpectedValue, sizeof(notExpectedValue));
-            postSyncAddress += 16; //next post sync needs to be right after the previous one
+            postSyncAddress += 16; // next post sync needs to be right after the previous one
         }
 
         auto dstGpuAddress = reinterpret_cast<void *>(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());
@@ -168,7 +168,7 @@ struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,
             partitionType = (rand() % 3 + 1);
             partitionCount = rand() % 16 + 1;
 
-            //now generate dimensions that makes sense
+            // now generate dimensions that makes sense
             auto goodWorkingSizeGenerated = false;
             while (!goodWorkingSizeGenerated) {
                 dispatchParamters.localWorkSize[0] = rand() % 128 + 1;
@@ -340,7 +340,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPipeControlIsBeingE
     flushStream();
 
     expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, 4u);
-    //write needs to happen after 8 bytes
+    // write needs to happen after 8 bytes
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress + 8), &writeValue, 4u);
 }
 
@@ -389,7 +389,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     uint32_t writeValue = 7u;
     uint32_t pipeControlNotExecutedValue = 0u;
 
-    //this pipe control should be executed
+    // this pipe control should be executed
     void *pipeControlAddress = taskStream->getSpace(0);
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
@@ -404,10 +404,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
         pipeControl->setAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
     };
 
-    //we have now command buffer that has conditional batch buffer end and pipe control that tests whether batch buffer end acted correctly
+    // we have now command buffer that has conditional batch buffer end and pipe control that tests whether batch buffer end acted correctly
 
-    //MAD_GREATER_THAN_IDD If Indirect fetched data is greater than inline data then continue.
-    //continue test
+    // MAD_GREATER_THAN_IDD If Indirect fetched data is greater than inline data then continue.
+    // continue test
     conditionalBatchBufferEnd->setCompareOperation(CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION::COMPARE_OPERATION_MAD_GREATER_THAN_IDD);
     *compareAddress = 11;
     auto inlineData = 10u;
@@ -416,7 +416,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     programPipeControl();
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
-    //terminate test
+    // terminate test
     *compareAddress = 10;
     inlineData = 10u;
     writeAddress += sizeof(uint64_t);
@@ -427,9 +427,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &pipeControlNotExecutedValue, sizeof(pipeControlNotExecutedValue));
 
-    //MAD_GREATER_THAN_OR_EQUAL_IDD	If Indirect fetched data is greater than or equal to inline data then continue.
+    // MAD_GREATER_THAN_OR_EQUAL_IDD	If Indirect fetched data is greater than or equal to inline data then continue.
 
-    //continue test - greater
+    // continue test - greater
     conditionalBatchBufferEnd->setCompareOperation(CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION::COMPARE_OPERATION_MAD_GREATER_THAN_OR_EQUAL_IDD);
     *compareAddress = 11;
     inlineData = 10u;
@@ -442,7 +442,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 
-    //continue test - equal
+    // continue test - equal
     *compareAddress = 10;
     inlineData = 10u;
 
@@ -454,7 +454,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 
-    //terminate test
+    // terminate test
     *compareAddress = 9;
     inlineData = 10u;
     writeAddress += sizeof(uint64_t);
@@ -465,9 +465,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &pipeControlNotExecutedValue, sizeof(pipeControlNotExecutedValue));
 
-    //MAD_LESS_THAN_IDD	If Indirect fetched data is less than inline data then continue.
+    // MAD_LESS_THAN_IDD	If Indirect fetched data is less than inline data then continue.
 
-    //continue test
+    // continue test
     conditionalBatchBufferEnd->setCompareOperation(CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION::COMPARE_OPERATION_MAD_LESS_THAN_IDD);
     *compareAddress = 9;
     inlineData = 10u;
@@ -480,7 +480,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 
-    //terminate test
+    // terminate test
     *compareAddress = 10;
     inlineData = 10u;
     writeAddress += sizeof(uint64_t);
@@ -491,9 +491,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &pipeControlNotExecutedValue, sizeof(pipeControlNotExecutedValue));
 
-    //MAD_LESS_THAN_OR_EQUAL_IDD	If Indirect fetched data is less than or equal to inline data then continue.
+    // MAD_LESS_THAN_OR_EQUAL_IDD	If Indirect fetched data is less than or equal to inline data then continue.
 
-    //continue test - less
+    // continue test - less
     conditionalBatchBufferEnd->setCompareOperation(CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION::COMPARE_OPERATION_MAD_LESS_THAN_OR_EQUAL_IDD);
     *compareAddress = 9;
     inlineData = 10u;
@@ -506,7 +506,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 
-    //continue test - equal
+    // continue test - equal
     *compareAddress = 10;
     inlineData = 10u;
 
@@ -518,7 +518,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 
-    //terminate test
+    // terminate test
     *compareAddress = 11;
     inlineData = 10u;
     writeAddress += sizeof(uint64_t);
@@ -529,9 +529,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &pipeControlNotExecutedValue, sizeof(pipeControlNotExecutedValue));
 
-    //MAD_EQUAL_IDD	If Indirect fetched data is equal to inline data then continue.
+    // MAD_EQUAL_IDD	If Indirect fetched data is equal to inline data then continue.
 
-    //continue test equal
+    // continue test equal
     conditionalBatchBufferEnd->setCompareOperation(CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION::COMPARE_OPERATION_MAD_EQUAL_IDD);
     *compareAddress = 10;
     inlineData = 10u;
@@ -544,7 +544,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 
-    //terminate test
+    // terminate test
     *compareAddress = 0;
     inlineData = 10u;
     writeAddress += sizeof(uint64_t);
@@ -555,9 +555,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &pipeControlNotExecutedValue, sizeof(pipeControlNotExecutedValue));
 
-    //MAD_NOT_EQUAL_IDD	If Indirect fetched data is not equal to inline data then continue.
+    // MAD_NOT_EQUAL_IDD	If Indirect fetched data is not equal to inline data then continue.
 
-    //continue test not equal
+    // continue test not equal
     conditionalBatchBufferEnd->setCompareOperation(CONDITIONAL_BATCH_BUFFER_END::COMPARE_OPERATION::COMPARE_OPERATION_MAD_NOT_EQUAL_IDD);
     *compareAddress = 11;
     inlineData = 10u;
@@ -570,7 +570,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 
-    //terminate test
+    // terminate test
     *compareAddress = 10;
     inlineData = 10u;
     writeAddress += sizeof(uint64_t);
@@ -585,11 +585,11 @@ template <bool enableNesting>
 struct MultiLevelBatchAubFixture : public AUBFixture {
     void setUp() {
         if (enableNesting) {
-            //turn on Batch Buffer nesting
+            // turn on Batch Buffer nesting
             DebugManager.flags.AubDumpAddMmioRegistersList.set(
                 "0x1A09C;0x10001000");
         } else {
-            //turn off Batch Buffer nesting
+            // turn off Batch Buffer nesting
             DebugManager.flags.AubDumpAddMmioRegistersList.set(
                 "0x1A09C;0x10000000");
         }
@@ -662,13 +662,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
     getSimulatedCsr<FamilyType>()->initializeEngine();
     writeMMIO<FamilyType>(0x1A09C, 0x10001000);
 
-    //nest to second level
+    // nest to second level
     auto batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(taskStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(secondLevelBatch->getGpuAddress());
     batchBufferStart->setNestedLevelBatchBuffer(BATCH_BUFFER_START::NESTED_LEVEL_BATCH_BUFFER::NESTED_LEVEL_BATCH_BUFFER_NESTED);
 
-    //nest to third  level
+    // nest to third  level
     batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(secondLevelBatchStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(thirdLevelBatch->getGpuAddress());
@@ -683,7 +683,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
     writeAddress += sizeof(uint64_t);
     auto writeValue = 7u;
 
-    //this pipe control should be executed
+    // this pipe control should be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::ImmediateData,
@@ -722,13 +722,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    //nest to second level
+    // nest to second level
     auto batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(taskStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(secondLevelBatch->getGpuAddress());
     batchBufferStart->setNestedLevelBatchBuffer(BATCH_BUFFER_START::NESTED_LEVEL_BATCH_BUFFER::NESTED_LEVEL_BATCH_BUFFER_NESTED);
 
-    //nest to third  level
+    // nest to third  level
     batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(secondLevelBatchStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(thirdLevelBatch->getGpuAddress());
@@ -743,7 +743,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
     writeAddress += sizeof(uint64_t);
     auto writeValue = 7u;
 
-    //this pipe control should NOT be executed
+    // this pipe control should NOT be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::ImmediateData,
@@ -768,7 +768,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
     writeAddress = helperSurface->getGpuAddress() + sizeof(uint64_t);
     writeValue = 0u;
 
-    //pipe controls are not emitted
+    // pipe controls are not emitted
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
     writeAddress += sizeof(uint64_t);
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
@@ -781,14 +781,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenCommandBuffer
     using BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    //nest to second level
+    // nest to second level
     auto batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(taskStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(secondLevelBatch->getGpuAddress());
     batchBufferStart->setEnableCommandCache(1u);
     batchBufferStart->setNestedLevelBatchBuffer(BATCH_BUFFER_START::NESTED_LEVEL_BATCH_BUFFER::NESTED_LEVEL_BATCH_BUFFER_NESTED);
 
-    //this pipe control should be executed
+    // this pipe control should be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::ImmediateData,
@@ -811,13 +811,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     using CONDITIONAL_BATCH_BUFFER_END = typename FamilyType::MI_CONDITIONAL_BATCH_BUFFER_END;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    //nest to second level
+    // nest to second level
     auto batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(taskStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(secondLevelBatch->getGpuAddress());
     batchBufferStart->setSecondLevelBatchBuffer(BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
 
-    //nest to third  level
+    // nest to third  level
     batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(secondLevelBatchStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(thirdLevelBatch->getGpuAddress());
@@ -832,7 +832,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     writeAddress += sizeof(uint64_t);
     auto writeValue = 7u;
 
-    //this pipe control should't be executed
+    // this pipe control should't be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::ImmediateData,
@@ -846,7 +846,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
 
     writeAddress += sizeof(uint64_t);
     writeValue++;
-    //and this shouldn't as well, we returned to ring
+    // and this shouldn't as well, we returned to ring
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
@@ -871,13 +871,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     using CONDITIONAL_BATCH_BUFFER_END = typename FamilyType::MI_CONDITIONAL_BATCH_BUFFER_END;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    //nest to second level
+    // nest to second level
     auto batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(taskStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(secondLevelBatch->getGpuAddress());
     batchBufferStart->setSecondLevelBatchBuffer(BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
 
-    //nest to third  level
+    // nest to third  level
     batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(secondLevelBatchStream->getSpace(sizeof(BATCH_BUFFER_START)));
     batchBufferStart->init();
     batchBufferStart->setBatchBufferStartAddress(thirdLevelBatch->getGpuAddress());
@@ -892,7 +892,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     writeAddress += sizeof(uint64_t);
     auto writeValue = 7u;
 
-    //this pipe control should't be executed
+    // this pipe control should't be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::ImmediateData,
@@ -906,7 +906,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
 
     writeAddress += sizeof(uint64_t);
     writeValue++;
-    //and this should , we returned to primary batch
+    // and this should , we returned to primary batch
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
@@ -1006,11 +1006,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
     auto expectedGpuAddress = taskStream->getGraphicsAllocation()->getGpuAddress() +
                               WalkerPartition::computeControlSectionOffset<FamilyType>(testArgs);
 
-    //16 partitions updated atomic to value 16
-    //17th partition updated it to 17 and was predicated out of the batch buffer
+    // 16 partitions updated atomic to value 16
+    // 17th partition updated it to 17 and was predicated out of the batch buffer
     uint32_t expectedValue = 17u;
     expectMemory<FamilyType>(reinterpret_cast<void *>(expectedGpuAddress), &expectedValue, sizeof(expectedValue));
-    //this is 1 tile scenario
+    // this is 1 tile scenario
     uint32_t expectedTileValue = 1u;
     expectMemory<FamilyType>(reinterpret_cast<void *>(expectedGpuAddress + 4llu), &expectedTileValue, sizeof(expectedTileValue));
 }
@@ -1031,7 +1031,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenGeneralPurposeRegi
     WalkerPartition::programMiLoadRegisterReg<FamilyType>(streamCpuPointer, totalBytesProgrammed, generalPurposeRegister5, wparidCCSOffset);
     WalkerPartition::programWparidMask<FamilyType>(streamCpuPointer, totalBytesProgrammed, 4u);
     WalkerPartition::programWparidPredication<FamilyType>(streamCpuPointer, totalBytesProgrammed, true);
-    //this command must not execute
+    // this command must not execute
     taskStream->getSpace(totalBytesProgrammed);
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
@@ -1054,23 +1054,23 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicationWhenItI
     auto addressShift = 8u;
     auto writeAddress = helperSurface->getGpuAddress();
 
-    //program WPARID mask to 16 partitions
+    // program WPARID mask to 16 partitions
     WalkerPartition::programWparidMask<FamilyType>(streamCpuPointer, totalBytesProgrammed, 16u);
     streamCpuPointer = taskStream->getSpace(totalBytesProgrammed);
-    //program WPARID to value within 0-19
+    // program WPARID to value within 0-19
     for (uint32_t wparid = 0u; wparid < 20; wparid++) {
         totalBytesProgrammed = 0;
         streamCpuPointer = taskStream->getSpace(0);
         WalkerPartition::programRegisterWithValue<FamilyType>(streamCpuPointer, WalkerPartition::wparidCCSOffset, totalBytesProgrammed, wparid);
         WalkerPartition::programWparidPredication<FamilyType>(streamCpuPointer, totalBytesProgrammed, true);
         taskStream->getSpace(totalBytesProgrammed);
-        //emit pipe control
+        // emit pipe control
         PipeControlArgs args;
         MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
             *taskStream, PostSyncMode::ImmediateData,
             writeAddress, writeValue, device->getHardwareInfo(), args);
 
-        //turn off predication
+        // turn off predication
         streamCpuPointer = taskStream->getSpace(0);
         totalBytesProgrammed = 0;
         WalkerPartition::programWparidPredication<FamilyType>(streamCpuPointer, totalBytesProgrammed, false);
@@ -1105,10 +1105,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicationWhenItI
     auto writeAddress = helperSurface->getGpuAddress();
 
     WalkerPartition::programRegisterWithValue<FamilyType>(streamCpuPointer, WalkerPartition::addressOffsetCCSOffset, totalBytesProgrammed, addressShift);
-    //program WPARID mask to 8 partitions
+    // program WPARID mask to 8 partitions
     WalkerPartition::programWparidMask<FamilyType>(streamCpuPointer, totalBytesProgrammed, 8u);
     streamCpuPointer = taskStream->getSpace(totalBytesProgrammed);
-    //program WPARID to value within 0-13
+    // program WPARID to value within 0-13
     for (uint32_t wparid = 0u; wparid < 13; wparid++) {
         totalBytesProgrammed = 0;
         streamCpuPointer = taskStream->getSpace(0);
@@ -1116,7 +1116,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicationWhenItI
         WalkerPartition::programWparidPredication<FamilyType>(streamCpuPointer, totalBytesProgrammed, true);
         taskStream->getSpace(totalBytesProgrammed);
 
-        //emit pipe control
+        // emit pipe control
         void *pipeControlAddress = taskStream->getSpace(0);
         PipeControlArgs args;
         MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
@@ -1126,7 +1126,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicationWhenItI
         auto pipeControl = retrieveSyncPipeControl<FamilyType>(pipeControlAddress, device->getHardwareInfo());
         ASSERT_NE(nullptr, pipeControl);
         pipeControl->setWorkloadPartitionIdOffsetEnable(true);
-        //turn off predication
+        // turn off predication
         streamCpuPointer = taskStream->getSpace(0);
         totalBytesProgrammed = 0;
         WalkerPartition::programWparidPredication<FamilyType>(streamCpuPointer, totalBytesProgrammed, false);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         if (outEventObj) {
             outEventObj->setSubmitTimeStamp();
         }
-        //wait for the completness of previous commands
+        // wait for the completness of previous commands
         if (transferProperties.cmdType != CL_COMMAND_UNMAP_MEM_OBJECT) {
             if (!transferProperties.memObj->isMemObjZeroCopy() || transferProperties.blocking) {
                 finish();

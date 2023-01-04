@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -276,7 +276,7 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
 
     cmdQHw->taskLevel = 23;
     cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
-    //new virtual event is created on enqueue, bind it to the created virtual event
+    // new virtual event is created on enqueue, bind it to the created virtual event
     EXPECT_NE(cmdQHw->virtualEvent, &virtualEvent);
 
     event.setStatus(CL_SUBMITTED);
@@ -285,7 +285,7 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     EXPECT_FALSE(cmdQHw->isQueueBlocked());
 
     //+1 due to dependency between virtual event & new virtual event
-    //new virtual event is actually responsible for command delivery
+    // new virtual event is actually responsible for command delivery
     EXPECT_EQ(virtualEventTaskLevel + 1, cmdQHw->taskLevel);
     EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
 }

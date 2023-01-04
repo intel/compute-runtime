@@ -260,7 +260,7 @@ TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachManyTimesTh
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr;
-    rootSession->tileSessions[1].second = true; //prevent destroying root session
+    rootSession->tileSessions[1].second = true; // prevent destroying root session
 
     auto result = zetDebugAttach(neoDevice->getSubDevice(0)->getSpecializedDevice<L0::Device>()->toHandle(), &config, &debugSession0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

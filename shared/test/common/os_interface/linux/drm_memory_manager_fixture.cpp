@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled
 
     memoryManager = new (std::nothrow) TestedDrmMemoryManager(localMemoryEnabled, false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
-    //assert we have memory manager
+    // assert we have memory manager
     ASSERT_NE(nullptr, memoryManager);
     if (memoryManager->getgemCloseWorker()) {
         memoryManager->getgemCloseWorker()->close(true);

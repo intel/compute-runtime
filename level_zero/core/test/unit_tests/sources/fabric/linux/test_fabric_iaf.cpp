@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -374,7 +374,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
         fabricSubDeviceIaf1->connections = connection01To11;
         fabricSubDeviceIaf1->guid = 0xAB;
 
-        //SubVertices
+        // SubVertices
         auto &fabricVertex00 = fabricVertex0->subVertices[0];
         auto fabricSubDeviceIaf00 = static_cast<FabricSubDeviceIaf *>(fabricVertex00->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
         fabricSubDeviceIaf00->connections.clear();
@@ -401,7 +401,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
         fabricSubDeviceIaf1->connections = connection11To01;
         fabricSubDeviceIaf1->guid = 0xABCD;
 
-        //SubVertices
+        // SubVertices
         auto &fabricVertex00 = fabricVertex1->subVertices[0];
         auto fabricSubDeviceIaf00 = static_cast<FabricSubDeviceIaf *>(fabricVertex00->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
         fabricSubDeviceIaf00->connections.clear();
@@ -423,7 +423,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
 
     constexpr uint32_t root2root = 1;
     constexpr uint32_t subDevice2root = 4;          // 2 root to 2 sub-devices each
-    constexpr uint32_t subDevice2SubDevice = 4 + 2; //4 MDFI (considering 4 roots with 2 sub-devices); 2 sub-device to sub-device XeLink
+    constexpr uint32_t subDevice2SubDevice = 4 + 2; // 4 MDFI (considering 4 roots with 2 sub-devices); 2 sub-device to sub-device XeLink
 
     EXPECT_EQ(static_cast<uint32_t>(driverHandle->fabricEdges.size()), root2root + subDevice2root + subDevice2SubDevice);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -653,7 +653,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithL
 using DrmMemoryManagerFailInjectionTest = Test<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation, NonDefaultIoctlsSupported) {
-    mock->ioctl_expected.total = -1; //don't care
+    mock->ioctl_expected.total = -1; // don't care
     class MockGfxPartition : public GfxPartition {
       public:
         MockGfxPartition() : GfxPartition(reservedCpuAddressRange) {

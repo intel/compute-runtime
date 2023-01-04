@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ TEST_F(clEventTests, GivenValidEventWhenReleasingEventThenSuccessIsReturned) {
     cl_event event = (cl_event)pEvent;
     auto retVal = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    //no delete operation. clReleaseEvent should do this for us
+    // no delete operation. clReleaseEvent should do this for us
 }
 
 TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedThenReferenceCountIsUpdated) {

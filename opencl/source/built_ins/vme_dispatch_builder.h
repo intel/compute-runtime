@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,7 +189,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
             }
 
             if (false == img->isTiledAllocation()) {
-                //VME only works with tiled images.
+                // VME only works with tiled images.
                 return CL_OUT_OF_RESOURCES;
             }
         }

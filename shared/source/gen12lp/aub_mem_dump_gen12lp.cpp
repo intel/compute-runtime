@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,7 +147,7 @@ const MMIOList AUBFamilyMapper<Family>::globalMMIO = {
     MMIOPair(0x0000B098, 0x00300010),
     MMIOPair(0x0000B09C, 0x00300010),
 
-    //PAT_INDEX
+    // PAT_INDEX
     MMIOPair(0x00004100, 0x0000000),
     MMIOPair(0x00004104, 0x0000000),
     MMIOPair(0x00004108, 0x0000000),
@@ -157,24 +157,24 @@ const MMIOList AUBFamilyMapper<Family>::globalMMIO = {
     MMIOPair(0x00004118, 0x0000000),
     MMIOPair(0x0000411c, 0x0000000),
 
-    MMIOPair(0x00004b80, 0xffff1001), //GACB_PERF_CTRL_REG
-    MMIOPair(0x00007000, 0xffff0000), //CACHE_MODE_0
-    MMIOPair(0x00007004, 0xffff0000), //CACHE_MODE_1
-    MMIOPair(0x00009008, 0x00000200), //IDICR
-    MMIOPair(0x0000900c, 0x00001b40), //SNPCR
-    MMIOPair(0x0000b120, 0x14000002), //LTCDREG
-    MMIOPair(0x00042080, 0x00000000), //CHICKEN_MISC_1
+    MMIOPair(0x00004b80, 0xffff1001), // GACB_PERF_CTRL_REG
+    MMIOPair(0x00007000, 0xffff0000), // CACHE_MODE_0
+    MMIOPair(0x00007004, 0xffff0000), // CACHE_MODE_1
+    MMIOPair(0x00009008, 0x00000200), // IDICR
+    MMIOPair(0x0000900c, 0x00001b40), // SNPCR
+    MMIOPair(0x0000b120, 0x14000002), // LTCDREG
+    MMIOPair(0x00042080, 0x00000000), // CHICKEN_MISC_1
 };
 
 static const MMIOList mmioListRCS = {
-    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x00002058), 0x00000000), //CTX_WA_PTR_RCSUNIT
-    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000020a8), 0x00000000), //IMR
-    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x00002058), 0x00000000), // CTX_WA_PTR_RCSUNIT
+    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000020a8), 0x00000000), // IMR
+    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 
-    MMIOPair(0x00002090, 0xffff0000), //CHICKEN_PWR_CTX_RASTER_1
-    MMIOPair(0x000020e0, 0xffff4000), //FF_SLICE_CS_CHICKEN1_RCSUNIT
-    MMIOPair(0x000020e4, 0xffff0000), //FF_SLICE_CS_CHICKEN2_RCSUNIT
-    MMIOPair(0x000020ec, 0xffff0051), //CS_DEBUG_MODE1
+    MMIOPair(0x00002090, 0xffff0000), // CHICKEN_PWR_CTX_RASTER_1
+    MMIOPair(0x000020e0, 0xffff4000), // FF_SLICE_CS_CHICKEN1_RCSUNIT
+    MMIOPair(0x000020e4, 0xffff0000), // FF_SLICE_CS_CHICKEN2_RCSUNIT
+    MMIOPair(0x000020ec, 0xffff0051), // CS_DEBUG_MODE1
 
     // FORCE_TO_NONPRIV
     MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000024d0), 0x00007014),
@@ -190,28 +190,28 @@ static const MMIOList mmioListRCS = {
     MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000024f8), 0x0000e000),
     MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000024fc), 0x0000e000),
 
-    MMIOPair(0x00002580, 0xffff0005), //CS_CHICKEN1
-    MMIOPair(0x0000e194, 0xffff0002), //CHICKEN_SAMPLER_2
+    MMIOPair(0x00002580, 0xffff0005), // CS_CHICKEN1
+    MMIOPair(0x0000e194, 0xffff0002), // CHICKEN_SAMPLER_2
 
-    MMIOPair(0x0000B134, 0xD0000020) //L3ALLOCREG
+    MMIOPair(0x0000B134, 0xD0000020) // L3ALLOCREG
 };
 
 static const MMIOList mmioListBCS = {
-    MMIOPair(AubMemDump::computeRegisterOffset(bcs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(bcs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 };
 
 static const MMIOList mmioListVCS = {
-    MMIOPair(AubMemDump::computeRegisterOffset(vcs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(vcs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 };
 
 static const MMIOList mmioListVECS = {
-    MMIOPair(AubMemDump::computeRegisterOffset(vecs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(vecs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 };
 
 static const MMIOList mmioListCCS = {
-    MMIOPair(0x0000ce90, 0x00010001),                                                  //GFX_MULT_CTXT_CTL
-    MMIOPair(0x00014800, 0x00010001),                                                  //RCU_MODE
-    MMIOPair(AubMemDump::computeRegisterOffset(ccs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(0x0000ce90, 0x00010001),                                                  // GFX_MULT_CTXT_CTL
+    MMIOPair(0x00014800, 0x00010001),                                                  // RCU_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(ccs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 
     // FORCE_TO_NONPRIV
     MMIOPair(AubMemDump::computeRegisterOffset(ccs.mmioBase, 0x000024d0), 0x00007014),
@@ -227,7 +227,7 @@ static const MMIOList mmioListCCS = {
     MMIOPair(AubMemDump::computeRegisterOffset(ccs.mmioBase, 0x000024f8), 0x0000e000),
     MMIOPair(AubMemDump::computeRegisterOffset(ccs.mmioBase, 0x000024fc), 0x0000e000),
 
-    MMIOPair(0x0000B234, 0xD0000020) //L3ALLOCREG_CCS0
+    MMIOPair(0x0000B234, 0xD0000020) // L3ALLOCREG_CCS0
 };
 
 const MMIOList *AUBFamilyMapper<Family>::perEngineMMIO[aub_stream::NUM_ENGINES] = {

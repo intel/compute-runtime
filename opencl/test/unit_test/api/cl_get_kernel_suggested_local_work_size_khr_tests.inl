@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeKHRTests, GivenVariousInputWhenGettingSu
     EXPECT_EQ(expectedLws.y, suggestedLocalWorkSize[1]);
     EXPECT_EQ(expectedLws.z, suggestedLocalWorkSize[2]);
 
-    //null global work offset is fine
+    // null global work offset is fine
     retVal = clGetKernelSuggestedLocalWorkSizeKHR(pCommandQueue, pMultiDeviceKernel, 3, nullptr, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,12 +84,12 @@ using cl_unified_shared_memory_type_intel = cl_uint;
 #define CL_MEM_ALLOCATION_HANDLE_INTEL 0x10050
 #define CL_MEM_USES_COMPRESSION_INTEL 0x10051
 
-//Used with createBuffer
+// Used with createBuffer
 #define CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL (1 << 23)
 
 /******************************
-*        UNIFIED MEMORY       *
-*******************************/
+ *        UNIFIED MEMORY       *
+ *******************************/
 
 #if !defined(cl_intel_unified_shared_memory)
 
@@ -145,8 +145,8 @@ using cl_unified_shared_memory_type_intel = cl_uint;
 #define CL_COMMAND_MEMSET_INTEL 0x4204
 
 /******************************
-*  THREAD ARBITRATION POLICY  *
-*******************************/
+ *  THREAD ARBITRATION POLICY  *
+ *******************************/
 
 /* cl_device_info */
 #define CL_DEVICE_SUPPORTED_THREAD_ARBITRATION_POLICY_INTEL 0x4208
@@ -166,8 +166,8 @@ using cl_unified_shared_memory_type_intel = cl_uint;
 #define CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_STALL_BASED_ROUND_ROBIN_INTEL 0x10026
 
 /******************************
-*    SLICE COUNT SELECTING    *
-*******************************/
+ *    SLICE COUNT SELECTING    *
+ *******************************/
 
 /* cl_device_info */
 #define CL_DEVICE_SLICE_COUNT_INTEL 0x10020
@@ -176,8 +176,8 @@ using cl_unified_shared_memory_type_intel = cl_uint;
 #define CL_QUEUE_SLICE_COUNT_INTEL 0x10021
 
 /******************************
-*   QUEUE FAMILY SELECTING    *
-*******************************/
+ *   QUEUE FAMILY SELECTING    *
+ *******************************/
 
 #if !defined(cl_intel_command_queue_families)
 
@@ -220,8 +220,8 @@ typedef struct _cl_queue_family_properties_intel {
 #endif
 
 /******************************
-*   DEVICE ATTRIBUTE QUERY    *
-*******************************/
+ *   DEVICE ATTRIBUTE QUERY    *
+ *******************************/
 
 #if !defined(cl_intel_device_attribute_query)
 
@@ -251,7 +251,7 @@ typedef cl_uint cl_resource_barrier_type;
 #define CL_RESOURCE_BARRIER_TYPE_DISCARD 0x3 // DISCARD
 
 typedef cl_uint cl_resource_memory_scope;
-#define CL_MEMORY_SCOPE_DEVICE 0x0 // INCLUDES CROSS-TILE
+#define CL_MEMORY_SCOPE_DEVICE 0x0          // INCLUDES CROSS-TILE
 #define CL_MEMORY_SCOPE_ALL_SVM_DEVICES 0x1 // CL_MEMORY_SCOPE_DEVICE + CROSS-DEVICE
 
 #pragma pack(push, 1)
@@ -284,8 +284,8 @@ typedef struct _cl_device_pci_bus_info_khr {
 #endif
 
 /************************************************
-*   cl_intel_mem_compression_hints extension    *
-*************************************************/
+ *   cl_intel_mem_compression_hints extension    *
+ *************************************************/
 #define CL_MEM_COMPRESSED_HINT_INTEL (1u << 21)
 #define CL_MEM_UNCOMPRESSED_HINT_INTEL (1u << 22)
 
@@ -341,4 +341,4 @@ typedef cl_bitfield cl_command_queue_mdapi_properties_intel;
 
 // cl_intel_variable_eu_thread_count
 #define CL_DEVICE_EU_THREAD_COUNTS_INTEL 0x1000A // placeholder
-#define CL_KERNEL_EU_THREAD_COUNT_INTEL 0x1000B // placeholder
+#define CL_KERNEL_EU_THREAD_COUNT_INTEL 0x1000B  // placeholder

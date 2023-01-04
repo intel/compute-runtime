@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,7 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
 
     csr->waitForCompletionWithTimeoutResult = WaitStatus::NotReady;
 
-    //we have unrecoverable for this case, this will throw.
+    // we have unrecoverable for this case, this will throw.
     EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false), std::exception);
     EXPECT_EQ(1u, csr->waitForFlushStampCalled);
     EXPECT_EQ(flushStampToWait, csr->waitForFlushStampParamsPassed[0].flushStampToWait);

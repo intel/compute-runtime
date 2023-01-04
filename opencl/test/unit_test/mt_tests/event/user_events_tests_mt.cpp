@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ TEST_F(MockEventTests, GivenEventCreatedFromUserEventsThatIsNotSignaledThenDoNot
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -36,14 +36,14 @@ TEST_F(MockEventTests, GivenEventCreatedFromUserEventsThatIsNotSignaledThenDoNot
 
     std::thread t([&]() {
         threadStarted = true;
-        //call WaitForEvents
+        // call WaitForEvents
         clWaitForEvents(1, &retEvent);
         waitForEventsCompleted = true;
     });
-    //wait for the thread to start
+    // wait for the thread to start
     while (!threadStarted)
         ;
-    //now wait a while.
+    // now wait a while.
     while (!waitForEventsCompleted && counter++ < deadline)
         ;
 
@@ -53,7 +53,7 @@ TEST_F(MockEventTests, GivenEventCreatedFromUserEventsThatIsNotSignaledThenDoNot
 
     EXPECT_EQ(taskLevelBeforeWaitForEvents, csr.peekTaskLevel());
 
-    //set event to CL_COMPLETE
+    // set event to CL_COMPLETE
     uEvent->setStatus(CL_COMPLETE);
     t.join();
 

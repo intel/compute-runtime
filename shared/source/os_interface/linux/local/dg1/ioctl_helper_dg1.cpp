@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClass
     if (ret == 0) {
         return ret;
     }
-    //fallback to PROD_DG1 kernel
+    // fallback to PROD_DG1 kernel
     handle = 0u;
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<drm_i915_gem_memory_class_instance> regions(regionsSize);

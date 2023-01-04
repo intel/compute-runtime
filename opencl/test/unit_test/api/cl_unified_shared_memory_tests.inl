@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -717,7 +717,7 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_TRUE(kernel->isAnyKernelArgumentUsingSystemMemory());
 
-    //check if cross thread is updated
+    // check if cross thread is updated
     auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.argAsPtr(0).stateless));
     auto systemAddress = reinterpret_cast<uintptr_t>(systemPointer);
 

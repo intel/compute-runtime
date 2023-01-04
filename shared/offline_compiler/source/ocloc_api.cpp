@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,12 +60,12 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
 
 int oclocFreeOutput(uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
     for (uint32_t i = 0; i < *numOutputs; i++) {
-        delete[](*dataOutputs)[i];
-        delete[](*nameOutputs)[i];
+        delete[] (*dataOutputs)[i];
+        delete[] (*nameOutputs)[i];
     }
-    delete[](*dataOutputs);
-    delete[](*lenOutputs);
-    delete[](*nameOutputs);
+    delete[] (*dataOutputs);
+    delete[] (*lenOutputs);
+    delete[] (*nameOutputs);
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ std::tuple<uint64_t , size_t, size_t, int, bool, bool> Inputs[] = {std::make_tup
 TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCopy) {
 
     char *passedPtr = (char *)host_ptr;
-    //misalign the pointer
+    // misalign the pointer
     if (MisalignPointer && passedPtr) {
         passedPtr += 1;
     }
@@ -90,7 +90,7 @@ TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCop
 
     EXPECT_NE(nullptr, buffer->getCpuAddress());
 
-    //check if buffer always have properly aligned storage ( PAGE )
+    // check if buffer always have properly aligned storage ( PAGE )
     EXPECT_EQ(alignUp(buffer->getCpuAddress(), MemoryConstants::cacheLineSize), buffer->getCpuAddress());
 
     delete buffer;

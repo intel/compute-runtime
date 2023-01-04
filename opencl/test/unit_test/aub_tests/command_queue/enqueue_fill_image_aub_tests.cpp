@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,7 +92,7 @@ struct AubFillImage
         auto channelOrder = std::get<1>(GetParam());
 
         if (dataType != CL_UNORM_INT8 && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
-            //sRGBA and sBGRA support only unorm int8 type
+            // sRGBA and sBGRA support only unorm int8 type
             GTEST_SKIP();
         }
         CommandDeviceFixture::setUp(cl_command_queue_properties(0));

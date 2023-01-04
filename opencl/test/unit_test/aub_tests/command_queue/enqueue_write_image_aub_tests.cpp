@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -227,7 +227,7 @@ struct AUBWriteImage
 
         auto srcMemoryAligned = alignedMalloc(4 + pixelSize * numPixels, MemoryConstants::cacheLineSize);
         memset(srcMemoryAligned, 0x0, 4 + pixelSize * numPixels);
-        auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4); //ensure non cacheline-aligned (but aligned to 4) hostPtr to create non-zerocopy image
+        auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4); // ensure non cacheline-aligned (but aligned to 4) hostPtr to create non-zerocopy image
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);

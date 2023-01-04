@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,9 +61,9 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     walkerCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));
     walkerCmd->setThreadGroupIdStartingZ(static_cast<uint32_t>(startWorkGroups[2]));
 
-    //1) cross-thread inline data will be put into R1, but if kernel uses local ids, then cross-thread should be put further back
-    //so whenever local ids are driver or hw generated, reserve space by setting right values for emitLocalIds
-    //2) Auto-generation of local ids should be possible, when in fact local ids are used
+    // 1) cross-thread inline data will be put into R1, but if kernel uses local ids, then cross-thread should be put further back
+    // so whenever local ids are driver or hw generated, reserve space by setting right values for emitLocalIds
+    // 2) Auto-generation of local ids should be possible, when in fact local ids are used
     if (!localIdsGenerationByRuntime && kernelUsesLocalIds) {
         uint32_t emitLocalIdsForDim = 0;
         if (kernelDescriptor.kernelAttributes.localId[0]) {

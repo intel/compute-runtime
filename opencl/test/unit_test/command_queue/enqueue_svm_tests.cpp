@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1679,7 +1679,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
 
     svmManager->makeInternalAllocationsResident(commandStreamReceiver, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
-    //only unified memory allocation is made resident
+    // only unified memory allocation is made resident
     EXPECT_EQ(1u, residentAllocations.size());
     EXPECT_EQ(residentAllocations[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
 
@@ -1703,7 +1703,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
                                                            residencyContainer,
                                                            InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
-    //only unified memory allocation is added to residency container
+    // only unified memory allocation is added to residency container
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
 
@@ -1727,7 +1727,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyC
                                                            residencyContainer,
                                                            InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
-    //only unified memory allocation is added to residency container
+    // only unified memory allocation is added to residency container
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
 

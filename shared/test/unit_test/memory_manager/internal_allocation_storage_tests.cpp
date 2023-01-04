@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,26 +53,26 @@ TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompl
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), TEMPORARY_ALLOCATION);
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation3), TEMPORARY_ALLOCATION);
 
-    //head point to alloc 2, tail points to alloc3
+    // head point to alloc 2, tail points to alloc3
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation2));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
     EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation2, allocation3));
 
-    //now remove element form the middle
+    // now remove element form the middle
     storage->cleanAllocationList(6, TEMPORARY_ALLOCATION);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
     EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
     EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation3));
 
-    //now remove head
+    // now remove head
     storage->cleanAllocationList(11, TEMPORARY_ALLOCATION);
     EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation));
     EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
 
-    //now remove tail
+    // now remove tail
     storage->cleanAllocationList(16, TEMPORARY_ALLOCATION);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,8 +180,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
 
     EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
     EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), kernels[4]->getCrossThreadData(), sizeof(INLINE_DATA)));
-    //this kernel does nothing, so no expectMemory because only such kernel can fit into single GRF
-    //this is for sake of testing inline data data copying by COMPUTE_WALKER
+    // this kernel does nothing, so no expectMemory because only such kernel can fit into single GRF
+    // this is for sake of testing inline data data copying by COMPUTE_WALKER
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSizeMoreThanSingleGrfWhenInlineDataAllowedThenCopyGrfCrossThreadToInline) {
@@ -461,7 +461,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
 
     pCmdQ->finish();
 
-    //we expect sequence of local ids from 0..199
+    // we expect sequence of local ids from 0..199
     auto expectedMemory = reinterpret_cast<uint32_t *>(variables[0].expectedMemory);
     auto currentWorkItem = 0u;
 

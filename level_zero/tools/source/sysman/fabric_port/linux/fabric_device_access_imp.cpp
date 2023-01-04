@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,7 +161,7 @@ ze_result_t FabricDeviceAccessNl::getPorts(std::vector<zes_fabric_port_id_t> &po
         return result;
     }
 
-    //Update fabricPorts
+    // Update fabricPorts
     for (const auto &iafPort : iafPorts) {
         Port port = {};
         readIafPort(port, iafPort);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -348,7 +348,7 @@ TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchTokenThenProperWorkG
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
 
-    //dim0 : [0 : 1]; dim1 : [2 : 3]; dim2 : [4 : 5]
+    // dim0 : [0 : 1]; dim1 : [2 : 3]; dim2 : [4 : 5]
     executionEnvironment.WorkgroupWalkOrderDims = 1 | (2 << 2);
 
     pPatchList = &executionEnvironment;
@@ -367,7 +367,7 @@ TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchToken2ThenProperWork
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
 
-    //dim0 : [0 : 1]; dim1 : [2 : 3]; dim2 : [4 : 5]
+    // dim0 : [0 : 1]; dim1 : [2 : 3]; dim2 : [4 : 5]
     executionEnvironment.WorkgroupWalkOrderDims = 2 | (1 << 4);
 
     pPatchList = &executionEnvironment;
@@ -1261,7 +1261,7 @@ TEST_F(KernelDataTest, givenRelocationTablePatchTokenThenLinkerInputIsCreated) {
     token.Token = PATCH_TOKEN_PROGRAM_RELOCATION_TABLE;
     token.Size = static_cast<uint32_t>(sizeof(SPatchFunctionTableInfo));
     token.NumEntries = 0;
-    kernelHeapSize = 0x100; //force creating kernel allocation for ISA
+    kernelHeapSize = 0x100; // force creating kernel allocation for ISA
     auto kernelHeapData = std::make_unique<char[]>(kernelHeapSize);
     pKernelHeap = kernelHeapData.get();
 

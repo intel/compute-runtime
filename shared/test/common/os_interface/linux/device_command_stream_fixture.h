@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,45 +170,45 @@ class DrmMockCustom : public Drm {
     std::atomic<int> ioctl_res;
     std::atomic<IoctlResExt *> ioctl_res_ext;
 
-    //DRM_IOCTL_I915_GEM_EXECBUFFER2
+    // DRM_IOCTL_I915_GEM_EXECBUFFER2
     NEO::MockExecBuffer execBuffer{};
 
-    //First exec object
+    // First exec object
     NEO::MockExecObject execBufferBufferObjects{};
 
-    //DRM_IOCTL_I915_GEM_CREATE
+    // DRM_IOCTL_I915_GEM_CREATE
     uint64_t createParamsSize = 0;
     uint32_t createParamsHandle = 0;
-    //DRM_IOCTL_I915_GEM_SET_TILING
+    // DRM_IOCTL_I915_GEM_SET_TILING
     uint32_t setTilingMode = 0;
     uint32_t setTilingHandle = 0;
     uint32_t setTilingStride = 0;
-    //DRM_IOCTL_I915_GEM_GET_TILING
+    // DRM_IOCTL_I915_GEM_GET_TILING
     uint32_t getTilingModeOut = 0;
     uint32_t getTilingHandleIn = 0;
-    //DRM_IOCTL_PRIME_FD_TO_HANDLE
+    // DRM_IOCTL_PRIME_FD_TO_HANDLE
     uint32_t outputHandle = 0;
     int32_t inputFd = 0;
-    //DRM_IOCTL_PRIME_HANDLE_TO_FD
+    // DRM_IOCTL_PRIME_HANDLE_TO_FD
     uint32_t inputHandle = 0;
     int32_t outputFd = 0;
     bool incrementOutputFdAfterCall = false;
     int32_t inputFlags = 0;
-    //DRM_IOCTL_I915_GEM_USERPTR
+    // DRM_IOCTL_I915_GEM_USERPTR
     uint32_t returnHandle = 0;
-    //DRM_IOCTL_I915_GEM_SET_DOMAIN
+    // DRM_IOCTL_I915_GEM_SET_DOMAIN
     uint32_t setDomainHandle = 0;
     uint32_t setDomainReadDomains = 0;
     uint32_t setDomainWriteDomain = 0;
-    //DRM_IOCTL_I915_GETPARAM
+    // DRM_IOCTL_I915_GETPARAM
     NEO::GetParam recordedGetParam = {0};
     int getParamRetValue = 0;
-    //DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM
+    // DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM
     NEO::GemContextParam recordedGetContextParam = {0};
     uint64_t getContextParamRetValue = 0;
-    //DRM_IOCTL_I915_GEM_WAIT
+    // DRM_IOCTL_I915_GEM_WAIT
     int64_t gemWaitTimeout = 0;
-    //DRM_IOCTL_I915_GEM_MMAP_OFFSET
+    // DRM_IOCTL_I915_GEM_MMAP_OFFSET
     uint32_t mmapOffsetHandle = 0;
     uint32_t mmapOffsetPad = 0;
     uint64_t mmapOffsetExpected = 0;
@@ -216,7 +216,7 @@ class DrmMockCustom : public Drm {
     bool failOnMmapOffset = false;
     bool failOnPrimeFdToHandle = false;
 
-    //DRM_IOCTL_I915_GEM_CREATE_EXT
+    // DRM_IOCTL_I915_GEM_CREATE_EXT
     uint64_t createExtSize = 0;
     uint32_t createExtHandle = 0;
     uint64_t createExtExtensions = 0;

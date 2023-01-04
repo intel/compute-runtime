@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,8 +52,8 @@ void EventBuilder::finalize() {
         sentinel.addChild(*this->event);
         for (Event *parent : parentEvents) {
 
-            //do not add as child if:
-            //parent has no parents and is not blocked
+            // do not add as child if:
+            // parent has no parents and is not blocked
             if (!(parent->peekIsBlocked() == false && parent->taskLevel != CompletionStamp::notReady) ||
                 (!parent->isEventWithoutCommand() && !parent->peekIsCmdSubmitted())) {
                 parent->addChild(*this->event);

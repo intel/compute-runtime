@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,7 @@ class TestElf {
 
         auto symTabSectionHeader = elfEncoder.getSectionHeader(symTabSectionIndex);
         symTabSectionHeader->info = 4;                                          // one greater than last LOCAL symbol
-        symTabSectionHeader->link = elfEncoder.getLastSectionHeaderIndex() + 1; //strtab section added as last
+        symTabSectionHeader->link = elfEncoder.getLastSectionHeaderIndex() + 1; // strtab section added as last
         return elfEncoder.encode();
     }
     const int64_t relaAddend = 16;
@@ -477,7 +477,7 @@ TEST(ElfDecoder, WhenElfContainsInvalidSymbolSectionHeaderThenDecodingFailsAndEr
     sectionHeader0.type = SECTION_HEADER_TYPE::SHT_SYMTAB;
     sectionHeader0.size = sizeof(sectionHeader0);
     sectionHeader0.offset = header.shOff;
-    sectionHeader0.entsize = sizeof(ElfSymbolEntry<EI_CLASS_64>) + 4; //invalid entSize
+    sectionHeader0.entsize = sizeof(ElfSymbolEntry<EI_CLASS_64>) + 4; // invalid entSize
 
     storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&sectionHeader0), reinterpret_cast<const uint8_t *>(&sectionHeader0 + 1));
 

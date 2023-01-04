@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,10 +61,10 @@ HWTEST2_F(WalkerPartitionPvcAndLaterTests, givenProgramBatchBufferStartCommandWh
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
 
     if (gfxCoreFamily == IGFX_XE_HPC_CORE) {
-        //bits 57-63 are zeroed
+        // bits 57-63 are zeroed
         EXPECT_EQ((gpuAddress & 0x1FFFFFFFFFFFFFF), batchBufferStart->getBatchBufferStartAddress());
     } else {
-        //bits 48-63 are zeroed
+        // bits 48-63 are zeroed
         EXPECT_EQ((gpuAddress & 0xFFFFFFFFFFFF), batchBufferStart->getBatchBufferStartAddress());
     }
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());

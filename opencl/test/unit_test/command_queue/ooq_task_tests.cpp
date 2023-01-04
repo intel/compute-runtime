@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ TYPED_TEST_P(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThe
     auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
     auto taskLevelClosed = blockingCall ? 1u : 0u; // for blocking commands task level will be closed
 
-    //for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
+    // for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
     if (!blockingCall) {
         *tagAddress = 0;
     }
@@ -85,7 +85,7 @@ TYPED_TEST_P(OOQTaskTypedTests, givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCo
     auto tagAddress = commandStreamReceiver.getTagAddress();
     auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
 
-    //for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
+    // for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
     if (!blockingCall) {
         *tagAddress = 0;
     }

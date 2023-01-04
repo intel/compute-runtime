@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
-        //get offset between base cpu ptr of map allocation and dst ptr
+        // get offset between base cpu ptr of map allocation and dst ptr
         size_t srcOffset = ptrDiff(srcPtr, mapAllocation->getUnderlyingBuffer());
         srcPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + srcOffset);
     } else {

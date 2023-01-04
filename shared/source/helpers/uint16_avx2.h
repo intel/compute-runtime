@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ struct uint16x16_t {
     }
 
     uint16x16_t(uint16_t a) {
-        value = _mm256_set1_epi16(a); //AVX
+        value = _mm256_set1_epi16(a); // AVX
     }
 
     explicit uint16x16_t(const void *alignedPtr) {
@@ -54,33 +54,33 @@ struct uint16x16_t {
 
     inline void load(const void *alignedPtr) {
         DEBUG_BREAK_IF(!isAligned<32>(alignedPtr));
-        value = _mm256_load_si256(reinterpret_cast<const __m256i *>(alignedPtr)); //AVX
+        value = _mm256_load_si256(reinterpret_cast<const __m256i *>(alignedPtr)); // AVX
     }
 
     inline void loadUnaligned(const void *ptr) {
-        value = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(ptr)); //AVX
+        value = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(ptr)); // AVX
     }
 
     inline void store(void *alignedPtr) {
         DEBUG_BREAK_IF(!isAligned<32>(alignedPtr));
-        _mm256_store_si256(reinterpret_cast<__m256i *>(alignedPtr), value); //AVX
+        _mm256_store_si256(reinterpret_cast<__m256i *>(alignedPtr), value); // AVX
     }
 
     inline void storeUnaligned(void *ptr) {
-        _mm256_storeu_si256(reinterpret_cast<__m256i *>(ptr), value); //AVX
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(ptr), value); // AVX
     }
 
     inline operator bool() const {
-        return _mm256_testz_si256(value, mask().value) ? false : true; //AVX
+        return _mm256_testz_si256(value, mask().value) ? false : true; // AVX
     }
 
     inline uint16x16_t &operator-=(const uint16x16_t &a) {
-        value = _mm256_sub_epi16(value, a.value); //AVX2
+        value = _mm256_sub_epi16(value, a.value); // AVX2
         return *this;
     }
 
     inline uint16x16_t &operator+=(const uint16x16_t &a) {
-        value = _mm256_add_epi16(value, a.value); //AVX2
+        value = _mm256_add_epi16(value, a.value); // AVX2
         return *this;
     }
 
@@ -88,13 +88,13 @@ struct uint16x16_t {
         uint16x16_t result;
         result.value =
             _mm256_xor_si256(mask().value,
-                             _mm256_cmpgt_epi16(b.value, a.value)); //AVX2
+                             _mm256_cmpgt_epi16(b.value, a.value)); // AVX2
         return result;
     }
 
     inline friend uint16x16_t operator&&(const uint16x16_t &a, const uint16x16_t &b) {
         uint16x16_t result;
-        result.value = _mm256_and_si256(a.value, b.value); //AVX2
+        result.value = _mm256_and_si256(a.value, b.value); // AVX2
         return result;
     }
 
@@ -104,7 +104,7 @@ struct uint16x16_t {
 
         // Have to swap arguments to get intended calling semantics
         result.value =
-            _mm256_blendv_epi8(b.value, a.value, mask.value); //AVX2
+            _mm256_blendv_epi8(b.value, a.value, mask.value); // AVX2
         return result;
     }
 };

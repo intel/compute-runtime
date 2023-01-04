@@ -1278,7 +1278,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenCallingReadGpuMe
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
     NEO::SysCalls::closeFuncCalled = 0;
-    handler->preadRetVal = bufferSize; //16 bytes to read
+    handler->preadRetVal = bufferSize; // 16 bytes to read
     char output[bufferSize] = {};
     auto retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
     EXPECT_EQ(0, retVal);

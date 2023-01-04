@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -433,7 +433,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrFilledWith3TripleFragmentsWhenAskedForPop
     ASSERT_EQ(3u, reqs.requiredFragmentsCount);
 
     FragmentStorage fragments[maxFragmentsCount];
-    //check all fragments
+    // check all fragments
     for (int i = 0; i < maxFragmentsCount; i++) {
         fragments[i].fragmentCpuPointer = const_cast<void *>(reqs.allocationFragments[i].allocationPtr);
         fragments[i].fragmentSize = reqs.allocationFragments[i].allocationSize;
@@ -701,7 +701,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithBigFragmentWhenAskedForF
     EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER, overlapStatus);
     EXPECT_EQ(nullptr, oustideFragment);
 
-    //partialOverlap
+    // partialOverlap
     auto ptrPartial = (void *)(((uintptr_t)bigPtr + bigSize) - 100);
     auto partialBigSize = MemoryConstants::pageSize * 100;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,24 +62,24 @@ TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDevice
 TEST_P(clSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAllocated) {
     cl_mem_flags flags = GetParam();
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
-    //check for svm support
+    // check for svm support
     if (devInfo.svmCapabilities != 0) {
-        //fg svm flag
+        // fg svm flag
         if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
-            //fg svm flag, fg svm support - expected success
+            // fg svm flag, fg svm support - expected success
             if (devInfo.svmCapabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
                 auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
                 EXPECT_NE(nullptr, svmPtr);
 
                 clSVMFree(pContext, svmPtr);
             }
-            //fg svm flag no fg svm support
+            // fg svm flag no fg svm support
             else {
                 auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
                 EXPECT_EQ(nullptr, svmPtr);
             }
         }
-        //no fg svm flag, svm support - expected success
+        // no fg svm flag, svm support - expected success
         else {
             auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
             EXPECT_NE(nullptr, svmPtr);
@@ -87,7 +87,7 @@ TEST_P(clSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAlloc
             clSVMFree(pContext, svmPtr);
         }
     } else {
-        //no svm support -expected fail
+        // no svm support -expected fail
         auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
         EXPECT_EQ(nullptr, svmPtr);
     }
@@ -125,26 +125,26 @@ TEST_P(clSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAlloc
     cl_mem_flags flags = GetParam();
     void *svmPtr = nullptr;
 
-    //1: no svm - no flags supported
+    // 1: no svm - no flags supported
     pHwInfo->capabilityTable.ftrSvm = false;
     pHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
     EXPECT_EQ(nullptr, svmPtr);
 
-    //2: coarse svm - normal flags supported
+    // 2: coarse svm - normal flags supported
     pHwInfo->capabilityTable.ftrSvm = true;
     svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
     if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
-        //fg svm flags not supported
+        // fg svm flags not supported
         EXPECT_EQ(nullptr, svmPtr);
     } else {
-        //no fg svm flags supported
+        // no fg svm flags supported
         EXPECT_NE(nullptr, svmPtr);
         clSVMFree(pContext, svmPtr);
     }
 
-    //3: fg svm - all flags supported
+    // 3: fg svm - all flags supported
     pHwInfo->capabilityTable.ftrSupportsCoherency = true;
     svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
     EXPECT_NE(nullptr, svmPtr);

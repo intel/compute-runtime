@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ struct uint16x8_t {
     }
 
     uint16x8_t(uint16_t a) {
-        value = _mm_set1_epi16(a); //SSE2
+        value = _mm_set1_epi16(a); // SSE2
     }
 
     explicit uint16x8_t(const void *alignedPtr) {
@@ -57,33 +57,33 @@ struct uint16x8_t {
 
     inline void load(const void *alignedPtr) {
         DEBUG_BREAK_IF(!isAligned<16>(alignedPtr));
-        value = _mm_load_si128(reinterpret_cast<const __m128i *>(alignedPtr)); //SSE2
+        value = _mm_load_si128(reinterpret_cast<const __m128i *>(alignedPtr)); // SSE2
     }
 
     inline void loadUnaligned(const void *ptr) {
-        value = _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr)); //SSE2
+        value = _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr)); // SSE2
     }
 
     inline void store(void *alignedPtr) {
         DEBUG_BREAK_IF(!isAligned<16>(alignedPtr));
-        _mm_store_si128(reinterpret_cast<__m128i *>(alignedPtr), value); //SSE2
+        _mm_store_si128(reinterpret_cast<__m128i *>(alignedPtr), value); // SSE2
     }
 
     inline void storeUnaligned(void *ptr) {
-        _mm_storeu_si128(reinterpret_cast<__m128i *>(ptr), value); //SSE2
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(ptr), value); // SSE2
     }
 
     inline operator bool() const {
-        return _mm_test_all_zeros(value, mask().value) ? false : true; //SSE4.1 alternatives?
+        return _mm_test_all_zeros(value, mask().value) ? false : true; // SSE4.1 alternatives?
     }
 
     inline uint16x8_t &operator-=(const uint16x8_t &a) {
-        value = _mm_sub_epi16(value, a.value); //SSE2
+        value = _mm_sub_epi16(value, a.value); // SSE2
         return *this;
     }
 
     inline uint16x8_t &operator+=(const uint16x8_t &a) {
-        value = _mm_add_epi16(value, a.value); //SSE2
+        value = _mm_add_epi16(value, a.value); // SSE2
         return *this;
     }
 
@@ -91,13 +91,13 @@ struct uint16x8_t {
         uint16x8_t result;
         result.value =
             _mm_xor_si128(mask().value,
-                          _mm_cmplt_epi16(a.value, b.value)); //SSE2
+                          _mm_cmplt_epi16(a.value, b.value)); // SSE2
         return result;
     }
 
     inline friend uint16x8_t operator&&(const uint16x8_t &a, const uint16x8_t &b) {
         uint16x8_t result;
-        result.value = _mm_and_si128(a.value, b.value); //SSE2
+        result.value = _mm_and_si128(a.value, b.value); // SSE2
         return result;
     }
 
@@ -107,7 +107,7 @@ struct uint16x8_t {
 
         // Have to swap arguments to get intended calling semantics
         result.value =
-            _mm_blendv_epi8(b.value, a.value, mask.value); //SSE4.1 alternatives?
+            _mm_blendv_epi8(b.value, a.value, mask.value); // SSE4.1 alternatives?
         return result;
     }
 };

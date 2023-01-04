@@ -598,7 +598,7 @@ TEST_F(DrmTests, GivenFailOnParamBoostWhenCreatingDrmThenDrmIsCreated) {
     failOnParamBoost = -1;
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
-    //non-fatal error - issue warning only
+    // non-fatal error - issue warning only
     EXPECT_NE(drm, nullptr);
 }
 

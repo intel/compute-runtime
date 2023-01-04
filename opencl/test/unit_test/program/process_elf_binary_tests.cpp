@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,11 +66,11 @@ TEST_F(ProcessElfBinaryTests, GivenValidBinaryWhenCreatingProgramFromBinaryThenS
 }
 
 TEST_F(ProcessElfBinaryTests, GivenValidSpirBinaryWhenCreatingProgramFromBinaryThenSuccessIsReturned) {
-    //clCreateProgramWithIL => SPIR-V stored as source code
+    // clCreateProgramWithIL => SPIR-V stored as source code
     const uint32_t spirvBinary[2] = {0x03022307, 0x07230203};
     size_t spirvBinarySize = sizeof(spirvBinary);
 
-    //clCompileProgram => SPIR-V stored as IR binary
+    // clCompileProgram => SPIR-V stored as IR binary
     program->isSpirV = true;
     program->irBinary = makeCopy(spirvBinary, spirvBinarySize);
     program->irBinarySize = spirvBinarySize;
@@ -79,20 +79,20 @@ TEST_F(ProcessElfBinaryTests, GivenValidSpirBinaryWhenCreatingProgramFromBinaryT
     EXPECT_NE(0u, program->irBinarySize);
     EXPECT_TRUE(program->getIsSpirV());
 
-    //clGetProgramInfo => SPIR-V stored as ELF binary
+    // clGetProgramInfo => SPIR-V stored as ELF binary
     cl_int retVal = program->packDeviceBinary(*device);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].packedDeviceBinary);
     EXPECT_NE(0u, program->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
 
-    //use ELF reader to parse and validate ELF binary
+    // use ELF reader to parse and validate ELF binary
     std::string decodeErrors;
     std::string decodeWarnings;
     auto elf = NEO::Elf::decodeElf(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(program->buildInfos[rootDeviceIndex].packedDeviceBinary.get()), program->buildInfos[rootDeviceIndex].packedDeviceBinarySize), decodeErrors, decodeWarnings);
     auto header = elf.elfFileHeader;
     ASSERT_NE(nullptr, header);
 
-    //check if ELF binary contains section SECTION_HEADER_TYPE_SPIRV
+    // check if ELF binary contains section SECTION_HEADER_TYPE_SPIRV
     bool hasSpirvSection = false;
     for (const auto &elfSectionHeader : elf.sectionHeaders) {
         if (elfSectionHeader.header->type == NEO::Elf::SHT_OPENCL_SPIRV) {
@@ -102,7 +102,7 @@ TEST_F(ProcessElfBinaryTests, GivenValidSpirBinaryWhenCreatingProgramFromBinaryT
     }
     EXPECT_TRUE(hasSpirvSection);
 
-    //clCreateProgramWithBinary => new program should recognize SPIR-V binary
+    // clCreateProgramWithBinary => new program should recognize SPIR-V binary
     program->isSpirV = false;
     auto elfBinary = makeCopy(program->buildInfos[rootDeviceIndex].packedDeviceBinary.get(), program->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
     retVal = program->createProgramFromBinary(elfBinary.get(), program->buildInfos[rootDeviceIndex].packedDeviceBinarySize, *device);

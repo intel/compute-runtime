@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t e
 }
 
 void EngineHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
-    std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> engineGroupInstance = {}; //set contains pair of engine group and struct containing engine instance and subdeviceId
+    std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> engineGroupInstance = {}; // set contains pair of engine group and struct containing engine instance and subdeviceId
     OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
     for (auto itr = engineGroupInstance.begin(); itr != engineGroupInstance.end(); ++itr) {
         for (const auto &deviceHandle : deviceHandles) {

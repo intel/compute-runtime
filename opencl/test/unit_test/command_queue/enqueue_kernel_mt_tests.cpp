@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
     auto threadCount = 4;
 
     auto function = [&]() {
-        //wait until we are signalled
+        // wait until we are signalled
         while (!startEnqueueProcess)
             ;
         for (int enqueue = 0; enqueue < enqueueCount; enqueue++) {
@@ -51,7 +51,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
 
     startEnqueueProcess = true;
 
-    //call a flush while other threads enqueue, we can't drop anything
+    // call a flush while other threads enqueue, we can't drop anything
     while (currentTaskCount < enqueueCount * threadCount) {
         clFlush(pCmdQ);
         auto locker = mockCsr->obtainUniqueOwnership();

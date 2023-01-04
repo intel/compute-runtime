@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,7 +142,7 @@ bool queryTest() {
             status &= queryRun(deviceId, -1, testSettings->metricGroupName.get());
         }
     } else {
-        //Run for specific device
+        // Run for specific device
         status &= queryRun(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
     }
 
@@ -215,7 +215,7 @@ bool streamTest() {
             status &= streamRun(deviceId, -1, testSettings->metricGroupName.get());
         }
     } else {
-        //Run for specific device
+        // Run for specific device
         status &= streamRun(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
     }
 
@@ -276,7 +276,7 @@ bool streamMultiMetricDomainTest() {
             status &= streamMultiMetricDomainRun(deviceId, -1);
         }
     } else {
-        //Run for specific device
+        // Run for specific device
         status &= streamMultiMetricDomainRun(testSettings->deviceId.get(), testSettings->subDeviceId.get());
     }
 
@@ -427,7 +427,7 @@ bool streamMtCollectionWorkloadDifferentThreads() {
             status &= streamMt(deviceId, -1, testSettings->metricGroupName.get());
         }
     } else {
-        //Run for specific device
+        // Run for specific device
         status &= streamMt(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
     }
 
@@ -592,7 +592,7 @@ bool streamMpCollectionWorkloadDifferentProcess() {
     if (testSettings->deviceId.get() == -1) {
         status &= streamMp(0, 0, testSettings->metricGroupName.get());
     } else {
-        //Run for specific device
+        // Run for specific device
         status &= streamMp(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
     }
 
@@ -822,7 +822,7 @@ bool queryImmediateCommandListTest() {
             status &= queryRun(deviceId, -1, testSettings->metricGroupName.get());
         }
     } else {
-        //Run for specific device
+        // Run for specific device
         status &= queryRun(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
     }
 
@@ -882,7 +882,7 @@ bool collectIndefinitely() {
     if (testSettings->deviceId.get() == -1) {
         testSettings->deviceId.set(0);
     }
-    //Run for specific device
+    // Run for specific device
     status &= collectStart(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
 
     return status;

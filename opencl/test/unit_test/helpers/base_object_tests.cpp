@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,11 +94,11 @@ class MockObject<Program> : public MockObjectBase<Program> {
 typedef ::testing::Types<
     MockPlatform,
     IntelAccelerator,
-    //Context,
-    //Program,
-    //Kernel,
-    //Sampler
-    //others...
+    // Context,
+    // Program,
+    // Kernel,
+    // Sampler
+    // others...
     MockCommandQueue>
     BaseObjectTypes;
 
@@ -224,7 +224,7 @@ TYPED_TEST(BaseObjectTests, WhenCastingToDispatchTableThenEntriesAreCorrect) {
 TEST(BaseObjectTests, WhenSettingSharedContextFlagThenItIsSetCorrectly) {
     MockContext newContext;
 
-    //cast to cl_context
+    // cast to cl_context
     cl_context clContext = &newContext;
     EXPECT_FALSE(newContext.isSharedContext);
 

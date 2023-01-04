@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
             handler.reset(new MockHandler());
         }
         int getExecutionStatus() {
-            //return execution status without updating
+            // return execution status without updating
             return executionStatus.load();
         }
         void setTaskStamp(TaskCountType taskLevel, TaskCountType taskCount) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,13 +36,13 @@ TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPt
     char *misalignedPtr = (char *)originalPtr;
     misalignedPtr++;
 
-    //values really used
+    // values really used
     misalignedPtr[0] = 1;
     misalignedPtr[1] = 2;
     misalignedPtr[2] = 3;
     misalignedPtr[3] = 4;
     misalignedPtr[4] = 5;
-    //values not used should be ommitted
+    // values not used should be ommitted
     misalignedPtr[5] = 6;
     misalignedPtr[6] = 7;
 
@@ -82,9 +82,9 @@ TEST(HashGeneration, givenMisalignedBufferWithSizeOneWhenPassedToUpdateFunctionT
     char *misalignedPtr = (char *)originalPtr;
     misalignedPtr++;
 
-    //values really used
+    // values really used
     misalignedPtr[0] = 1;
-    //values not used should be ommitted
+    // values not used should be ommitted
     misalignedPtr[1] = 2;
     misalignedPtr[2] = 3;
     misalignedPtr[3] = 4;

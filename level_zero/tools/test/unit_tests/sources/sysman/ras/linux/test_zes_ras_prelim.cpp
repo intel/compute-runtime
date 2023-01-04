@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -742,7 +742,7 @@ TEST_F(SysmanRasAffinityMaskFixture, GivenAffinityMaskIsSetWhenCallingRasPropert
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         EXPECT_EQ(properties.pNext, nullptr);
         EXPECT_EQ(properties.onSubdevice, true);
-        EXPECT_EQ(properties.subdeviceId, 1u); //Affinity mask 0.1 is set which means only subdevice 1 is exposed
+        EXPECT_EQ(properties.subdeviceId, 1u); // Affinity mask 0.1 is set which means only subdevice 1 is exposed
         if (handleIndex == 0u) {
             EXPECT_EQ(properties.type, ZES_RAS_ERROR_TYPE_CORRECTABLE);
 

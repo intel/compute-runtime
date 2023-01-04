@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,13 +53,13 @@ TEST_F(clEnqueueCopyBufferToImageTests, GivenInvalidCmdQueueWhenCopyingBufferToI
     size_t region[] = {10, 10, 0};
 
     auto retVal = clEnqueueCopyBufferToImage(
-        nullptr, //commandQueue
-        nullptr, //srcBuffer
-        nullptr, //dstBuffer
-        0u,      //src_offset
+        nullptr, // commandQueue
+        nullptr, // srcBuffer
+        nullptr, // dstBuffer
+        0u,      // src_offset
         dstOrigin,
         region,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -72,12 +72,12 @@ TEST_F(clEnqueueCopyBufferToImageTests, GivenInvalidSrcBufferWhenCopyingBufferTo
 
     auto retVal = clEnqueueCopyBufferToImage(
         pCommandQueue,
-        nullptr, //srcBuffer
-        nullptr, //dstBuffer
-        0u,      //src_offset
+        nullptr, // srcBuffer
+        nullptr, // dstBuffer
+        0u,      // src_offset
         dstOrigin,
         region,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -99,10 +99,10 @@ TEST_F(clEnqueueCopyBufferToImageTests, GivenValidParametersWhenCopyingBufferToI
         pCommandQueue,
         srcBuffer.get(),
         dstImage,
-        0u, //src_offset
+        0u, // src_offset
         dstOrigin,
         region,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -127,10 +127,10 @@ TEST_F(clEnqueueCopyBufferToImageTests, GivenQueueIncapableWhenCopyingBufferToIm
         pCommandQueue,
         srcBuffer.get(),
         dstImage,
-        0u, //src_offset
+        0u, // src_offset
         dstOrigin,
         region,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 

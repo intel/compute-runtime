@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ bool ImplicitScalingHelper::isImplicitScalingEnabled(const DeviceBitfield &devic
     if (DebugManager.flags.EnableWalkerPartition.get() != -1) {
         partitionWalker = !!DebugManager.flags.EnableWalkerPartition.get();
     }
-    //we can't do this without local memory
+    // we can't do this without local memory
     partitionWalker &= OSInterface::osEnableLocalMemory;
 
     return partitionWalker;

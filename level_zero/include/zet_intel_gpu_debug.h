@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ extern "C" {
 
 #ifndef ZET_INTEL_GPU_DEBUG_MINOR
 #define ZET_INTEL_GPU_DEBUG_MINOR 0
-#endif //!ZET_INTEL_GPU_DEBUG_MINOR
+#endif //! ZET_INTEL_GPU_DEBUG_MINOR
 
 #if ZET_INTEL_GPU_DEBUG_MAJOR == 1
 ///////////////////////////////////////////////////////////////////////////////

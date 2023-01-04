@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,10 +51,10 @@ typedef void(CL_CALLBACK *memobj_logging_fn)(cl_mem, void *);
 typedef void(CL_CALLBACK *svmfree_logging_fn)(cl_command_queue, cl_uint, void *[], void *);
 
 /*
-*
-* function pointer typedefs
-*
-*/
+ *
+ * function pointer typedefs
+ *
+ */
 
 // Platform APIs
 typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clGetPlatformIDs)(
@@ -1096,13 +1096,13 @@ typedef void (*INTELpfn_clEnqueueReleaseVA_APIMediaSurfacesINTEL)();
 #endif
 
 /*
-*
-* vendor dispatch table structure
-*
-* note that the types in the structure KHRicdVendorDispatch mirror the function
-* names listed in the string table khrIcdVendorDispatchFunctionNames
-*
-*/
+ *
+ * vendor dispatch table structure
+ *
+ * note that the types in the structure KHRicdVendorDispatch mirror the function
+ * names listed in the string table khrIcdVendorDispatchFunctionNames
+ *
+ */
 
 struct SDispatchTable {
     KHRpfn_clGetPlatformIDs clGetPlatformIDs;

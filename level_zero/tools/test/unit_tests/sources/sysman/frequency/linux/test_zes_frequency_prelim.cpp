@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -871,7 +871,7 @@ TEST_F(FreqMultiDeviceFixture, GivenAffinityMaskIsSetWhenCallingFrequencyPropert
         EXPECT_EQ(nullptr, properties.pNext);
         EXPECT_EQ(ZES_FREQ_DOMAIN_GPU, properties.type);
         EXPECT_TRUE(properties.onSubdevice);
-        EXPECT_EQ(1u, properties.subdeviceId); //Affinity mask 0.1 is set which means only subdevice 1 is exposed
+        EXPECT_EQ(1u, properties.subdeviceId); // Affinity mask 0.1 is set which means only subdevice 1 is exposed
     }
 }
 

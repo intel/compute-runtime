@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ TEST_F(clEnqueueNativeKernelTests, GivenAnyParametersWhenExecutingNativeKernelTh
         nullptr, // mem_list
         nullptr, // args_mem_loc
         0,       // num_events
-        nullptr, //event_list
+        nullptr, // event_list
         nullptr  // event
     );
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);

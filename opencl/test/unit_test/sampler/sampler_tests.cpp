@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ TEST_P(CreateSampler, GivenModeWhenSamplerIsCreatedThenParamsAreSetCorrectly) {
     EXPECT_EQ(addressingMode, sampler->getAddressingMode());
     EXPECT_EQ(filterMode, sampler->getFilterMode());
 
-    //check for SnapWA
+    // check for SnapWA
     bool snapWaNeeded = addressingMode == CL_ADDRESS_CLAMP && filterMode == CL_FILTER_NEAREST;
     auto snapWaValue = snapWaNeeded ? iOpenCL::CONSTANT_REGISTER_BOOLEAN_TRUE : iOpenCL::CONSTANT_REGISTER_BOOLEAN_FALSE;
     EXPECT_EQ(snapWaValue, sampler->getSnapWaValue());

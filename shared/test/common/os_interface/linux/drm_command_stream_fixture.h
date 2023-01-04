@@ -35,7 +35,7 @@ class DrmCommandStreamTest : public ::testing::Test {
     template <typename GfxFamily>
     void setUpT() {
 
-        //make sure this is disabled, we don't want to test this now
+        // make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
         mock = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
@@ -68,7 +68,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_EQ(1u, mock->ioctlCallsCount);
 
-        //assert we have memory manager
+        // assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
         mock->ioctlCount.reset();
         mock->ioctlTearDownExpected.reset();
@@ -118,7 +118,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         executionEnvironment->incRefInternal();
         executionEnvironment->initGmm();
         this->dbgState = std::make_unique<DebugManagerStateRestore>();
-        //make sure this is disabled, we don't want to test this now
+        // make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
         mock = new DrmType(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
@@ -199,7 +199,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
         executionEnvironment->incRefInternal();
         executionEnvironment->initGmm();
         this->dbgState = std::make_unique<DebugManagerStateRestore>();
-        //make sure this is disabled, we don't want to test this now
+        // make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
         mock = new T(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);

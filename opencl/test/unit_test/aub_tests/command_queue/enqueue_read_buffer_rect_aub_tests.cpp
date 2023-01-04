@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,7 +95,7 @@ HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
     char *ptr = new char[slicePitch];
     memset(ptr, 0, slicePitch);
     for (unsigned int i = 0; i < rowPitch; i++) {
-        //one slice will be copied from src. all others should be zeros
+        // one slice will be copied from src. all others should be zeros
         if (i == zHostOffs) {
             AUBCommandStreamFixture::expectMemory<FamilyType>(destMemory + slicePitch * i, srcMemory + slicePitch * zBuffOffs, slicePitch);
         } else {

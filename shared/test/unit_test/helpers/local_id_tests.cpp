@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -488,8 +488,8 @@ INSTANTIATE_TEST_CASE_P(LayoutForImagesTests, LocalIdsLayoutForImagesTest, ::tes
 // NOTE: You'll need a unique test prefix
 INSTANTIATE_TEST_CASE_P(SingleTest, LocalIDFixture,
                         ::testing::Combine(
-                            ::testing::Values(32),  //SIMD
-                            ::testing::Values(32),  //GRF
-                            ::testing::Values(5),   //LWSX
-                            ::testing::Values(6),   //LWSY
-                            ::testing::Values(7))); //LWSZ
+                            ::testing::Values(32),  // SIMD
+                            ::testing::Values(32),  // GRF
+                            ::testing::Values(5),   // LWSX
+                            ::testing::Values(6),   // LWSY
+                            ::testing::Values(7))); // LWSZ

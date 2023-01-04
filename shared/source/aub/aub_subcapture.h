@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,9 @@ class SettingsReader;
 class AubSubCaptureCommon {
   public:
     enum class SubCaptureMode {
-        Off = 0, //subcapture off
-        Filter,  //subcapture kernel specified by filter (static regkey)
-        Toggle   //toggle subcapture on/off (dynamic regkey)
+        Off = 0, // subcapture off
+        Filter,  // subcapture kernel specified by filter (static regkey)
+        Toggle   // toggle subcapture on/off (dynamic regkey)
     } subCaptureMode = SubCaptureMode::Off;
 
     struct SubCaptureFilter {

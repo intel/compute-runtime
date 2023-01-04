@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 namespace L0 {
 const std::string LinuxDiagnosticsImp::deviceDir("device");
 
-//the sysfs node will be at /sys/class/drm/card<n>/invalidate_lmem_mmaps
+// the sysfs node will be at /sys/class/drm/card<n>/invalidate_lmem_mmaps
 const std::string LinuxDiagnosticsImp::invalidateLmemFile("invalidate_lmem_mmaps");
 // the sysfs node will be at /sys/class/drm/card<n>/quiesce_gpu
 const std::string LinuxDiagnosticsImp::quiescentGpuFile("quiesce_gpu");
@@ -34,14 +34,14 @@ void OsDiagnostics::getSupportedDiagTestsFromFW(void *pOsSysman, std::vector<std
 
 // before running diagnostics need to close all active workloads
 // writing 1 to /sys/class/drm/card<n>/quiesce_gpu will signal KMD
-//to close and clear all allocations,
-//ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE will be sent till the kworker confirms that
-//all allocations are closed and GPU is be wedged.
+// to close and clear all allocations,
+// ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE will be sent till the kworker confirms that
+// all allocations are closed and GPU is be wedged.
 // GPU will only be unwedged after warm/cold reset
-//writing 1 to /sys/class/drm/card<n>/invalidate_lmem_mmaps clears
+// writing 1 to /sys/class/drm/card<n>/invalidate_lmem_mmaps clears
 // all memory mappings where LMEMBAR is being referenced are invalidated.
-//Also prevents new ones from being created.
-//It will invalidate LMEM memory mappings only when sysfs entry quiesce_gpu is set.
+// Also prevents new ones from being created.
+// It will invalidate LMEM memory mappings only when sysfs entry quiesce_gpu is set.
 ze_result_t LinuxDiagnosticsImp::waitForQuiescentCompletion() {
     uint32_t count = 0;
     const int intVal = 1;
@@ -60,7 +60,7 @@ ze_result_t LinuxDiagnosticsImp::waitForQuiescentCompletion() {
         } else {
             return result;
         }
-    } while (count < 10); //limiting to 10 retries as we can endup going into a infinite loop if the cleanup and a process start are out of sync
+    } while (count < 10); // limiting to 10 retries as we can endup going into a infinite loop if the cleanup and a process start are out of sync
     result = pSysfsAccess->write(invalidateLmemFile, intVal);
     if (ZE_RESULT_SUCCESS != result) {
         return result;

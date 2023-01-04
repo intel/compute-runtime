@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,11 +124,11 @@ struct MultiGraphicsAllocationTests : ::testing::Test {
 TEST_F(MultiGraphicsAllocationTests, whenCreatingMultiGraphicsAllocationWithSharedStorageThenMigrationIsNotRequired) {
 
     AllocationProperties allocationProperties{0u,
-                                              true, //allocateMemory
+                                              true, // allocateMemory
                                               MemoryConstants::pageSize,
                                               AllocationType::BUFFER_HOST_MEMORY,
-                                              false, //multiOsContextCapable
-                                              false, //isMultiStorageAllocationParam
+                                              false, // multiOsContextCapable
+                                              false, // isMultiStorageAllocationParam
                                               systemMemoryBitfield};
 
     auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, multiGraphicsAllocation);
@@ -147,11 +147,11 @@ TEST_F(MultiGraphicsAllocationTests, whenCreatingMultiGraphicsAllocationWithExis
     uint8_t hostPtr[MemoryConstants::pageSize]{};
 
     AllocationProperties allocationProperties{0u,
-                                              false, //allocateMemory
+                                              false, // allocateMemory
                                               MemoryConstants::pageSize,
                                               AllocationType::BUFFER_HOST_MEMORY,
-                                              false, //multiOsContextCapable
-                                              false, //isMultiStorageAllocationParam
+                                              false, // multiOsContextCapable
+                                              false, // isMultiStorageAllocationParam
                                               systemMemoryBitfield};
 
     multiGraphicsAllocation.addAllocation(memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties, hostPtr));
@@ -168,11 +168,11 @@ TEST_F(MultiGraphicsAllocationTests, whenCreatingMultiGraphicsAllocationWithExis
 
 TEST_F(MultiGraphicsAllocationTests, whenCreatingMultiGraphicsAllocationWithSeparatedStorageThenMigrationIsRequired) {
     AllocationProperties allocationProperties{0u,
-                                              true, //allocateMemory
+                                              true, // allocateMemory
                                               MemoryConstants::pageSize,
                                               AllocationType::BUFFER_HOST_MEMORY,
-                                              false, //multiOsContextCapable
-                                              false, //isMultiStorageAllocationParam
+                                              false, // multiOsContextCapable
+                                              false, // isMultiStorageAllocationParam
                                               systemMemoryBitfield};
 
     multiGraphicsAllocation.addAllocation(memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties));
@@ -188,11 +188,11 @@ TEST_F(MultiGraphicsAllocationTests, whenCreatingMultiGraphicsAllocationWithSepa
 
 TEST_F(MultiGraphicsAllocationTests, givenMultiGraphicsAllocationThatRequiresMigrationWhenCopyOrMoveMultiGraphicsAllocationThenTheCopyStillRequiresMigration) {
     AllocationProperties allocationProperties{0u,
-                                              true, //allocateMemory
+                                              true, // allocateMemory
                                               MemoryConstants::pageSize,
                                               AllocationType::BUFFER_HOST_MEMORY,
-                                              false, //multiOsContextCapable
-                                              false, //isMultiStorageAllocationParam
+                                              false, // multiOsContextCapable
+                                              false, // isMultiStorageAllocationParam
                                               systemMemoryBitfield};
 
     multiGraphicsAllocation.addAllocation(memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties));
@@ -220,11 +220,11 @@ struct MigrationSyncDataTests : public MultiGraphicsAllocationTests {
     void SetUp() override {
         MultiGraphicsAllocationTests::SetUp();
         AllocationProperties allocationProperties{0u,
-                                                  true, //allocateMemory
+                                                  true, // allocateMemory
                                                   MemoryConstants::pageSize,
                                                   AllocationType::BUFFER_HOST_MEMORY,
-                                                  false, //multiOsContextCapable
-                                                  false, //isMultiStorageAllocationParam
+                                                  false, // multiOsContextCapable
+                                                  false, // isMultiStorageAllocationParam
                                                   systemMemoryBitfield};
 
         multiGraphicsAllocation.addAllocation(memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties));

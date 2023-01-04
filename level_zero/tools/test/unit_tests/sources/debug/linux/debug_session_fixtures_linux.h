@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -174,7 +174,7 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
             if (*static_cast<char *>(addr) != static_cast<char>(0xaa)) {
                 memoryModifiedInMunmap = true;
             }
-            delete[](char *) addr;
+            delete[] (char *)addr;
         } else {
             return -1;
         }

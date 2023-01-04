@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-//Tests for pipes
+// Tests for pipes
 
 class PipeTest : public ::testing::Test, public MemoryManagementFixture {
   public:

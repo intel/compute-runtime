@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -272,7 +272,7 @@ size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, boo
                 if (eventDeallocation.address == eventAllocation.address &&
                     eventDeallocation.event != AllocationEvent::EVENT_UNKNOWN) {
 
-                    //this memory was once freed, now it is allocated but not freed
+                    // this memory was once freed, now it is allocated but not freed
                     if (requireCallStack && eventDeallocation.frames == 0) {
                         potentialLeak = true;
                         potentialLeakIndex = currentIndex;

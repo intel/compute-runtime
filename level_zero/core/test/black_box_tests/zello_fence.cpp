@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,7 +166,7 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
     if (verbose)
         std::cout << "zeFenceHostSynchronize success" << std::endl;
 
-    //Tear down
+    // Tear down
     SUCCESS_OR_TERMINATE(zeFenceReset(fence));
     SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));

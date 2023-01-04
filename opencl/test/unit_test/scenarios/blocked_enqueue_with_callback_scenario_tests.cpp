@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ void CL_CALLBACK callback(cl_event event, cl_int status, void *data) {
         cl_event callbackEvent = callbackData->signalCallbackDoneEvent;
         clSetUserEventStatus(callbackEvent, CL_COMPLETE);
         // No need to reatin and release this synchronization event
-        //clReleaseEvent(callbackEvent);
+        // clReleaseEvent(callbackEvent);
     }
 }
 
