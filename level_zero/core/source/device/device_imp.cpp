@@ -332,6 +332,9 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
 
     uint32_t totalEngineGroups = numEngineGroups + numSubDeviceCopyEngineGroups;
 
+    uint32_t additionalEngines = getAdditionalEngines(std::numeric_limits<uint32_t>::max(), nullptr);
+    totalEngineGroups += additionalEngines;
+
     if (*pCount == 0) {
         *pCount = totalEngineGroups;
         return ZE_RESULT_SUCCESS;
@@ -364,8 +367,12 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
     }
 
     if (*pCount > numEngineGroups) {
-        uint32_t remainingEngineGroups = *pCount - numEngineGroups;
-        getCopyQueueGroupsFromSubDevice(remainingEngineGroups, &pCommandQueueGroupProperties[numEngineGroups]);
+        uint32_t remainingCopyEngineGroups = *pCount - numEngineGroups - additionalEngines;
+        getCopyQueueGroupsFromSubDevice(remainingCopyEngineGroups, &pCommandQueueGroupProperties[numEngineGroups]);
+    }
+
+    if (*pCount > (numEngineGroups + numSubDeviceCopyEngineGroups)) {
+        getAdditionalEngines(additionalEngines, &pCommandQueueGroupProperties[numEngineGroups + numSubDeviceCopyEngineGroups]);
     }
 
     return ZE_RESULT_SUCCESS;
