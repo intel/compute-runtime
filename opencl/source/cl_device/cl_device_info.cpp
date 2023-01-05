@@ -295,7 +295,9 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         }
         break;
     case CL_DEVICE_UUID_KHR:
-        device.generateUuid(uuid);
+        if (device.getUuid(uuid) == false) {
+            device.generateUuid(uuid);
+        }
         src = uuid.data();
         retSize = srcSize = CL_UUID_SIZE_KHR;
         break;

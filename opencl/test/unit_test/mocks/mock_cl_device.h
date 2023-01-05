@@ -43,6 +43,7 @@ class MockClDevice : public ClDevice {
 
     explicit MockClDevice(MockDevice *pMockDevice);
 
+    void setPciUuid(std::array<uint8_t, ProductHelper::uuidSize> &id);
     bool createEngines() { return device.createEngines(); }
     void setOSTime(OSTime *osTime) { device.setOSTime(osTime); }
     bool getCpuTime(uint64_t *timeStamp) { return device.getCpuTime(timeStamp); }

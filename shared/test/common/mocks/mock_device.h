@@ -57,12 +57,14 @@ class MockDevice : public RootDevice {
     using Device::engineInstanced;
     using Device::engineInstancedType;
     using Device::executionEnvironment;
+    using Device::generateUuidFromPciBusInfo;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
     using Device::isDebuggerActive;
     using Device::regularEngineGroups;
     using Device::rootCsrCreated;
     using Device::rtMemoryBackedBuffer;
+    using Device::uuid;
     using RootDevice::createEngines;
     using RootDevice::defaultEngineIndex;
     using RootDevice::getDeviceBitfield;

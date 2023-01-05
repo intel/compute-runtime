@@ -1055,6 +1055,19 @@ TEST(GetDeviceInfo, givenDeviceUuidWhenGettingDeviceInfoThenGenerateDeviceUuid) 
     EXPECT_EQ(generateDeviceUuid, deviceUuidKHR);
 }
 
+TEST(GetDeviceInfo, givenDeviceUuidWhenGettingDeviceInfoThenGenerateDeviceUuidFromPci) {
+    std::array<uint8_t, CL_UUID_SIZE_KHR> generateDeviceUuid, deviceUuidKHR;
+    size_t retSize = 0;
+    memset(generateDeviceUuid.data(), 1, CL_UUID_SIZE_KHR);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device->setPciUuid(generateDeviceUuid);
+    auto retVal = device->getDeviceInfo(CL_DEVICE_UUID_KHR, sizeof(deviceUuidKHR), &deviceUuidKHR, &retSize);
+    ASSERT_EQ(retVal, CL_SUCCESS);
+
+    EXPECT_EQ(generateDeviceUuid, deviceUuidKHR);
+}
+
 struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();

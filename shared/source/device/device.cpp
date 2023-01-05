@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -740,13 +740,47 @@ bool Device::getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
 
 bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != PhysicalDevicePciBusInfo::invalidValue) {
-
         uuid.fill(0);
-        memcpy_s(&uuid[0], 2, &pciBusInfo.pciDomain, 2);
-        memcpy_s(&uuid[2], 1, &pciBusInfo.pciBus, 1);
-        memcpy_s(&uuid[3], 1, &pciBusInfo.pciDevice, 1);
-        memcpy_s(&uuid[4], 1, &pciBusInfo.pciFunction, 1);
-        uuid[ProductHelper::uuidSize - 1] = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+
+        /* Device UUID uniquely identifies a device within a system.
+         * We generate it based on device information along with PCI information
+         * This guarantees uniqueness of UUIDs on a system even when multiple
+         * identical Intel GPUs are present.
+         */
+
+        /* We want to have UUID matching between different GPU APIs (including outside
+         * of compute_runtime project - i.e. other than L0 or OCL). This structure definition
+         * has been agreed upon by various Intel driver teams.
+         *
+         * Consult other driver teams before changing this.
+         */
+
+        struct device_uuid {
+            uint16_t vendor_id;
+            uint16_t device_id;
+            uint16_t revision_id;
+            uint16_t pci_domain;
+            uint8_t pci_bus;
+            uint8_t pci_dev;
+            uint8_t pci_func;
+            uint8_t reserved[4];
+            uint8_t sub_device_id;
+        };
+
+        device_uuid deviceUUID = {};
+        deviceUUID.vendor_id = 0x8086; // Intel
+        deviceUUID.device_id = getHardwareInfo().platform.usDeviceID;
+        deviceUUID.revision_id = getHardwareInfo().platform.usRevId;
+        deviceUUID.pci_domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+        deviceUUID.pci_bus = static_cast<uint8_t>(pciBusInfo.pciBus);
+        deviceUUID.pci_dev = static_cast<uint8_t>(pciBusInfo.pciDevice);
+        deviceUUID.pci_func = static_cast<uint8_t>(pciBusInfo.pciFunction);
+        deviceUUID.sub_device_id = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+
+        static_assert(sizeof(device_uuid) == ProductHelper::uuidSize);
+
+        memcpy_s(uuid.data(), ProductHelper::uuidSize, &deviceUUID, sizeof(device_uuid));
+
         return true;
     }
     return false;

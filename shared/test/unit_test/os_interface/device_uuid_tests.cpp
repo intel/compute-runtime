@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,11 +49,24 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffinityMaskT
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     const auto deviceFactory = createDevices(pciBusInfo, 4);
 
-    std::array<uint8_t, 16> uuid;
-    uint8_t expectedUuid[16] = {0x00, 0x00, 0x34, 0xab,
-                                0xcd, 0x0, 0x0, 0x0,
-                                0x0, 0x0, 0x0, 0x0,
-                                0x0, 0x0, 0x0, 0x0};
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+
+    uint16_t vendorId = 0x8086; // Intel
+    uint16_t deviceId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usDeviceID);
+    uint16_t revisionId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usRevId);
+    uint16_t pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+    uint8_t pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+    uint8_t pciDevice = static_cast<uint8_t>(pciBusInfo.pciDevice);
+    uint8_t pciFunction = static_cast<uint8_t>(pciBusInfo.pciFunction);
+
+    memcpy_s(&expectedUuid[0], sizeof(uint16_t), &vendorId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[2], sizeof(uint16_t), &deviceId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[4], sizeof(uint16_t), &revisionId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[6], sizeof(uint16_t), &pciDomain, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[8], sizeof(uint8_t), &pciBus, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[9], sizeof(uint8_t), &pciDevice, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[10], sizeof(uint8_t), &pciFunction, sizeof(uint8_t));
 
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
@@ -83,13 +96,26 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDevic
     VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
     std::array<uint8_t, 16> uuid;
     const uint32_t numSubDevices = 2;
-    uint8_t expectedUuid[16] = {0xad, 0x54, 0x34, 0xab,
-                                0xcd, 0x0, 0x0, 0x0,
-                                0x0, 0x0, 0x0, 0x0,
-                                0x0, 0x0, 0x0, 0x0};
+    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
     DebugManager.flags.ZE_AFFINITY_MASK.set("default");
     PhysicalDevicePciBusInfo pciBusInfo(0x54ad, 0x34, 0xab, 0xcd);
     const auto deviceFactory = createDevices(pciBusInfo, numSubDevices);
+
+    uint16_t vendorId = 0x8086; // Intel
+    uint16_t deviceId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usDeviceID);
+    uint16_t revisionId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usRevId);
+    uint16_t pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+    uint8_t pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+    uint8_t pciDevice = static_cast<uint8_t>(pciBusInfo.pciDevice);
+    uint8_t pciFunction = static_cast<uint8_t>(pciBusInfo.pciFunction);
+
+    memcpy_s(&expectedUuid[0], sizeof(uint16_t), &vendorId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[2], sizeof(uint16_t), &deviceId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[4], sizeof(uint16_t), &revisionId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[6], sizeof(uint16_t), &pciDomain, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[8], sizeof(uint8_t), &pciBus, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[9], sizeof(uint8_t), &pciDevice, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[10], sizeof(uint8_t), &pciFunction, sizeof(uint8_t));
 
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
@@ -120,15 +146,29 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenNoSubDevicesInAffinityMaskwhenRetrievi
 
     setupMockProductHelper<productFamily>();
     VariableBackup<ProductHelper *> backupProductHelper(&productHelperFactory[productFamily], mockProductHelper.get());
-    std::array<uint8_t, 16> uuid;
-    uint8_t expectedUuid[16] = {0x00, 0x00, 0x34, 0xab,
-                                0xcd, 0x0, 0x0, 0x0,
-                                0x0, 0x0, 0x0, 0x0,
-                                0x0, 0x0, 0x0, 0x0};
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
+    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+
+    PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
 
     DebugManager.flags.ZE_AFFINITY_MASK.set("0");
-    PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     const auto deviceFactory = createDevices(pciBusInfo, 2);
+
+    uint16_t vendorId = 0x8086; // Intel
+    uint16_t deviceId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usDeviceID);
+    uint16_t revisionId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usRevId);
+    uint16_t pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+    uint8_t pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+    uint8_t pciDevice = static_cast<uint8_t>(pciBusInfo.pciDevice);
+    uint8_t pciFunction = static_cast<uint8_t>(pciBusInfo.pciFunction);
+
+    memcpy_s(&expectedUuid[0], sizeof(uint16_t), &vendorId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[2], sizeof(uint16_t), &deviceId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[4], sizeof(uint16_t), &revisionId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[6], sizeof(uint16_t), &pciDomain, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[8], sizeof(uint8_t), &pciBus, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[9], sizeof(uint8_t), &pciDevice, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[10], sizeof(uint8_t), &pciFunction, sizeof(uint8_t));
 
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
@@ -142,11 +182,24 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMas
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     const auto deviceFactory = createDevices(pciBusInfo, 4);
 
-    std::array<uint8_t, 16> uuid;
-    uint8_t expectedUuid[16] = {0x00, 0x00, 0x34, 0xab,
-                                0xcd, 0x0, 0x0, 0x0,
-                                0x0, 0x0, 0x0, 0x0,
-                                0x0, 0x0, 0x0, 0x0};
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+
+    uint16_t vendorId = 0x8086; // Intel
+    uint16_t deviceId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usDeviceID);
+    uint16_t revisionId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usRevId);
+    uint16_t pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+    uint8_t pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+    uint8_t pciDevice = static_cast<uint8_t>(pciBusInfo.pciDevice);
+    uint8_t pciFunction = static_cast<uint8_t>(pciBusInfo.pciFunction);
+
+    memcpy_s(&expectedUuid[0], sizeof(uint16_t), &vendorId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[2], sizeof(uint16_t), &deviceId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[4], sizeof(uint16_t), &revisionId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[6], sizeof(uint16_t), &pciDomain, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[8], sizeof(uint8_t), &pciBus, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[9], sizeof(uint8_t), &pciDevice, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[10], sizeof(uint8_t), &pciFunction, sizeof(uint8_t));
 
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
     expectedUuid[15] = 4;

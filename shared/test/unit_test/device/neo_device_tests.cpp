@@ -149,6 +149,33 @@ TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
     EXPECT_EQ(memcmp(&uuid, &expectedUuid, ProductHelper::uuidSize), 0);
 }
 
+TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidFromPciBusInfoThenValidValuesAreSet) {
+    std::array<uint8_t, ProductHelper::uuidSize> uuid, expectedUuid;
+
+    PhysicalDevicePciBusInfo pciBusInfo = {1, 1, 1, 1};
+
+    pDevice->generateUuidFromPciBusInfo(pciBusInfo, uuid);
+
+    expectedUuid.fill(0);
+    uint16_t vendorId = 0x8086; // Intel
+    uint16_t deviceId = static_cast<uint16_t>(pDevice->getHardwareInfo().platform.usDeviceID);
+    uint16_t revisionId = static_cast<uint16_t>(pDevice->getHardwareInfo().platform.usRevId);
+    uint16_t pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+    uint8_t pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+    uint8_t pciDevice = static_cast<uint8_t>(pciBusInfo.pciDevice);
+    uint8_t pciFunction = static_cast<uint8_t>(pciBusInfo.pciFunction);
+
+    memcpy_s(&expectedUuid[0], sizeof(uint16_t), &vendorId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[2], sizeof(uint16_t), &deviceId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[4], sizeof(uint16_t), &revisionId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[6], sizeof(uint16_t), &pciDomain, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[8], sizeof(uint8_t), &pciBus, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[9], sizeof(uint8_t), &pciDevice, sizeof(uint8_t));
+    memcpy_s(&expectedUuid[10], sizeof(uint8_t), &pciFunction, sizeof(uint8_t));
+
+    EXPECT_EQ(memcmp(&uuid, &expectedUuid, ProductHelper::uuidSize), 0);
+}
+
 using DeviceGetCapsTest = Test<DeviceFixture>;
 
 TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledThenMaxParameterSizeIsSetCorrectly) {
