@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -481,6 +481,14 @@ if(UNIX)
     set(NEO_ENABLE_i915_PRELIM_DETECTION FALSE)
   endif()
   message(STATUS "i915 prelim headers detection: ${NEO_ENABLE_i915_PRELIM_DETECTION}")
+
+  # drm-xe support
+  if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
+    set(NEO_ENABLE_XE_DRM_DETECTION TRUE)
+  elseif(NOT DEFINED NEO_ENABLE_XE_DRM_DETECTION)
+    set(NEO_ENABLE_XE_DRM_DETECTION FALSE)
+  endif()
+  message(STATUS "Xe drm detection: ${NEO_ENABLE_XE_DRM_DETECTION}")
 endif()
 if(NOT DEFINED I915_HEADERS_DIR OR I915_HEADERS_DIR STREQUAL "")
   get_filename_component(I915_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)

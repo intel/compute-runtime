@@ -27,7 +27,7 @@ components:
     branch: master
     dest_dir: infra
     fetch_tags: true
-    revision: v4598
+    revision: v4602
     type: git
   internal:
     branch: master
