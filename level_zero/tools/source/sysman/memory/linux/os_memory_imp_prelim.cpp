@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include "drm/intel_hwconfig_types.h"
@@ -38,7 +39,7 @@ void LinuxMemoryImp::init() {
 }
 
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
@@ -293,17 +294,10 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 }
 
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
-    std::string memHealth;
-    ze_result_t result = pSysfsAccess->read(deviceMemoryHealth, memHealth);
-    if (ZE_RESULT_SUCCESS != result) {
-        pState->health = ZES_MEM_HEALTH_UNKNOWN;
-    } else {
-        auto health = i915ToL0MemHealth.find(memHealth);
-        if (health == i915ToL0MemHealth.end()) {
-            pState->health = ZES_MEM_HEALTH_UNKNOWN;
-        } else {
-            pState->health = i915ToL0MemHealth.at(memHealth);
-        }
+    pState->health = ZES_MEM_HEALTH_UNKNOWN;
+    FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+    if (pFwInterface != nullptr) {
+        pFwInterface->fwGetMemoryHealthIndicator(&pState->health);
     }
 
     std::vector<NEO::MemoryRegion> deviceRegions;

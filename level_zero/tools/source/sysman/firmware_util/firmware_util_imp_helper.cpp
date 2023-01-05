@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ namespace L0 {
 const std::string fwDeviceIfrGetStatusExt = "igsc_ifr_get_status_ext";
 const std::string fwIafPscUpdate = "igsc_iaf_psc_update";
 const std::string fwGfspMemoryErrors = "igsc_gfsp_memory_errors";
+const std::string fwGfspGetHealthIndicator = "igsc_gfsp_get_health_indicator";
 const std::string fwGfspCountTiles = "igsc_gfsp_count_tiles";
 const std::string fwDeviceIfrRunArrayScanTest = "igsc_ifr_run_array_scan_test";
 const std::string fwDeviceIfrRunMemPPRTest = "igsc_ifr_run_mem_ppr_test";
@@ -26,6 +27,7 @@ pIgscIfrGetStatusExt deviceIfrGetStatusExt;
 pIgscIafPscUpdate iafPscUpdate;
 pIgscGfspMemoryErrors gfspMemoryErrors;
 pIgscGfspCountTiles gfspCountTiles;
+pIgscGfspGetHealthIndicator gfspGetHealthIndicator;
 pIgscIfrRunArrayScanTest deviceIfrRunArrayScanTest;
 pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 pIgscGetEccConfig getEccConfig;
@@ -107,6 +109,35 @@ ze_result_t FirmwareUtilImp::fwGetMemoryErrorCount(zes_ras_error_type_t type, ui
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_UNINITIALIZED;
+}
+
+void FirmwareUtilImp::fwGetMemoryHealthIndicator(zes_mem_health_t *health) {
+    gfspGetHealthIndicator = reinterpret_cast<pIgscGfspGetHealthIndicator>(libraryHandle->getProcAddress(fwGfspGetHealthIndicator));
+    if (gfspGetHealthIndicator != nullptr) {
+        uint8_t healthIndicator = 0;
+        int ret = gfspGetHealthIndicator(&fwDeviceHandle, &healthIndicator);
+        if (ret == IGSC_SUCCESS) {
+            switch (healthIndicator) {
+            case IGSC_HEALTH_INDICATOR_HEALTHY:
+                *health = ZES_MEM_HEALTH_OK;
+                break;
+            case IGSC_HEALTH_INDICATOR_DEGRADED:
+                *health = ZES_MEM_HEALTH_DEGRADED;
+                break;
+            case IGSC_HEALTH_INDICATOR_CRITICAL:
+                *health = ZES_MEM_HEALTH_CRITICAL;
+                break;
+            case IGSC_HEALTH_INDICATOR_REPLACE:
+                *health = ZES_MEM_HEALTH_REPLACE;
+                break;
+            default:
+                *health = ZES_MEM_HEALTH_UNKNOWN;
+            }
+            return;
+        }
+    }
+
+    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(); Could not get memory health indicator from igsc\n", __FUNCTION__);
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) {

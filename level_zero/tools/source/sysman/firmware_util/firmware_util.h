@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ class FirmwareUtil {
     virtual ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) = 0;
     virtual ze_result_t fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) = 0;
     virtual void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) = 0;
+    virtual void fwGetMemoryHealthIndicator(zes_mem_health_t *health) = 0;
     virtual ~FirmwareUtil() = default;
 };
 } // namespace L0

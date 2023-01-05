@@ -22,8 +22,8 @@ extern pIgscGetEccConfig getEccConfig;
 extern pIgscSetEccConfig setEccConfig;
 namespace ult {
 
-std::map<std::string, void *> IFRfuncMap;
 constexpr static uint32_t mockMaxTileCount = 2;
+static int mockMemoryHealthIndicator = IGSC_HEALTH_INDICATOR_HEALTHY;
 
 int mockDeviceIfrGetStatusExt(struct igsc_device_handle *handle, uint32_t *supportedTests, uint32_t *hwCapabilities, uint32_t *ifrApplied, uint32_t *prevErrors, uint32_t *pendingReset) {
     return 0;
@@ -60,6 +60,15 @@ static inline int mockCountTiles(struct igsc_device_handle *handle, uint32_t *nu
 
 static inline int mockMemoryErrors(struct igsc_device_handle *handle, struct igsc_gfsp_mem_err *tiles) {
     return 0;
+}
+
+static inline int mockGetHealthIndicator(struct igsc_device_handle *handle, uint8_t *healthIndicator) {
+    *healthIndicator = mockMemoryHealthIndicator;
+    return 0;
+}
+
+static inline int mockGetHealthIndicatorFailure(struct igsc_device_handle *handle, uint8_t *healthIndicator) {
+    return -1;
 }
 
 TEST(FwStatusExtTest, GivenIFRWasSetWhenFirmwareUtilChecksIFRThenIFRStatusIsUpdated) {
@@ -292,8 +301,6 @@ TEST(FwGetMemErrorCountTest, GivenGetProcAddrCallFailsWhenMemoryErrorCountIsRequ
         GTEST_SKIP();
     }
 
-    L0::ult::MockFwUtilOsLibrary::getNonNullProcAddr = false;
-
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     zes_ras_error_type_t errorType = ZES_RAS_ERROR_TYPE_CORRECTABLE;
@@ -341,6 +348,150 @@ TEST(FwGetMemErrorCountTest, GivenValidFwUtilMethodWhenMemoryErrorCountIsRequest
     uint64_t errorCount = 0;
     auto ret = pFwUtilImp->fwGetMemoryErrorCount(errorType, subDeviceCount, subDeviceId, errorCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemHealthIndicatorTest, GivenValidFwUtilMethodWhenGetMemoryHealthIndicatorReturnsDegradedThenVerifyMemoryIsDegraded) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_get_health_indicator"] = reinterpret_cast<void *>(&mockGetHealthIndicator);
+    mockMemoryHealthIndicator = IGSC_HEALTH_INDICATOR_DEGRADED;
+
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    zes_mem_health_t health = ZES_MEM_HEALTH_UNKNOWN;
+    pFwUtilImp->fwGetMemoryHealthIndicator(&health);
+    EXPECT_EQ(health, ZES_MEM_HEALTH_DEGRADED);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemHealthIndicatorTest, GivenValidFwUtilMethodWhenGetMemoryHealthIndicatorReturnsHealthyThenVerifyMemoryIsHealthy) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_get_health_indicator"] = reinterpret_cast<void *>(&mockGetHealthIndicator);
+    mockMemoryHealthIndicator = IGSC_HEALTH_INDICATOR_HEALTHY;
+
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    zes_mem_health_t health = ZES_MEM_HEALTH_UNKNOWN;
+    pFwUtilImp->fwGetMemoryHealthIndicator(&health);
+    EXPECT_EQ(health, ZES_MEM_HEALTH_OK);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemHealthIndicatorTest, GivenValidFwUtilMethodWhenGetMemoryHealthIndicatorReturnsCriticalThenVerifyMemoryHealthIsCritical) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_get_health_indicator"] = reinterpret_cast<void *>(&mockGetHealthIndicator);
+    mockMemoryHealthIndicator = IGSC_HEALTH_INDICATOR_CRITICAL;
+
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    zes_mem_health_t health = ZES_MEM_HEALTH_UNKNOWN;
+    pFwUtilImp->fwGetMemoryHealthIndicator(&health);
+    EXPECT_EQ(health, ZES_MEM_HEALTH_CRITICAL);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemHealthIndicatorTest, GivenValidFwUtilMethodWhenGetMemoryHealthIndicatorReturnsReplaceNeededThenVerifyMemoryNeedsReplace) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_get_health_indicator"] = reinterpret_cast<void *>(&mockGetHealthIndicator);
+    mockMemoryHealthIndicator = IGSC_HEALTH_INDICATOR_REPLACE;
+
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    zes_mem_health_t health = ZES_MEM_HEALTH_UNKNOWN;
+    pFwUtilImp->fwGetMemoryHealthIndicator(&health);
+    EXPECT_EQ(health, ZES_MEM_HEALTH_REPLACE);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemHealthIndicatorTest, GivenValidFwUtilMethodWhenGetMemoryHealthIndicatorReturnsUnknownThenVerifyMemoryHealthIsUnknown) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_get_health_indicator"] = reinterpret_cast<void *>(&mockGetHealthIndicator);
+    mockMemoryHealthIndicator = -1;
+
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    zes_mem_health_t health = ZES_MEM_HEALTH_UNKNOWN;
+    pFwUtilImp->fwGetMemoryHealthIndicator(&health);
+    EXPECT_EQ(health, ZES_MEM_HEALTH_UNKNOWN);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemHealthIndicatorTest, GivenFwGetHealthIndicatorFailsWhenMemoryHealthIndicatorIsRequestedThenVerifyMemoryHealthIsUnknown) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_get_health_indicator"] = reinterpret_cast<void *>(&mockGetHealthIndicatorFailure);
+
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    zes_mem_health_t health = ZES_MEM_HEALTH_UNKNOWN;
+    pFwUtilImp->fwGetMemoryHealthIndicator(&health);
+    EXPECT_EQ(health, ZES_MEM_HEALTH_UNKNOWN);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwGetMemHealthIndicatorTest, GivenFwGetHealthIndicatorProcAddrIsNullWhenMemoryHealthIndicatorIsRequestedThenVerifyMemoryHealthIsUnknown) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    zes_mem_health_t health = ZES_MEM_HEALTH_UNKNOWN;
+    pFwUtilImp->fwGetMemoryHealthIndicator(&health);
+    EXPECT_EQ(health, ZES_MEM_HEALTH_UNKNOWN);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;

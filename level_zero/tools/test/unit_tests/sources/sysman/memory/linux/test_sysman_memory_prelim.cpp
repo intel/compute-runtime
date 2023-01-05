@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/driver_info.h"
+
 #include "level_zero/tools/source/sysman/linux/pmt/pmt_xml_offsets.h"
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp_prelim.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
@@ -736,75 +738,16 @@ TEST_F(SysmanDeviceMemoryFixture, GivenCallinggetHbmFrequencyWhenProductFamilyIs
     delete pLinuxMemoryImp;
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateAndIfMemoryHealthSysfsEntryNotAvaliableThenMemoryHealthWillsetUnknown) {
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesSysmanMemoryGetStateAndFwUtilInterfaceIsAbsentThenMemoryHealthWillBeUnknown) {
     setLocalSupportedAndReinit(true);
 
     pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        ze_result_t result = zesMemoryGetState(handle, &state);
-
-        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(state.health, ZES_MEM_HEALTH_UNKNOWN);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateAndIfMemoryHealthSetRebootAlaramThenMemoryHealthWillsetDegraded) {
-    setLocalSupportedAndReinit(true);
-
-    pSysfsAccess->mockReadStringValue.push_back("REBOOT_ALARM");
-    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        ze_result_t result = zesMemoryGetState(handle, &state);
-
-        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(state.health, ZES_MEM_HEALTH_DEGRADED);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateAndIfMemoryHealthSetDegradedThenMemoryHealthWillReturnsetCritical) {
-    setLocalSupportedAndReinit(true);
-
-    pSysfsAccess->mockReadStringValue.push_back("DEGRADED");
-    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        ze_result_t result = zesMemoryGetState(handle, &state);
-
-        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(state.health, ZES_MEM_HEALTH_CRITICAL);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateAndIfMockMemoryHealthSetDegradeFailThenMemoryHealthWillsetReplace) {
-    setLocalSupportedAndReinit(true);
-
-    pSysfsAccess->mockReadStringValue.push_back("DEGRADED_FAILED");
-    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        ze_result_t result = zesMemoryGetState(handle, &state);
-
-        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(state.health, ZES_MEM_HEALTH_REPLACE);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateAndIfMockMemoryHealthSetRandomValueThenMemoryHealthWillsetUnknown) {
-    setLocalSupportedAndReinit(true);
-
-    pSysfsAccess->mockReadStringValue.push_back("RANDOM");
-    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    auto deviceImp = static_cast<L0::DeviceImp *>(pLinuxSysmanImp->getDeviceHandle());
+    deviceImp->driverInfo.reset(nullptr);
+    VariableBackup<L0::FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
 
     for (auto handle : handles) {
         zes_mem_state_t state;

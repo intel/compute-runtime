@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@ namespace ult {
 
 static uint32_t mockFwUtilDeviceCloseCallCount = 0;
 bool MockFwUtilOsLibrary::mockLoad = true;
-bool MockFwUtilOsLibrary::getNonNullProcAddr = false;
 
 TEST(FwUtilDeleteTest, GivenLibraryWasNotSetWhenFirmwareUtilInterfaceIsDeletedThenLibraryFunctionIsNotAccessed) {
 
@@ -71,7 +70,6 @@ TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceAndIgscDevic
         GTEST_SKIP();
     }
 
-    L0::ult::MockFwUtilOsLibrary::getNonNullProcAddr = false;
     FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
     FirmwareUtil *pFwUtil = FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);

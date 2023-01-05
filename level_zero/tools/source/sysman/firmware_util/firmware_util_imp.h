@@ -66,6 +66,9 @@ typedef int (*pIgscGfspMemoryErrors)(struct igsc_device_handle *handle,
 typedef int (*pIgscGfspCountTiles)(struct igsc_device_handle *handle,
                                    uint32_t *numOfTiles);
 
+typedef int (*pIgscGfspGetHealthIndicator)(struct igsc_device_handle *handle,
+                                           uint8_t *healthIndicator);
+
 typedef int (*pIgscIfrRunArrayScanTest)(struct igsc_device_handle *handle,
                                         uint32_t *status,
                                         uint32_t *extendedStatus,
@@ -122,6 +125,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) override;
     ze_result_t fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) override;
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
+    void fwGetMemoryHealthIndicator(zes_mem_health_t *health) override;
 
     ze_result_t fwGetVersion(std::string &fwVersion);
     ze_result_t opromGetVersion(std::string &fwVersion);

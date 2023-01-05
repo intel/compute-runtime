@@ -22,6 +22,7 @@ namespace ult {
 
 struct MockFwUtilInterface : public FirmwareUtil {
 
+    zes_mem_health_t fwGetMemoryHealthIndicatorResult = ZES_MEM_HEALTH_OK;
     MockFwUtilInterface() = default;
 
     ADDMETHOD_NOBASE(fwDeviceInit, ze_result_t, ZE_RESULT_SUCCESS, ());
@@ -35,21 +36,26 @@ struct MockFwUtilInterface : public FirmwareUtil {
     ADDMETHOD_NOBASE(fwGetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t * currentState, uint8_t *pendingState));
     ADDMETHOD_NOBASE(fwSetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t newState, uint8_t *currentState, uint8_t *pendingState));
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
+
+    void fwGetMemoryHealthIndicator(zes_mem_health_t *health) override {
+        *health = fwGetMemoryHealthIndicatorResult;
+    }
 };
 
 struct MockFwUtilOsLibrary : public OsLibrary {
   public:
     static bool mockLoad;
-    static bool getNonNullProcAddr;
     MockFwUtilOsLibrary(const std::string &name, std::string *errorValue) {
     }
     MockFwUtilOsLibrary() {}
     ~MockFwUtilOsLibrary() override = default;
     void *getProcAddress(const std::string &procName) override {
-        if (getNonNullProcAddr) {
-            return reinterpret_cast<void *>(&mockDeviceIteratorCreate);
+        auto it = funcMap.find(procName);
+        if (funcMap.end() == it) {
+            return nullptr;
+        } else {
+            return it->second;
         }
-        return nullptr;
     }
     bool isLoaded() override {
         return false;
@@ -62,11 +68,6 @@ struct MockFwUtilOsLibrary : public OsLibrary {
             return nullptr;
         }
     }
-
-    static inline int mockDeviceIteratorCreate(struct igsc_device_iterator **iter) {
-        return -1;
-    }
-
     std::map<std::string, void *> funcMap;
 };
 
