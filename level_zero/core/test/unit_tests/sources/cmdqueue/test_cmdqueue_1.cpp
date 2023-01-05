@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -783,18 +783,18 @@ TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithL
     allEngines.clear();
 
     engineGroups.push_back(NEO::EngineGroupT{});
-    engineGroups.back().engineGroupType = EngineGroupType::Copy;
-    engineGroups.back().engines.resize(1);
-    engineGroups.back().engines[0].commandStreamReceiver = copyCsr.get();
-    EngineControl copyEngine{copyCsr.get(), copyOsContext};
-    allEngines.push_back(copyEngine);
-
-    engineGroups.push_back(NEO::EngineGroupT{});
     engineGroups.back().engineGroupType = EngineGroupType::Compute;
     engineGroups.back().engines.resize(1);
     engineGroups.back().engines[0].commandStreamReceiver = computeCsr.get();
     EngineControl computeEngine{computeCsr.get(), computeOsContext};
     allEngines.push_back(computeEngine);
+
+    engineGroups.push_back(NEO::EngineGroupT{});
+    engineGroups.back().engineGroupType = EngineGroupType::Copy;
+    engineGroups.back().engines.resize(1);
+    engineGroups.back().engines[0].commandStreamReceiver = copyCsr.get();
+    EngineControl copyEngine{copyCsr.get(), copyOsContext};
+    allEngines.push_back(copyEngine);
 
     uint32_t count = 0u;
     ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
