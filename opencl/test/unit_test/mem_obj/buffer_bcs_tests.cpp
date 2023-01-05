@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,8 +75,8 @@ struct BcsBufferTests : public ::testing::Test {
         auto hwInfo = *defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
         device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-
-        if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(device->getHardwareInfo())) {
+        auto &productHelper = device->getProductHelper();
+        if (!productHelper.isBlitterFullySupported(device->getHardwareInfo())) {
             GTEST_SKIP();
         }
 
@@ -143,8 +143,9 @@ HWTEST_F(NoBcsBufferTests, givenProductWithNoFullyBlitterSupportWhenCreatingBuff
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
 
-    EXPECT_FALSE(ProductHelper::get(hwInfo.platform.eProductFamily)->isBlitterFullySupported(hwInfo));
     std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
+    auto &productHelper = newDevice->getProductHelper();
+    EXPECT_FALSE(productHelper.isBlitterFullySupported(hwInfo));
     std::unique_ptr<BcsMockContext> newBcsMockContext = std::make_unique<BcsMockContext>(newDevice.get());
 
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(newBcsMockContext->bcsCsr.get());

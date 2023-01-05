@@ -1990,7 +1990,8 @@ TEST_F(MockWddmMemoryManagerTest, givenDisabledAsyncDeleterFlagWhenMemoryManager
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThenUseWddmToMap) {
-    if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (!productHelper.isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     wddm->init();
@@ -2026,7 +2027,8 @@ TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThen
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPageTableNotSupportedThenMapAuxVa) {
-    if (ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (!productHelper.isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
@@ -2059,7 +2061,8 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPageTableSupportedThenMapAuxVa) {
-    if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (!productHelper.isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
@@ -2100,7 +2103,8 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndPageTableSupportedWhenReleaseingThenUnmapAuxVa) {
-    if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (!productHelper.isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     wddm->init();
@@ -2234,7 +2238,8 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenD
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpdateAuxTable) {
-    if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isPageTableManagerSupported(*defaultHwInfo)) {
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (!productHelper.isPageTableManagerSupported(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;

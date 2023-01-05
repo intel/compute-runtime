@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,10 +83,10 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
         {0x6, false},
         {0x7, false},
     };
-    auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
+    auto &productHelper = pDevice->getProductHelper();
     for (auto &testInput : testInputs) {
         hwInfo->platform.usRevId = testInput.revId;
-        productHelper->fillPipelineSelectPropertiesSupportStructure(commandStreamReceiver.pipelineSupportFlags, *hwInfo);
+        productHelper.fillPipelineSelectPropertiesSupportStructure(commandStreamReceiver.pipelineSupportFlags, *hwInfo);
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.lastMediaSamplerConfig = false;
         commandStreamReceiver.lastSystolicPipelineSelectMode = false;

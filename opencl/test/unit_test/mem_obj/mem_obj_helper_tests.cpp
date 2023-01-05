@@ -8,6 +8,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -417,7 +418,9 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
     uint32_t contextTypes[] = {ContextType::CONTEXT_TYPE_DEFAULT, ContextType::CONTEXT_TYPE_SPECIALIZED,
                                ContextType::CONTEXT_TYPE_UNRESTRICTIVE};
     __REVID steppingValues[] = {REVISION_A0, REVISION_B};
-    const auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+
+    MockExecutionEnvironment mockExecutionEnvironemnt{};
+    const auto &productHelper = mockExecutionEnvironemnt.rootDeviceEnvironments[0]->getProductHelper();
 
     for (auto stepping : steppingValues) {
         hardwareStepping = productHelper.getHwRevIdFromStepping(stepping, *defaultHwInfo);
