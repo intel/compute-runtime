@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
     StreamProperties properties{};
     properties.stateComputeMode.setProperties(false, GrfConfig::DefaultGrfNumber, 0, PreemptionMode::Disabled, rootDeviceEnvironment);
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer.getCommandStream(),
-                                                                  properties.stateComputeMode, *defaultHwInfo, nullptr);
+                                                                  properties.stateComputeMode, rootDeviceEnvironment, nullptr);
 
     auto usedSpaceAfter = cmdContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

@@ -30,7 +30,7 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroup(const Hardware
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) {
+void ProductHelperHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const {
 }
 
 template <>
@@ -344,7 +344,7 @@ size_t ProductHelperHw<IGFX_UNKNOWN>::getSvmCpuAlignment() const {
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {
+void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {
 }
 
 template <>

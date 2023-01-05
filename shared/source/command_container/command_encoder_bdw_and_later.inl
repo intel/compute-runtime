@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -471,18 +471,18 @@ inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &devic
 
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
-                                                                               const HardwareInfo &hwInfo, bool isRcs) {
+                                                                               const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {
     MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);
 }
 
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream,
-                                                                      const HardwareInfo &hwInfo, bool isRcs, bool dcFlushRequired) {
+                                                                      const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlushRequired) {
     PipeControlArgs args;
     args.dcFlushEnable = dcFlushRequired;
     args.textureCacheInvalidationEnable = true;
 
-    NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs);
+    NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, rootDeviceEnvironment, isRcs);
 }
 
 template <typename GfxFamily>

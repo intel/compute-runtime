@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,7 @@ GEN9TEST_F(ThreadArbitrationGen9, whenThreadArbitrationPolicyIsProgrammedThenCor
     MockDevice mockDevice;
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.threadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
-    EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, mockDevice.getRootDeviceEnvironment(), nullptr);
 
     parseCommands<Gen9Family>(cs);
 

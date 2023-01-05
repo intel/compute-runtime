@@ -69,7 +69,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(Line
 
     if (isExtendedWARequired) {
         DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);
-        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs());
+        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, this->peekRootDeviceEnvironment(), isRcs());
     }
 }
 

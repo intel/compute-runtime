@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ inline void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t
 }
 
 template <>
-void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
@@ -129,7 +129,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
     stateComputeMode.setMaskBits(maskBits);
 
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
     productHelper.updateScmCommand(&stateComputeMode, properties);
 
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();

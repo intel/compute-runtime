@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -377,8 +377,8 @@ struct EncodeComputeMode {
     static size_t getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs);
     static void programComputeModeCommandWithSynchronization(LinearStream &csr, StateComputeModeProperties &properties,
                                                              const PipelineSelectArgs &args, bool hasSharedHandles,
-                                                             const HardwareInfo &hwInfo, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper);
-    static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper);
+                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper);
+    static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
 };
@@ -390,10 +390,10 @@ struct EncodeWA {
     static size_t getAdditionalPipelineSelectSize(Device &device, bool isRcs);
 
     static void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
-                                                              const HardwareInfo &hwInfo, bool isRcs);
+                                                              const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs);
     static void setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args);
 
-    static void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream, const HardwareInfo &hwInfo, bool isRcs, bool dcFlushRequired);
+    static void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlushRequired);
 
     static void adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, GMM_YUV_PLANE_ENUM plane);
 };

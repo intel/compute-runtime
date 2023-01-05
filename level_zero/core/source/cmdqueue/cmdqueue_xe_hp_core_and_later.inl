@@ -40,7 +40,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
         bool isRcs = this->getCsr()->isRcs();
 
-        NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs, this->getCsr()->getDcFlushSupport());
+        NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, neoDevice->getRootDeviceEnvironment(), isRcs, this->getCsr()->getDcFlushSupport());
         auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
 
         STATE_BASE_ADDRESS sbaCmd;

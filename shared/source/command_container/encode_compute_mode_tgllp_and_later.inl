@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,20 +35,20 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
 template <typename Family>
 inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
-    bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper) {
-
+    bool hasSharedHandles, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, hwInfo, isRcs);
 
-    auto &productHelper = (*ProductHelper::get(hwInfo.platform.eProductFamily));
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {
         PipeControlArgs args;
-        NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(csr, args, hwInfo, isRcs);
+        NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(csr, args, rootDeviceEnvironment, isRcs);
     }
 
-    EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, hwInfo, logicalStateHelper);
+    EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, rootDeviceEnvironment, logicalStateHelper);
 
     if (hasSharedHandles) {
         PipeControlArgs args;

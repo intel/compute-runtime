@@ -85,7 +85,7 @@ bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const Hardw
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const StateComputeModeProperties &properties) {
+void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const StateComputeModeProperties &properties) const {
     using STATE_COMPUTE_MODE = typename XeHpgCoreFamily::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 

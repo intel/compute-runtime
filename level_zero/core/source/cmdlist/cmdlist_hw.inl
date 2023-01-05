@@ -2520,7 +2520,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
         pipelineSelectArgs.systolicPipelineSelectSupport = this->systolicModeSupport;
 
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
-            *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, pipelineSelectArgs, false, hwInfo, isRcs, this->dcFlushSupport, nullptr);
+            *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs, this->dcFlushSupport, nullptr);
     }
 }
 
@@ -2592,10 +2592,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
-    const auto &hwInfo = this->device->getHwInfo();
     bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
 
-    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(*commandContainer.getCommandStream(), hwInfo, isRcs, this->dcFlushSupport);
+    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(*commandContainer.getCommandStream(), this->device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->dcFlushSupport);
 
     auto gmmHelper = container.getDevice()->getRootDeviceEnvironment().getGmmHelper();
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);

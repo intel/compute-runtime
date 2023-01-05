@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -567,7 +567,7 @@ size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device
 }
 
 template <typename Family>
-void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
@@ -712,8 +712,10 @@ inline size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, 
 }
 template <typename Family>
 inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
-                                                                            const HardwareInfo &hwInfo, bool isRcs) {
-    auto &productHelper = (*ProductHelper::get(hwInfo.platform.eProductFamily));
+                                                                            const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {
+
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     if (isExtendedWARequired) {

@@ -74,8 +74,8 @@ class ProductHelper {
     virtual bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
-    virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
-    virtual void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
+    virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
+    virtual void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
     virtual void updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
@@ -218,8 +218,8 @@ class ProductHelperHw : public ProductHelper {
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
-    void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) override;
-    void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) override;
+    void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const override;
+    void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const override;
     void updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) const override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
     bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;

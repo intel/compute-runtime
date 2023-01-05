@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,7 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareIn
 }
 
 template <>
-void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
     using PIXEL_ASYNC_COMPUTE_THREAD_LIMIT = typename STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT;
@@ -131,7 +131,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
     auto maskBits = stateComputeMode.getMaskBits();
 
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
     bool ignoreIsDirty = productHelper.programAllStateComputeCommandFields();
 
     if (properties.zPassAsyncComputeThreadLimit.isDirty ||

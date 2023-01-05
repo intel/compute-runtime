@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
 
 template <>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
-                                                          const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
+                                                          const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
     if (properties.threadArbitrationPolicy.isDirty) {

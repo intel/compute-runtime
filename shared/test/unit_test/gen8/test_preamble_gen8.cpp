@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 using namespace NEO;
 
@@ -62,10 +63,11 @@ typedef PreambleFixture ThreadArbitrationGen8;
 BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
     typedef Gen8Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
-
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.threadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
-    EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
 
     EXPECT_EQ(0u, cs.getUsed());
 

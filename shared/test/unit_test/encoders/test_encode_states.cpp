@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -398,8 +398,9 @@ HWTEST2_F(CommandEncodeStatesTest, whenProgramComputeModeCommandModeIsCalledThen
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.threadArbitrationPolicy.value = ThreadArbitrationPolicy::AgeBased;
     streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
-                                                                  streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
+                                                                  streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
 
     if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsThreadArbitrationPolicy) {
         GenCmdList commands;
@@ -423,8 +424,9 @@ HWTEST2_F(CommandEncodeStatesTest, whenProgramComputeModeCommandModeIsCalledThen
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.threadArbitrationPolicy.value = ThreadArbitrationPolicy::AgeBased;
     streamProperties.stateComputeMode.isCoherencyRequired.isDirty = true;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
-                                                                  streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
+                                                                  streamProperties.stateComputeMode, rootDeviceEnvironment, nullptr);
 
     if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsNonCoherent) {
         GenCmdList commands;

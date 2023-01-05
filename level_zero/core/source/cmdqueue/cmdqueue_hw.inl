@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1224,7 +1224,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
 
         bool isRcs = this->getCsr()->isRcs();
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(commandStream, csrState.stateComputeMode, pipelineSelectArgs,
-                                                                                        false, device->getHwInfo(), isRcs, this->getCsr()->getDcFlushSupport(), nullptr);
+                                                                                        false, device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->getCsr()->getDcFlushSupport(), nullptr);
     }
     csrState.stateComputeMode.setProperties(cmdListFinal.stateComputeMode);
 }
