@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
 #include "shared/source/command_stream/task_count_helper.h"
 
 #include "CL/cl.h"
-
-#include <cstdint>
 
 namespace NEO {
 extern bool isGTPinInitialized;

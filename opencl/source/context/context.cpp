@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/heap_allocator.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"

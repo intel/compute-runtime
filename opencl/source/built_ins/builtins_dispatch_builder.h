@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/built_ins/builtinops/built_in_ops.h"
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/helpers/vec.h"
 
 #include "opencl/source/kernel/multi_device_kernel.h"
+#include "opencl/source/program/program.h"
 
 #include "CL/cl.h"
 
@@ -19,6 +19,7 @@
 #include <vector>
 
 namespace NEO {
+struct BuiltinCode;
 typedef std::vector<char> BuiltinResourceT;
 
 class ClDeviceVector;

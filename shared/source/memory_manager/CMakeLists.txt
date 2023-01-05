@@ -36,6 +36,7 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_allocation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_banks.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/source/sharings/unified/unified_sharing_types.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

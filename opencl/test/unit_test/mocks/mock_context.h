@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/context/context.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 

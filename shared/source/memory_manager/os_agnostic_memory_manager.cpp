@@ -576,12 +576,4 @@ double OsAgnosticMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootD
     return 0.8;
 }
 
-void MemoryAllocation::overrideMemoryPool(MemoryPool pool) {
-    if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
-        this->memoryPool = MemoryPool::LocalMemory;
-        return;
-    }
-    this->memoryPool = pool;
-}
-
 } // namespace NEO

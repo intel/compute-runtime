@@ -17,6 +17,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/source/sharings/unified/unified_buffer.h"
 
 namespace NEO {
 

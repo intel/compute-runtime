@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,22 +8,24 @@
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/unified_memory/unified_memory.h"
-#include "shared/source/utilities/heap_allocator.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/context/driver_diagnostics.h"
-#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
-#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
 
 #include <map>
 
+enum InternalMemoryType : uint32_t;
+
 namespace NEO {
+struct MemoryProperties;
+class HeapAllocator;
 
 class AsyncEventsHandler;
 class CommandQueue;

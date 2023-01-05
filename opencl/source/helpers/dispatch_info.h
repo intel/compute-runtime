@@ -6,7 +6,6 @@
  */
 
 #pragma once
-
 #include "shared/source/helpers/registered_method_dispatcher.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/utilities/stackvec.h"

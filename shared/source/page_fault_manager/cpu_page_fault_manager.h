@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,11 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/spinlock.h"
 
-#include "memory_properties_flags.h"
-
 #include <memory>
 #include <unordered_map>
 
 namespace NEO {
+struct MemoryProperties;
 class GraphicsAllocation;
 class Device;
 class SVMAllocsManager;

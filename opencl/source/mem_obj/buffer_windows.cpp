@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/sharings/unified/unified_sharing_types.h"
 
 namespace NEO {
 bool Buffer::validateHandleType(const MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem) {

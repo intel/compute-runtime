@@ -7,8 +7,6 @@
 
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
-#include "shared/source/compiler_interface/external_functions.h"
-
 #include "opencl/source/program/printf_handler.h"
 
 namespace NEO {

@@ -8,11 +8,12 @@
 #pragma once
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/kernel/implicit_args.h"
 
+#include "opencl/source/helpers/base_object.h"
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
+class ClDeviceVector;
 class MultiGraphicsAllocation;
 
 template <>

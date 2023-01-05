@@ -51,6 +51,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/pipe.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
+#include "opencl/source/program/program.h"
 #include "opencl/source/sampler/sampler.h"
 
 #include "patch_list.h"
@@ -772,9 +773,15 @@ void Kernel::setKernelId(uint64_t newKernelId) {
     KernelInfo *pKernelInfo = const_cast<KernelInfo *>(&kernelInfo);
     pKernelInfo->kernelId = newKernelId;
 }
+
 uint32_t Kernel::getStartOffset() const {
     return this->startOffset;
 }
+
+Context &Kernel::getContext() const {
+    return program->getContext();
+}
+
 void Kernel::setStartOffset(uint32_t offset) {
     this->startOffset = offset;
 }
@@ -998,6 +1005,10 @@ const void *Kernel::getKernelArg(uint32_t argIndex) const {
 
 const Kernel::SimpleKernelArgInfo &Kernel::getKernelArgInfo(uint32_t argIndex) const {
     return kernelArguments[argIndex];
+}
+
+bool Kernel::getAllowNonUniform() const {
+    return program->getAllowNonUniform();
 }
 
 void Kernel::setSvmKernelExecInfo(GraphicsAllocation *argValue) {

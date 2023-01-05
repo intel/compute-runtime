@@ -1,18 +1,15 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/context/context_type.h"
 #include "opencl/source/mem_obj/mem_obj.h"
-#include "opencl/source/sharings/unified/unified_buffer.h"
 
 #include "igfxfmid.h"
 #include "memory_properties_flags.h"
@@ -20,6 +17,7 @@
 #include <functional>
 
 namespace NEO {
+struct UnifiedSharingMemoryDescription;
 class Buffer;
 class ClDevice;
 class Device;

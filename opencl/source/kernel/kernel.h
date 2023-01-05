@@ -11,20 +11,23 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/vec.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/properties_helper.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
-#include "opencl/source/program/program.h"
 
+#include <map>
 #include <vector>
 
 namespace NEO {
+class MemObj;
+class TimestampPacketContainer;
+class Context;
+class Program;
 struct ImplicitArgs;
 enum class AllocationType;
 struct PatchInfoData;
@@ -216,9 +219,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         return kernelInfo;
     }
 
-    Context &getContext() const {
-        return program->getContext();
-    }
+    Context &getContext() const;
 
     Program *getProgram() const { return program; }
 
@@ -289,7 +290,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     const void *getKernelArg(uint32_t argIndex) const;
     const SimpleKernelArgInfo &getKernelArgInfo(uint32_t argIndex) const;
 
-    bool getAllowNonUniform() const { return program->getAllowNonUniform(); }
+    bool getAllowNonUniform() const;
     bool isVmeKernel() const { return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme; }
     bool requiresSystolicPipelineSelectMode() const { return systolicPipelineSelectMode; }
 
