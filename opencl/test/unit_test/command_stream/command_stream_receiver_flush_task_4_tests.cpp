@@ -889,13 +889,13 @@ struct BcsCrossDeviceMigrationTests : public ::testing::Test {
 
         void migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) override {
             migrateMultiGraphicsAllocationsIfRequiredCalled = true;
-            migrateMultiGraphicsAllocationsReceivedOperationParams = &operationParams;
+            migrateMultiGraphicsAllocationsReceivedOperationParams = operationParams;
             migrateMultiGraphicsAllocationsReceivedCsr = &csr;
             CommandQueueHw<FamilyType>::migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
         }
 
         bool migrateMultiGraphicsAllocationsIfRequiredCalled = false;
-        const BuiltinOpParams *migrateMultiGraphicsAllocationsReceivedOperationParams = nullptr;
+        BuiltinOpParams migrateMultiGraphicsAllocationsReceivedOperationParams{};
         CommandStreamReceiver *migrateMultiGraphicsAllocationsReceivedCsr = nullptr;
     };
 
@@ -958,5 +958,5 @@ HWTEST_F(BcsCrossDeviceMigrationTests, givenBufferWithMultiStorageWhenEnqueueRea
     EXPECT_EQ(bcsCsr, cmdQueue->migrateMultiGraphicsAllocationsReceivedCsr);
     EXPECT_EQ(targetRootDeviceIndex, bcsCsr->getRootDeviceIndex());
 
-    EXPECT_EQ(buffer.get(), cmdQueue->migrateMultiGraphicsAllocationsReceivedOperationParams->srcMemObj);
+    EXPECT_EQ(buffer.get(), cmdQueue->migrateMultiGraphicsAllocationsReceivedOperationParams.srcMemObj);
 }
