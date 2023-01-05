@@ -15,10 +15,12 @@ L0::L0GfxCoreHelper &NEO::RootDeviceEnvironment::getHelper<L0::L0GfxCoreHelper>(
 
 namespace L0 {
 
-L0GfxCoreHelper *l0GfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+createL0GfxCoreHelperFunctionType l0GfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
-L0GfxCoreHelper &L0GfxCoreHelper::get(GFXCORE_FAMILY gfxCore) {
-    return *l0GfxCoreHelperFactory[gfxCore];
+std::unique_ptr<L0GfxCoreHelper> L0GfxCoreHelper::create(GFXCORE_FAMILY gfxCore) {
+    auto createL0GfxCoreHelperFunc = l0GfxCoreHelperFactory[gfxCore];
+    auto l0GfxCoreHelper = createL0GfxCoreHelperFunc();
+    return l0GfxCoreHelper;
 }
 
 bool L0GfxCoreHelper::enableFrontEndStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
@@ -86,9 +88,9 @@ bool L0GfxCoreHelper::useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo) 
 
 template <>
 L0::L0GfxCoreHelper &NEO::RootDeviceEnvironment::getHelper<L0::L0GfxCoreHelper>() const {
-    auto &apiHelper = L0::L0GfxCoreHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
-    return apiHelper;
+    return *static_cast<L0::L0GfxCoreHelper *>(apiGfxCoreHelper.get());
 }
 
 void NEO::RootDeviceEnvironment::initApiGfxCoreHelper() {
+    apiGfxCoreHelper = L0::L0GfxCoreHelper::create(this->getHardwareInfo()->platform.eRenderCoreFamily);
 }

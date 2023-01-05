@@ -19,8 +19,6 @@
 
 namespace L0 {
 
-extern L0GfxCoreHelper *l0GfxCoreHelperFactory[IGFX_MAX_CORE];
-
 namespace ult {
 
 using CommandListCreate = Test<DeviceFixture>;
@@ -1359,9 +1357,9 @@ struct MockL0GfxCoreHelperSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw<G
 };
 
 HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsFollowsTheSameSetting, IsAtLeastSkl) {
-    MockL0GfxCoreHelperSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperSupport;
-    VariableBackup<L0GfxCoreHelper *> l0GfxCoreHelperFactoryBackup{&L0::l0GfxCoreHelperFactory[static_cast<size_t>(device->getHwInfo().platform.eRenderCoreFamily)]};
-    l0GfxCoreHelperFactoryBackup = &mockL0GfxCoreHelperSupport;
+    MockL0GfxCoreHelperSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperSupport{};
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelperSupport));
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
@@ -1381,6 +1379,9 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdLis
 
     EXPECT_FALSE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
 }
 
 template <typename GfxFamily>
@@ -1390,8 +1391,8 @@ struct MockL0GfxCoreHelperNoSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw
 
 HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsIsNotEnabled, IsAtLeastSkl) {
     MockL0GfxCoreHelperNoSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperNoSupport;
-    VariableBackup<L0GfxCoreHelper *> l0GfxCoreHelperFactoryBackup{&L0::l0GfxCoreHelperFactory[static_cast<size_t>(device->getHwInfo().platform.eRenderCoreFamily)]};
-    l0GfxCoreHelperFactoryBackup = &mockL0GfxCoreHelperNoSupport;
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelperNoSupport));
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
@@ -1411,6 +1412,9 @@ HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmd
 
     EXPECT_FALSE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
 }
 
 } // namespace ult

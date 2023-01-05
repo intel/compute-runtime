@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/api_gfx_core_helper.h"
 
 #include "level_zero/tools/source/debug/eu_thread.h"
 #include <level_zero/ze_api.h>
@@ -29,9 +31,14 @@ struct Event;
 struct Device;
 struct EventPool;
 
-class L0GfxCoreHelper {
+class L0GfxCoreHelper;
+using createL0GfxCoreHelperFunctionType = std::unique_ptr<L0GfxCoreHelper> (*)();
+
+class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
   public:
-    static L0GfxCoreHelper &get(GFXCORE_FAMILY gfxCore);
+    ~L0GfxCoreHelper() override = default;
+    static std::unique_ptr<L0GfxCoreHelper> create(GFXCORE_FAMILY gfxCore);
+
     static bool enableFrontEndStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enablePipelineSelectStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enableStateComputeModeTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
@@ -68,13 +75,13 @@ class L0GfxCoreHelper {
 template <typename GfxFamily>
 class L0GfxCoreHelperHw : public L0GfxCoreHelper {
   public:
-    static L0GfxCoreHelper &get() {
-        static L0GfxCoreHelperHw<GfxFamily> l0GfxCoreHelper;
-        return l0GfxCoreHelper;
+    ~L0GfxCoreHelperHw() override = default;
+    static std::unique_ptr<L0GfxCoreHelper> create() {
+        return std::unique_ptr<L0GfxCoreHelper>(new L0GfxCoreHelperHw<GfxFamily>());
     }
+
     void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const override;
     L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const override;
-    L0GfxCoreHelperHw() = default;
 
     bool isResumeWARequired() override;
     bool imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
@@ -92,6 +99,9 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool isZebinAllowed(const NEO::Debugger *debugger) const override;
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const override;
+
+  protected:
+    L0GfxCoreHelperHw() = default;
 };
 
 } // namespace L0

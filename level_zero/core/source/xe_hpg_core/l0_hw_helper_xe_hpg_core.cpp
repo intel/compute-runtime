@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,7 @@ namespace L0 {
 using Family = NEO::XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
-template <>
-void populateFactoryTable<L0GfxCoreHelperHw<Family>>() {
-    extern L0GfxCoreHelper *l0GfxCoreHelperFactory[IGFX_MAX_CORE];
-    l0GfxCoreHelperFactory[gfxCore] = &L0GfxCoreHelperHw<Family>::get();
-}
+#include "level_zero/core/source/helpers/l0_hw_helper_factory_init.inl"
 
 template <>
 bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
