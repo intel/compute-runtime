@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5686,22 +5686,6 @@ TEST(PopulateArgDescriptor, GivenValidConstDataBufferArgThenItIsPopulatedCorrect
     EXPECT_EQ(1, maximumBindingTableEntry.btiValue);
 }
 
-TEST(PopulateArgDescriptor, GivenInvalidConstDataBufferArgThenErrorIsReturned) {
-    NEO::KernelDescriptor kernelDescriptor;
-    kernelDescriptor.kernelMetadata.kernelName = "kernel";
-    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataConstBuffer;
-    dataConstBuffer.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataConstBuffer;
-    dataConstBuffer.btiValue = -1;
-
-    uint32_t crossThreadDataSize = 0U;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
-    std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(warnings.empty());
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid bti for argument of type const_base in context of : kernel\n", errors.c_str());
-}
-
 TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrectly) {
     NEO::KernelDescriptor kernelDescriptor;
     NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataGlobalBuffer;
@@ -5724,20 +5708,44 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
     EXPECT_EQ(1, maximumBindingTableEntry.btiValue);
 }
 
-TEST(PopulateArgDescriptor, GivenInvalidGlobalDataBufferArgThenErrorIsReturned) {
+TEST(PopulateArgDescriptor, GivenGlobalDataBufferArgWithoutBTIThenItIsPopulatedCorrectly) {
     NEO::KernelDescriptor kernelDescriptor;
-    kernelDescriptor.kernelMetadata.kernelName = "kernel";
     NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataGlobalBuffer;
     dataGlobalBuffer.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataGlobalBuffer;
     dataGlobalBuffer.btiValue = -1;
+    dataGlobalBuffer.size = 8;
+    dataGlobalBuffer.offset = 32;
 
     uint32_t crossThreadDataSize = 0U;
     ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
     auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(warnings.empty());
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid bti for argument of type global_base in context of : kernel\n", errors.c_str());
+    EXPECT_TRUE(errors.empty());
+    EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
+    EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful));
+}
+
+TEST(PopulateArgDescriptor, GivenConstDataBufferArgWithoutBTIThenItIsPopulatedCorrectly) {
+    NEO::KernelDescriptor kernelDescriptor;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataGlobalBuffer;
+    dataGlobalBuffer.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataConstBuffer;
+    dataGlobalBuffer.btiValue = -1;
+    dataGlobalBuffer.size = 8;
+    dataGlobalBuffer.offset = 32;
+
+    uint32_t crossThreadDataSize = 0U;
+    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
+    std::string errors, warnings;
+    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_TRUE(errors.empty());
+    EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize);
+    EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful));
 }
 
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
