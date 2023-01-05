@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 -->
 
-# Level Zero Immediate Commandlist
+# Level Zero Immediate Command list
 
 * [Introduction](#Introduction)
 * [Availability](#Availability)
@@ -89,7 +89,7 @@ For more code samples, please refer [compute-benchmarks](https://github.com/inte
 
 # Availability
 
-* Level-Zero support for immediate command list is available for all platforms.
+* Level-Zero support for immediate command list is available for all platforms except Meteor Lake.
 * Immediate command lists support both Compute and Copy engines.
 
 # Optimizations

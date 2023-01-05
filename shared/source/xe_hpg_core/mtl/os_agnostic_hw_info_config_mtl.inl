@@ -124,4 +124,9 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(AllocationType allocation
     return patIndex;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isFlushTaskAllowed() const {
+    return false;
+}
+
 } // namespace NEO

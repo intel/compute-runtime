@@ -566,6 +566,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenIn
 struct PauseOnGpuWithImmediateCommandListTests : public PauseOnGpuFixture {
     void SetUp() override {
         PauseOnGpuFixture::setUp();
+        DebugManager.flags.EnableFlushTaskSubmission.set(1);
 
         ze_command_queue_desc_t queueDesc = {};
         ze_result_t returnValue;
