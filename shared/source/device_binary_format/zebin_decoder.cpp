@@ -759,14 +759,13 @@ bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[Len], size_t vecSi
     return true;
 }
 
-bool setSSHOffsetBasedOnBti(SurfaceStateHeapOffset &offset, Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::BtiValueT bti, Elf::ZebinKernelMetadata::Types::Kernel::BindingTableEntry::BindingTableEntryBaseT &outMaxBindingTableIndex) {
-    if (bti < 0) {
-        return false;
+void setSSHOffsetBasedOnBti(SurfaceStateHeapOffset &offset, Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::BtiValueT bti, Elf::ZebinKernelMetadata::Types::Kernel::BindingTableEntry::BindingTableEntryBaseT &outMaxBindingTableIndex) {
+    if (bti == -1) {
+        return;
     }
     outMaxBindingTableIndex.btiValue = std::max<int32_t>(outMaxBindingTableIndex.btiValue, bti);
     constexpr auto surfaceStateSize = 64U;
     offset = surfaceStateSize * bti;
-    return true;
 }
 
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t grfSize,
@@ -1165,10 +1164,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless = src.offset;
             dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize = src.size;
         }
-        if (false == setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful, src.btiValue, maximumBindingTableEntry)) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid bti for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::dataConstBuffer.str() + " in context of : " + dst.kernelMetadata.kernelName + "\n");
-            return DecodeError::InvalidBinary;
-        }
+        setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful, src.btiValue, maximumBindingTableEntry);
     } break;
 
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeDataGlobalBuffer: {
@@ -1176,10 +1172,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless = src.offset;
             dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize = src.size;
         }
-        if (false == setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue, maximumBindingTableEntry)) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid bti for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::dataGlobalBuffer.str() + " in context of : " + dst.kernelMetadata.kernelName + "\n");
-            return DecodeError::InvalidBinary;
-        }
+        setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue, maximumBindingTableEntry);
     } break;
     }
 
