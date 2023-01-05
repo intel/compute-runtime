@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ bool SpecialUltHelperGen12lp::shouldPerformimagePitchAlignment(PRODUCT_FAMILY pr
 }
 
 bool SpecialUltHelperGen12lp::isPipeControlWArequired(PRODUCT_FAMILY productFamily) {
-    return productFamily == IGFX_TIGERLAKE_LP || productFamily == IGFX_DG1;
+    return productFamily != IGFX_ROCKETLAKE;
 }
 
 } // namespace NEO

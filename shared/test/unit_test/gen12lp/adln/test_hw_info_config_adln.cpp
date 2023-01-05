@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,4 +109,10 @@ ADLNTEST_F(AdlnProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesS
     EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
     EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
+}
+
+ADLNTEST_F(AdlnProductHelper, givenAdlnPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
+    auto hwInfo = *defaultHwInfo;
+
+    EXPECT_TRUE(productHelper->pipeControlWARequired(hwInfo));
 }

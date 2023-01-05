@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,4 +110,19 @@ ADLSTEST_F(AdlsProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesS
     EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
     EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
+}
+
+ADLSTEST_F(AdlsProductHelper, givenA0SteppingAndAdlsPlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
+    std::array<std::pair<uint32_t, bool>, 3> revisions = {
+        {{REVISION_A0, true},
+         {REVISION_B, false},
+         {REVISION_C, false}}};
+
+    for (const auto &[revision, paramBool] : revisions) {
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
+        productHelper->configureHardwareCustom(&hwInfo, nullptr);
+
+        EXPECT_EQ(paramBool, productHelper->pipeControlWARequired(hwInfo));
+    }
 }
