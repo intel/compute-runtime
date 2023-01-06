@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -116,6 +116,7 @@ EOF
     export NEO_SKIP_UNIT_TESTS
 
     dch -v ${PKG_VERSION} -m "build $PKG_VERSION"
+    ulimit -n 65535 || true
     dpkg-buildpackage -j`nproc --all` -us -uc -b -rfakeroot
     sudo dpkg -i --force-depends ../*.deb
     if [ "${LOG_CCACHE_STATS}" == "1" ]; then
