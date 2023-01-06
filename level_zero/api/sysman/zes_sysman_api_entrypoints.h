@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -689,6 +689,137 @@ ze_result_t zesDeviceSetEccState(
     const zes_device_ecc_desc_t *newState,
     zes_device_ecc_properties_t *pState) {
     return L0::SysmanDevice::deviceSetEccState(hDevice, newState, pState);
+}
+
+ze_result_t zesOverclockGetDomainProperties(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_properties_t *pDomainProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesOverclockGetDomainVFProperties(
+    zes_overclock_handle_t hDomainHandle,
+    zes_vf_property_t *pVFProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesOverclockGetDomainControlProperties(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    zes_control_property_t *pControlProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesOverclockGetControlCurrentValue(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    double *pValue) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesOverclockGetControlPendingValue(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    double *pValue) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesOverclockSetControlUserValue(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    double pValue,
+    zes_pending_action_t *pPendingAction) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesOverclockGetControlState(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    zes_control_state_t *pControlState,
+    zes_pending_action_t *pPendingAction) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesOverclockGetVFPointValues(
+    zes_overclock_handle_t hDomainHandle,
+    zes_vf_type_t vfType,
+    zes_vf_array_type_t vfArrayType,
+    uint32_t pointIndex,
+    uint32_t *pointValue) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesOverclockSetVFPointValues(
+    zes_overclock_handle_t hDomainHandle,
+    zes_vf_type_t vfType,
+    uint32_t pointIndex,
+    uint32_t pointValue) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesFabricPortGetFabricErrorCounters(
+    zes_fabric_port_handle_t hPort,
+    zes_fabric_port_error_counters_t *pErrors) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesInit(
+    zes_init_flags_t flags) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesDeviceGet(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_device_handle_t *phDevices) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesDriverGet(
+    uint32_t *pCount,
+    zes_driver_handle_t *phDrivers) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesDeviceSetOverclockWaiver(
+    zes_device_handle_t hDevice) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesDeviceGetOverclockDomains(
+    zes_device_handle_t hDevice,
+    uint32_t *pOverclockDomains) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesDeviceGetOverclockControls(
+    zes_device_handle_t hDevice,
+    zes_overclock_domain_t domainType,
+    uint32_t *pAvailableControls) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesDeviceResetOverclockSettings(
+    zes_device_handle_t hDevice,
+    ze_bool_t onShippedState) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesDeviceReadOverclockState(
+    zes_device_handle_t hDevice,
+    zes_overclock_mode_t *pOverclockMode,
+    ze_bool_t *pWaiverSetting,
+    ze_bool_t *pOverclockState,
+    zes_pending_action_t *pPendingAction,
+    ze_bool_t *pPendingReset) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zesDeviceEnumOverclockDomains(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_overclock_handle_t *phDomainHandle) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0
@@ -1628,5 +1759,191 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesTemperatureGetState(
     return L0::zesTemperatureGetState(
         hTemperature,
         pTemperature);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockGetDomainProperties(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_properties_t *pDomainProperties) {
+    return L0::zesOverclockGetDomainProperties(
+        hDomainHandle,
+        pDomainProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockGetDomainVFProperties(
+    zes_overclock_handle_t hDomainHandle,
+    zes_vf_property_t *pVFProperties) {
+    return L0::zesOverclockGetDomainVFProperties(
+        hDomainHandle,
+        pVFProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockGetDomainControlProperties(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    zes_control_property_t *pControlProperties) {
+    return L0::zesOverclockGetDomainControlProperties(
+        hDomainHandle,
+        domainControl,
+        pControlProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockGetControlCurrentValue(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    double *pValue) {
+    return L0::zesOverclockGetControlCurrentValue(
+        hDomainHandle,
+        domainControl,
+        pValue);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockGetControlPendingValue(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    double *pValue) {
+    return L0::zesOverclockGetControlPendingValue(
+        hDomainHandle,
+        domainControl,
+        pValue);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockSetControlUserValue(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    double pValue,
+    zes_pending_action_t *pPendingAction) {
+    return L0::zesOverclockSetControlUserValue(
+        hDomainHandle,
+        domainControl,
+        pValue,
+        pPendingAction);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockGetControlState(
+    zes_overclock_handle_t hDomainHandle,
+    zes_overclock_control_t domainControl,
+    zes_control_state_t *pControlState,
+    zes_pending_action_t *pPendingAction) {
+    return L0::zesOverclockGetControlState(
+        hDomainHandle,
+        domainControl,
+        pControlState,
+        pPendingAction);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockGetVFPointValues(
+    zes_overclock_handle_t hDomainHandle,
+    zes_vf_type_t vfType,
+    zes_vf_array_type_t vfArrayType,
+    uint32_t pointIndex,
+    uint32_t *pointValue) {
+    return L0::zesOverclockGetVFPointValues(
+        hDomainHandle,
+        vfType,
+        vfArrayType,
+        pointIndex,
+        pointValue);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesOverclockSetVFPointValues(
+    zes_overclock_handle_t hDomainHandle,
+    zes_vf_type_t vfType,
+    uint32_t pointIndex,
+    uint32_t pointValue) {
+    return L0::zesOverclockSetVFPointValues(
+        hDomainHandle,
+        vfType,
+        pointIndex,
+        pointValue);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesFabricPortGetFabricErrorCounters(
+    zes_fabric_port_handle_t hPort,
+    zes_fabric_port_error_counters_t *pErrors) {
+    return L0::zesFabricPortGetFabricErrorCounters(
+        hPort,
+        pErrors);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInit(
+    zes_init_flags_t flags) {
+    return L0::zesInit(
+        flags);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceGet(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_device_handle_t *phDevices) {
+    return L0::zesDeviceGet(
+        hDriver,
+        pCount,
+        phDevices);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGet(
+    uint32_t *pCount,
+    zes_driver_handle_t *phDrivers) {
+    return L0::zesDriverGet(
+        pCount,
+        phDrivers);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceSetOverclockWaiver(
+    zes_device_handle_t hDevice) {
+    return L0::zesDeviceSetOverclockWaiver(
+        hDevice);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceGetOverclockDomains(
+    zes_device_handle_t hDevice,
+    uint32_t *pOverclockDomains) {
+    return L0::zesDeviceGetOverclockDomains(
+        hDevice,
+        pOverclockDomains);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceGetOverclockControls(
+    zes_device_handle_t hDevice,
+    zes_overclock_domain_t domainType,
+    uint32_t *pAvailableControls) {
+    return L0::zesDeviceGetOverclockControls(
+        hDevice,
+        domainType,
+        pAvailableControls);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceResetOverclockSettings(
+    zes_device_handle_t hDevice,
+    ze_bool_t onShippedState) {
+    return L0::zesDeviceResetOverclockSettings(
+        hDevice,
+        onShippedState);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceReadOverclockState(
+    zes_device_handle_t hDevice,
+    zes_overclock_mode_t *pOverclockMode,
+    ze_bool_t *pWaiverSetting,
+    ze_bool_t *pOverclockState,
+    zes_pending_action_t *pPendingAction,
+    ze_bool_t *pPendingReset) {
+    return L0::zesDeviceReadOverclockState(
+        hDevice,
+        pOverclockMode,
+        pWaiverSetting,
+        pOverclockState,
+        pPendingAction,
+        pPendingReset);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumOverclockDomains(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_overclock_handle_t *phDomainHandle) {
+    return L0::zesDeviceEnumOverclockDomains(
+        hDevice,
+        pCount,
+        phDomainHandle);
 }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,37 @@ zesGetDeviceProcAddrTable(
     pDdiTable->pfnEccConfigurable = L0::zesDeviceEccConfigurable;
     pDdiTable->pfnGetEccState = L0::zesDeviceGetEccState;
     pDdiTable->pfnSetEccState = L0::zesDeviceSetEccState;
+    pDdiTable->pfnGet = L0::zesDeviceGet;
+    pDdiTable->pfnSetOverclockWaiver = L0::zesDeviceSetOverclockWaiver;
+    pDdiTable->pfnGetOverclockDomains = L0::zesDeviceGetOverclockDomains;
+    pDdiTable->pfnGetOverclockControls = L0::zesDeviceGetOverclockControls;
+    pDdiTable->pfnResetOverclockSettings = L0::zesDeviceResetOverclockSettings;
+    pDdiTable->pfnReadOverclockState = L0::zesDeviceReadOverclockState;
+    pDdiTable->pfnEnumOverclockDomains = L0::zesDeviceEnumOverclockDomains;
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zesGetGlobalProcAddrTable(
+    ze_api_version_t version,
+    zes_global_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    NEO::EnvironmentVariableReader envReader;
+    bool isSysManEnabled =
+        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
+    if (false == isSysManEnabled) {
+        *pDdiTable = {};
+        return result;
+    }
+    pDdiTable->pfnInit = L0::zesInit;
+
     return result;
 }
 
@@ -92,6 +123,8 @@ zesGetDriverProcAddrTable(
 
     pDdiTable->pfnEventListen = L0::zesDriverEventListen;
     pDdiTable->pfnEventListenEx = L0::zesDriverEventListenEx;
+    pDdiTable->pfnGet = L0::zesDriverGet;
+
     return result;
 }
 
@@ -172,6 +205,7 @@ zesGetFabricPortProcAddrTable(
     pDdiTable->pfnSetConfig = L0::zesFabricPortSetConfig;
     pDdiTable->pfnGetState = L0::zesFabricPortGetState;
     pDdiTable->pfnGetThroughput = L0::zesFabricPortGetThroughput;
+    pDdiTable->pfnGetFabricErrorCounters = L0::zesFabricPortGetFabricErrorCounters;
 
     return result;
 }
@@ -513,6 +547,39 @@ zesGetTemperatureProcAddrTable(
     pDdiTable->pfnGetConfig = L0::zesTemperatureGetConfig;
     pDdiTable->pfnSetConfig = L0::zesTemperatureSetConfig;
     pDdiTable->pfnGetState = L0::zesTemperatureGetState;
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zesGetOverclockProcAddrTable(
+    ze_api_version_t version,           ///< [in] API version requested
+    zes_overclock_dditable_t *pDdiTable ///< [in,out] pointer to table of DDI function pointers
+) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    NEO::EnvironmentVariableReader envReader;
+    bool isSysManEnabled =
+        envReader.getSetting("ZES_ENABLE_SYSMAN", false);
+    if (false == isSysManEnabled) {
+        *pDdiTable = {};
+        return result;
+    }
+
+    pDdiTable->pfnGetDomainProperties = L0::zesOverclockGetDomainProperties;
+    pDdiTable->pfnGetDomainVFProperties = L0::zesOverclockGetDomainVFProperties;
+    pDdiTable->pfnGetDomainControlProperties = L0::zesOverclockGetDomainControlProperties;
+    pDdiTable->pfnGetControlCurrentValue = L0::zesOverclockGetControlCurrentValue;
+    pDdiTable->pfnGetControlPendingValue = L0::zesOverclockGetControlPendingValue;
+    pDdiTable->pfnSetControlUserValue = L0::zesOverclockSetControlUserValue;
+    pDdiTable->pfnGetControlState = L0::zesOverclockGetControlState;
+    pDdiTable->pfnGetVFPointValues = L0::zesOverclockGetVFPointValues;
+    pDdiTable->pfnSetVFPointValues = L0::zesOverclockSetVFPointValues;
 
     return result;
 }
