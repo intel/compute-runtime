@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1203,11 +1203,13 @@ TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppen
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     const auto appendBarrierResult = commandList->appendBarrier(nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, appendBarrierResult);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingSignalEventsThenDeviceLostIsReturned) {
@@ -1259,11 +1261,13 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendSignalEvent(event);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImmediateCommandListAndWaitingOnEventsThenDeviceLostIsReturned, IsSKL) {
@@ -1306,11 +1310,13 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImme
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendWaitOnEvents(1, &event, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForImmediateCommandThenNextCommandBufferIsUsed) {
@@ -1380,10 +1386,12 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::GpuHang;
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendWaitOnEvents(1, &event, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCommandListWithoutFlushTaskAndWaitingOnEventsThenDeviceLostIsReturnedFromExecute, IsSKL) {
@@ -1540,11 +1548,13 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendEventReset(event);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 HWTEST_F(CommandListCreate, GivenImmediateCommandListWithFlushTaskCreatedThenNumIddPerBlockIsOne) {
@@ -1611,11 +1621,13 @@ HWTEST_F(CommandListCreate, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWhenCre
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendWaitOnEvents(1, &event, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendResetEventThenUpdateTaskCountNeededFlagIsDisabled) {

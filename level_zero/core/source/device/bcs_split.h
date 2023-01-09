@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,8 @@ struct BcsSplit {
                                 K srcptr,
                                 size_t size,
                                 ze_event_handle_t hSignalEvent,
+                                bool performMigration,
+                                bool hasRelaxedOrderingDependencies,
                                 std::function<ze_result_t(T, K, size_t, ze_event_handle_t)> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -78,7 +80,13 @@ struct BcsSplit {
 
             auto eventHandle = this->events.subcopy[subcopyEventIndex + i]->toHandle();
             result = appendCall(localDstPtr, localSrcPtr, localSize, eventHandle);
-            cmdList->executeCommandListImmediateImpl(true, this->cmdQs[i]);
+
+            if (cmdList->isFlushTaskSubmissionEnabled) {
+                cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, false, hasRelaxedOrderingDependencies, this->cmdQs[i]);
+            } else {
+                cmdList->executeCommandListImmediateImpl(performMigration, this->cmdQs[i]);
+            }
+
             eventHandles.push_back(eventHandle);
 
             totalSize -= localSize;
