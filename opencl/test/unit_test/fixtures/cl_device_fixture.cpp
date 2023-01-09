@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/sip.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
 #include "gtest/gtest.h"
 

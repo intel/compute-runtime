@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "reg_configs_common.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,10 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/image/image_surface_state.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 

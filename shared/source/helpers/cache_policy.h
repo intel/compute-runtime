@@ -1,17 +1,15 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/debug_settings/debug_settings_manager.h"
-
 #include "igfxfmid.h"
 
+#include <cstddef>
 #include <cstdint>
-#include <stddef.h>
 
 namespace NEO {
 class GraphicsAllocation;

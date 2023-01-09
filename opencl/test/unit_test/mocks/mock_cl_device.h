@@ -10,7 +10,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
 namespace NEO {
 class FailMemoryManager;
@@ -68,18 +67,9 @@ class MockClDevice : public ClDevice {
         auto executionEnvironment = prepareExecutionEnvironment(pHwInfo, rootDeviceIndex);
         return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
     }
-    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
-        auto executionEnvironment = new MockClExecutionEnvironment();
-        auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(pHwInfo);
-            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
-        }
-        executionEnvironment->calculateMaxOsContextCount();
-        return executionEnvironment;
-    }
+
+    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex);
+
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const { return device.createCommandStreamReceiver(); }
     BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }

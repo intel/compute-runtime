@@ -11,6 +11,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/bit_helpers.h"

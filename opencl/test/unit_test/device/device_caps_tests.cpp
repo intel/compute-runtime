@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/hw_helper.h"

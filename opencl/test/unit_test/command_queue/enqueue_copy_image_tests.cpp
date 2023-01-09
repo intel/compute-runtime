@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "reg_configs_common.h"

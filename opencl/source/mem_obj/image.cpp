@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/helpers/mipmap.h"

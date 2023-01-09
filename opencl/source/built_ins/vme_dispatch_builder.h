@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/basic_math.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"

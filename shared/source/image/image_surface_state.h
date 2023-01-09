@@ -13,7 +13,6 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 template <typename GfxFamily>

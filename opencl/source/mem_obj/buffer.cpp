@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
@@ -16,6 +17,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/sharings/unified/unified_buffer.h"
 

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpg_core/hw_cmds.h"

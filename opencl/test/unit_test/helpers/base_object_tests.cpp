@@ -16,6 +16,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/sampler/sampler.h"
+#include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "opencl/test/unit_test/program/program_tests.h"
 
 namespace NEO {
+struct KernelInfo;
 class MockGraphicsAllocation;
 class MockProgram;
 } // namespace NEO
