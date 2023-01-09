@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ class IoctlHelper {
   public:
     IoctlHelper(Drm &drmArg) : drm(drmArg){};
     virtual ~IoctlHelper() {}
-    static std::unique_ptr<IoctlHelper> get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion, Drm &drm);
+    static std::unique_ptr<IoctlHelper> getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm);
     virtual uint32_t ioctl(DrmIoctl request, void *arg);
 
     virtual bool initialize() = 0;

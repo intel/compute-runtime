@@ -1191,7 +1191,7 @@ TEST(DrmTest, givenInvalidUapiPrelimVersionThenFallbackToBasePrelim) {
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     const auto productFamily = defaultHwInfo->platform.eProductFamily;
-    std::unique_ptr<IoctlHelper> ioctlHelper(IoctlHelper::get(productFamily, "-1", "unk", drm));
+    std::unique_ptr<IoctlHelper> ioctlHelper(IoctlHelper::getI915Helper(productFamily, "-1", drm));
     EXPECT_NE(nullptr, ioctlHelper.get());
 }
 
