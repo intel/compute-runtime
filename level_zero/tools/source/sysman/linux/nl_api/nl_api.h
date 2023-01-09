@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,10 @@
 #include <netlink/genl/mngt.h>
 #include <string>
 #include <sys/socket.h>
+
+namespace NEO {
+class OsLibrary;
+} // namespace NEO
 
 namespace L0 {
 
@@ -92,7 +96,7 @@ class NlApi : public NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL bool loadEntryPoints();
 
     NlApi();
-    MOCKABLE_VIRTUAL ~NlApi() = default;
+    MOCKABLE_VIRTUAL ~NlApi();
 
   protected:
     template <class T>

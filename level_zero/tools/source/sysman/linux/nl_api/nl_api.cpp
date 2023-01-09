@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "nl_api.h"
+
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/os_library.h"
 
 namespace L0 {
 
@@ -249,5 +252,7 @@ struct nlmsghdr *NlApi::nlmsgHdr(struct nl_msg *msg) {
 NlApi::NlApi() {
     genlLibraryHandle.reset(NEO::OsLibrary::load(std::string(libgenlFile)));
 }
+
+NlApi::~NlApi() = default;
 
 } // namespace L0

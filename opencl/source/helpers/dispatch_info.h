@@ -12,7 +12,6 @@
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
-#include "opencl/source/mem_obj/mem_obj.h"
 
 #include <algorithm>
 #include <memory>
@@ -85,11 +84,7 @@ class DispatchInfo {
 };
 
 struct MultiDispatchInfo {
-    ~MultiDispatchInfo() {
-        for (MemObj *redescribedSurface : redescribedSurfaces) {
-            redescribedSurface->release();
-        }
-    }
+    ~MultiDispatchInfo();
 
     explicit MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
     explicit MultiDispatchInfo(const BuiltinOpParams &operationParams) : builtinOpParams(operationParams) {}
@@ -182,9 +177,7 @@ struct MultiDispatchInfo {
         return redescribedSurfaces;
     }
 
-    void pushRedescribedMemObj(std::unique_ptr<MemObj> memObj) {
-        redescribedSurfaces.push_back(memObj.release());
-    }
+    void pushRedescribedMemObj(std::unique_ptr<MemObj> memObj);
 
     Kernel *peekMainKernel() const;
 

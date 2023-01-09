@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -36,6 +36,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/device${BRANCH_DIR_SUFFIX}device_imp_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/bcs_split.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/bcs_split.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device/device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp_${DRIVER_MODEL}/device_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp.cpp

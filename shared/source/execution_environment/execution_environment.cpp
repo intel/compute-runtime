@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/affinity_mask.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string_helpers.h"

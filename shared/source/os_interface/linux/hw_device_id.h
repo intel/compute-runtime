@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include <string>

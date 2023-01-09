@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"

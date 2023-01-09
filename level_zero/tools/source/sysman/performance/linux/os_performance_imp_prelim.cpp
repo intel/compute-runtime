@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/performance/linux/os_performance_imp_prelim.h"
+
+#include "shared/source/device/device.h"
 
 #include <cmath>
 

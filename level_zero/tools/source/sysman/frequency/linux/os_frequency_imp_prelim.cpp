@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/frequency/linux/os_frequency_imp_prelim.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 
 #include "igfxfmid.h"
 #include "sysman/linux/os_sysman_imp.h"

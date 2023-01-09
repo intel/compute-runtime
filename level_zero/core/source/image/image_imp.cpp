@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/image/image_imp.h"
 
+#include "shared/source/device/device.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"

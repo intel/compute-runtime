@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"

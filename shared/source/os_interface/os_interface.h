@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,16 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/topology_map.h"
-#include "shared/source/os_interface/driver_info.h"
 
+#include <limits>
 #include <memory>
 
 namespace NEO {
+struct PhysicalDevicePciBusInfo;
+struct PhysicalDevicePciSpeedInfo;
+enum class DriverModelType;
 class ExecutionEnvironment;
 class MemoryManager;
 class OsContext;

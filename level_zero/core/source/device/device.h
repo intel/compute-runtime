@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include "shared/source/device/device.h"
-#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
+
+#include <memory>
 
 static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
@@ -39,9 +39,8 @@ class L0GfxCoreHelper;
 enum class ModuleType;
 
 struct Device : _ze_device_handle_t {
-    uint32_t getRootDeviceIndex() const {
-        return neoDevice->getRootDeviceIndex();
-    }
+    uint32_t getRootDeviceIndex() const;
+
     NEO::Device *getNEODevice() const {
         return this->neoDevice;
     }
@@ -123,8 +122,8 @@ struct Device : _ze_device_handle_t {
 
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;
-    NEO::SourceLevelDebugger *getSourceLevelDebugger() { return getNEODevice()->getSourceLevelDebugger(); }
-    NEO::DebuggerL0 *getL0Debugger() { return getNEODevice()->getL0Debugger(); }
+    NEO::SourceLevelDebugger *getSourceLevelDebugger();
+    NEO::DebuggerL0 *getL0Debugger();
 
     virtual NEO::GraphicsAllocation *getDebugSurface() const = 0;
 

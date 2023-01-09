@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp_prelim.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/system_info.h"

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"

@@ -7,6 +7,7 @@
 
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/utilities/directory.h"
 
 #include <fcntl.h>
+#include <limits>
 #include <netlink/attr.h>
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/family.h>

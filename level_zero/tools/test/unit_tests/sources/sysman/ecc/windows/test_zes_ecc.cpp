@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/os_interface/driver_info.h"
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/ecc/windows/mock_ecc.h"
 
