@@ -122,8 +122,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithNotDefaultRootDeviceIndexAndBc
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
     std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
+    REQUIRE_FULL_BLITTER_OR_SKIP(newDevice->getRootDeviceEnvironment());
     std::unique_ptr<BcsMockContext> newBcsMockContext = std::make_unique<BcsMockContext>(newDevice.get());
 
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(newBcsMockContext->bcsCsr.get());
@@ -1351,7 +1351,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenDebugFlagSetToOneWhenEnqueueingCopyLocal
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsQueueWhenEnqueueingCopyBufferToBufferThenUseBlitterRegardlessOfPreference) {
-    REQUIRE_BLITTER_OR_SKIP(&device->getDevice().getHardwareInfo());
+    REQUIRE_BLITTER_OR_SKIP(device->getDevice().getRootDeviceEnvironment());
 
     cl_command_queue_properties properties[] = {
         CL_QUEUE_FAMILY_INTEL,

@@ -1932,7 +1932,8 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableSt
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenCreatingWorkPartitionAllocationThenInitializeContentsWithCopyEngine) {
-    REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    REQUIRE_BLITTER_OR_SKIP(*mockExecutionEnvironment.rootDeviceEnvironments[0].get());
     DebugManagerStateRestore restore{};
     DebugManager.flags.EnableStaticPartitioning.set(0);
 
@@ -2135,7 +2136,7 @@ TEST(CreateWorkPartitionAllocationTest, givenEnabledBlitterWhenInitializingWorkP
     auto memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
     auto commandStreamReceiver = device.getDefaultEngine().commandStreamReceiver;
 
-    REQUIRE_BLITTER_OR_SKIP(&device.getHardwareInfo());
+    REQUIRE_BLITTER_OR_SKIP(device.getRootDeviceEnvironment());
     memoryManager->freeGraphicsMemory(commandStreamReceiver->getWorkPartitionAllocation());
 
     memoryManager->copyMemoryToAllocationBanksCalled = 0u;

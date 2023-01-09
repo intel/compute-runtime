@@ -300,9 +300,9 @@ TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsC
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
     EXPECT_EQ(2u, device->getNumGenericSubDevices());
     std::unique_ptr<OsContext> bcsOsContext;
 
@@ -321,9 +321,10 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
     DebugManager.flags.DeferCmdQBcsInitialization.set(0);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto internalUsage = true;
     auto expectedEngineType = EngineHelpers::linkCopyEnginesSupported(device->getRootDeviceEnvironment(), device->getDeviceBitfield())
@@ -1790,11 +1791,11 @@ struct CsrSelectionCommandQueueTests : ::testing::Test {
     void SetUp() override {
         HardwareInfo hwInfo = *::defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = blitter;
-        if (blitter) {
-            REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
-        }
 
         device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
+        if (blitter) {
+            REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+        }
         clDevice = std::make_unique<MockClDevice>(device);
         context = std::make_unique<MockContext>(clDevice.get());
 
@@ -2748,7 +2749,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
 }
 
 TEST_F(MultiTileFixture, givenMultiSubDeviceAndCommandQueueUsingMainCopyEngineWhenReleaseMainCopyEngineThenDeviceAndSubdeviceSelectorReset) {
-    REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    REQUIRE_BLITTER_OR_SKIP(rootDeviceEnvironment);
 
     auto device = platform()->getClDevice(0);
     auto subDevice = device->getSubDevice(0);

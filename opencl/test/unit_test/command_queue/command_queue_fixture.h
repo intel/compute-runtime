@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,13 +94,14 @@ struct CommandQueueHwBlitTest : ClDeviceFixture, ContextFixture, CommandQueueHwF
     void SetUp() override {
         hwInfo = *::defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
-        REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
         DebugManager.flags.EnableBlitterOperationsSupport.set(1);
         DebugManager.flags.EnableTimestampPacket.set(1);
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
         ClDeviceFixture::setUpImpl(&hwInfo);
         cl_device_id device = pClDevice;
+        REQUIRE_FULL_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
         ContextFixture::setUp(1, &device);
         cl_command_queue_properties queueProperties = ooq ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
         CommandQueueHwFixture::setUp(pClDevice, queueProperties);

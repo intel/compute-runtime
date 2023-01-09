@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,7 +298,7 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
     HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
 
-    REQUIRE_BLITTER_OR_SKIP(hwInfo);
+    REQUIRE_BLITTER_OR_SKIP(pDevice->getRootDeviceEnvironment());
 
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
@@ -326,7 +326,7 @@ HWTEST_F(BlitTests, givenMemorySizeIsLessThanTwicenMaxWidthWhenFillPatternWithBl
     HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
 
-    REQUIRE_BLITTER_OR_SKIP(hwInfo);
+    REQUIRE_BLITTER_OR_SKIP(pDevice->getRootDeviceEnvironment());
 
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};

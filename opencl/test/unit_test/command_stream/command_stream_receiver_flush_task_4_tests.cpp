@@ -508,7 +508,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
 
     for (auto &rootDeviceEnvironment : deviceFactory->rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments) {
-        REQUIRE_FULL_BLITTER_OR_SKIP(rootDeviceEnvironment->getHardwareInfo());
+        REQUIRE_FULL_BLITTER_OR_SKIP(*rootDeviceEnvironment);
     }
 
     auto clCmdQ1 = clCreateCommandQueue(context.get(), deviceFactory->rootDevices[1], {}, nullptr);
@@ -902,14 +902,15 @@ struct BcsCrossDeviceMigrationTests : public ::testing::Test {
     void SetUp() override {
         VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-        REQUIRE_FULL_BLITTER_OR_SKIP(defaultHwInfo.get());
 
         DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
         DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(true);
 
         deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
         auto device1 = deviceFactory->rootDevices[0];
+        REQUIRE_FULL_BLITTER_OR_SKIP(device1->getRootDeviceEnvironment());
         auto device2 = deviceFactory->rootDevices[1];
+        REQUIRE_FULL_BLITTER_OR_SKIP(device2->getRootDeviceEnvironment());
         cl_device_id devices[] = {device1, device2};
 
         context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);

@@ -78,9 +78,9 @@ struct MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAndEnqueueNDRangeKernelInLoopThenIsNoRace) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
-    HardwareInfo hwInfo = *defaultHwInfo.get();
+    HardwareInfo hwInfo = *pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+    REQUIRE_FULL_BLITTER_OR_SKIP(*pDevice->executionEnvironment->rootDeviceEnvironments[0]);
 
     std::atomic<bool> startEnqueueProcess(false);
 
@@ -199,9 +199,9 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
 HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThread2EnqueueNDRangeKernelInLoopThenIsNoRace) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
-    HardwareInfo hwInfo = *defaultHwInfo.get();
+    HardwareInfo hwInfo = *pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+    REQUIRE_FULL_BLITTER_OR_SKIP(*pDevice->executionEnvironment->rootDeviceEnvironments[0]);
 
     std::atomic<bool> startEnqueueProcess(false);
 
@@ -327,9 +327,9 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
     DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(0);
-    HardwareInfo hwInfo = *defaultHwInfo.get();
+    HardwareInfo hwInfo = *pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+    REQUIRE_FULL_BLITTER_OR_SKIP(*pDevice->executionEnvironment->rootDeviceEnvironments[0]);
 
     std::atomic<bool> startEnqueueProcess(false);
 
@@ -444,9 +444,9 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
 HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueueWriteBufferAndSecondHalfEnqueueNDRangeKernelInLoopThenIsNoRace) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
-    HardwareInfo hwInfo = *defaultHwInfo.get();
+    HardwareInfo hwInfo = *pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+    REQUIRE_FULL_BLITTER_OR_SKIP(*pDevice->executionEnvironment->rootDeviceEnvironments[0]);
 
     std::atomic<bool> startEnqueueProcess(false);
 

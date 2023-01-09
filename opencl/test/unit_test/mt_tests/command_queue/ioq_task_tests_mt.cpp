@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -230,7 +230,6 @@ TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingImageThenEventsAreComplete
 TEST_F(IOQTaskTestsMt, givenBlitterWhenCopyUsingMultipleThreadsThenSuccessReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
@@ -241,6 +240,7 @@ TEST_F(IOQTaskTestsMt, givenBlitterWhenCopyUsingMultipleThreadsThenSuccessReturn
     std::array<std::future<void>, numThreads> threads;
 
     auto device = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
     MockClDevice clDevice(device);
     auto cmdQ = createCommandQueue(&clDevice);
     EXPECT_EQ(cmdQ->taskCount, 0u);

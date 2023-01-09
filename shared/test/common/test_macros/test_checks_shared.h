@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,11 @@
 namespace NEO {
 class Device;
 struct HardwareInfo;
+struct RootDeviceEnvironment;
 
 namespace TestChecks {
-bool supportsBlitter(const HardwareInfo *pHardwareInfo);
-bool fullySupportsBlitter(const HardwareInfo *pHardwareInfo);
+bool supportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironemnt);
+bool fullySupportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool supportsImages(const HardwareInfo &hardwareInfo);
 bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 bool supportsSvm(const HardwareInfo *pHardwareInfo);

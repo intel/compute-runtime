@@ -118,14 +118,15 @@ TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandler
 HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutput) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
-
     DebugManagerStateRestore restore;
 
     for (auto enable : {-1, 0, 1}) {
         DebugManager.flags.EnableStatelessCompression.set(enable);
 
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+        REQUIRE_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
         MockContext context(device.get());
 
         auto kernelInfo = std::make_unique<MockKernelInfo>();
@@ -157,14 +158,15 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
 }
 
 HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutputAndFalseIsReturned) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
 
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
-
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    REQUIRE_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
     MockContext context(device.get());
 
     auto kernelInfo = std::make_unique<MockKernelInfo>();
@@ -194,13 +196,13 @@ HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessComp
 HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToCopyPrintfOutput) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
 
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
     DebugManager.flags.EnableLocalMemory.set(1);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    REQUIRE_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
     MockContext context(device.get());
 
     auto kernelInfo = std::make_unique<MockKernelInfo>();
@@ -328,7 +330,8 @@ TEST_F(PrintfHandlerTests, GivenEmptyMultiDispatchInfoWhenCreatingPrintfHandlerT
 }
 
 TEST_F(PrintfHandlerTests, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenPreparingPrintfSurfaceDispatchThenBlitterIsUsed) {
-    REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    REQUIRE_BLITTER_OR_SKIP(*mockExecutionEnvironment.rootDeviceEnvironments[0].get());
 
     DebugManagerStateRestore restorer;
 

@@ -140,10 +140,12 @@ TEST(Event, WhenGettingEventInfoThenCqIsReturned) {
 TEST(Event, givenBcsCsrSetInEventWhenPeekingBcsTaskCountThenReturnCorrectTaskCount) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
     auto device = ReleaseableObjectPtr<MockClDevice>{
         new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockAlignedMallocManagerDevice>(&hwInfo)}};
+
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
     MockContext context{device.get()};
     MockCommandQueue queue{context};
     queue.constructBcsEngine(false);

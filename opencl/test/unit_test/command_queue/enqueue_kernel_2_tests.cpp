@@ -954,7 +954,7 @@ HWTEST_F(BlitAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDi
 
     auto hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(hwInfo);
+    REQUIRE_FULL_BLITTER_OR_SKIP(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]);
 
     MockContext context(pClDevice);
     MockKernelWithInternals mockKernel(context.getDevices(), &context);

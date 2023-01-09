@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -240,7 +240,7 @@ HWTEST_F(EnqueueHandlerTest, givenNonBlitPropertyWhenEnqueueIsBlockedThenDontReg
 HWTEST_F(EnqueueHandlerTest, givenBlitPropertyWhenEnqueueIsBlockedThenRegisterBlitProperties) {
     HardwareInfo *hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(hwInfo);
+    REQUIRE_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());
 
     std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
     auto &csr = mockCmdQ->getGpgpuCommandStreamReceiver();
@@ -326,7 +326,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
     DebugManager.flags.EnableTimestampPacket.set(1);
 
     setUpImpl<CsrType>();
-    REQUIRE_FULL_BLITTER_OR_SKIP(&device->getHardwareInfo());
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
@@ -371,7 +371,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
     DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
 
     setUpImpl<CsrType>();
-    REQUIRE_FULL_BLITTER_OR_SKIP(&device->getHardwareInfo());
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
