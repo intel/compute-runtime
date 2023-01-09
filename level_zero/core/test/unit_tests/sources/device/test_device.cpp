@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -51,7 +52,7 @@
 #include <memory>
 
 namespace NEO {
-extern GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
 } // namespace NEO
 
 namespace L0 {
@@ -1274,12 +1275,13 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
             return EngineGroupType::Compute;
         }
     };
-    auto hwInfo = *defaultHwInfo.get();
-    MockGfxCoreHelper gfxCoreHelper{};
-    VariableBackup<GfxCoreHelper *> gfxCoreHelperFactoryBackup{&NEO::gfxCoreHelperFactory[static_cast<size_t>(hwInfo.platform.eRenderCoreFamily)]};
-    gfxCoreHelperFactoryBackup = &gfxCoreHelper;
 
+    auto rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
+    auto &hwInfo = *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]);
+
     auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS2, neoDevice->getRootDeviceEnvironment());
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
@@ -3568,9 +3570,8 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
                                                                                               rootDeviceIndex);
     Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
-    MockGfxCoreHelper gfxCoreHelper{};
-    VariableBackup<GfxCoreHelper *> gfxCoreHelperFactoryBackup{&NEO::gfxCoreHelperFactory[static_cast<size_t>(hwInfo.platform.eRenderCoreFamily)]};
-    gfxCoreHelperFactoryBackup = &gfxCoreHelper;
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*neoMockDevice->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     uint32_t count = 0;
     ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
@@ -3578,7 +3579,7 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
 
     NEO::EngineGroupType engineGroupTypes[] = {NEO::EngineGroupType::RenderCompute, NEO::EngineGroupType::Compute};
     for (auto isCooperativeDispatchSupported : ::testing::Bool()) {
-        gfxCoreHelper.isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
+        raii.mockGfxCoreHelper->isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
 
         std::vector<ze_command_queue_group_properties_t> properties(count);
         res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());

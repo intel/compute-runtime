@@ -996,7 +996,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
             return EngineGroupType::RenderCompute;
         }
     };
-    RAIIGfxCoreHelperFactory<FakeGfxCoreHelper> overrideGfxCoreHelper{defaultHwInfo->platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<FakeGfxCoreHelper> overrideGfxCoreHelper{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
 
     auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS, pDevice->getRootDeviceEnvironment());
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
@@ -2605,15 +2605,19 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
     };
 
     template <typename GfxFamily, typename GfxCoreHelperType>
-    auto overrideGfxCoreHelper() {
-        return RAIIGfxCoreHelperFactory<GfxCoreHelperType>{::defaultHwInfo->platform.eRenderCoreFamily};
+    auto overrideGfxCoreHelper(RootDeviceEnvironment &rootDeviceEnvironment) {
+        return RAIIGfxCoreHelperFactory<GfxCoreHelperType>{rootDeviceEnvironment};
     }
 };
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseCorrectEngine) {
-    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
+
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
     MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
     MockClDevice clDevice{device};
     MockContext context{&clDevice};
@@ -2642,7 +2646,8 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
     UltClDeviceFactory deviceFactory{1, 2};
     MockContext context{deviceFactory.rootDevices[0]};
     cl_command_queue_properties properties[5] = {};
@@ -2658,10 +2663,12 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWh
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
-    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
     UltClDeviceFactory deviceFactory{1, 2};
     MockContext context{deviceFactory.subDevices[0]};
     cl_command_queue_properties properties[5] = {};
@@ -2687,10 +2694,11 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
-    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 0, 1>>();
-
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 0, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
@@ -2712,7 +2720,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenC
     DebugManager.flags.DeferOsContextInitialization.set(1);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
 
-    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 1, 1, 1>>();
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 1, 1, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
@@ -2734,7 +2744,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
     DebugManager.flags.DeferOsContextInitialization.set(1);
 
-    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 1, 1, 1>>();
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 1, 1, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
@@ -2754,6 +2766,8 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenCreatingCmdQueu
     DebugManager.flags.NumberOfRegularContextsPerEngine.set(4);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::ENGINE_CCS));
 
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
     class MyMockGfxCoreHelper : public GfxCoreHelperHw<FamilyType> {
       public:
         const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
@@ -2772,7 +2786,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenCreatingCmdQueu
         }
     };
 
-    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MyMockGfxCoreHelper>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MyMockGfxCoreHelper>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     MockContext context{};
     auto &device = static_cast<MockDevice &>(context.getDevice(0)->getDevice());

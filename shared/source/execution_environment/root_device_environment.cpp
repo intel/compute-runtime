@@ -153,7 +153,14 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
 }
 
 void RootDeviceEnvironment::initHelpers() {
+    initGfxCoreHelper();
     initApiGfxCoreHelper();
+}
+
+void RootDeviceEnvironment::initGfxCoreHelper() {
+    if (gfxCoreHelper == nullptr) {
+        gfxCoreHelper = GfxCoreHelper::create(this->getHardwareInfo()->platform.eRenderCoreFamily);
+    }
 }
 
 BuiltIns *RootDeviceEnvironment::getBuiltIns() {
@@ -186,8 +193,8 @@ HelperType &RootDeviceEnvironment::getHelper() const {
         return productHelper;
     } else {
         static_assert(std::is_same_v<HelperType, GfxCoreHelper>, "Only CompilerProductHelper, ProductHelper and GfxCoreHelper are supported");
-        auto &gfxCoreHelper = GfxCoreHelper::get(this->getHardwareInfo()->platform.eRenderCoreFamily);
-        return gfxCoreHelper;
+        UNRECOVERABLE_IF(gfxCoreHelper == nullptr);
+        return *gfxCoreHelper;
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,10 +15,14 @@
 #include <algorithm>
 
 namespace NEO {
-GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
-GfxCoreHelper &GfxCoreHelper::get(GFXCORE_FAMILY gfxCore) {
-    return *gfxCoreHelperFactory[gfxCore];
+GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+
+std::unique_ptr<GfxCoreHelper> GfxCoreHelper::create(const GFXCORE_FAMILY gfxCoreFamily) {
+
+    auto createFunction = gfxCoreHelperFactory[gfxCoreFamily];
+    auto gfxCoreHelper = createFunction();
+    return gfxCoreHelper;
 }
 
 bool GfxCoreHelper::compressedBuffersSupported(const HardwareInfo &hwInfo) {

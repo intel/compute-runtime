@@ -22,6 +22,7 @@ namespace NEO {
 
 using Gen9EnqueueTest = Test<ClDeviceFixture>;
 GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKernelIsSubmittedThenRoundRobinPolicyIsProgrammed) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     MockContext mc;
     CommandQueueHw<Gen9Family> cmdQ{&mc, pClDevice, 0, false};
 
@@ -36,7 +37,7 @@ GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKe
 
     auto cmd = findMmioCmd<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), DebugControlReg2::address);
     ASSERT_NE(nullptr, cmd);
-    EXPECT_EQ(DebugControlReg2::getRegData(GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy()), cmd->getDataDword());
+    EXPECT_EQ(DebugControlReg2::getRegData(gfxCoreHelper.getDefaultThreadArbitrationPolicy()), cmd->getDataDword());
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), DebugControlReg2::address));
 }
 

@@ -70,6 +70,7 @@ struct RootDeviceEnvironment {
     bool isNumberOfCcsLimited() const;
 
     void initHelpers();
+    void initGfxCoreHelper();
     void initApiGfxCoreHelper();
     template <typename HelperType>
     HelperType &getHelper() const;
@@ -88,6 +89,8 @@ struct RootDeviceEnvironment {
     std::unique_ptr<Debugger> debugger;
     std::unique_ptr<SWTagsManager> tagsManager;
     std::unique_ptr<ApiGfxCoreHelper> apiGfxCoreHelper;
+    std::unique_ptr<GfxCoreHelper> gfxCoreHelper;
+
     ExecutionEnvironment &executionEnvironment;
 
     AffinityMaskHelper deviceAffinityMask{true};

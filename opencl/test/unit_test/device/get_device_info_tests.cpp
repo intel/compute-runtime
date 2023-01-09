@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -16,6 +17,7 @@
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
@@ -709,8 +711,8 @@ class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
         return true;
     }
 
-    static auto overrideGfxCoreHelper() {
-        return RAIIGfxCoreHelperFactory<MockGfxCoreHelper<GfxFamily, ccsCount, bcsCount>>{::defaultHwInfo->platform.eRenderCoreFamily};
+    static auto overrideGfxCoreHelper(RootDeviceEnvironment &rootDeviceEnvironment) {
+        return RAIIGfxCoreHelperFactory<MockGfxCoreHelper<GfxFamily, ccsCount, bcsCount>>{rootDeviceEnvironment};
     }
 
     uint64_t disableEngineSupportOnSubDevice = -1; // disabled by default
@@ -720,9 +722,13 @@ class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
 using GetDeviceInfoQueueFamilyTest = ::testing::Test;
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
-    auto raiiGfxCoreHelper = MockGfxCoreHelper<FamilyType, 3, 1>::overrideGfxCoreHelper();
+
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto raiiGfxCoreHelper = MockGfxCoreHelper<FamilyType, 3, 1>::overrideGfxCoreHelper(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
     UltClDeviceFactory deviceFactory{1, 0};
     ClDevice &clDevice = *deviceFactory.rootDevices[0];
     size_t paramRetSize{};
@@ -743,11 +749,15 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThen
 }
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
-    auto raiiGfxCoreHelper = MockGfxCoreHelper<FamilyType, 3, 1>::overrideGfxCoreHelper();
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto raiiGfxCoreHelper = MockGfxCoreHelper<FamilyType, 3, 1>::overrideGfxCoreHelper(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
     UltClDeviceFactory deviceFactory{1, 2};
     ClDevice &clDevice = *deviceFactory.subDevices[1];
+
     size_t paramRetSize{};
     cl_int retVal{};
 
@@ -769,18 +779,22 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
     constexpr int bcsCount = 1;
 
     using MockGfxCoreHelperT = MockGfxCoreHelper<FamilyType, 3, bcsCount>;
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
-    auto raiiGfxCoreHelper = MockGfxCoreHelperT::overrideGfxCoreHelper();
-    MockGfxCoreHelperT &mockGfxCoreHelper = static_cast<MockGfxCoreHelperT &>(raiiGfxCoreHelper.mockGfxCoreHelper);
-
+    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    auto mockClExecutionEnvironment = std::make_unique<MockClExecutionEnvironment>();
+    mockClExecutionEnvironment->prepareRootDeviceEnvironments(1);
+    mockClExecutionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    auto raiiGfxCoreHelper = MockGfxCoreHelperT::overrideGfxCoreHelper(*mockClExecutionEnvironment->rootDeviceEnvironments[0]);
+    MockGfxCoreHelperT &mockGfxCoreHelper = static_cast<MockGfxCoreHelperT &>(*raiiGfxCoreHelper.mockGfxCoreHelper);
     mockGfxCoreHelper.disableEngineSupportOnSubDevice = 0b10; // subdevice 1
     mockGfxCoreHelper.disabledSubDeviceEngineType = aub_stream::EngineType::ENGINE_BCS;
 
-    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-    UltClDeviceFactory deviceFactory{1, 2};
-    ClDevice &clDevice0 = *deviceFactory.subDevices[0];
-    ClDevice &clDevice1 = *deviceFactory.subDevices[1];
+    deviceFactory = std::make_unique<UltClDeviceFactory>(1, 2, mockClExecutionEnvironment.release());
+    ClDevice &clDevice0 = *deviceFactory->subDevices[0];
+    ClDevice &clDevice1 = *deviceFactory->subDevices[1];
+
     size_t paramRetSize{};
     cl_int retVal{};
 

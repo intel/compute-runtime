@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,14 +15,14 @@
 
 namespace NEO {
 
-extern GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
 
 using Family = Gen11Family;
 static auto gfxFamily = IGFX_GEN11_CORE;
 
 struct EnableCoreGen11 {
     EnableCoreGen11() {
-        gfxCoreHelperFactory[gfxFamily] = &GfxCoreHelperHw<Family>::get();
+        gfxCoreHelperFactory[gfxFamily] = GfxCoreHelperHw<Family>::create;
         populateFactoryTable<AUBCommandStreamReceiverHw<Family>>();
         populateFactoryTable<CommandStreamReceiverHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();

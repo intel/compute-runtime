@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,8 @@ TEST(ClCommandStreamReceiverTest, WhenMakingResidentThenBufferResidencyFlagIsSet
 using ClCommandStreamReceiverTests = Test<DeviceFixture>;
 
 HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndCreateGlobalFenceAllocationIsCalledThenFenceAllocationIsAllocated) {
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{
+        *pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]};
 
     MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
@@ -61,7 +62,8 @@ HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenFenceAlloca
 }
 
 HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenGettingFenceAllocationThenCorrectFenceAllocationIsReturned) {
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperWithFenceAllocation<FamilyType>> gfxCoreHelperBackup{
+        *pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]};
 
     CommandStreamReceiverHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.setupContext(*pDevice->getDefaultEngine().osContext);

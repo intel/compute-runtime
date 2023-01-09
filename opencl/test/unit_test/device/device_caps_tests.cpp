@@ -1210,7 +1210,7 @@ class MyMockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIsTakenFromHelper) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    RAIIGfxCoreHelperFactory<MyMockGfxCoreHelper<FamilyType>> gfxCoreHelperBackup{device->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MyMockGfxCoreHelper<FamilyType>> gfxCoreHelperBackup{*device->executionEnvironment->rootDeviceEnvironments[0]};
 
     DriverInfoMock *driverInfoMock = new DriverInfoMock();
     device->driverInfo.reset(driverInfoMock);
@@ -1218,7 +1218,7 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIs
     EXPECT_TRUE(getPlanarYuvHeightCalled);
     getPlanarYuvHeightCalled = false;
     const auto &caps = device->getDeviceInfo();
-    EXPECT_EQ(gfxCoreHelperBackup.mockGfxCoreHelper.dummyPlanarYuvValue, caps.planarYuvMaxHeight);
+    EXPECT_EQ(gfxCoreHelperBackup.mockGfxCoreHelper->dummyPlanarYuvValue, caps.planarYuvMaxHeight);
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenReturnDefaultValues) {

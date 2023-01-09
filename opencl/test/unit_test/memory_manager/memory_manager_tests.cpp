@@ -613,11 +613,11 @@ HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAlignmentWhenAllocateGraphicsMem
         }
         bool isEnable = false;
     };
-    auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw>(defaultHwInfo->platform.eRenderCoreFamily);
+    auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw>(*executionEnvironment->rootDeviceEnvironments[0]);
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    raiiFactory.mockGfxCoreHelper.isEnable = true;
+    raiiFactory.mockGfxCoreHelper->isEnable = true;
 
     auto osAgnosticMemoryManager = std::make_unique<MemoryManagerCreate<MockMemoryManager>>(true, false, *executionEnvironment);
     osAgnosticMemoryManager->failInDevicePool = true;
@@ -632,7 +632,7 @@ HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAlignmentWhenAllocateGraphicsMem
 
     osAgnosticMemoryManager->freeGraphicsMemory(allocationWithEnabled1MbAlignment);
 
-    raiiFactory.mockGfxCoreHelper.isEnable = false;
+    raiiFactory.mockGfxCoreHelper->isEnable = false;
     auto allocationWithoutEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
 
     ASSERT_NE(nullptr, allocationWithoutEnabled1MbAlignment);

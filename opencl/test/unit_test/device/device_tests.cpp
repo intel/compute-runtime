@@ -574,7 +574,10 @@ HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingEngineGroupsT
             UNRECOVERABLE_IF(true);
         }
     };
-    RAIIGfxCoreHelperFactory<MyGfxCoreHelper> overrideGfxCoreHelper{::defaultHwInfo->platform.eRenderCoreFamily};
+    MockDevice device{};
+
+    RAIIGfxCoreHelperFactory<MyGfxCoreHelper> overrideGfxCoreHelper{
+        *device.executionEnvironment->rootDeviceEnvironments[0]};
 
     MockOsContext rcsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}));
     EngineControl rcsEngine{nullptr, &rcsContext};
@@ -582,7 +585,6 @@ HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingEngineGroupsT
     MockOsContext ccsContext(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::Regular}));
     EngineControl ccsEngine{nullptr, &ccsContext};
 
-    MockDevice device{};
     ASSERT_EQ(0u, device.getRegularEngineGroups().size());
     device.addEngineToEngineGroup(ccsEngine);
     device.addEngineToEngineGroup(rcsEngine);

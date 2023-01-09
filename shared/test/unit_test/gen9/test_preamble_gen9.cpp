@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,8 @@ GEN9TEST_F(Gen9L3Config, GivenSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
 
 using ThreadArbitration = PreambleFixture;
 GEN9TEST_F(ThreadArbitration, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, gfxCoreHelper.getDefaultThreadArbitrationPolicy());
 }
 
 GEN9TEST_F(ThreadArbitration, whenGetSupportedThreadArbitrationPoliciesIsCalledThenAgeBasedAndRoundRobinAreReturned) {

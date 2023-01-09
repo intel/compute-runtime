@@ -726,6 +726,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
 
     auto executionEnvironment = device->getExecutionEnvironment();
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(&device->getHardwareInfo());
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     auto p2 = std::make_unique<MockProgram>(toClDeviceVector(*device));
     retVal = p2->build(p2->getDevices(), nullptr, false);
@@ -1119,6 +1120,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     auto device = pContext->getDevice(0);
     auto executionEnvironment = device->getExecutionEnvironment();
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(&device->getHardwareInfo());
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     auto p2 = std::make_unique<MockProgram>(toClDeviceVector(*device));
     retVal = p2->compile(p2->getDevices(), nullptr, 0, nullptr, nullptr);
@@ -1343,6 +1345,7 @@ TEST_F(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     auto device = pContext->getDevice(0);
     auto executionEnvironment = device->getExecutionEnvironment();
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(&device->getHardwareInfo());
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     auto failingProgram = std::make_unique<MockProgram>(toClDeviceVector(*device));
 

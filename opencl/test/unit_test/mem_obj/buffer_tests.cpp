@@ -1835,7 +1835,8 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     constexpr size_t bigBufferSize = smallBufferSize + 1;
     char memory[smallBufferSize];
     char bigMemory[bigBufferSize];
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{defaultHwInfo->platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{
+        *executionEnvironment->rootDeviceEnvironments[0]};
 
     {
         // cpu copy allowed

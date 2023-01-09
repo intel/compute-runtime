@@ -41,10 +41,12 @@ struct EncodeSurfaceStateArgs;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
 class ProductHelper;
+class GfxCoreHelper;
+using GfxCoreHelperCreateFunctionType = std::unique_ptr<GfxCoreHelper> (*)();
 
 class GfxCoreHelper {
   public:
-    static GfxCoreHelper &get(GFXCORE_FAMILY gfxCore);
+    static std::unique_ptr<GfxCoreHelper> create(const GFXCORE_FAMILY gfxCoreFamily);
     virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
     virtual size_t getPaddingForISAAllocation() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -164,6 +166,8 @@ class GfxCoreHelper {
     virtual bool isRelaxedOrderingSupported() const = 0;
     static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
 
+    virtual ~GfxCoreHelper() = default;
+
   protected:
     GfxCoreHelper() = default;
 };
@@ -171,8 +175,8 @@ class GfxCoreHelper {
 template <typename GfxFamily>
 class GfxCoreHelperHw : public GfxCoreHelper {
   public:
-    static GfxCoreHelperHw<GfxFamily> &get() {
-        static GfxCoreHelperHw<GfxFamily> gfxCoreHelper;
+    static std::unique_ptr<GfxCoreHelper> create() {
+        auto gfxCoreHelper = std::unique_ptr<GfxCoreHelper>(new GfxCoreHelperHw<GfxFamily>());
         return gfxCoreHelper;
     }
 
@@ -377,6 +381,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isChipsetUniqueUUIDSupported() const override;
     bool isTimestampShiftRequired() const override;
     bool isRelaxedOrderingSupported() const override;
+
+    ~GfxCoreHelperHw() override = default;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

@@ -161,7 +161,7 @@ HWTEST_F(BufferCreateLinuxTests, givenClMemCopyHostPointerPassedToBufferCreateWh
     context.setSpecialQueue(commandQueue, mockRootDeviceIndex);
     constexpr size_t smallBufferSize = Buffer::maxBufferSizeForCopyOnCpu;
     char memory[smallBufferSize];
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{defaultHwInfo->platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{*executionEnvironment->rootDeviceEnvironments[0]};
 
     {
         // cpu copy allowed
@@ -177,7 +177,7 @@ HWTEST_F(BufferCreateLinuxTests, givenClMemCopyHostPointerPassedToBufferCreateWh
 
         writeBufferCounter = commandQueue->writeBufferCounter;
         lockResourceCalled = memoryManager->lockResourceCalled;
-        overrideGfxCoreHelperHw.mockGfxCoreHelper.setIsLockable = false;
+        overrideGfxCoreHelperHw.mockGfxCoreHelper->setIsLockable = false;
 
         std::unique_ptr<Buffer> bufferWhenLockNotAllowed(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
         ASSERT_NE(nullptr, bufferWhenLockNotAllowed.get());
@@ -202,7 +202,7 @@ HWTEST_F(BufferCreateLinuxTests, givenClMemCopyHostPointerPassedToBufferCreateWh
     context.setSpecialQueue(commandQueue, mockRootDeviceIndex);
     constexpr size_t bigBufferSize = Buffer::maxBufferSizeForCopyOnCpu + 1;
     char bigMemory[bigBufferSize];
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{defaultHwInfo->platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{*executionEnvironment->rootDeviceEnvironments[0]};
 
     {
         // buffer size over threshold -> cpu copy disallowed
@@ -218,7 +218,7 @@ HWTEST_F(BufferCreateLinuxTests, givenClMemCopyHostPointerPassedToBufferCreateWh
 
         writeBufferCounter = commandQueue->writeBufferCounter;
         lockResourceCalled = memoryManager->lockResourceCalled;
-        overrideGfxCoreHelperHw.mockGfxCoreHelper.setIsLockable = false;
+        overrideGfxCoreHelperHw.mockGfxCoreHelper->setIsLockable = false;
 
         std::unique_ptr<Buffer> bufferWhenLockNotAllowed(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
         ASSERT_NE(nullptr, bufferWhenLockNotAllowed.get());

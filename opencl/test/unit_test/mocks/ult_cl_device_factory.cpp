@@ -31,6 +31,18 @@ UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDe
     }
 }
 
+UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment) {
+    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *clExecutionEnvironment);
+
+    for (auto &pRootDevice : pUltDeviceFactory->rootDevices) {
+        auto pRootClDevice = new MockClDevice{pRootDevice};
+        for (auto &pClSubDevice : pRootClDevice->subDevices) {
+            subDevices.push_back(pClSubDevice.get());
+        }
+        rootDevices.push_back(pRootClDevice);
+    }
+}
+
 UltClDeviceFactory::~UltClDeviceFactory() {
     for (auto &pClDevice : rootDevices) {
         pClDevice->decRefInternal();

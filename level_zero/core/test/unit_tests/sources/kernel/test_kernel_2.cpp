@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/basic_math.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -14,9 +15,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
-namespace NEO {
-extern GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE];
-}
+
 namespace L0 {
 #include "level_zero/core/source/kernel/patch_with_implicit_surface.inl"
 namespace ult {
@@ -289,10 +288,8 @@ HWTEST_F(KernelImp, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledThenI
             ++encodeBufferSurfaceStateCalled;
         }
     };
-    MockGfxCoreHelper gfxCoreHelper{};
-    auto hwInfo = *defaultHwInfo.get();
-    VariableBackup<GfxCoreHelper *> gfxCoreHelperFactoryBackup{&NEO::gfxCoreHelperFactory[static_cast<size_t>(hwInfo.platform.eRenderCoreFamily)]};
-    gfxCoreHelperFactoryBackup = &gfxCoreHelper;
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

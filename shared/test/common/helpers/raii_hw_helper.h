@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,26 +7,40 @@
 
 #pragma once
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
-extern GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
 
 template <class MockHelper>
 class RAIIGfxCoreHelperFactory {
   public:
     GFXCORE_FAMILY gfxCoreFamily;
-    GfxCoreHelper *gfxCoreHelper;
-    MockHelper mockGfxCoreHelper{};
+    GfxCoreHelperCreateFunctionType createGfxCoreHelper;
+    std::unique_ptr<GfxCoreHelper> gfxCoreHelperBackup;
+    MockHelper *mockGfxCoreHelper;
+    RootDeviceEnvironment &rootDeviceEnvironment;
 
-    RAIIGfxCoreHelperFactory(GFXCORE_FAMILY gfxCoreFamily) {
-        this->gfxCoreFamily = gfxCoreFamily;
-        gfxCoreHelper = gfxCoreHelperFactory[this->gfxCoreFamily];
-        gfxCoreHelperFactory[this->gfxCoreFamily] = &mockGfxCoreHelper;
+    static std::unique_ptr<GfxCoreHelper> create() {
+
+        return std::unique_ptr<GfxCoreHelper>(new MockHelper());
+    }
+    GfxCoreHelperCreateFunctionType createMockGfxCoreHelper = create;
+
+    RAIIGfxCoreHelperFactory(RootDeviceEnvironment &rootDeviceEnvironment) : rootDeviceEnvironment(rootDeviceEnvironment) {
+        this->gfxCoreFamily = rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily;
+        createGfxCoreHelper = gfxCoreHelperFactory[this->gfxCoreFamily];
+        gfxCoreHelperFactory[this->gfxCoreFamily] = createMockGfxCoreHelper;
+        gfxCoreHelperBackup = createMockGfxCoreHelper();
+        rootDeviceEnvironment.gfxCoreHelper.swap(gfxCoreHelperBackup);
+        mockGfxCoreHelper = static_cast<MockHelper *>(rootDeviceEnvironment.gfxCoreHelper.get());
     }
 
     ~RAIIGfxCoreHelperFactory() {
-        gfxCoreHelperFactory[this->gfxCoreFamily] = gfxCoreHelper;
+        gfxCoreHelperFactory[this->gfxCoreFamily] = createGfxCoreHelper;
+        rootDeviceEnvironment.gfxCoreHelper.swap(gfxCoreHelperBackup);
     }
 };
 } // namespace NEO
