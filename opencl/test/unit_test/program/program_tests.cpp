@@ -1911,39 +1911,6 @@ TEST_F(ProgramTests, GivenNullContextWhenCreatingProgramFromGenBinaryThenSuccess
     delete pProgram;
 }
 
-TEST_F(ProgramTests, givenValidZebinPrepareLinkerInput) {
-    ZebinTestData::ValidEmptyProgram zebin;
-    const std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
-kernels:
-    - name : some_kernel
-      execution_env :
-        simd_size : 8
-)===";
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, mockRootDeviceIndex));
-    {
-        auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
-        program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(zebin.storage.data(), zebin.storage.size());
-        program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = zebin.storage.size();
-
-        auto retVal = program->processGenBinary(*pClDevice);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].linkerInput.get());
-    }
-    {
-        zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-        zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-
-        auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
-        program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(zebin.storage.data(), zebin.storage.size());
-        program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = zebin.storage.size();
-
-        auto retVal = program->processGenBinary(*pClDevice);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].linkerInput.get());
-    }
-}
-
 TEST_F(ProgramTests, whenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions) {
     if (sizeof(void *) != 8U) {
         GTEST_SKIP();

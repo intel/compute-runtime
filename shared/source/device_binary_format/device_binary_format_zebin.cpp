@@ -111,6 +111,10 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
     dst.grfSize = src.targetDevice.grfSize;
     dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
     auto decodeError = decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
+    if (DecodeError::Success != decodeError) {
+        return decodeError;
+    }
+
     prepareLinkerInputForZebin<numBits>(dst, elf);
     return decodeError;
 }

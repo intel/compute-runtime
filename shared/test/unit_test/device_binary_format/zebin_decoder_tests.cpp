@@ -31,6 +31,41 @@
 extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 
+class DecodeZeInfoKernelEntryFixture {
+  public:
+    DecodeZeInfoKernelEntryFixture() {
+    }
+
+    DecodeError decodeZeInfoKernelEntry(ConstStringRef zeinfo) {
+        kernelDescriptor = std::make_unique<KernelDescriptor>();
+        yamlParser = std::make_unique<NEO::Yaml::YamlParser>();
+        errors.clear();
+        warnings.clear();
+
+        bool parseSuccess = yamlParser->parse(zeinfo, errors, warnings);
+        if (false == parseSuccess) {
+            return DecodeError::InvalidBinary;
+        }
+
+        auto &kernelNode = *yamlParser->createChildrenRange(*yamlParser->findNodeWithKeyDfs("kernels")).begin();
+        return NEO::decodeZeInfoKernelEntry(*kernelDescriptor, *yamlParser, kernelNode,
+                                            grfSize, minScratchSpaceSize, errors, warnings);
+    }
+
+  protected:
+    void setUp() {}
+    void tearDown() {}
+    std::unique_ptr<KernelDescriptor> kernelDescriptor;
+    uint32_t grfSize = 32U;
+    uint32_t minScratchSpaceSize = 1024U;
+    std::string errors, warnings;
+
+  private:
+    std::unique_ptr<Yaml::YamlParser> yamlParser;
+};
+
+using decodeZeInfoKernelEntryTest = Test<DecodeZeInfoKernelEntryFixture>;
+
 TEST(ExtractZebinSections, WhenElfDoesNotContainValidStringSectionThenFail) {
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> elfHeader;
@@ -60,9 +95,9 @@ TEST(ExtractZebinSections, GivenUnknownElfSectionThenFail) {
     NEO::Elf::ElfEncoder<> elfEncoder;
     elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_RESERVED_START, "someSection", std::string{});
     auto encodedElf = elfEncoder.encode();
-    std::string elfDecodeErrors;
-    std::string elfDecodeWarnings;
-    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elfDecodeErrors, elfDecodeWarnings);
+    std::string elferrors;
+    std::string elfwarnings;
+    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elferrors, elfwarnings);
 
     NEO::ZebinSections sections;
     std::string errors;
@@ -78,9 +113,9 @@ TEST(ExtractZebinSections, GivenUnknownElfProgbitsSectionThenFail) {
     NEO::Elf::ElfEncoder<> elfEncoder;
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, "someSection", std::string{});
     auto encodedElf = elfEncoder.encode();
-    std::string elfDecodeErrors;
-    std::string elfDecodeWarnings;
-    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elfDecodeErrors, elfDecodeWarnings);
+    std::string elferrors;
+    std::string elfwarnings;
+    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elferrors, elfwarnings);
 
     NEO::ZebinSections sections;
     std::string errors;
@@ -112,9 +147,9 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     elfEncoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + "someKernel", std::string{});
 
     auto encodedElf = elfEncoder.encode();
-    std::string elfDecodeErrors;
-    std::string elfDecodeWarnings;
-    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elfDecodeErrors, elfDecodeWarnings);
+    std::string elferrors;
+    std::string elfwarnings;
+    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elferrors, elfwarnings);
 
     NEO::ZebinSections sections;
     std::string errors;
@@ -149,9 +184,9 @@ TEST(ExtractZebinSections, GivenMispelledConstDataSectionThenAllowItButEmitError
     NEO::Elf::ElfEncoder<> elfEncoder;
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, ".data.global_const", std::string{});
     auto encodedElf = elfEncoder.encode();
-    std::string elfDecodeErrors;
-    std::string elfDecodeWarnings;
-    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elfDecodeErrors, elfDecodeWarnings);
+    std::string elferrors;
+    std::string elfwarnings;
+    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elferrors, elfwarnings);
 
     NEO::ZebinSections sections;
     std::string errors;
@@ -177,9 +212,9 @@ TEST(ExtractZebinSections, GivenUnknownMiscSectionThenEmitWarning) {
     elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_MISC, unknownMiscSectionName, std::string{});
 
     auto encodedElf = elfEncoder.encode();
-    std::string elfDecodeErrors;
-    std::string elfDecodeWarnings;
-    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elfDecodeErrors, elfDecodeWarnings);
+    std::string elferrors;
+    std::string elfwarnings;
+    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elferrors, elfwarnings);
 
     NEO::ZebinSections sections;
     std::string errors;
@@ -524,7 +559,7 @@ kernels:
 }
 
 TEST(DecodeKernelMiscInfo, givenValidKernelMiscInfoSecionThenExplicitArgsExtendedMetadataIsProperlyPopulated) {
-    NEO::ConstStringRef zeInfo = R"===(---
+    ConstStringRef zeinfo = R"===(---
 version:         '1.19'
 kernels:
   - name:            kernel1
@@ -577,7 +612,7 @@ kernels_misc_info:
 ...
 )===";
     NEO::ProgramInfo programInfo;
-    setKernelMiscInfoPosition(zeInfo, programInfo);
+    setKernelMiscInfoPosition(zeinfo, programInfo);
     EXPECT_NE(std::string::npos, programInfo.kernelMiscInfoPos);
 
     auto kernel1Info = new KernelInfo();
@@ -590,7 +625,7 @@ kernels_misc_info:
     programInfo.kernelInfos.push_back(kernel2Info);
 
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, zeInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, zeinfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::Success, res);
     EXPECT_TRUE(outErrors.empty());
     EXPECT_TRUE(outWarnings.empty());
@@ -929,7 +964,7 @@ kernels_misc_info:
 }
 
 TEST(DecodeKernelMiscInfo, givenNoKernelMiscInfoSectionAvailableWhenParsingItThenEmitWarningAndReturn) {
-    NEO::ConstStringRef zeInfo = R"===(---
+    ConstStringRef zeinfo = R"===(---
 version:         '1.19'
 kernels:
   - name:            kernel1
@@ -942,10 +977,10 @@ kernels:
 )===";
 
     NEO::ProgramInfo programInfo;
-    setKernelMiscInfoPosition(zeInfo, programInfo);
+    setKernelMiscInfoPosition(zeinfo, programInfo);
     EXPECT_EQ(std::string::npos, programInfo.kernelMiscInfoPos);
     std::string outWarnings, outErrors;
-    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, zeInfo, outErrors, outWarnings);
+    auto res = decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, zeinfo, outErrors, outWarnings);
 
     EXPECT_EQ(DecodeError::InvalidBinary, res);
     auto expectedError{"DeviceBinaryFormat::Zebin : Position of kernels_misc_info not set - may be missing in zeInfo.\n"};
@@ -1335,8 +1370,8 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
 }
 
-TEST(PopulateKernelDescriptor, GivenValidExperimentalPropertiesThenPopulateKernelDescriptorSucceeds) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidExperimentalPropertiesThenPopulateKernelDescriptorSucceeds) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -1351,28 +1386,12 @@ kernels:
           has_non_kernel_arg_atomic: 0
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
 }
 
-TEST(PopulateKernelDescriptor, GivenErrorWhileReadingExperimentalPropertiesThenPopulateKernelDescriptorFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenErrorWhileReadingExperimentalPropertiesThenPopulateKernelDescriptorFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -1387,23 +1406,7 @@ kernels:
           has_non_kernel_arg_atomic: 0
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
 }
 
@@ -1686,8 +1689,8 @@ kernels:
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read sip_surface_bti from : [any] in context of : some_kernel\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, givenValidDebugEnvironmentWithInvalidSipSurfaceBTIThenDoesNotGenerateSSH) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, givenValidDebugEnvironmentWithInvalidSipSurfaceBTIThenDoesNotGenerateSSH) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -1695,36 +1698,19 @@ kernels:
       debug_env:
         sip_surface_bti: 123
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
 
-    EXPECT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.numEntries);
-    EXPECT_TRUE(NEO::isUndefinedOffset(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.tableOffset));
-    ASSERT_EQ(0U, programInfo.kernelInfos[0]->heapInfo.SurfaceStateHeapSize);
-    ASSERT_EQ(nullptr, programInfo.kernelInfos[0]->heapInfo.pSsh);
-    EXPECT_TRUE(NEO::isUndefinedOffset(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful));
+    EXPECT_EQ(0U, kernelDescriptor->payloadMappings.bindingTable.numEntries);
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor->payloadMappings.bindingTable.tableOffset));
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful));
+    ASSERT_EQ(0U, kernelDescriptor->generatedSsh.size());
 }
-TEST(PopulateKernelDescriptor, givenValidDebugEnvironmentWithSIPSurfaceBTISetThenGeneratesSshAndSetsSystemThreadSurfaceAddress) {
-    NEO::ConstStringRef zeinfo = R"===(
+
+TEST_F(decodeZeInfoKernelEntryTest, givenValidDebugEnvironmentWithSIPSurfaceBTISetThenGeneratesSshAndSetsSystemThreadSurfaceAddress) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -1732,38 +1718,20 @@ kernels:
       debug_env:
         sip_surface_bti: 0
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
 
-    EXPECT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.numEntries);
-    EXPECT_EQ(64U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
-    ASSERT_EQ(128U, programInfo.kernelInfos[0]->heapInfo.SurfaceStateHeapSize);
-    ASSERT_NE(nullptr, programInfo.kernelInfos[0]->heapInfo.pSsh);
-    EXPECT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful);
-    EXPECT_EQ(0U, reinterpret_cast<const uint32_t *>(ptrOffset(programInfo.kernelInfos[0]->heapInfo.pSsh, 64U))[0]);
+    EXPECT_EQ(1U, kernelDescriptor->payloadMappings.bindingTable.numEntries);
+    EXPECT_EQ(64U, kernelDescriptor->payloadMappings.bindingTable.tableOffset);
+    ASSERT_EQ(128U, kernelDescriptor->generatedSsh.size());
+    EXPECT_EQ(0U, kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful);
+    EXPECT_EQ(0U, reinterpret_cast<const uint32_t *>(ptrOffset(kernelDescriptor->generatedSsh.data(), 64U))[0]);
 }
 
-TEST(PopulateKernelDescriptor, givenErrorWhileReadingDebugEnvironmentThenPopulateKernelDescriptorFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, givenErrorWhileReadingDebugEnvironmentThenPopulateKernelDescriptorFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -1772,28 +1740,12 @@ kernels:
         sip_surface_bti: any
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
 }
 
-TEST(PopulateKernelDescriptor, GivenArgumentByValueWithMoreThanOneElementWithSourceOffsetsSpecifiedThenSetThemAccordingly) {
-    NEO::ConstStringRef yaml = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgumentByValueWithMoreThanOneElementWithSourceOffsetsSpecifiedThenSetThemAccordingly) {
+    ConstStringRef zeinfo = R"===(
 kernels:
   - name:            some_kernel
     execution_env:
@@ -1813,40 +1765,15 @@ kernels:
 )===";
     namespace Defaults = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults;
     NEO::ZeInfoPayloadArguments args;
-    int32_t maxArgIndex = Defaults::argIndex;
-    int32_t maxSmpIndex = Defaults::samplerIndex;
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    NEO::ZebinSections zebinSections;
-    std::string errors, warnings;
-
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(yaml, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    auto &argsNode = *parser.findNodeWithKeyDfs("payload_arguments");
-    auto readPayloadArgsRes = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, readPayloadArgsRes);
-    EXPECT_EQ(args[0].sourceOffset, 0);
-    EXPECT_EQ(args[1].sourceOffset, 1);
-
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto res = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto res = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, res);
-    auto elements = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescValue>().elements;
+    auto elements = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescValue>().elements;
     EXPECT_EQ(0, elements[0].sourceOffset);
     EXPECT_EQ(1, elements[1].sourceOffset);
 }
 
-TEST(PopulateKernelDescriptor, GiveArgumentByValueWithOneElementWithoutSourceOffsetSpecifiedSetItToZero) {
-    NEO::ConstStringRef yaml = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GiveArgumentByValueWithOneElementWithoutSourceOffsetSpecifiedSetItToZero) {
+    ConstStringRef zeinfo = R"===(
 kernels:
   - name:            some_kernel
     execution_env:
@@ -1860,38 +1787,14 @@ kernels:
 )===";
     namespace Defaults = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults;
     NEO::ZeInfoPayloadArguments args;
-    int32_t maxArgIndex = Defaults::argIndex;
-    int32_t maxSmpIndex = Defaults::samplerIndex;
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    NEO::ZebinSections zebinSections;
-    std::string errors, warnings;
-
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(yaml, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    auto &argsNode = *parser.findNodeWithKeyDfs("payload_arguments");
-    auto readPayloadArgsRes = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, readPayloadArgsRes);
-    EXPECT_EQ(args[0].sourceOffset, Defaults::sourceOffset);
-
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto res = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto res = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, res);
-    auto elements = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescValue>().elements;
+    auto elements = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescValue>().elements;
     EXPECT_EQ(0, elements[0].sourceOffset);
 }
 
-TEST(PopulateKernelDescriptor, GivenArgumentByValueWithoutAnySourceOffsetsSpecifiedThenPopulateKernelDescriptorReturnsError) {
-    NEO::ConstStringRef yaml = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgumentByValueWithoutAnySourceOffsetsSpecifiedThenPopulateKernelDescriptorReturnsError) {
+    ConstStringRef zeinfo = R"===(
 kernels:
   - name:            some_kernel
     execution_env:
@@ -1909,38 +1812,13 @@ kernels:
 )===";
     namespace Defaults = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults;
     NEO::ZeInfoPayloadArguments args;
-    int32_t maxArgIndex = Defaults::argIndex;
-    int32_t maxSmpIndex = Defaults::samplerIndex;
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    NEO::ZebinSections zebinSections;
-    std::string errors, warnings;
-
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(yaml, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    auto &argsNode = *parser.findNodeWithKeyDfs("payload_arguments");
-    auto readPayloadArgsRes = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, readPayloadArgsRes);
-    EXPECT_EQ(args[0].sourceOffset, Defaults::sourceOffset);
-    EXPECT_EQ(args[1].sourceOffset, Defaults::sourceOffset);
-
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("Missing source offset value for element in argByValue\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenKernelAttributesWhenPopulatingKernelDescriptorThenKernelLanguageSourcesAreSetAccordingly) {
-    NEO::ConstStringRef yaml = R"===(---
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelAttributesWhenPopulatingKernelDescriptorThenKernelLanguageSourcesAreSetAccordingly) {
+    ConstStringRef zeinfo = R"===(---
 kernels:         
   - name:            some_kernel
     execution_env:
@@ -1954,31 +1832,14 @@ kernels:
       new_user_hint: new_user_hint_value
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    NEO::ZebinSections zebinSections;
-    std::string errors, warnings;
-
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(yaml, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
-    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0,1,2) reqd_work_group_size(256,2,1) work_group_size_hint(256,2,1) vec_type_hint(uint)", programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.kernelLanguageAttributes.c_str());
-    EXPECT_EQ(16U, programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.requiredSubGroupSize);
-    EXPECT_FALSE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.isInvalid);
+    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0,1,2) reqd_work_group_size(256,2,1) work_group_size_hint(256,2,1) vec_type_hint(uint)", kernelDescriptor->kernelMetadata.kernelLanguageAttributes.c_str());
+    EXPECT_EQ(16U, kernelDescriptor->kernelMetadata.requiredSubGroupSize);
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.isInvalid);
 }
 
 TEST(PopulateKernelSourceAttributes, GivenInvalidKernelAttributeWhenPopulatingKernelSourceAttributesThenKernelIsInvalidFlagIsSet) {
@@ -1991,8 +1852,8 @@ TEST(PopulateKernelSourceAttributes, GivenInvalidKernelAttributeWhenPopulatingKe
     EXPECT_STREQ("invalid_kernel(reason)", kd.kernelMetadata.kernelLanguageAttributes.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenUnknownAttributeWhenPopulatingKernelDescriptorThenErrorIsReturned) {
-    NEO::ConstStringRef yaml = R"===(---
+TEST_F(decodeZeInfoKernelEntryTest, GivenUnknownAttributeWhenPopulatingKernelDescriptorThenErrorIsReturned) {
+    ConstStringRef zeinfo = R"===(---
 kernels:         
   - name:            some_kernel
     execution_env:
@@ -2001,24 +1862,7 @@ kernels:
       unknown_attribute: unkown_attribute_value
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    NEO::ZebinSections zebinSections;
-    std::string errors, warnings;
-
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(yaml, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown attribute entry \"unknown_attribute\" in context of some_kernel\n", errors.c_str());
@@ -2203,8 +2047,7 @@ kernels:
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
     int32_t maxArgIndex = -1;
-    int32_t maxSmpIndex = -1;
-    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
+    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(2, maxArgIndex);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
@@ -2254,8 +2097,7 @@ kernels:
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
     int32_t maxArgIndex = -1;
-    int32_t maxSmpIndex = -1;
-    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
+    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" for payload argument in context of some_kernel\n", warnings.c_str());
@@ -2295,8 +2137,7 @@ kernels:
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
     int32_t maxArgIndex = -1;
-    int32_t maxSmpIndex = -1;
-    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
+    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
@@ -2330,8 +2171,7 @@ kernels:
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
     int32_t maxArgIndex = -1;
-    int32_t maxSmpIndex = -1;
-    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
+    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [true] in context of : some_kernel\n", errors.c_str());
@@ -2358,14 +2198,11 @@ kernels:
     std::string errors;
     std::string warnings;
     NEO::ZeInfoBindingTableIndices btis;
-    NEO::ZeInfoBindingTableIndices::value_type maxBindingTableEntry = {};
-    auto err = NEO::readZeInfoBindingTableIndices(parser, btisNode, btis, maxBindingTableEntry, "some_kernel", errors, warnings);
+    auto err = NEO::readZeInfoBindingTableIndices(parser, btisNode, btis, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(2U, btis.size());
-    EXPECT_EQ(5, maxBindingTableEntry.btiValue);
-    EXPECT_EQ(13, maxBindingTableEntry.argIndex);
 
     EXPECT_EQ(1, btis[0].btiValue);
     EXPECT_EQ(7, btis[0].argIndex);
@@ -2394,8 +2231,7 @@ kernels:
     std::string errors;
     std::string warnings;
     NEO::ZeInfoBindingTableIndices btis;
-    NEO::ZeInfoBindingTableIndices::value_type maxBindingTableEntry = {};
-    auto err = NEO::readZeInfoBindingTableIndices(parser, argsNode, btis, maxBindingTableEntry, "some_kernel", errors, warnings);
+    auto err = NEO::readZeInfoBindingTableIndices(parser, argsNode, btis, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" for binding table index in context of some_kernel\n", warnings.c_str());
@@ -2424,8 +2260,7 @@ kernels:
     std::string errors;
     std::string warnings;
     NEO::ZeInfoBindingTableIndices btis;
-    NEO::ZeInfoBindingTableIndices::value_type maxBindingTableEntry = {};
-    auto err = NEO::readZeInfoBindingTableIndices(parser, argsNode, btis, maxBindingTableEntry, "some_kernel", errors, warnings);
+    auto err = NEO::readZeInfoBindingTableIndices(parser, argsNode, btis, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read arg_index from : [any] in context of : some_kernel\n", errors.c_str());
@@ -2571,12 +2406,12 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenValid32BitZebinThenReturnSuccess) {
     NEO::SingleDeviceBinary singleBinary;
     ZebinTestData::ValidEmptyProgram<Elf::EI_CLASS_32> zebin;
     singleBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(decodeWarnings.empty());
-    EXPECT_TRUE(decodeErrors.empty());
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_TRUE(errors.empty());
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenInvalidElfThenReturnError) {
@@ -2584,13 +2419,13 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenInvalidElfThenReturnError) {
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_TRUE(decodeWarnings.empty());
-    EXPECT_FALSE(decodeErrors.empty());
-    EXPECT_STREQ("Invalid or missing ELF header", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty());
+    EXPECT_FALSE(errors.empty());
+    EXPECT_STREQ("Invalid or missing ELF header", errors.c_str());
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenFailedToExtractZebinSectionsThenDecodingFails) {
@@ -2602,12 +2437,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenFailedToExtractZebinSectionsThenDecoding
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_FALSE(decodeErrors.empty());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_FALSE(errors.empty());
 
     std::string elfErrors;
     std::string elfWarnings;
@@ -2618,8 +2453,8 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenFailedToExtractZebinSectionsThenDecoding
     std::string extractWarnings;
     auto extractErr = NEO::extractZebinSections(elf, sections, extractErrors, extractWarnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, extractErr);
-    EXPECT_STREQ(extractErrors.c_str(), decodeErrors.c_str());
-    EXPECT_STREQ(extractWarnings.c_str(), decodeWarnings.c_str());
+    EXPECT_STREQ(extractErrors.c_str(), errors.c_str());
+    EXPECT_STREQ(extractWarnings.c_str(), warnings.c_str());
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenValidationOfZebinSectionsCountFailsThenDecodingFails) {
@@ -2632,12 +2467,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenValidationOfZebinSectionsCountFailsThenD
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_FALSE(decodeErrors.empty());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_FALSE(errors.empty());
 
     std::string elfErrors;
     std::string elfWarnings;
@@ -2655,8 +2490,8 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenValidationOfZebinSectionsCountFailsThenD
     std::string validateWarnings;
     auto validateErr = NEO::validateZebinSectionsCount(sections, validateErrors, validateWarnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, validateErr);
-    EXPECT_STREQ(validateErrors.c_str(), decodeErrors.c_str());
-    EXPECT_STREQ(validateWarnings.c_str(), decodeWarnings.c_str());
+    EXPECT_STREQ(validateErrors.c_str(), errors.c_str());
+    EXPECT_STREQ(validateWarnings.c_str(), warnings.c_str());
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenGlobalDataSectionThenSetsUpInitDataAndSize) {
@@ -2669,12 +2504,12 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenGlobalDataSectionThenSetsUpInitDataAndS
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(sizeof(data), programInfo.globalVariables.size);
     EXPECT_EQ(0, memcmp(programInfo.globalVariables.initData, data, sizeof(data)));
     EXPECT_EQ(0U, programInfo.globalConstants.size);
@@ -2691,12 +2526,12 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataSectionThenSetsUpInitDataAndSi
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(sizeof(data), programInfo.globalConstants.size);
     EXPECT_EQ(0, memcmp(programInfo.globalConstants.initData, data, sizeof(data)));
     EXPECT_EQ(0U, programInfo.globalVariables.size);
@@ -2713,12 +2548,12 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataStringsSectionThenSetsUpInitDa
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(sizeof(data), programInfo.globalStrings.size);
     EXPECT_NE(nullptr, programInfo.globalStrings.initData);
     EXPECT_EQ(sizeof(data), programInfo.globalStrings.size);
@@ -2784,12 +2619,12 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenSymtabSectionThenEmitsWarningAndSkipsIt
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Ignoring symbol table\n", decodeWarnings.c_str());
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Ignoring symbol table\n", warnings.c_str());
+    EXPECT_TRUE(errors.empty()) << errors;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenSymtabWithInvalidSymEntriesThenFails) {
@@ -2802,12 +2637,12 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenSymtabWithInvalidSymEntriesThenFails) {
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_STREQ("Invalid symbol table entries size - expected : 24, got : 23\n", decodeErrors.c_str());
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ("Invalid symbol table entries size - expected : 24, got : 23\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoSectionIsEmptyThenEmitsWarning) {
@@ -2819,12 +2654,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoSectionIsEmptyThenEmitsWarning) {
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at least one .ze_info section, got 0\n", decodeWarnings.c_str());
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at least one .ze_info section, got 0\n", warnings.c_str());
+    EXPECT_TRUE(errors.empty()) << errors;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenYamlParserForZeInfoFailsThenDecodingFails) {
@@ -2838,19 +2673,19 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenYamlParserForZeInfoFailsThenDecodingFail
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_TRUE(warnings.empty()) << warnings;
 
     NEO::Yaml::YamlParser parser;
     std::string parserErrors;
     std::string parserWarnings;
     bool validYaml = parser.parse((brokenZeInfo), parserErrors, parserWarnings);
     EXPECT_FALSE(validYaml);
-    EXPECT_STREQ(parserWarnings.c_str(), decodeWarnings.c_str());
-    EXPECT_STREQ(parserErrors.c_str(), decodeErrors.c_str());
+    EXPECT_STREQ(parserWarnings.c_str(), warnings.c_str());
+    EXPECT_STREQ(parserErrors.c_str(), errors.c_str());
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenEmptyInZeInfoThenEmitsWarning) {
@@ -2864,12 +2699,12 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenEmptyInZeInfoThenEmitsWarning) {
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ("NEO::Yaml : Text has no data\nDeviceBinaryFormat::Zebin : Empty kernels metadata section (.ze_info)\n", decodeWarnings.c_str());
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_STREQ("NEO::Yaml : Text has no data\nDeviceBinaryFormat::Zebin : Empty kernels metadata section (.ze_info)\n", warnings.c_str());
+    EXPECT_TRUE(errors.empty()) << errors;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmitsWarning) {
@@ -2883,12 +2718,12 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmit
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"some_entry\" in global scope of .ze_info\n", decodeWarnings.c_str());
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"some_entry\" in global scope of .ze_info\n", warnings.c_str());
+    EXPECT_TRUE(errors.empty()) << errors;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEmitsWarning) {
@@ -2902,12 +2737,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEm
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"a\" in global scope of .ze_info\nDeviceBinaryFormat::Zebin::.ze_info : Expected one kernels entry in global scope of .ze_info, got : 0\n", decodeWarnings.c_str());
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"a\" in global scope of .ze_info\nDeviceBinaryFormat::Zebin::.ze_info : Expected one kernels entry in global scope of .ze_info, got : 0\n", warnings.c_str());
+    EXPECT_TRUE(errors.empty()) << errors;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThenFails) {
@@ -2921,12 +2756,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThen
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Expected at most one kernels entry in global scope of .ze_info, got : 2\n", decodeErrors.c_str());
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Expected at most one kernels entry in global scope of .ze_info, got : 2\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleVersionSectionsThenFails) {
@@ -2940,12 +2775,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleVersionSectionsThe
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Expected at most one version entry in global scope of .ze_info, got : 2\n", decodeErrors.c_str());
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Expected at most one version entry in global scope of .ze_info, got : 2\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainVersionSectionsThenEmitsWarnings) {
@@ -2963,12 +2798,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainVersionSectionsThenE
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ(expectedWarning.c_str(), decodeWarnings.c_str());
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
+    EXPECT_TRUE(errors.empty()) << errors;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoVersionIsInvalidThenFails) {
@@ -2982,12 +2817,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoVersionIsInvalidThenFails) {
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : 1a\n", decodeErrors.c_str());
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : 1a\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMinorVersionIsNewerThenEmitsWarning) {
@@ -3004,12 +2839,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMinorVersionIsNewerThenEmitsWarnin
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ(expectedWarning.c_str(), decodeWarnings.c_str());
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
+    EXPECT_TRUE(errors.empty()) << errors;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails) {
@@ -3026,12 +2861,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails)
         NEO::ProgramInfo programInfo;
         NEO::SingleDeviceBinary singleBinary;
         singleBinary.deviceBinary = zebin.storage;
-        std::string decodeErrors;
-        std::string decodeWarnings;
-        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+        std::string errors;
+        std::string warnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
         EXPECT_EQ(NEO::DecodeError::UnhandledBinary, error);
-        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 2, decoder is at : 1\n", decodeErrors.c_str());
-        EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 2, decoder is at : 1\n", errors.c_str());
+        EXPECT_TRUE(warnings.empty()) << warnings;
     }
 
     {
@@ -3045,12 +2880,12 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails)
         NEO::ProgramInfo programInfo;
         NEO::SingleDeviceBinary singleBinary;
         singleBinary.deviceBinary = zebin.storage;
-        std::string decodeErrors;
-        std::string decodeWarnings;
-        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+        std::string errors;
+        std::string warnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
         EXPECT_EQ(NEO::DecodeError::UnhandledBinary, error);
-        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 0, decoder is at : 1\n", decodeErrors.c_str());
-        EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 0, decoder is at : 1\n", errors.c_str());
+        EXPECT_TRUE(warnings.empty()) << warnings;
     }
 }
 
@@ -3069,18 +2904,18 @@ kernels:
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected exactly 1 of name section, got : 0\nDeviceBinaryFormat::Zebin : Expected exactly 1 of execution_env section, got : 0\n", decodeErrors.c_str());
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected exactly 1 of name section, got : 0\nDeviceBinaryFormat::Zebin : Expected exactly 1 of execution_env section, got : 0\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoThenPopulatesKernelDescriptorProperly) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
-    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
+    std::string zeinfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :
@@ -3089,21 +2924,23 @@ kernels:
       execution_env :
         simd_size : 32
 )===";
+
+    uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_other_kernel", {});
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_other_kernel", {kernelIsa, sizeof(kernelIsa)});
 
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
 
     ASSERT_EQ(2U, programInfo.kernelInfos.size());
     EXPECT_STREQ("some_kernel", programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.kernelName.c_str());
@@ -3118,7 +2955,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoAndExternalFunctionsMetadata
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
 
-    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
+    std::string zeinfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :
@@ -3131,20 +2968,21 @@ functions:
         barrier_count: 1
 )===";
 
+    uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
 
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
 
     ASSERT_EQ(1U, programInfo.externalFunctions.size());
     auto &funInfo = programInfo.externalFunctions[0];
@@ -3177,13 +3015,13 @@ functions:
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
     const std::string expectedError = "DeviceBinaryFormat::Zebin::.ze_info : could not read grf_count from : [abc] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [defgas] in context of : external functions\n";
-    EXPECT_STREQ(expectedError.c_str(), decodeErrors.c_str());
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ(expectedError.c_str(), errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenZeInfoWithTwoExternalFunctionsEntriesThenFail) {
@@ -3214,21 +3052,21 @@ functions:
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
     const std::string expectedError = "DeviceBinaryFormat::Zebin::.ze_info : Expected at most one functions entry in global scope of .ze_info, got : 2\n";
-    EXPECT_STREQ(expectedError.c_str(), decodeErrors.c_str());
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ(expectedError.c_str(), errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, givenZeInfoWithKernelsMiscInfoSectionWhenDecodingBinaryThenDoNotParseThisSection) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
-    std::string zeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
+    std::string zeinfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
-  - name:            kernel1
+  - name:            some_kernel
     execution_env:
       simd_size:       32
     payload_arguments:
@@ -3245,55 +3083,39 @@ kernels_misc_info:
   // OTHERWISE, YOU WILL GET PARSING ERROR
 ...
 )===";
+    uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel1", {});
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
 
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(decodeWarnings.empty());
-    EXPECT_TRUE(decodeErrors.empty());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_NE(std::string::npos, programInfo.kernelMiscInfoPos);
 }
 
-TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescriptorWithDefaults) {
-    std::string zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDescriptorWithDefaults) {
+    ConstStringRef zeinfo = R"===(
     kernels:
         - name : some_kernel
           execution_env:   
             simd_size: 32
             grf_count: 128
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
 
     namespace Defaults = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::Defaults;
-    const auto &kernelDescriptor = programInfo.kernelInfos[0]->kernelDescriptor;
+    const auto &kernelDescriptor = *this->kernelDescriptor;
     EXPECT_EQ(kernelDescriptor.entryPoints.skipPerThreadDataLoad, static_cast<NEO::InstructionsSegmentOffset>(Defaults::offsetToSkipPerThreadDataLoad));
     EXPECT_EQ(kernelDescriptor.entryPoints.skipSetFFIDGP, static_cast<NEO::InstructionsSegmentOffset>(Defaults::offsetToSkipSetFfidGp));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.passInlineData, (Defaults::inlineDataPayloadSize != 0));
@@ -3319,54 +3141,32 @@ TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescrip
     EXPECT_EQ(kernelDescriptor.kernelMetadata.requiredSubGroupSize, static_cast<uint8_t>(Defaults::requiredSubGroupSize));
 }
 
-TEST(PopulateKernelDescriptor, WhenValidationOfZeinfoSectionsCountFailsThenDecodingFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, WhenValidationOfZeinfoSectionsCountFailsThenDecodingFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected exactly 1 of name section, got : 0\nDeviceBinaryFormat::Zebin : Expected exactly 1 of execution_env section, got : 0\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected exactly 1 of name section, got : 0\nDeviceBinaryFormat::Zebin : Expected exactly 1 of execution_env section, got : 0\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidExecutionEnvironmentThenFail) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidExecutionEnvironmentThenFail) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env :
         simd_size : true
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [true] in context of : some_kernel\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [true] in context of : some_kernel\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidPerThreadPayloadArgYamlEntriesThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPerThreadPayloadArgYamlEntriesThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3377,25 +3177,14 @@ kernels:
           offset:          aaa
           size:            8
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read offset from : [aaa] in context of : some_kernel\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read offset from : [aaa] in context of : some_kernel\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidPayloadArgYamlEntriesThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPayloadArgYamlEntriesThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3406,25 +3195,14 @@ kernels:
           offset:          aaa
           size:            12
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read offset from : [aaa] in context of : some_kernel\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read offset from : [aaa] in context of : some_kernel\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidPerThreadMemoryBufferYamlEntriesThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPerThreadMemoryBufferYamlEntriesThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3435,48 +3213,26 @@ kernels:
           usage:       spill_fill_space
           size:        eight
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [eight] in context of : some_kernel\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [eight] in context of : some_kernel\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidSimdSizeThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidSimdSizeThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
         simd_size: 7
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid simd size : 7 in context of : some_kernel. Expected 1, 8, 16 or 32. Got : 7\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid simd size : 7 in context of : some_kernel. Expected 1, 8, 16 or 32. Got : 7\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenValidSimdSizeThenSetsItCorrectly) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidSimdSizeThenSetsItCorrectly) {
     uint32_t validSimdSizes[] = {1, 8, 16, 32};
     for (auto simdSize : validSimdSizes) {
         std::string zeinfo = R"===(
@@ -3485,33 +3241,16 @@ TEST(PopulateKernelDescriptor, GivenValidSimdSizeThenSetsItCorrectly) {
           execution_env:   
             simd_size: )===" +
                              std::to_string(simdSize) + "\n";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        EXPECT_EQ(simdSize, (*programInfo.kernelInfos.begin())->kernelDescriptor.kernelAttributes.simdSize);
+        EXPECT_EQ(simdSize, kernelDescriptor->kernelAttributes.simdSize);
     }
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidPerThreadArgThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPerThreadArgThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -3521,24 +3260,13 @@ kernels:
           offset:          0
           size:            8
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in per-thread data section in context of : some_kernel.\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in per-thread data section in context of : some_kernel.\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenValidThreadSchedulingModesThenPopulateCorrectly) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidThreadSchedulingModesThenPopulateCorrectly) {
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::ThreadSchedulingMode;
 
     std::pair<ConstStringRef, ThreadArbitrationPolicy> threadSchedulingModes[3] = {
@@ -3555,34 +3283,17 @@ TEST(PopulateKernelDescriptor, GivenValidThreadSchedulingModesThenPopulateCorrec
                              str.str() +
                              R"===(
         )===";
-
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(warnings.empty()) << warnings;
         EXPECT_TRUE(errors.empty()) << errors;
 
-        EXPECT_EQ(val, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
+        EXPECT_EQ(val, kernelDescriptor->kernelAttributes.threadArbitrationPolicy);
     }
 }
 
-TEST(PopulateKernelDescriptor, GivenValidLocalIdThenAlignUpChannelSizeToGrfSize) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidLocalIdThenAlignUpChannelSizeToGrfSize) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3592,34 +3303,17 @@ kernels:
           offset:          0
           size:            192
 )===";
-    NEO::ProgramInfo programInfo;
-    programInfo.grfSize = 64;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    grfSize = 64U;
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(3U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.numLocalIdChannels);
-    EXPECT_EQ(192U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadDataSize);
+    EXPECT_EQ(3U, kernelDescriptor->kernelAttributes.numLocalIdChannels);
+    EXPECT_EQ(192U, kernelDescriptor->kernelAttributes.perThreadDataSize);
 }
 
-TEST(PopulateKernelDescriptor, GivenValidPerThreadArgThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidPerThreadArgThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3629,32 +3323,15 @@ kernels:
           offset:          0
           size:            192
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(3U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.numLocalIdChannels);
+    EXPECT_EQ(3U, kernelDescriptor->kernelAttributes.numLocalIdChannels);
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidPayloadArgThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidPayloadArgThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3664,27 +3341,17 @@ kernels:
           offset:          0
           size:            12
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in cross thread data section in context of : some_kernel.\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in cross thread data section in context of : some_kernel.\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenZebinAppendElwsThenInjectsElwsArg) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenZebinAppendElwsThenInjectsElwsArg) {
     DebugManagerStateRestore dbgRestore;
     NEO::DebugManager.flags.ZebinAppendElws.set(true);
-    NEO::ConstStringRef zeinfo = R"===(
+
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3694,38 +3361,22 @@ kernels:
           offset:          16
           size:            12
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
 
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(64, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.crossThreadDataSize);
-    EXPECT_EQ(16, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0]);
-    EXPECT_EQ(20, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1]);
-    EXPECT_EQ(24, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2]);
-    EXPECT_EQ(32, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[0]);
-    EXPECT_EQ(36, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[1]);
-    EXPECT_EQ(40, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[2]);
+    EXPECT_EQ(64, kernelDescriptor->kernelAttributes.crossThreadDataSize);
+    EXPECT_EQ(16, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[0]);
+    EXPECT_EQ(20, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[1]);
+    EXPECT_EQ(24, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[2]);
+    EXPECT_EQ(32, kernelDescriptor->payloadMappings.dispatchTraits.enqueuedLocalWorkSize[0]);
+    EXPECT_EQ(36, kernelDescriptor->payloadMappings.dispatchTraits.enqueuedLocalWorkSize[1]);
+    EXPECT_EQ(40, kernelDescriptor->payloadMappings.dispatchTraits.enqueuedLocalWorkSize[2]);
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidBindingTableYamlEntriesThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidBindingTableYamlEntriesThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3739,25 +3390,14 @@ kernels:
         - arg_index: 0
           bti_value:true
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read bti_value from : [true] in context of : some_kernel\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read bti_value from : [true] in context of : some_kernel\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenValidBindingTableEntriesThenGeneratesSsh) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidBindingTableEntriesThenGeneratesSsh) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3780,41 +3420,23 @@ kernels:
         - arg_index: 1
           bti_value:7
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
 
-    ASSERT_EQ(2U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-    EXPECT_EQ(128, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>().bindful);
-    EXPECT_EQ(448, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[1].as<ArgDescImage>().bindful);
-    EXPECT_EQ(8U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.numEntries);
-    EXPECT_EQ(512U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
-    ASSERT_EQ(576U, programInfo.kernelInfos[0]->heapInfo.SurfaceStateHeapSize);
-    ASSERT_NE(nullptr, programInfo.kernelInfos[0]->heapInfo.pSsh);
-    EXPECT_EQ(128U, reinterpret_cast<const uint32_t *>(ptrOffset(programInfo.kernelInfos[0]->heapInfo.pSsh, 512U))[2]);
-    EXPECT_EQ(448U, reinterpret_cast<const uint32_t *>(ptrOffset(programInfo.kernelInfos[0]->heapInfo.pSsh, 512U))[7]);
+    ASSERT_EQ(2U, kernelDescriptor->payloadMappings.explicitArgs.size());
+    EXPECT_EQ(128, kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescPointer>().bindful);
+    EXPECT_EQ(448, kernelDescriptor->payloadMappings.explicitArgs[1].as<ArgDescImage>().bindful);
+    EXPECT_EQ(8U, kernelDescriptor->payloadMappings.bindingTable.numEntries);
+    EXPECT_EQ(512U, kernelDescriptor->payloadMappings.bindingTable.tableOffset);
+    ASSERT_EQ(576U, kernelDescriptor->generatedSsh.size());
+    EXPECT_EQ(128U, reinterpret_cast<const uint32_t *>(ptrOffset(kernelDescriptor->generatedSsh.data(), 512U))[2]);
+    EXPECT_EQ(448U, reinterpret_cast<const uint32_t *>(ptrOffset(kernelDescriptor->generatedSsh.data(), 512U))[7]);
 }
 
-TEST(PopulateKernelDescriptor, GivenBtiEntryForWrongArgTypeThenFail) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenBtiEntryForWrongArgTypeThenFail) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3828,25 +3450,14 @@ kernels:
         - arg_index: 0
           bti_value:0
 )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid binding table entry for non-pointer and non-image argument idx : 0.\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid binding table entry for non-pointer and non-image argument idx : 0.\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenValidArgSamplerThenGeneratesDsh) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidArgSamplerThenGeneratesDsh) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -3859,29 +3470,12 @@ kernels:
           arg_index:       0
           sampler_index:   0
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
 
-    const auto &kernelDescriptor = programInfo.kernelInfos[0]->kernelDescriptor;
+    const auto &kernelDescriptor = *this->kernelDescriptor;
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesSamplers);
 
     const auto &samplerTable = kernelDescriptor.payloadMappings.samplerTable;
@@ -3893,12 +3487,12 @@ kernels:
     ASSERT_EQ(1U, args.size());
     EXPECT_EQ(64U, args[0].as<ArgDescSampler>().bindful);
 
-    const auto &heapInfo = programInfo.kernelInfos[0]->heapInfo;
-    ASSERT_EQ(128U, heapInfo.DynamicStateHeapSize);
+    ASSERT_EQ(128U, kernelDescriptor.generatedDsh.size());
 }
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsNotPrivateThenFails) {
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsNotPrivateThenFails) {
     {
-        NEO::ConstStringRef zeinfo = R"===(
+        ConstStringRef zeinfo = R"===(
   kernels:         
     - name : some_kernel
       execution_env:   
@@ -3909,25 +3503,14 @@ TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsag
             size:            64
     ...
     )===";
-        NEO::ProgramInfo programInfo;
-        NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-        NEO::Yaml::YamlParser parser;
-        std::string parseErrors;
-        std::string parseWarnings;
-        bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-        ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-        NEO::ZebinSections zebinSections;
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        std::string decodeErrors;
-        std::string decodeWarnings;
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-        EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-        EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for global allocation type in context of : some_kernel. Expected : private_space.\n", decodeErrors.c_str());
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for global allocation type in context of : some_kernel. Expected : private_space.\n", errors.c_str());
     }
 
     {
-        NEO::ConstStringRef zeinfo = R"===(
+        ConstStringRef zeinfo = R"===(
   kernels:         
     - name : some_kernel
       execution_env:   
@@ -3938,26 +3521,15 @@ TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsag
             size:            64
     ...
     )===";
-        NEO::ProgramInfo programInfo;
-        NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-        NEO::Yaml::YamlParser parser;
-        std::string parseErrors;
-        std::string parseWarnings;
-        bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-        ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-        NEO::ZebinSections zebinSections;
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        std::string decodeErrors;
-        std::string decodeWarnings;
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-        EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-        EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for global allocation type in context of : some_kernel. Expected : private_space.\n", decodeErrors.c_str());
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for global allocation type in context of : some_kernel. Expected : private_space.\n", errors.c_str());
     }
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsSlmThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsSlmThenFails) {
+    ConstStringRef zeinfo = R"===(
   kernels:         
     - name : some_kernel
       execution_env:   
@@ -3968,25 +3540,14 @@ TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsSlmThenFails)
             size:            64
     ...
     )===";
-    NEO::ProgramInfo programInfo;
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
-    NEO::Yaml::YamlParser parser;
-    std::string parseErrors;
-    std::string parseWarnings;
-    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
-    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
-    NEO::ZebinSections zebinSections;
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation type in context of : some_kernel.\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation type in context of : some_kernel.\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsPrivateThenSetsProperFieldsInDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsPrivateThenSetsProperFieldsInDescriptor) {
+    ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
@@ -3996,32 +3557,15 @@ kernels:
             usage:           private_space
             size:            256
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(256U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
+    EXPECT_EQ(256U, kernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize);
 }
 
-TEST(PopulateKernelDescriptor, givenPerSimtThreadBufferWhenPopulatingThenCalculatesCorrectSize) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, givenPerSimtThreadBufferWhenPopulatingThenCalculatesCorrectSize) {
+    ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
@@ -4032,32 +3576,15 @@ kernels:
             size:            256
             is_simt_thread:  true
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(256U * 8, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
+    EXPECT_EQ(256U * 8, kernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize);
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferOfSizeSmallerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeSmallerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
+    ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
@@ -4067,35 +3594,16 @@ kernels:
             usage:           private_space
             size:            512
 )===";
-    NEO::ProgramInfo programInfo;
-    programInfo.minScratchSpaceSize = 1024U;
-
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(1024U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
-    EXPECT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(1024U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferOfSizeBiggerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeBiggerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
+    ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
@@ -4105,35 +3613,16 @@ kernels:
             usage:           private_space
             size:            1540
 )===";
-    NEO::ProgramInfo programInfo;
-    programInfo.minScratchSpaceSize = 1024U;
-
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(2048U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
-    EXPECT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenSlotIsProvidedThenSetsProperFieldsInDescriptorInCorrectSlot) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenSlotIsProvidedThenSetsProperFieldsInDescriptorInCorrectSlot) {
+    ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
@@ -4144,33 +3633,16 @@ kernels:
             size:            1024
             slot : 1
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
-    EXPECT_EQ(1024U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(1024U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenSlotIsInvalidThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenSlotIsInvalidThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
@@ -4181,30 +3653,14 @@ kernels:
             size:            512
             slot : 2
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid scratch buffer slot 2 in context of : some_kernel. Expected 0 or 1.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWithInvalidSizeThenErrorIsReturned) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWithInvalidSizeThenErrorIsReturned) {
+    ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
@@ -4214,30 +3670,14 @@ kernels:
             usage:           private_space
             size:            0
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0) in context of : some_kernel.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWithMultipleScratchEntriesForTheSameSlotThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWithMultipleScratchEntriesForTheSameSlotThenFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
@@ -4250,60 +3690,34 @@ kernels:
             usage:           spill_fill_space
             size:            128
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry 0 in context of : some_kernel.\n", decodeErrors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry 0 in context of : some_kernel.\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenKernelWithoutCorrespondingTextSectionThenFail) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST(DecodeZebinTest, GivenKernelWithoutCorrespondingTextSectionThenFail) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
         simd_size: 8
 )===";
     NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
     std::string errors, warnings;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
     auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
     ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
 
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZebin(programInfo, elf, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Could not find text section for kernel some_kernel\n", errors.c_str());
-    EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateKernelDescriptor, GivenValidExecutionEnvironmentThenPopulateKernelDescriptorProperly) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidExecutionEnvironmentThenPopulateKernelDescriptorProperly) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -4333,29 +3747,12 @@ kernels:
           - 2
         indirect_stateless_count : 2
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
 
-    auto &kernelDescriptor = programInfo.kernelInfos[0]->kernelDescriptor;
+    auto &kernelDescriptor = *this->kernelDescriptor;
     EXPECT_EQ(7U, kernelDescriptor.kernelAttributes.barrierCount);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.usesBarriers());
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption);
@@ -4381,8 +3778,8 @@ kernels:
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
 }
 
-TEST(PopulateKernelDescriptor, givenPipeKernelArgumentWhenPopulatingKernelDescriptorThenProperTypeQualifierIsSet) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, givenPipeKernelArgumentWhenPopulatingKernelDescriptorThenProperTypeQualifierIsSet) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -4397,36 +3794,19 @@ kernels:
           access_type:     readwrite
           is_pipe:         true
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
 
-    const auto &argTraits = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].getTraits();
+    const auto &argTraits = kernelDescriptor->payloadMappings.explicitArgs[0].getTraits();
     KernelArgMetadata::TypeQualifiers expectedQual = {};
     expectedQual.pipeQual = true;
     EXPECT_EQ(expectedQual.packed, argTraits.typeQualifiers.packed);
 }
 
-TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenOffsetIsNonZeroThenFail) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalIdWhenOffsetIsNonZeroThenFail) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -4436,30 +3816,14 @@ kernels:
           offset:          4
           size:            192
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid offset for argument of type local_id in context of : some_kernel. Expected 0.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenSizeIsInvalidThenFail) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalIdWhenSizeIsInvalidThenFail) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -4469,29 +3833,13 @@ kernels:
           offset:          0
           size:            7
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type local_id in context of : some_kernel. For simd=8 expected : 32 or 64 or 96. Got : 7 \n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenSizeIsValidThenCalculateNumChannelAndSetEmitLocalIdAccordingly) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalIdWhenSizeIsValidThenCalculateNumChannelAndSetEmitLocalIdAccordingly) {
     uint32_t simdSizes[] = {8, 16, 32};
     uint32_t numChannelsOpts[] = {1, 2, 3};
 
@@ -4509,31 +3857,14 @@ TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenSizeIsValidTh
                   size:            )===" +
                                  std::to_string(((simdSize == 32) ? 32 : 16) * numChannels * sizeof(short)) + R"===(
         )===";
-            NEO::ProgramInfo programInfo;
-            ZebinTestData::ValidEmptyProgram zebin;
-            zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-            std::string errors, warnings;
-            auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-            ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-            NEO::Yaml::YamlParser parser;
-            bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-            ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-            NEO::ZebinSections zebinSections;
-            auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-            ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-            auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-            auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+            auto err = decodeZeInfoKernelEntry(zeinfo);
             EXPECT_EQ(NEO::DecodeError::Success, err) << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_TRUE(errors.empty()) << errors << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_TRUE(warnings.empty()) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
-            ASSERT_EQ(1U, programInfo.kernelInfos.size());
-            EXPECT_EQ(numChannels, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.numLocalIdChannels) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
-            EXPECT_EQ(simdSize, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.simdSize) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
+            EXPECT_EQ(numChannels, kernelDescriptor->kernelAttributes.numLocalIdChannels) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
+            EXPECT_EQ(simdSize, kernelDescriptor->kernelAttributes.simdSize) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
 
-            const auto &emitLocalId = programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.localId;
+            const auto &emitLocalId = kernelDescriptor->kernelAttributes.localId;
             EXPECT_EQ(static_cast<uint8_t>(numChannels > 0), emitLocalId[0]);
             EXPECT_EQ(static_cast<uint8_t>(numChannels > 1), emitLocalId[1]);
             EXPECT_EQ(static_cast<uint8_t>(numChannels > 2), emitLocalId[2]);
@@ -4541,8 +3872,8 @@ TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenSizeIsValidTh
     }
 }
 
-TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenOffsetIsNonZeroThenFail) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePackedLocalIdWhenOffsetIsNonZeroThenFail) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -4552,30 +3883,14 @@ kernels:
           offset:          4
           size:            6
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Unhandled offset for argument of type packed_local_ids in context of : some_kernel. Expected 0.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenSizeIsInvalidThenFail) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePackedLocalIdWhenSizeIsInvalidThenFail) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -4585,30 +3900,14 @@ kernels:
           offset:          0
           size:            1
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type packed_local_ids in context of : some_kernel. Expected : 2 or 4 or 6. Got : 1 \n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenSizeIsValidThenCalculateNumChannelAndSetEmitLocalIdAccordingly) {
-    uint32_t simdSizes[] = {1};
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePackedLocalIdWhenSizeIsValidThenCalculateNumChannelAndSetEmitLocalIdAccordingly) {
+    uint8_t simdSizes[] = {1};
     uint32_t numChannelsOpts[] = {1, 2, 3};
 
     for (auto simdSize : simdSizes) {
@@ -4625,31 +3924,14 @@ TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenSizeIsV
                   size:            )===" +
                                  std::to_string(numChannels * sizeof(short)) + R"===(
         )===";
-            NEO::ProgramInfo programInfo;
-            ZebinTestData::ValidEmptyProgram zebin;
-            zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-            std::string errors, warnings;
-            auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-            ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-            NEO::Yaml::YamlParser parser;
-            bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-            ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-            NEO::ZebinSections zebinSections;
-            auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-            ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-            auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-            auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+            auto err = decodeZeInfoKernelEntry(zeinfo);
             EXPECT_EQ(NEO::DecodeError::Success, err) << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_TRUE(errors.empty()) << errors << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_TRUE(warnings.empty()) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
-            ASSERT_EQ(1U, programInfo.kernelInfos.size());
-            EXPECT_EQ(numChannels, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.numLocalIdChannels) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
-            EXPECT_EQ(simdSize, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.simdSize) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
+            EXPECT_EQ(numChannels, kernelDescriptor->kernelAttributes.numLocalIdChannels) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
+            EXPECT_EQ(simdSize, kernelDescriptor->kernelAttributes.simdSize) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
 
-            const auto &emitLocalId = programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.localId;
+            const auto &emitLocalId = kernelDescriptor->kernelAttributes.localId;
             EXPECT_EQ(static_cast<uint8_t>(numChannels > 0), emitLocalId[0]);
             EXPECT_EQ(static_cast<uint8_t>(numChannels > 1), emitLocalId[1]);
             EXPECT_EQ(static_cast<uint8_t>(numChannels > 2), emitLocalId[2]);
@@ -4657,7 +3939,7 @@ TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenSizeIsV
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenBufferPointerArgWhenAddressSpaceIsKnownThenPopulatesArgDescriptorAccordingly) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenBufferPointerArgWhenAddressSpaceIsKnownThenPopulatesArgDescriptorAccordingly) {
     using AddressSpace = NEO::KernelArgMetadata::AddressSpaceQualifier;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
     std::pair<NEO::ConstStringRef, AddressSpace> addressSpaces[] = {
@@ -4683,38 +3965,21 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenBufferPointerArgWhenAddressSp
                              R"===(
                   access_type : readwrite
         )===";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-        EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
-        EXPECT_EQ(addressSpace.second, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].getTraits().getAddressQualifier());
+        ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
+        EXPECT_TRUE(kernelDescriptor->payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
+        EXPECT_EQ(addressSpace.second, kernelDescriptor->payloadMappings.explicitArgs[0].getTraits().getAddressQualifier());
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddressSpaceIsImageThenPopulatesArgDescriptorAccordingly) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenAddressSpaceIsImageThenPopulatesArgDescriptorAccordingly) {
     using AddressSpace = NEO::KernelArgMetadata::AddressSpaceQualifier;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
 
-    std::string zeinfo = R"===(
+    ConstStringRef zeinfo = R"===(
     kernels:
         - name : 'some_kernel'
             execution_env:   
@@ -4726,32 +3991,15 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddressSpaceIsI
                 access_type:     readwrite
                 addrmode: stateful
     )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTImage>());
+    ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
+    EXPECT_TRUE(kernelDescriptor->payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTImage>());
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAccessQualifierIsKnownThenPopulatesArgDescriptorAccordingly) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenAccessQualifierIsKnownThenPopulatesArgDescriptorAccordingly) {
     using AccessQualifier = NEO::KernelArgMetadata::AccessQualifier;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AccessType;
     std::pair<NEO::ConstStringRef, AccessQualifier> accessQualifiers[] = {
@@ -4776,33 +4024,16 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAccessQualifier
                   )===" + (accessQualifier.first.empty() ? "" : ("access_type	: " + accessQualifier.first.str())) +
                              R"===(
         )===";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-        EXPECT_EQ(accessQualifier.second, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].getTraits().getAccessQualifier()) << accessQualifier.first.str();
+        ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
+        EXPECT_EQ(accessQualifier.second, kernelDescriptor->payloadMappings.explicitArgs[0].getTraits().getAccessQualifier()) << accessQualifier.first.str();
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenNonPointerArgWhenAddressSpaceIsStatelessThenFails) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenNonPointerArgWhenAddressSpaceIsStatelessThenFails) {
     using AccessQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
     NEO::ConstStringRef nonPtrAddrSpace[] = {image, sampler};
@@ -4823,31 +4054,15 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenNonPointerArgWhenAddressSpace
                              addrSpace.str() +
                              R"===(
         )===";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
         EXPECT_STREQ("Invalid or missing memory addressing stateless for arg idx : 0 in context of : some_kernel.\n", errors.c_str());
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressingModeIsUknownThenFail) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsUknownThenFail) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:   
@@ -4858,29 +4073,13 @@ kernels:
             size : 8	
             arg_index	: 0
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("Invalid or missing memory addressing mode for arg idx : 0 in context of : some_kernel.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressingModeIsKnownThenPopulatesArgDescriptorAccordingly) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsKnownThenPopulatesArgDescriptorAccordingly) {
     using AddressingMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingMode;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::MemoryAddressingMode;
     std::pair<NEO::ConstStringRef, AddressingMode> addressingModes[] = {{stateful, AddressingMode::MemoryAddressingModeStateful},
@@ -4903,8 +4102,8 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressin
                              R"===(
         )===";
         uint32_t expectedArgsCount = 1U;
-        bool statefulOrBindlessAddressing = (AddressingMode::MemoryAddressingModeStateful == addressingMode.second) || (AddressingMode::MemoryAddressingModeBindless == addressingMode.second);
-        if (statefulOrBindlessAddressing) {
+        bool statefulOrBindlessAdressing = (AddressingMode::MemoryAddressingModeStateful == addressingMode.second) || (AddressingMode::MemoryAddressingModeBindless == addressingMode.second);
+        if (statefulOrBindlessAdressing) {
             zeinfo += R"===(
                 -arg_type : arg_bypointer
                     offset : 24
@@ -4923,29 +4122,12 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressin
         )===";
             expectedArgsCount += 2;
         }
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(expectedArgsCount, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-        auto &argAsPointer = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+        ASSERT_EQ(expectedArgsCount, kernelDescriptor->payloadMappings.explicitArgs.size());
+        auto &argAsPointer = kernelDescriptor->payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
         switch (addressingMode.second) {
         default:
             EXPECT_EQ(AddressingMode::MemoryAddressingModeStateful, addressingMode.second);
@@ -4964,9 +4146,9 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressin
             break;
         }
 
-        if (statefulOrBindlessAddressing) {
-            auto &argAsImage = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>();
-            auto &argAsSampler = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[2].as<NEO::ArgDescSampler>();
+        if (statefulOrBindlessAdressing) {
+            auto &argAsImage = kernelDescriptor->payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>();
+            auto &argAsSampler = kernelDescriptor->payloadMappings.explicitArgs[2].as<NEO::ArgDescSampler>();
             switch (addressingMode.second) {
             default:
                 ASSERT_FALSE(true);
@@ -4982,8 +4164,8 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressin
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeLocalSizeWhenArgSizeIsInvalidThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalSizeWhenArgSizeIsInvalidThenFails) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
@@ -4993,29 +4175,13 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeLocalSizeWhenArgSizeIs
                   offset : 16
                   size : 7
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type local_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeLocalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
     uint32_t vectorSizes[] = {4, 8, 12};
 
     for (auto vectorSize : vectorSizes) {
@@ -5030,37 +4196,20 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeLocalSizeWhenArgSizeVa
                   size : )===" +
                              std::to_string(vectorSize) + R"===(
         )===";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
-            EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[i])
+            EXPECT_EQ(16 + sizeof(uint32_t) * i, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
         }
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobaIdOffsetWhenArgSizeIsInvalidThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobaIdOffsetWhenArgSizeIsInvalidThenFails) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
@@ -5070,30 +4219,14 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobaIdOffsetWhenArgSi
                   offset : 16
                   size : 7
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type global_id_offset in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorCrossThreadPayload, GivenArgTypePrivateBaseStatelessWhenArgSizeValidThenPopulatesKernelDescriptor) {
-    std::string zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrivateBaseStatelessWhenArgSizeValidThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:
@@ -5104,33 +4237,16 @@ TEST(PopulateArgDescriptorCrossThreadPayload, GivenArgTypePrivateBaseStatelessWh
                   size : 8
     )===";
 
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-    ASSERT_EQ(16U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.stateless);
-    ASSERT_EQ(8U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
+    ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
+    ASSERT_EQ(16U, kernelDescriptor->payloadMappings.implicitArgs.privateMemoryAddress.stateless);
+    ASSERT_EQ(8U, kernelDescriptor->payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobaIdOffsetWhenArgSizeValidThenPopulatesKernelDescriptor) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobaIdOffsetWhenArgSizeValidThenPopulatesKernelDescriptor) {
     uint32_t vectorSizes[] = {4, 8, 12};
 
     for (auto vectorSize : vectorSizes) {
@@ -5145,37 +4261,20 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobaIdOffsetWhenArgSi
                   size : )===" +
                              std::to_string(vectorSize) + R"===(
         )===";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
-            EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[i])
+            EXPECT_EQ(16 + sizeof(uint32_t) * i, kernelDescriptor->payloadMappings.dispatchTraits.globalWorkOffset[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
         }
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupCountWhenArgSizeIsInvalidThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGroupCountWhenArgSizeIsInvalidThenFails) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
@@ -5185,29 +4284,13 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupCountWhenArgSizeI
                   offset : 16
                   size : 7
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type group_count in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupCountWhenArgSizeValidThenPopulatesKernelDescriptor) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGroupCountWhenArgSizeValidThenPopulatesKernelDescriptor) {
     uint32_t vectorSizes[] = {4, 8, 12};
 
     for (auto vectorSize : vectorSizes) {
@@ -5222,37 +4305,20 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupCountWhenArgSizeV
                   size : )===" +
                              std::to_string(vectorSize) + R"===(
         )===";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
-            EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[i])
+            EXPECT_EQ(16 + sizeof(uint32_t) * i, kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
         }
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenArgSizeIsInvalidThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeEnqueuedLocalSizeWhenArgSizeIsInvalidThenFails) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
@@ -5262,30 +4328,14 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenA
                   offset : 16
                   size : 7
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type enqueued_local_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeByPointerWithSlmAlignmentSetThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeByPointerWithSlmAlignmentSetThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:
@@ -5298,31 +4348,14 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeByPointerWithSlmAlignm
                  addrmode	: slm
                  slm_alignment: 8
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto res = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto res = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, res);
-    ASSERT_EQ(1u, programInfo.kernelInfos.size());
-    ASSERT_EQ(1u, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-    const auto &arg = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>();
+    ASSERT_EQ(1u, kernelDescriptor->payloadMappings.explicitArgs.size());
+    const auto &arg = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescPointer>();
     EXPECT_EQ(8, arg.requiredSlmAlignment);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeEnqueuedLocalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
     uint32_t vectorSizes[] = {4, 8, 12};
 
     for (auto vectorSize : vectorSizes) {
@@ -5337,37 +4370,20 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenA
                   size : )===" +
                              std::to_string(vectorSize) + R"===(
         )===";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
-            EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[i])
+            EXPECT_EQ(16 + sizeof(uint32_t) * i, kernelDescriptor->payloadMappings.dispatchTraits.enqueuedLocalWorkSize[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
         }
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobalSizeWhenArgSizeIsInvalidThenFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeIsInvalidThenFails) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
@@ -5377,29 +4393,13 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobalSizeWhenArgSizeI
                   offset : 16
                   size : 7
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type global_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
     uint32_t vectorSizes[] = {4, 8, 12};
 
     for (auto vectorSize : vectorSizes) {
@@ -5414,37 +4414,20 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobalSizeWhenArgSizeV
                   size : )===" +
                              std::to_string(vectorSize) + R"===(
         )===";
-        NEO::ProgramInfo programInfo;
-        ZebinTestData::ValidEmptyProgram zebin;
-        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-        std::string errors, warnings;
-        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-        NEO::Yaml::YamlParser parser;
-        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-        NEO::ZebinSections zebinSections;
-        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        auto err = decodeZeInfoKernelEntry(zeinfo);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
-        ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
-            EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[i])
+            EXPECT_EQ(16 + sizeof(uint32_t) * i, kernelDescriptor->payloadMappings.dispatchTraits.globalWorkSize[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
         }
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenOffsetAndSizeValidThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeBufferOffsetWhenOffsetAndSizeValidThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
@@ -5455,33 +4438,17 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenOffset
                   size: 4
                   arg_index: 0
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-    const auto &arg = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>();
+    ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
+    const auto &arg = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescPointer>();
     EXPECT_EQ(8, arg.bufferOffset);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, givenPureStatefulArgWithBufferAddressWhenThereIsNoStatelessAccessThenPopulatesKernelDescriptorAndArgIsPureStateful) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, givenPureStatefulArgWithBufferAddressWhenThereIsNoStatelessAccessThenPopulatesKernelDescriptorAndArgIsPureStateful) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:
@@ -5502,64 +4469,32 @@ TEST(PopulateArgDescriptorCrossthreadPayload, givenPureStatefulArgWithBufferAddr
                 - bti_value: 0
                   arg_index: 0         
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+    ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
 
-    const auto &arg = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>();
+    const auto &arg = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescPointer>();
     EXPECT_EQ(32, arg.stateless);
     EXPECT_EQ(8, arg.pointerSize);
     EXPECT_FALSE(arg.accessedUsingStatelessAddressingMode);
     EXPECT_TRUE(arg.isPureStateful());
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, GivenNoArgsThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenNoArgsThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
                 simd_size: 32
               
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+    ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
 }
 
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIsInvalidThenPopulateArgDescriptorFails) {
@@ -5571,7 +4506,6 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIs
     bufferOffsetArg.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeBufferOffset;
     bufferOffsetArg.offset = 8;
     bufferOffsetArg.argIndex = 0;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
 
     for (auto size : {1, 2, 8}) {
         bufferOffsetArg.size = size;
@@ -5579,7 +4513,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIs
         uint32_t crossThreadData = 0;
         std::string errors, warnings;
 
-        auto err = NEO::populateArgDescriptor(bufferOffsetArg, kernelDescriptor, crossThreadData, maximumBindingTableEntry, errors, warnings);
+        auto err = NEO::populateArgDescriptor(bufferOffsetArg, kernelDescriptor, crossThreadData, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
         auto expectedError = "DeviceBinaryFormat::Zebin : Invalid size for argument of type buffer_offset in context of : some_kernel. Expected 4. Got : " + std::to_string(size) + "\n";
         EXPECT_STREQ(expectedError.c_str(), errors.c_str());
@@ -5599,16 +4533,15 @@ TEST(PopulateArgDescriptor, GivenValueArgWithPointerMemberThenItIsProperlyPopula
 
     std::string errors, warnings;
     uint32_t crossThreadDataSize = 0U;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
-    auto retVal = NEO::populateArgDescriptor(valueArg, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
+    auto retVal = NEO::populateArgDescriptor(valueArg, kernelDescriptor, crossThreadDataSize, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, retVal);
     EXPECT_TRUE(warnings.empty());
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescValue>().elements[0].isPtr);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSizeIsValidThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeWorkDimensionsWhenSizeIsValidThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
@@ -5618,31 +4551,15 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSize
                   offset: 32
                   size: 4
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_EQ(32U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.workDim);
+    EXPECT_EQ(32U, kernelDescriptor->payloadMappings.dispatchTraits.workDim);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeImplicitArgBufferWhenPopulatingKernelDescriptorThenProperOffsetIsSetAndImplicitArgsAreRequired) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeImplicitArgBufferWhenPopulatingKernelDescriptorThenProperOffsetIsSetAndImplicitArgsAreRequired) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -5652,28 +4569,12 @@ kernels:
           offset:          4
           size:            8
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_EQ(4u, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
-    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+    EXPECT_EQ(4u, kernelDescriptor->payloadMappings.implicitArgs.implicitArgsBuffer);
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
 }
 
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSizeIsInvalidThenPopulateKernelDescriptorFails) {
@@ -5684,7 +4585,6 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSize
     NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT workDimensionsArg;
     workDimensionsArg.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeWorkDimensions;
     workDimensionsArg.offset = 0x20;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
 
     for (auto size : {1, 2, 8}) {
         workDimensionsArg.size = size;
@@ -5692,7 +4592,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSize
         uint32_t crossThreadData = 0;
         std::string errors, warnings;
 
-        auto err = NEO::populateArgDescriptor(workDimensionsArg, kernelDescriptor, crossThreadData, maximumBindingTableEntry, errors, warnings);
+        auto err = NEO::populateArgDescriptor(workDimensionsArg, kernelDescriptor, crossThreadData, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
         auto expectedError = "DeviceBinaryFormat::Zebin : Invalid size for argument of type work_dimensions in context of : some_kernel. Expected 4. Got : " + std::to_string(size) + "\n";
         EXPECT_STREQ(expectedError.c_str(), errors.c_str());
@@ -5708,9 +4608,8 @@ TEST(PopulateArgDescriptor, GivenValidArgOfTypeRTGlobalBufferThenRtGlobalBufferI
     rtGlobalBufferArg.offset = 32;
 
     uint32_t crossThreadDataSize = 0U;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(rtGlobalBufferArg, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
+    auto err = NEO::populateArgDescriptor(rtGlobalBufferArg, kernelDescriptor, crossThreadDataSize, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
@@ -5729,9 +4628,8 @@ TEST(PopulateArgDescriptor, GivenValidConstDataBufferArgThenItIsPopulatedCorrect
     dataConstBuffer.btiValue = 1;
 
     uint32_t crossThreadDataSize = 0U;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
+    auto err = NEO::populateArgDescriptor(dataConstBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
@@ -5739,7 +4637,7 @@ TEST(PopulateArgDescriptor, GivenValidConstDataBufferArgThenItIsPopulatedCorrect
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize);
     EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
     EXPECT_EQ(64U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful);
-    EXPECT_EQ(1, maximumBindingTableEntry.btiValue);
+    EXPECT_EQ(2U, kernelDescriptor.payloadMappings.bindingTable.numEntries);
 }
 
 TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrectly) {
@@ -5751,9 +4649,8 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
     dataGlobalBuffer.btiValue = 1;
 
     uint32_t crossThreadDataSize = 0U;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
+    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
@@ -5761,7 +4658,7 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
     EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
     EXPECT_EQ(64U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
-    EXPECT_EQ(1, maximumBindingTableEntry.btiValue);
+    EXPECT_EQ(2U, kernelDescriptor.payloadMappings.bindingTable.numEntries);
 }
 
 TEST(PopulateArgDescriptor, GivenGlobalDataBufferArgWithoutBTIThenItIsPopulatedCorrectly) {
@@ -5773,15 +4670,15 @@ TEST(PopulateArgDescriptor, GivenGlobalDataBufferArgWithoutBTIThenItIsPopulatedC
     dataGlobalBuffer.offset = 32;
 
     uint32_t crossThreadDataSize = 0U;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
+    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(warnings.empty());
     EXPECT_TRUE(errors.empty());
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
     EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful));
+    EXPECT_EQ(0U, kernelDescriptor.payloadMappings.bindingTable.numEntries);
 }
 
 TEST(PopulateArgDescriptor, GivenConstDataBufferArgWithoutBTIThenItIsPopulatedCorrectly) {
@@ -5793,19 +4690,19 @@ TEST(PopulateArgDescriptor, GivenConstDataBufferArgWithoutBTIThenItIsPopulatedCo
     dataGlobalBuffer.offset = 32;
 
     uint32_t crossThreadDataSize = 0U;
-    ZeInfoBindingTableIndices::value_type maximumBindingTableEntry;
     std::string errors, warnings;
-    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, maximumBindingTableEntry, errors, warnings);
+    auto err = NEO::populateArgDescriptor(dataGlobalBuffer, kernelDescriptor, crossThreadDataSize, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(warnings.empty());
     EXPECT_TRUE(errors.empty());
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize);
     EXPECT_EQ(32U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful));
+    EXPECT_EQ(0U, kernelDescriptor.payloadMappings.bindingTable.numEntries);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:
@@ -5815,33 +4712,17 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffset
                   offset: 32
                   size: 8
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    const auto printfSurfaceAddress = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
+    const auto printfSurfaceAddress = kernelDescriptor->payloadMappings.implicitArgs.printfSurfaceAddress;
     ASSERT_EQ(32U, printfSurfaceAddress.stateless);
     EXPECT_EQ(8U, printfSurfaceAddress.pointerSize);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeSyncBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeSyncBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:
@@ -5851,34 +4732,18 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeSyncBufferWhenOffsetAn
                   offset: 32
                   size: 8
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.usesSyncBuffer);
-    const auto &syncBufferAddress = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress;
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesSyncBuffer);
+    const auto &syncBufferAddress = kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress;
     ASSERT_EQ(32U, syncBufferAddress.stateless);
     EXPECT_EQ(8U, syncBufferAddress.pointerSize);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMetadataThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidImageArgumentWithImageMetadataThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:
@@ -5955,27 +4820,11 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMe
                 - bti_value:       2
                   arg_index:       1
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    auto &args = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs;
+    auto &args = kernelDescriptor->payloadMappings.explicitArgs;
 
     EXPECT_EQ(64U, args[0].as<ArgDescImage>().bindful);
     EXPECT_TRUE(args[0].getExtendedTypeInfo().isMediaImage);
@@ -6001,8 +4850,8 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMe
     EXPECT_EQ(48U, imgMetadata.flatPitch);
 }
 
-TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidSamplerArgumentWithMetadataThenPopulatesKernelDescriptor) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:
@@ -6071,28 +4920,12 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidSamplerArgumentWithMetad
                   size:            4
                   arg_index:       3
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
-    const auto &kd = programInfo.kernelInfos[0]->kernelDescriptor;
+    const auto &kd = *this->kernelDescriptor;
     auto &args = kd.payloadMappings.explicitArgs;
 
     auto &sampler0 = args[0].as<ArgDescSampler>();
@@ -6767,19 +5600,20 @@ TEST(PopulateGlobalDeviceHostNameMapping, givenValidZebinWithGlobalHostAccessTab
               host_name:       BoolVarName
     )===";
 
+    uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
 
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
-    std::string decodeErrors;
-    std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_TRUE(errors.empty()) << errors;
 
     EXPECT_EQ(2u, programInfo.globalsDeviceToHostNameMap.size());
     EXPECT_STREQ("IntVarName", programInfo.globalsDeviceToHostNameMap["int_var"].c_str());
@@ -6817,9 +5651,9 @@ TEST(PopulateGlobalDeviceHostNameMapping, givenZebinWithGlobalHostAccessTableSec
         NEO::ProgramInfo programInfo;
         NEO::SingleDeviceBinary singleBinary;
         singleBinary.deviceBinary = zebin.storage;
-        std::string decodeErrors;
-        std::string decodeWarnings;
-        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+        std::string errors;
+        std::string warnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
     }
 }
@@ -6996,8 +5830,8 @@ kernels:
     EXPECT_STREQ("NEO::Yaml : Could not parse line : [5] : [per_thread_payload_arguments:] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -\n", errors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenValidInlineSamplersThenPopulateKernelDescriptorSucceeds) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidInlineSamplersThenPopulateKernelDescriptorSucceeds) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -7009,37 +5843,20 @@ kernels:
           normalized:   true
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty());
 
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.inlineSamplers.size());
-    const auto &inlineSampler = programInfo.kernelInfos[0]->kernelDescriptor.inlineSamplers[0];
+    ASSERT_EQ(1U, kernelDescriptor->inlineSamplers.size());
+    const auto &inlineSampler = kernelDescriptor->inlineSamplers[0];
     EXPECT_EQ(0U, inlineSampler.samplerIndex);
     EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::AddrMode::ClampEdge, inlineSampler.addrMode);
     EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::FilterMode::Nearest, inlineSampler.filterMode);
     EXPECT_TRUE(inlineSampler.isNormalized);
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidInlineSamplersEntryThenPopulateKernelDescriptorFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidInlineSamplersEntryThenPopulateKernelDescriptorFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -7051,29 +5868,13 @@ kernels:
           normalized:     dead_beef
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_FALSE(errors.empty());
 }
 
-TEST(PopulateKernelDescriptor, GivenMissingMemberInInlineSamplersThenPopulateKernelDescriptorFails) {
-    NEO::ConstStringRef zeinfo = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenMissingMemberInInlineSamplersThenPopulateKernelDescriptorFails) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -7082,27 +5883,11 @@ kernels:
         -  addrmode:     clamp_edge
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
 }
 
-TEST(PopulateKernelDescriptor, givenGlobalBufferAndConstBufferWhenPopulatingKernelDescriptorThenMakeThemStateful) {
+TEST_F(decodeZeInfoKernelEntryTest, givenGlobalBufferAndConstBufferWhenPopulatingKernelDescriptorThenPopulateThemProperly) {
     NEO::ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
@@ -7119,32 +5904,22 @@ kernels:
           bti_value:       1
 ...
 )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
 
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+    EXPECT_EQ(0U, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
+    EXPECT_EQ(8U, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
+    EXPECT_EQ(0U, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
 
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+    EXPECT_EQ(8U, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
+    EXPECT_EQ(8U, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize);
+    EXPECT_EQ(64U, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful);
 
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto res = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, res);
-    EXPECT_TRUE(warnings.empty());
-    EXPECT_TRUE(errors.empty());
-
-    const auto &kernelInfo = *programInfo.kernelInfos.rbegin();
-    EXPECT_EQ(2u, kernelInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries);
-    EXPECT_EQ(128u, kernelInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
-    ASSERT_EQ(192u, kernelInfo->heapInfo.SurfaceStateHeapSize);
-    ASSERT_NE(nullptr, kernelInfo->heapInfo.pSsh);
+    EXPECT_EQ(2u, kernelDescriptor->payloadMappings.bindingTable.numEntries);
+    EXPECT_EQ(128u, kernelDescriptor->payloadMappings.bindingTable.tableOffset);
+    EXPECT_EQ(0U, *reinterpret_cast<const uint32_t *>(kernelDescriptor->generatedSsh.data() + 128U));
+    EXPECT_EQ(64U, *reinterpret_cast<const uint32_t *>(kernelDescriptor->generatedSsh.data() + 132U));
+    ASSERT_EQ(192u, kernelDescriptor->generatedSsh.size());
 }
 
 TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersFails) {
@@ -7202,11 +5977,9 @@ kernels:
     std::string errors;
     std::string warnings;
     ZeInfoInlineSamplers inlineSamplers;
-    int32_t maxSamplerIndex = -1;
     auto err = NEO::readZeInfoInlineSamplers(parser,
                                              inlineSamplersNode,
                                              inlineSamplers,
-                                             maxSamplerIndex,
                                              "some_kernel",
                                              errors,
                                              warnings);

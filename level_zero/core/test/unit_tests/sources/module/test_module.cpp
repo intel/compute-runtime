@@ -2322,32 +2322,6 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFla
     EXPECT_STREQ(expectedOptions.c_str(), moduleTu.options.c_str());
 }
 
-HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryThenLinkerInputIsCreated) {
-    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
-kernels:
-    - name : some_kernel
-      execution_env :
-        simd_size : 8
-    - name : some_other_kernel
-      execution_env :
-        simd_size : 32
-)===";
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_other_kernel", {});
-
-    zebin.elfHeader->machine = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-
-    L0::ModuleTranslationUnit moduleTuValid(this->device);
-    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    result = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
-    EXPECT_NE(nullptr, moduleTuValid.programInfo.linkerInput.get());
-}
-
 TEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryAndGlobalsAreExportedThenTheirAllocationTypeIsUSMDevice) {
     std::string zeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:

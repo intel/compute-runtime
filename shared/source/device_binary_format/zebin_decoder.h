@@ -100,21 +100,18 @@ using ZeInfoPayloadArguments = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Ke
 DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                        ZeInfoPayloadArguments &ouPayloadArguments,
                                        int32_t &outMaxPayloadArgumentIndex,
-                                       int32_t &outMaxSamplerIndex,
                                        ConstStringRef context,
                                        std::string &outErrReason, std::string &outWarning);
 
 using ZeInfoInlineSamplers = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT, 4>;
 DecodeError readZeInfoInlineSamplers(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                      ZeInfoInlineSamplers &outInlineSamplers,
-                                     int32_t &outMaxSamplerIndex,
                                      ConstStringRef context,
                                      std::string &outErrReason, std::string &outWarning);
 
 using ZeInfoBindingTableIndices = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Kernel::BindingTableEntry::BindingTableEntryBaseT, 32>;
 DecodeError readZeInfoBindingTableIndices(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
-                                          ZeInfoBindingTableIndices &outBindingTableIndices, ZeInfoBindingTableIndices::value_type &outMaxBindingTableIndex,
-                                          ConstStringRef context,
+                                          ZeInfoBindingTableIndices &outBindingTableIndices, ConstStringRef context,
                                           std::string &outErrReason, std::string &outWarning);
 
 using ZeInfoPerThreadMemoryBuffers = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::PerThreadMemoryBufferBaseT, 8>;
@@ -131,14 +128,12 @@ DecodeError readZeInfoGlobalHostAceessTable(const NEO::Yaml::YamlParser &parser,
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, const uint32_t grfSize,
                                        std::string &outErrReason, std::string &outWarning);
 
-NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize, NEO::Elf::ZebinKernelMetadata::Types::Kernel::BindingTableEntry::BindingTableEntryBaseT &maximumBindingTableEntry,
+NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize,
                                        std::string &outErrReason, std::string &outWarning);
 
 NEO::DecodeError populateInlineSamplers(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT &src, NEO::KernelDescriptor &dst, std::string &outErrReason, std::string &outWarning);
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
-NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, NEO::ZebinSections<numBits> &zebinSections,
-                                          NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &kernelNd, std::string &outErrReason, std::string &outWarning);
+NEO::DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &kernelNd, uint32_t grfSize, uint32_t minScratchSpaceSize, std::string &outErrReason, std::string &outWarning);
 
 NEO::DecodeError readZeInfoVersionFromZeInfo(NEO::Elf::ZebinKernelMetadata::Types::Version &dst,
                                              NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &versionNd, std::string &outErrReason, std::string &outWarning);
@@ -151,6 +146,8 @@ NEO::DecodeError populateKernelSourceAttributes(NEO::KernelDescriptor &dst, NEO:
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::string &outErrReason, std::string &outWarning);
+
+NEO::DecodeError decodeZeInfo(ProgramInfo &dst, ConstStringRef zeInfo, std::string &outErrReason, std::string &outWarning);
 
 void setKernelMiscInfoPosition(ConstStringRef metadata, NEO::ProgramInfo &dst);
 

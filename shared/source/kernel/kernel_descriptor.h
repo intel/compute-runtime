@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -316,7 +316,8 @@ struct KernelDescriptor {
         const void *igcInfoForGtpin = nullptr;
     } external;
 
-    std::vector<uint8_t> generatedHeaps;
+    std::vector<uint8_t> generatedSsh;
+    std::vector<uint8_t> generatedDsh;
 };
 
 } // namespace NEO
