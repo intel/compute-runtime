@@ -438,20 +438,20 @@ HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenError
                                                                                                                             internalEngine,
                                                                                                                             NEO::EngineGroupType::RenderCompute,
                                                                                                                             returnValue)));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandList0);
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
-
-    returnValue = commandList0->performCpuMemcpy(nullptr, nullptr, 8, nullptr, nullptr, nullptr, 1, nullptr);
-    ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
+    CpuMemCopyInfo cpuMemCopyInfo(nullptr, nullptr, 8);
+    returnValue = commandList0->performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
 
-    returnValue = commandList0->performCpuMemcpy(nullptr, nullptr, 8, nullptr, nullptr, nullptr, 1, nullptr);
-    ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);
+    returnValue = commandList0->performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);
 }
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsAtLeastSkl) {
@@ -1924,22 +1924,24 @@ using AppendMemoryLockedCopyTest = Test<AppendMemoryLockedCopyFixture>;
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenPreferCopyThroughLockedPtrCalledThenReturnTrue, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    NEO::SvmAllocationData *srcAllocData;
-    NEO::SvmAllocationData *dstAllocData;
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &srcAllocData);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(dstAllocData, dstFound, srcAllocData, srcFound, 1024));
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    ASSERT_FALSE(srcFound);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    ASSERT_TRUE(dstFound);
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMDeviceAllocThenReturnCorrectValue, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    NEO::SvmAllocationData *srcAllocData;
-    NEO::SvmAllocationData *dstAllocData;
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &srcAllocData);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
-    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(srcAllocData, srcFound));
-    EXPECT_TRUE(cmdList.isSuitableUSMDeviceAlloc(dstAllocData, dstFound));
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    EXPECT_FALSE(srcFound);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    EXPECT_TRUE(dstFound);
+    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocData));
+    EXPECT_TRUE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMHostAllocThenReturnCorrectValue, IsAtLeastSkl) {
@@ -1948,9 +1950,11 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
     NEO::SvmAllocationData *srcAllocData;
     NEO::SvmAllocationData *dstAllocData;
     auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &srcAllocData);
+    EXPECT_TRUE(srcFound);
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
-    EXPECT_TRUE(cmdList.isSuitableUSMHostAlloc(srcAllocData, srcFound));
-    EXPECT_FALSE(cmdList.isSuitableUSMHostAlloc(dstAllocData, dstFound));
+    EXPECT_TRUE(dstFound);
+    EXPECT_TRUE(cmdList.isSuitableUSMHostAlloc(srcAllocData));
+    EXPECT_FALSE(cmdList.isSuitableUSMHostAlloc(dstAllocData));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMSharedAllocThenReturnCorrectValue, IsAtLeastSkl) {
@@ -1960,11 +1964,14 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
     NEO::SvmAllocationData *deviceAllocData;
     NEO::SvmAllocationData *sharedAllocData;
     auto hostAllocFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &hostAllocData);
+    EXPECT_TRUE(hostAllocFound);
     auto deviceAllocFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &deviceAllocData);
+    EXPECT_TRUE(deviceAllocFound);
     auto sharedAllocFound = device->getDriverHandle()->findAllocationDataForRange(sharedPtr, 1024, &sharedAllocData);
-    EXPECT_FALSE(cmdList.isSuitableUSMSharedAlloc(hostAllocData, hostAllocFound));
-    EXPECT_FALSE(cmdList.isSuitableUSMSharedAlloc(deviceAllocData, deviceAllocFound));
-    EXPECT_TRUE(cmdList.isSuitableUSMSharedAlloc(sharedAllocData, sharedAllocFound));
+    EXPECT_TRUE(sharedAllocFound);
+    EXPECT_FALSE(cmdList.isSuitableUSMSharedAlloc(hostAllocData));
+    EXPECT_FALSE(cmdList.isSuitableUSMSharedAlloc(deviceAllocData));
+    EXPECT_TRUE(cmdList.isSuitableUSMSharedAlloc(sharedAllocData));
 }
 
 struct LocalMemoryMultiSubDeviceFixture : public SingleRootMultiSubDeviceFixture {
@@ -1988,7 +1995,8 @@ HWTEST2_F(LocalMemoryMultiSubDeviceTest, givenImmediateCommandListWhenIsSuitable
 
     NEO::SvmAllocationData *allocData;
     auto allocFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 2 * MemoryConstants::megaByte, &allocData);
-    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(allocData, allocFound));
+    EXPECT_TRUE(allocFound);
+    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(allocData));
     context->freeMem(devicePtr);
 }
 
@@ -1996,22 +2004,24 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrA
     DebugManager.flags.ExperimentalCopyThroughLock.set(0);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    NEO::SvmAllocationData *srcAllocData;
-    NEO::SvmAllocationData *dstAllocData;
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &srcAllocData);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(dstAllocData, dstFound, srcAllocData, srcFound, 1024));
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    ASSERT_FALSE(srcFound);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    ASSERT_TRUE(dstFound);
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtrViaEnvVariableWhenPreferCopyThroughLockPointerCalledThenTrueIsReturned, IsAtLeastSkl) {
     DebugManager.flags.ExperimentalForceCopyThroughLock.set(1);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    NEO::SvmAllocationData *srcAllocData;
-    NEO::SvmAllocationData *dstAllocData;
-    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &srcAllocData);
-    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(dstAllocData, dstFound, srcAllocData, srcFound, 1024));
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    ASSERT_FALSE(srcFound);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    ASSERT_TRUE(dstFound);
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTypeThenReturnCorrectValue, IsAtLeastSkl) {
@@ -2024,26 +2034,30 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTy
     NEO::SvmAllocationData *sharedUSMAllocData;
 
     const auto hostUSMFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &hostUSMAllocData);
+    EXPECT_TRUE(hostUSMFound);
     const auto hostNonUSMFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &hostNonUSMAllocData);
+    EXPECT_FALSE(hostNonUSMFound);
     const auto deviceUSMFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &deviceUSMAllocData);
+    EXPECT_TRUE(deviceUSMFound);
     const auto sharedUSMFound = device->getDriverHandle()->findAllocationDataForRange(sharedPtr, 1024, &sharedUSMAllocData);
+    EXPECT_TRUE(sharedUSMFound);
 
-    EXPECT_EQ(HOST_NON_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostUSMFound, hostNonUSMAllocData, hostNonUSMFound));
-    EXPECT_EQ(HOST_NON_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, deviceUSMFound, hostNonUSMAllocData, hostNonUSMFound));
-    EXPECT_EQ(HOST_NON_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, sharedUSMFound, hostNonUSMAllocData, hostNonUSMFound));
-    EXPECT_EQ(HOST_NON_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, hostNonUSMFound, hostNonUSMAllocData, hostNonUSMFound));
+    EXPECT_EQ(HOST_NON_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostNonUSMAllocData));
+    EXPECT_EQ(HOST_NON_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, hostNonUSMAllocData));
+    EXPECT_EQ(HOST_NON_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, hostNonUSMAllocData));
+    EXPECT_EQ(HOST_NON_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, hostNonUSMAllocData));
 
-    EXPECT_EQ(HOST_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostUSMFound, hostUSMAllocData, hostUSMFound));
-    EXPECT_EQ(HOST_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, deviceUSMFound, hostUSMAllocData, hostUSMFound));
-    EXPECT_EQ(HOST_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, sharedUSMFound, hostUSMAllocData, hostUSMFound));
-    EXPECT_EQ(HOST_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, hostNonUSMFound, hostUSMAllocData, hostUSMFound));
+    EXPECT_EQ(HOST_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostUSMAllocData));
+    EXPECT_EQ(HOST_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, hostUSMAllocData));
+    EXPECT_EQ(HOST_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, hostUSMAllocData));
+    EXPECT_EQ(HOST_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, hostUSMAllocData));
 
-    EXPECT_EQ(DEVICE_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostUSMFound, deviceUSMAllocData, deviceUSMFound));
-    EXPECT_EQ(DEVICE_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostUSMFound, sharedUSMAllocData, sharedUSMFound));
-    EXPECT_EQ(DEVICE_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, deviceUSMFound, deviceUSMAllocData, deviceUSMFound));
-    EXPECT_EQ(DEVICE_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, sharedUSMFound, sharedUSMAllocData, sharedUSMFound));
-    EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, hostNonUSMFound, deviceUSMAllocData, deviceUSMFound));
-    EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, hostNonUSMFound, sharedUSMAllocData, sharedUSMFound));
+    EXPECT_EQ(DEVICE_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, deviceUSMAllocData));
+    EXPECT_EQ(DEVICE_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, sharedUSMAllocData));
+    EXPECT_EQ(DEVICE_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, deviceUSMAllocData));
+    EXPECT_EQ(DEVICE_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, sharedUSMAllocData));
+    EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, deviceUSMAllocData));
+    EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, sharedUSMAllocData));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenLockPtr, IsAtLeastSkl) {
@@ -2161,6 +2175,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     NEO::SvmAllocationData *allocData;
     device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &allocData);
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
     auto lockedPtr = reinterpret_cast<char *>(dstAlloc->getLockedPtr());
     EXPECT_EQ(0, memcmp(lockedPtr, nonUsmHostPtr, 1024));
 }

@@ -353,13 +353,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     }
 
     ze_result_t ret;
-
-    NEO::SvmAllocationData *srcAllocData = nullptr;
-    NEO::SvmAllocationData *dstAllocData = nullptr;
-    bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, &srcAllocData);
-    bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, &dstAllocData);
-    if (preferCopyThroughLockedPtr(dstAllocData, dstAllocFound, srcAllocData, srcAllocFound, size)) {
-        return performCpuMemcpy(dstptr, srcptr, size, dstAllocData, srcAllocData, hSignalEvent, numWaitEvents, phWaitEvents);
+    CpuMemCopyInfo cpuMemCopyInfo(dstptr, srcptr, size);
+    this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, &cpuMemCopyInfo.srcAllocData);
+    this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, &cpuMemCopyInfo.dstAllocData);
+    if (preferCopyThroughLockedPtr(cpuMemCopyInfo)) {
+        return performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
     }
 
     auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size);
@@ -639,7 +637,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound, size_t size) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo) {
     if (NEO::DebugManager.flags.ExperimentalForceCopyThroughLock.get() == 1) {
         return true;
     }
@@ -655,31 +653,30 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(N
 
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
     if (gfxCoreHelper.copyThroughLockedPtrEnabled(this->device->getHwInfo())) {
-        return (!srcFound && isSuitableUSMDeviceAlloc(dstAlloc, dstFound) && size <= h2DThreshold) ||
-               (!dstFound && isSuitableUSMDeviceAlloc(srcAlloc, srcFound) && size <= d2HThreshold);
+        return (!cpuMemCopyInfo.srcAllocData && isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData) && cpuMemCopyInfo.size <= h2DThreshold) ||
+               (!cpuMemCopyInfo.dstAllocData && isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocData) && cpuMemCopyInfo.size <= d2HThreshold);
     }
     return false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc, bool allocFound) {
-    return allocFound && (alloc->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY);
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc) {
+    return alloc && (alloc->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc, bool allocFound) {
-    return allocFound && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) &&
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc) {
+    return alloc && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) &&
            alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->storageInfo.getNumBanks() == 1;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc, bool allocFound) {
-    return allocFound && (alloc->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY);
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc) {
+    return alloc && (alloc->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void *dstptr, const void *srcptr, size_t size, NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     bool needsBarrier = (numWaitEvents > 0);
     if (needsBarrier) {
         this->appendBarrier(nullptr, numWaitEvents, phWaitEvents);
@@ -697,11 +694,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    auto srcLockPointer = obtainLockedPtrFromDevice(srcAlloc, const_cast<void *>(srcptr));
-    auto dstLockPointer = obtainLockedPtrFromDevice(dstAlloc, dstptr);
+    auto srcLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.srcAllocData, const_cast<void *>(cpuMemCopyInfo.srcPtr));
+    auto dstLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.dstAllocData, cpuMemCopyInfo.dstPtr);
 
-    const void *cpuMemcpySrcPtr = srcLockPointer ? srcLockPointer : srcptr;
-    void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : dstptr;
+    const void *cpuMemcpySrcPtr = srcLockPointer ? srcLockPointer : cpuMemCopyInfo.srcPtr;
+    void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : cpuMemCopyInfo.dstPtr;
 
     if (this->dependenciesPresent) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
@@ -716,12 +713,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
         signalEvent->setGpuStartTimestamp();
     }
 
-    memcpy_s(cpuMemcpyDstPtr, size, cpuMemcpySrcPtr, size);
+    memcpy_s(cpuMemcpyDstPtr, cpuMemCopyInfo.size, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
 
     if (signalEvent) {
         signalEvent->setGpuEndTimestamp();
         signalEvent->hostSignal();
     }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -739,6 +737,7 @@ void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(N
     if (!alloc->isLocked()) {
         this->device->getDriverHandle()->getMemoryManager()->lockResource(alloc);
     }
+
     auto gpuAddress = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->getGpuAddress();
     auto offset = ptrDiff(ptr, gpuAddress);
     return ptrOffset(alloc->getLockedPtr(), offset);
@@ -752,13 +751,13 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkWaitEventsState(uint32_
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound) {
-    const bool srcHostUSM = isSuitableUSMHostAlloc(srcAlloc, srcFound);
-    const bool srcDeviceUSM = isSuitableUSMDeviceAlloc(srcAlloc, srcFound) || isSuitableUSMSharedAlloc(srcAlloc, srcFound);
+TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc) {
+    const bool srcHostUSM = isSuitableUSMHostAlloc(srcAlloc);
+    const bool srcDeviceUSM = isSuitableUSMDeviceAlloc(srcAlloc) || isSuitableUSMSharedAlloc(srcAlloc);
     const bool srcHostNonUSM = srcAlloc == nullptr;
 
-    const bool dstHostUSM = isSuitableUSMHostAlloc(dstAlloc, dstFound);
-    const bool dstDeviceUSM = isSuitableUSMDeviceAlloc(dstAlloc, dstFound) || isSuitableUSMSharedAlloc(dstAlloc, dstFound);
+    const bool dstHostUSM = isSuitableUSMHostAlloc(dstAlloc);
+    const bool dstDeviceUSM = isSuitableUSMDeviceAlloc(dstAlloc) || isSuitableUSMSharedAlloc(dstAlloc);
     const bool dstHostNonUSM = dstAlloc == nullptr;
 
     TransferType retVal;

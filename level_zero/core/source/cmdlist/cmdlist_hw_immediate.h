@@ -21,6 +21,16 @@ struct EventPool;
 struct Event;
 inline constexpr size_t maxImmediateCommandSize = 4 * MemoryConstants::kiloByte;
 
+struct CpuMemCopyInfo {
+    void *const dstPtr;
+    const void *const srcPtr;
+    const size_t size;
+    NEO::SvmAllocationData *dstAllocData{nullptr};
+    NEO::SvmAllocationData *srcAllocData{nullptr};
+
+    CpuMemCopyInfo(void *dstPtr, const void *srcPtr, size_t size) : dstPtr(dstPtr), srcPtr(srcPtr), size(size) {}
+};
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -141,15 +151,15 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void createLogicalStateHelper() override {}
     NEO::LogicalStateHelper *getLogicalStateHelper() const override;
 
-    bool preferCopyThroughLockedPtr(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound, size_t size);
-    bool isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc, bool allocFound);
-    bool isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc, bool allocFound);
-    bool isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc, bool allocFound);
-    ze_result_t performCpuMemcpy(void *dstptr, const void *srcptr, size_t size, NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    bool preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo);
+    bool isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc);
+    bool isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc);
+    bool isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc);
+    ze_result_t performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(NEO::SvmAllocationData *alloc, void *ptr);
     bool waitForEventsFromHost();
     void checkWaitEventsState(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
-    TransferType getTransferType(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound);
+    TransferType getTransferType(NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc);
 
   protected:
     void printKernelsPrintfOutput(bool hangDetected);
@@ -158,5 +168,4 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
 template <PRODUCT_FAMILY gfxProductFamily>
 struct CommandListImmediateProductFamily;
-
 } // namespace L0
