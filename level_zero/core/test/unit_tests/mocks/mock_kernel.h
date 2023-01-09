@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,7 +148,8 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
         return ZE_RESULT_SUCCESS;
     }
 
-    void printPrintfOutput() override {
+    void printPrintfOutput(bool hangDetected) override {
+        hangDetectedPassedToPrintfOutput = hangDetected;
         printPrintfOutputCalledTimes++;
     }
 
@@ -156,6 +157,7 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
     NEO::KernelDescriptor descriptor;
     NEO::KernelInfo info;
     uint32_t printPrintfOutputCalledTimes = 0;
+    bool hangDetectedPassedToPrintfOutput = false;
 };
 
 } // namespace ult

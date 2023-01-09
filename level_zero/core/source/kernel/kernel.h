@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,7 +141,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual bool hasIndirectAllocationsAllowed() const = 0;
 
     virtual NEO::GraphicsAllocation *getPrintfBufferAllocation() = 0;
-    virtual void printPrintfOutput() = 0;
+    virtual void printPrintfOutput(bool hangDetected) = 0;
 
     virtual bool usesSyncBuffer() = 0;
     virtual void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) = 0;

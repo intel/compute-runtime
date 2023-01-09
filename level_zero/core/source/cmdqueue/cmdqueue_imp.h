@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,9 +93,9 @@ struct CommandQueueImp : public CommandQueue {
 
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
 
-    void printKernelsPrintfOutput();
+    void printKernelsPrintfOutput(bool hangDetected);
 
-    void postSyncOperations();
+    void postSyncOperations(bool hangDetected);
 
     CommandBufferManager buffers;
     NEO::HeapContainer heapContainer;

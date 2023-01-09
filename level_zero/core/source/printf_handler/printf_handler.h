@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ struct Device;
 struct PrintfHandler {
     static NEO::GraphicsAllocation *createPrintfBuffer(Device *device);
     static void printOutput(const KernelImmutableData *kernelData,
-                            NEO::GraphicsAllocation *printfBuffer, Device *device);
+                            NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter);
     static size_t getPrintBufferSize();
 
   protected:

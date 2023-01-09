@@ -91,6 +91,65 @@ TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutput
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingByPollingThenPrintPrintfOutputAfterHangIsCalled) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    Mock<Kernel> kernel1;
+    TaskCountType currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+
+    commandQueue->printfKernelContainer.push_back(&kernel1);
+
+    commandQueue->synchronizeByPollingForTaskCount(0u);
+
+    EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
+    EXPECT_EQ(1u, kernel1.printPrintfOutputCalledTimes);
+    EXPECT_TRUE(kernel1.hangDetectedPassedToPrintfOutput);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingThenPrintPrintfOutputAfterHangIsCalled) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.OverrideUseKmdWaitFunction.set(1);
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    Mock<Kernel> kernel1;
+    TaskCountType currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
+
+    commandQueue->printfKernelContainer.push_back(&kernel1);
+    commandQueue->synchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
+    EXPECT_EQ(1u, kernel1.printPrintfOutputCalledTimes);
+    EXPECT_TRUE(kernel1.hangDetectedPassedToPrintfOutput);
+
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueCreate, givenGpuHangOnSecondReserveWhenReservingLinearStreamThenReturnGpuHang) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;

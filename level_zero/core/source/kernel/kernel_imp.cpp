@@ -213,7 +213,7 @@ KernelImp::~KernelImp() {
     }
     if (printfBuffer != nullptr) {
         // not allowed to call virtual function on destructor, so calling printOutput directly
-        PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice());
+        PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice(), false);
         module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(printfBuffer);
     }
     slmArgSizes.clear();
@@ -962,8 +962,8 @@ void KernelImp::createPrintfBuffer() {
     }
 }
 
-void KernelImp::printPrintfOutput() {
-    PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice());
+void KernelImp::printPrintfOutput(bool hangDetected) {
+    PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice(), hangDetected);
 }
 
 bool KernelImp::usesSyncBuffer() {

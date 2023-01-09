@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ struct KernelImp : Kernel {
     uint32_t getThreadExecutionMask() const override { return threadExecutionMask; }
 
     NEO::GraphicsAllocation *getPrintfBufferAllocation() override { return this->printfBuffer; }
-    void printPrintfOutput() override;
+    void printPrintfOutput(bool hangDetected) override;
 
     bool usesSyncBuffer() override;
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;

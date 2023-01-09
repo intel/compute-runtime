@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,10 +123,11 @@ ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
         auto &waitPair = buffers.getCurrentFlushStamp();
         const auto waitStatus = csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, NEO::QueueThrottle::MEDIUM);
         if (waitStatus == NEO::WaitStatus::GpuHang) {
+            postSyncOperations(true);
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
+        postSyncOperations(false);
 
-        postSyncOperations();
         return ZE_RESULT_SUCCESS;
     } else {
         return synchronizeByPollingForTaskCount(timeout);
@@ -149,23 +150,24 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
         return ZE_RESULT_NOT_READY;
     }
     if (waitStatus == NEO::WaitStatus::GpuHang) {
+        postSyncOperations(true);
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    postSyncOperations();
+    postSyncOperations(false);
     return ZE_RESULT_SUCCESS;
 }
 
-void CommandQueueImp::printKernelsPrintfOutput() {
+void CommandQueueImp::printKernelsPrintfOutput(bool hangDetected) {
     size_t size = this->printfKernelContainer.size();
     for (size_t i = 0; i < size; i++) {
-        this->printfKernelContainer[i]->printPrintfOutput();
+        this->printfKernelContainer[i]->printPrintfOutput(hangDetected);
     }
     this->printfKernelContainer.clear();
 }
 
-void CommandQueueImp::postSyncOperations() {
-    printKernelsPrintfOutput();
+void CommandQueueImp::postSyncOperations(bool hangDetected) {
+    printKernelsPrintfOutput(hangDetected);
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::DebugManager.flags.DebuggerLogBitmask.get()) {
         device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());

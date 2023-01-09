@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,9 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::dynamicStateHeapDataSize;
         using KernelImp::kernelArgHandlers;
         using KernelImp::kernelHasIndirectAccess;
+        using KernelImp::kernelImmData;
         using KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
+        using KernelImp::printfBuffer;
         using KernelImp::privateMemoryGraphicsAllocation;
         using KernelImp::requiredWorkgroupOrder;
         using KernelImp::surfaceStateHeapData;

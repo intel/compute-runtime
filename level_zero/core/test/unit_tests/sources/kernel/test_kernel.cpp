@@ -19,9 +19,11 @@
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -2440,7 +2442,7 @@ TEST_F(KernelPrintHandlerTest, whenPrintPrintfOutputIsCalledThenPrintfBufferIsUs
     kernel->initialize(&desc);
 
     EXPECT_FALSE(kernel->printfBuffer == nullptr);
-    kernel->printPrintfOutput();
+    kernel->printPrintfOutput(false);
     auto buffer = *reinterpret_cast<uint32_t *>(kernel->printfBuffer->getUnderlyingBuffer());
     EXPECT_EQ(buffer, MyPrintfHandler::getPrintfSurfaceInitialDataSize());
 }
@@ -2518,6 +2520,123 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
     mockKernel.crossThreadData.release();
 }
 
+using PrintfHandlerTests = ::testing::Test;
+
+HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterUsedThenBlitterCopiesBuffer) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo.set(0);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    {
+        device->incRefInternal();
+        Mock<L0::DeviceImp> deviceImp(device.get(), device->getExecutionEnvironment());
+
+        auto kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo->heapInfo.KernelHeapSize = 1;
+        char kernelHeap[1];
+        kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, nullptr, false);
+
+        auto &kernelDescriptor = kernelInfo->kernelDescriptor;
+        kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
+        kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+        kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
+        std::string expectedString("test123");
+        kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
+
+        constexpr size_t size = 128;
+        uint64_t gpuAddress = 0x2000;
+        uint32_t bufferArray[size] = {};
+        void *buffer = reinterpret_cast<void *>(bufferArray);
+        NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
+        auto printfAllocation = reinterpret_cast<uint32_t *>(buffer);
+        printfAllocation[0] = 8;
+        printfAllocation[1] = 0;
+
+        testing::internal::CaptureStdout();
+        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &deviceImp, true);
+        std::string output = testing::internal::GetCapturedStdout();
+
+        auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Internal);
+        if (bcsEngine) {
+            EXPECT_EQ(0u, output.size()); // memory is not actually copied with blitter in ULTs
+            auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
+            EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+            EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
+            EXPECT_EQ(size, bcsCsr->receivedBlitProperties[0].copySize[0]);
+        } else {
+            EXPECT_STREQ(expectedString.c_str(), output.c_str());
+        }
+    }
+}
+
+HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitterHangsThenErrorIsPrintedAndPrintfBufferPrinted) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo.set(0);
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    {
+        auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Internal);
+        if (!bcsEngine) {
+            GTEST_SKIP();
+        }
+        device->incRefInternal();
+        Mock<L0::DeviceImp> deviceImp(device.get(), device->getExecutionEnvironment());
+
+        auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
+        bcsCsr->callBaseFlushBcsTask = false;
+        bcsCsr->flushBcsTaskReturnValue = NEO::CompletionStamp::gpuHang;
+
+        auto kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo->heapInfo.KernelHeapSize = 1;
+        char kernelHeap[1];
+        kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, nullptr, false);
+
+        auto &kernelDescriptor = kernelInfo->kernelDescriptor;
+        kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
+        kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+        kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
+        std::string expectedString("test123");
+        kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
+
+        constexpr size_t size = 128;
+        uint64_t gpuAddress = 0x2000;
+        uint32_t bufferArray[size] = {};
+        void *buffer = reinterpret_cast<void *>(bufferArray);
+        NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
+        auto printfAllocation = reinterpret_cast<uint32_t *>(buffer);
+        printfAllocation[0] = 8;
+        printfAllocation[1] = 0;
+
+        testing::internal::CaptureStdout();
+        testing::internal::CaptureStderr();
+        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &deviceImp, true);
+        std::string output = testing::internal::GetCapturedStdout();
+        std::string error = testing::internal::GetCapturedStderr();
+
+        EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+        EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
+        EXPECT_EQ(size, bcsCsr->receivedBlitProperties[0].copySize[0]);
+
+        EXPECT_STREQ(expectedString.c_str(), output.c_str());
+        EXPECT_STREQ("Failed to copy printf buffer.\n", error.c_str());
+    }
+}
+
 using KernelPatchtokensPrintfStringMapTests = Test<ModuleImmutableDataFixture>;
 
 TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsageEnabledWhenPrintOutputThenProperStringIsPrinted) {
@@ -2542,7 +2661,7 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
     printfAllocation[1] = 0;
 
     testing::internal::CaptureStdout();
-    kernel->printPrintfOutput();
+    kernel->printPrintfOutput(false);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(expectedString.c_str(), output.c_str());
 }
@@ -2570,7 +2689,7 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
     printfAllocation[1] = 0;
 
     testing::internal::CaptureStdout();
-    kernel->printPrintfOutput();
+    kernel->printPrintfOutput(false);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ("", output.c_str());
 }
@@ -2598,7 +2717,7 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
     printfAllocation[1] = 0;
 
     testing::internal::CaptureStdout();
-    kernel->printPrintfOutput();
+    kernel->printPrintfOutput(false);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(expectedString.c_str(), output.c_str());
 }
