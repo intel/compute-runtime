@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -41,7 +41,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_create_multi_host_allocation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_version.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_version.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers_checks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.h
@@ -130,6 +130,12 @@ if("${BRANCH_TYPE}" STREQUAL "")
          ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_getter.cpp
     )
   endif()
+endif()
+
+if(NEO_ENABLE_XE_DRM_DETECTION)
+  list(REMOVE_ITEM NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_version.cpp
+  )
 endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE_LINUX ${NEO_CORE_OS_INTERFACE_LINUX})
