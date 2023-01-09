@@ -2373,6 +2373,27 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmDstHostP
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPtrThenUseGpuMemcpy, IsAtLeastSkl) {
+    MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1 * MemoryConstants::megaByte, nullptr, 0, nullptr);
+    ASSERT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
+
+    NEO::SvmAllocationData *dstAllocData;
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1 * MemoryConstants::megaByte, &dstAllocData));
+    ASSERT_NE(dstAllocData, nullptr);
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    auto graphicsAllocation = dstAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    mockMemoryManager->unlockResource(graphicsAllocation);
+    mockMemoryManager->failLockResource = true;
+    ASSERT_FALSE(graphicsAllocation->isLocked());
+
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1 * MemoryConstants::megaByte, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
+}
+
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
     DebugManager.flags.ExperimentalD2HCpuCopyThreshold.set(2048);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -2476,6 +2497,53 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagN
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(0u, reinterpret_cast<MockGpuTimestampEvent *>(event.get())->gpuStartTimestamp);
     EXPECT_EQ(0u, reinterpret_cast<MockGpuTimestampEvent *>(event.get())->gpuEndTimestamp);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenAllocationDataWhenFailingToObtainLockedPtrFromDeviceThenNullptrIsReturned, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    NEO::SvmAllocationData *dstAllocData = nullptr;
+    EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData));
+    ASSERT_NE(dstAllocData, nullptr);
+    auto graphicsAllocation = dstAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_FALSE(graphicsAllocation->isLocked());
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    mockMemoryManager->failLockResource = true;
+
+    bool lockingFailed = false;
+    void *lockedPtr = cmdList.obtainLockedPtrFromDevice(dstAllocData, devicePtr, lockingFailed);
+    EXPECT_FALSE(graphicsAllocation->isLocked());
+    EXPECT_TRUE(lockingFailed);
+    EXPECT_EQ(lockedPtr, nullptr);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenNullAllocationDataWhenObtainLockedPtrFromDeviceCalledThenNullptrIsReturned, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    bool lockingFailed = false;
+    EXPECT_EQ(cmdList.obtainLockedPtrFromDevice(nullptr, devicePtr, lockingFailed), nullptr);
+    EXPECT_FALSE(lockingFailed);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerformingCpuMemoryCopyThenErrorIsReturned, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    CpuMemCopyInfo cpuMemCopyInfo(nullptr, nullptr, 1024);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &cpuMemCopyInfo.srcAllocData);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &cpuMemCopyInfo.dstAllocData);
+    ASSERT_TRUE(srcFound != dstFound);
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    mockMemoryManager->failLockResource = true;
+
+    returnValue = cmdList.performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, returnValue);
+
+    std::swap(cpuMemCopyInfo.srcAllocData, cpuMemCopyInfo.dstAllocData);
+    returnValue = cmdList.performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, returnValue);
 }
 
 } // namespace ult

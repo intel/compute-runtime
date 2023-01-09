@@ -3131,8 +3131,19 @@ TEST_F(ImmediateEventAllPacketSignalSinglePacketUseTest, givenSignalAllEventPack
     testQueryAllPackets(event.get(), true);
 }
 
-using EventTimestampTest = Test<DeviceFixture>;
-HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyRegionsIsCalledWhenCopyTimeIsLessThanDeviceTimestampResolutionThenReturnTimstampDifferenceAsOne, IsXeHpcCore) {
+struct LocalMemoryEnabledDeviceFixture : public DeviceFixture {
+    void setUp() {
+        DebugManager.flags.EnableLocalMemory.set(1);
+        DeviceFixture::setUp();
+    }
+    void tearDown() {
+        DeviceFixture::tearDown();
+    }
+    DebugManagerStateRestore restore;
+};
+
+using EventTimestampTest = Test<LocalMemoryEnabledDeviceFixture>;
+HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndCopyTimeIsLessThanDeviceTimestampResolutionThenReturnTimstampDifferenceAsOne, IsXeHpcCore) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;

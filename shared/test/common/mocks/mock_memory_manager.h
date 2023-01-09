@@ -91,7 +91,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override {
         lockResourceCalled++;
-        auto pLockedMemory = OsAgnosticMemoryManager::lockResourceImpl(gfxAllocation);
+        void *pLockedMemory = nullptr;
+        if (!failLockResource) {
+            pLockedMemory = OsAgnosticMemoryManager::lockResourceImpl(gfxAllocation);
+        }
         lockResourcePointers.push_back(pLockedMemory);
         return pLockedMemory;
     }
@@ -239,6 +242,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failReserveAddress = false;
     bool failAllocateSystemMemory = false;
     bool failAllocate32Bit = false;
+    bool failLockResource = false;
     bool failSetMemAdvise = false;
     bool setMemPrefetchCalled = false;
     bool cpuCopyRequired = false;

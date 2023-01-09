@@ -357,7 +357,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, &cpuMemCopyInfo.srcAllocData);
     this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, &cpuMemCopyInfo.dstAllocData);
     if (preferCopyThroughLockedPtr(cpuMemCopyInfo)) {
-        return performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
+        ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
+        if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
+            return ret;
+        }
     }
 
     auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size);
@@ -677,6 +680,17 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMSharedAlloc(NEO
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    bool lockingFailed = false;
+    auto srcLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.srcAllocData, const_cast<void *>(cpuMemCopyInfo.srcPtr), lockingFailed);
+    if (lockingFailed) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    auto dstLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.dstAllocData, const_cast<void *>(cpuMemCopyInfo.dstPtr), lockingFailed);
+    if (lockingFailed) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     bool needsBarrier = (numWaitEvents > 0);
     if (needsBarrier) {
         this->appendBarrier(nullptr, numWaitEvents, phWaitEvents);
@@ -693,9 +707,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
     }
-
-    auto srcLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.srcAllocData, const_cast<void *>(cpuMemCopyInfo.srcPtr));
-    auto dstLockPointer = obtainLockedPtrFromDevice(cpuMemCopyInfo.dstAllocData, cpuMemCopyInfo.dstPtr);
 
     const void *cpuMemcpySrcPtr = srcLockPointer ? srcLockPointer : cpuMemCopyInfo.srcPtr;
     void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : cpuMemCopyInfo.dstPtr;
@@ -724,7 +735,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(NEO::SvmAllocationData *allocData, void *ptr) {
+void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(NEO::SvmAllocationData *allocData, void *ptr, bool &lockingFailed) {
     if (!allocData) {
         return nullptr;
     }
@@ -736,6 +747,10 @@ void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(N
 
     if (!alloc->isLocked()) {
         this->device->getDriverHandle()->getMemoryManager()->lockResource(alloc);
+        if (!alloc->isLocked()) {
+            lockingFailed = true;
+            return nullptr;
+        }
     }
 
     auto gpuAddress = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->getGpuAddress();
