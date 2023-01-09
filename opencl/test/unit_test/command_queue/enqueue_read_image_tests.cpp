@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

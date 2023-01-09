@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/command_stream/preemption_mode.h"
-
-#include "sku_info.h"
+#include <cstddef>
+#include <cstdint>
 
 namespace NEO {
+class LinearStream;
+enum PreemptionMode : uint32_t;
+struct HardwareInfo;
+struct RootDeviceEnvironment;
 class Device;
 class GraphicsAllocation;
 struct KernelDescriptor;

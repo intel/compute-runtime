@@ -1,20 +1,16 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/string.h"
-#include "shared/source/image/image_surface_state.h"
-
-#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
-#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
+struct HardwareInfo;
 class Image;
 struct KernelInfo;
 struct SurfaceFormatInfo;

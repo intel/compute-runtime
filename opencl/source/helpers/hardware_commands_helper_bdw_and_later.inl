@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 

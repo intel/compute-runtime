@@ -16,6 +16,8 @@ using Family = NEO::Gen9Family;
 #include "shared/source/command_container/encode_compute_mode_bdw_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"
 
+#include "stream_properties.inl"
+
 namespace NEO {
 template <>
 void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@
 #include <cstdint>
 #include <map>
 #include <mutex>
-#include <set>
 #include <shared_mutex>
 
 namespace NEO {

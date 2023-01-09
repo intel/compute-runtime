@@ -16,6 +16,7 @@
 
 #include "opencl/source/helpers/cl_helper.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

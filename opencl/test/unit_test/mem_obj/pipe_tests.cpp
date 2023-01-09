@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 

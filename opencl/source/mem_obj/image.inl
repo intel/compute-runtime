@@ -18,6 +18,7 @@
 
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 
 #include "image_ext.inl"

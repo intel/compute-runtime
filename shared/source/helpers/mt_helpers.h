@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #pragma once
 
 #include <atomic>
-#include <thread>
 
 namespace NEO {
 namespace MultiThreadHelpers {

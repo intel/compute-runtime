@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mem_obj/image_compression_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

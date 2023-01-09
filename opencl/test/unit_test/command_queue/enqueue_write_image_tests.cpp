@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
