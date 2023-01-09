@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,9 +52,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
 
     auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
+    auto &gfxcoreHelper = this->getHelper<GfxCoreHelper>();
 
     uint32_t expectedValue = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
-        GfxCoreHelperHw<FamilyType>::get().computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize));
+        gfxcoreHelper.computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize));
 
     EXPECT_EQ(expectedValue, idd.getSharedLocalMemorySize());
 }

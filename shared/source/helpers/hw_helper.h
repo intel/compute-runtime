@@ -91,8 +91,8 @@ class GfxCoreHelper {
     virtual bool isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const = 0;
     virtual uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const = 0;
     virtual uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const = 0;
-    virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
-    virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) = 0;
+    virtual uint32_t alignSlmSize(uint32_t slmSize) const = 0;
+    virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const = 0;
 
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const = 0;
@@ -270,9 +270,9 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const override;
 
-    uint32_t alignSlmSize(uint32_t slmSize) override;
+    uint32_t alignSlmSize(uint32_t slmSize) const override;
 
-    uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) override;
+    uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const override;
 
     static AuxTranslationMode getAuxTranslationMode(const HardwareInfo &hwInfo);
 

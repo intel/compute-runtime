@@ -102,8 +102,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        kernelDescriptor.kernelAttributes.barrierCount,
                                                        hwInfo);
 
+    auto &gfxCoreHelper = args.device->getGfxCoreHelper();
+
     auto slmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(
-        GfxCoreHelperHw<Family>::get().computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
+        gfxCoreHelper.computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
 
     if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
         slmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(DebugManager.flags.OverrideSlmAllocationSize.get());
@@ -291,7 +293,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, *args.device, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired);
 
-    EncodeDispatchKernel<Family>::appendAdditionalIDDFields(&idd, hwInfo, threadsPerThreadGroup,
+    EncodeDispatchKernel<Family>::appendAdditionalIDDFields(&idd, args.device->getRootDeviceEnvironment(), threadsPerThreadGroup,
                                                             args.dispatchInterface->getSlmTotalSize(),
                                                             args.dispatchInterface->getSlmPolicy());
 

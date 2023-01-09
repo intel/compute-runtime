@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ typedef Gen8Family Family;
 static uint32_t slmSizeId[] = {0, 1, 2, 4, 4, 8, 8, 8, 8, 16, 16, 16, 16, 16, 16, 16};
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) const {
     if (slmSize == 0u) {
         return 0u;
     }
@@ -30,7 +30,7 @@ uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
     slmSize += (4 * KB - 1);
     slmSize = slmSize >> 12;
     slmSize = std::min(slmSize, 15u);

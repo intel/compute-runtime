@@ -124,9 +124,9 @@ HWTEST2_F(CommandEncodeStatesTestHpc, GivenVariousSlmTotalSizesAndSettingRevIDTo
     for (auto rev : revs) {
         hwInfo.platform.usRevId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
         if ((hwInfo.platform.eProductFamily == IGFX_PVC) && (rev == REVISION_A0)) {
-            verifyPreferredSlmValues<FamilyType>(valuesToTestForPvcAStep, hwInfo);
+            verifyPreferredSlmValues<FamilyType>(valuesToTestForPvcAStep, pDevice->getRootDeviceEnvironment());
         } else {
-            verifyPreferredSlmValues<FamilyType>(valuesToTest, hwInfo);
+            verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
         }
     }
 }

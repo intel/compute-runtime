@@ -148,7 +148,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     productHelper.updateIddCommand(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                    kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
-    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, hardwareInfo, threadsPerThreadGroup,
+    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, device.getRootDeviceEnvironment(), threadsPerThreadGroup,
                                                                slmTotalSize, SlmPolicy::SlmPolicyNone);
 
     interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
@@ -161,8 +161,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
 
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto programmableIDSLMSize =
-        static_cast<SHARED_LOCAL_MEMORY_SIZE>(GfxCoreHelperHw<GfxFamily>::get().computeSlmValues(hardwareInfo, slmTotalSize));
+        static_cast<SHARED_LOCAL_MEMORY_SIZE>(gfxCoreHelper.computeSlmValues(hardwareInfo, slmTotalSize));
 
     if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
         programmableIDSLMSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(DebugManager.flags.OverrideSlmAllocationSize.get());

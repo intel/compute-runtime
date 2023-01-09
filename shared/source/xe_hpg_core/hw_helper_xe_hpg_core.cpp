@@ -126,7 +126,7 @@ bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t si
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     auto slmValue = std::max(slmSize, 1024u);

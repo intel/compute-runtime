@@ -97,9 +97,9 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesAndSettin
     for (auto rev : revs) {
         hwInfo.platform.usRevId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
         if ((hwInfo.platform.eProductFamily == IGFX_DG2) && (rev == REVISION_A0)) {
-            verifyPreferredSlmValues<FamilyType>(valuesToTestForDg2AStep, hwInfo);
+            verifyPreferredSlmValues<FamilyType>(valuesToTestForDg2AStep, pDevice->getRootDeviceEnvironment());
         } else {
-            verifyPreferredSlmValues<FamilyType>(valuesToTest, hwInfo);
+            verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
         }
     }
 }
@@ -119,7 +119,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
             {32 * KB, debugOverrideValue},
             {64 * KB, debugOverrideValue},
         };
-        verifyPreferredSlmValues<FamilyType>(valuesToTest, hardwareInfo);
+        verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
     }
 }
 

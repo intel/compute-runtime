@@ -56,6 +56,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto pImplicitArgs = args.dispatchInterface->getImplicitArgs();
 
     const HardwareInfo &hwInfo = args.device->getHardwareInfo();
+    auto &gfxCoreHelper = args.device->getGfxCoreHelper();
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
 
@@ -84,7 +85,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        kernelDescriptor.kernelAttributes.barrierCount,
                                                        hwInfo);
     auto slmSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
-        GfxCoreHelperHw<Family>::get().computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
+        gfxCoreHelper.computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
     idd.setSharedLocalMemorySize(slmSize);
 
     uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
@@ -375,7 +376,7 @@ template <typename Family>
 inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
+void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
 
 template <typename Family>
 inline void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {

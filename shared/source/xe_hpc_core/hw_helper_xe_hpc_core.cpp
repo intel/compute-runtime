@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -283,7 +283,7 @@ std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) c
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) const {
     const uint32_t alignedSlmSizes[] = {
         0u,
         1u * KB,
@@ -310,7 +310,7 @@ uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
     if (slmSize == 0u) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;

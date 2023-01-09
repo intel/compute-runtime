@@ -418,7 +418,7 @@ bool GfxCoreHelperHw<GfxFamily>::isLinearStoragePreferred(bool isSharedContext, 
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) const {
     if (slmSize == 0u) {
         return 0u;
     }
@@ -429,7 +429,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<GfxFamily>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
     auto value = std::max(slmSize, 1024u);
     value = Math::nextPowerOfTwo(value);
     value = Math::getMinLsbSet(value);

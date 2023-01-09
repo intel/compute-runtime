@@ -1076,51 +1076,51 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlmSiz
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto hwInfo = *defaultHwInfo;
-
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     if (::renderCoreFamily == IGFX_GEN8_CORE) {
-        EXPECT_EQ(0u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 0));
-        EXPECT_EQ(1u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1));
-        EXPECT_EQ(1u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1024));
-        EXPECT_EQ(1u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1025));
-        EXPECT_EQ(1u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 2048));
-        EXPECT_EQ(1u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 2049));
-        EXPECT_EQ(1u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 4096));
-        EXPECT_EQ(2u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 4097));
-        EXPECT_EQ(2u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 8192));
-        EXPECT_EQ(4u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 8193));
-        EXPECT_EQ(4u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 12288));
-        EXPECT_EQ(4u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 16384));
-        EXPECT_EQ(8u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 16385));
-        EXPECT_EQ(8u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 24576));
-        EXPECT_EQ(8u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 32768));
-        EXPECT_EQ(16u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 32769));
-        EXPECT_EQ(16u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 49152));
-        EXPECT_EQ(16u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 65535));
-        EXPECT_EQ(16u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 65536));
+        EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0));
+        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1));
+        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1024));
+        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1025));
+        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 2048));
+        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 2049));
+        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 4096));
+        EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 4097));
+        EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 8192));
+        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 8193));
+        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 12288));
+        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 16384));
+        EXPECT_EQ(8u, gfxCoreHelper.computeSlmValues(hwInfo, 16385));
+        EXPECT_EQ(8u, gfxCoreHelper.computeSlmValues(hwInfo, 24576));
+        EXPECT_EQ(8u, gfxCoreHelper.computeSlmValues(hwInfo, 32768));
+        EXPECT_EQ(16u, gfxCoreHelper.computeSlmValues(hwInfo, 32769));
+        EXPECT_EQ(16u, gfxCoreHelper.computeSlmValues(hwInfo, 49152));
+        EXPECT_EQ(16u, gfxCoreHelper.computeSlmValues(hwInfo, 65535));
+        EXPECT_EQ(16u, gfxCoreHelper.computeSlmValues(hwInfo, 65536));
     } else {
-        EXPECT_EQ(0u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 0));
-        EXPECT_EQ(1u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1));
-        EXPECT_EQ(1u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1024));
-        EXPECT_EQ(2u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1025));
-        EXPECT_EQ(2u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 2048));
-        EXPECT_EQ(3u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 2049));
-        EXPECT_EQ(3u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 4096));
-        EXPECT_EQ(4u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 4097));
-        EXPECT_EQ(4u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 8192));
-        EXPECT_EQ(5u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 8193));
-        EXPECT_EQ(5u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 16384));
-        EXPECT_EQ(6u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 16385));
-        EXPECT_EQ(6u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 32768));
-        EXPECT_EQ(7u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 32769));
-        EXPECT_EQ(7u, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 65536));
+        EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0));
+        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1));
+        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1024));
+        EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 1025));
+        EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 2048));
+        EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 2049));
+        EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 4096));
+        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 4097));
+        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 8192));
+        EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 8193));
+        EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 16384));
+        EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 16385));
+        EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 32768));
+        EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 32769));
+        EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 65536));
     }
 }
 
 HWTEST_F(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     using SHARED_LOCAL_MEMORY_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
     auto hwInfo = *defaultHwInfo;
-
-    auto receivedSlmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 0));
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto receivedSlmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(gfxCoreHelper.computeSlmValues(hwInfo, 0));
     EXPECT_EQ(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K, receivedSlmSize);
 }
 

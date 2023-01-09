@@ -144,8 +144,8 @@ MTLTEST_F(GfxCoreHelperTestMtl, givenMtlWhenSetForceNonCoherentThenNothingChange
 
 MTLTEST_F(GfxCoreHelperTestMtl, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto hardwareInfo = *defaultHwInfo;
-
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     for (auto &testInput : computeSlmValuesXeHPAndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hardwareInfo, testInput.slmSize));
+        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hardwareInfo, testInput.slmSize));
     }
 }
