@@ -35,15 +35,7 @@ PVCTEST_F(PvcProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
 }
 
 PVCTEST_F(PvcProductHelperLinux, WhenGetSvmCpuAlignmentThenProperValueIsReturned) {
-    DebugManagerStateRestore restorer;
-    {
-        DebugManager.flags.NEO_CAL_ENABLED.set(true);
-        EXPECT_EQ(MemoryConstants::pageSize64k, productHelper->getSvmCpuAlignment());
-    }
-    {
-        DebugManager.flags.NEO_CAL_ENABLED.set(false);
-        EXPECT_EQ(MemoryConstants::pageSize2Mb, productHelper->getSvmCpuAlignment());
-    }
+    EXPECT_EQ(MemoryConstants::pageSize64k, productHelper->getSvmCpuAlignment());
 }
 
 PVCTEST_F(PvcProductHelperLinux, given57bAddressSpaceWhenConfiguringHwInfoThenSetFtrFlag) {

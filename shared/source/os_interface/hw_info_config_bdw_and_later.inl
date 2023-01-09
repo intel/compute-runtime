@@ -75,9 +75,4 @@ bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
     return true;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
-    return MemoryConstants::pageSize2Mb;
-}
-
 } // namespace NEO

@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-
 #include "aubstream/product_family.h"
 
 namespace NEO {
@@ -163,11 +161,6 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const Hardwar
     }
 
     return false;
-}
-
-template <>
-size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
-    return DebugManager.flags.NEO_CAL_ENABLED.get() ? MemoryConstants::pageSize64k : MemoryConstants::pageSize2Mb;
 }
 
 template <>

@@ -342,7 +342,12 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
         }
     }
 
-    auto drmAllocation = createAllocWithAlignment(allocationData, cSize, cAlignment, alignedStorageSize, alignedGpuAddress);
+    auto mmapAlignment = cAlignment;
+    if (svmCpuAllocation && alignedStorageSize >= 2 * MemoryConstants::megaByte) {
+        mmapAlignment = MemoryConstants::pageSize2Mb;
+    }
+
+    auto drmAllocation = createAllocWithAlignment(allocationData, cSize, mmapAlignment, alignedStorageSize, alignedGpuAddress);
     if (drmAllocation != nullptr) {
         drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAddressRangeSize);
     }

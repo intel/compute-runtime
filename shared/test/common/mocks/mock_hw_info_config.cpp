@@ -339,11 +339,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isMatrixMultiplyAccumulateSupported(const Ha
 }
 
 template <>
-size_t ProductHelperHw<IGFX_UNKNOWN>::getSvmCpuAlignment() const {
-    return MemoryConstants::pageSize64k;
-}
-
-template <>
 void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {
 }
 
