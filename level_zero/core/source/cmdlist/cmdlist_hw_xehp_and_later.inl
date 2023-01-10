@@ -294,16 +294,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (l3FlushEnable) {
             programEventL3Flush<gfxCoreFamily>(event, this->device, partitionCount, commandContainer);
         }
-        if (this->signalAllEventPackets && event->getPacketsInUse() < event->getMaxPacketsCount()) {
-            uint32_t packets = event->getMaxPacketsCount() - event->getPacketsInUse();
-            CmdListEventOperation remainingPacketsOperation = estimateEventPostSync(event, packets);
-
-            uint64_t eventAddress = event->getGpuAddress(device) + event->getSinglePacketSize() * event->getPacketsInUse();
-            if (event->isUsingContextEndOffset()) {
-                eventAddress += event->getContextEndOffset();
-            }
-
-            dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED);
+        if (!launchParams.isKernelSplitOperation) {
+            dispatchEventRemainingPacketsPostSyncOperation(event);
         }
     }
 
@@ -452,8 +444,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
                 event->resetKernelCountAndPacketUsedCount();
                 event->zeroKernelCount();
             } else {
-                if (event->getKernelCount() > 1 && getDcFlushRequired(!!event->signalScope)) {
-                    programEventL3Flush<gfxCoreFamily>(event, this->device, this->partitionCount, this->commandContainer);
+                if (event->getKernelCount() > 1) {
+                    if (getDcFlushRequired(!!event->signalScope)) {
+                        programEventL3Flush<gfxCoreFamily>(event, this->device, this->partitionCount, this->commandContainer);
+                    }
+                    dispatchEventRemainingPacketsPostSyncOperation(event);
                 }
             }
         }

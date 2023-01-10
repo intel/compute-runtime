@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -190,6 +190,7 @@ struct TestExpectedValues {
     uint32_t expectedWalkerPostSyncOp = 0;
     uint32_t expectedPostSyncPipeControls = 0;
     uint32_t expectDcFlush = 0;
+    uint32_t expectStoreDataImm = 0;
     bool postSyncAddressZero = false;
     bool workloadPartition = false;
 };

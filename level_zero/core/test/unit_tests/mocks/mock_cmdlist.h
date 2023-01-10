@@ -430,6 +430,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
   public:
     using BaseClass = CommandListCoreFamily<gfxCoreFamily>;
+    using BaseClass::dcFlushSupport;
 
     ADDMETHOD(appendMemoryCopyKernelWithGA, ze_result_t, false, ZE_RESULT_SUCCESS,
               (void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,

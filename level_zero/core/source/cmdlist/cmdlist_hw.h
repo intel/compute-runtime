@@ -304,7 +304,8 @@ struct CommandListCoreFamily : CommandListImp {
     CmdListEventOperation estimateEventPostSync(Event *event, uint32_t operations);
     void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
     void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
-    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value);
+    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope);
+    void dispatchEventRemainingPacketsPostSyncOperation(Event *event);
     void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl);
 
     size_t cmdListCurrentStartOffset = 0;

@@ -2779,16 +2779,37 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuA
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope) {
     decltype(&CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute) dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute;
     if (isCopyOnly()) {
         dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy;
     }
 
-    for (uint32_t i = 0; i < eventOperations.operationCount; i++) {
+    auto operationCount = eventOperations.operationCount;
+    if (useLastPipeControl) {
+        operationCount--;
+    }
+
+    for (uint32_t i = 0; i < operationCount; i++) {
         (this->*dispatchFunction)(gpuAddress, value, eventOperations.workPartitionOperation);
 
         gpuAddress += eventOperations.operationOffset;
+    }
+
+    if (useLastPipeControl) {
+        const auto &hwInfo = this->device->getHwInfo();
+
+        NEO::PipeControlArgs pipeControlArgs;
+        pipeControlArgs.dcFlushEnable = getDcFlushRequired(signalScope);
+        pipeControlArgs.workloadPartitionOffset = eventOperations.workPartitionOperation;
+
+        NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+            *commandContainer.getCommandStream(),
+            NEO::PostSyncMode::ImmediateData,
+            gpuAddress,
+            value,
+            hwInfo,
+            pipeControlArgs);
     }
 }
 
@@ -2808,28 +2829,23 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event 
         gpuAddress += eventPostSync.operationOffset;
         eventPostSync.operationCount--;
     }
-    if (useLastPipeControl) {
-        eventPostSync.operationCount--;
-    }
 
-    dispatchPostSyncCommands(eventPostSync, gpuAddress, value);
+    dispatchPostSyncCommands(eventPostSync, gpuAddress, value, useLastPipeControl, !!event->signalScope);
+}
 
-    if (useLastPipeControl) {
-        const auto &hwInfo = this->device->getHwInfo();
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSyncOperation(Event *event) {
+    if (this->signalAllEventPackets && event->getPacketsInUse() < event->getMaxPacketsCount()) {
+        uint32_t packets = event->getMaxPacketsCount() - event->getPacketsInUse();
+        CmdListEventOperation remainingPacketsOperation = estimateEventPostSync(event, packets);
 
-        NEO::PipeControlArgs pipeControlArgs;
-        pipeControlArgs.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
-        pipeControlArgs.workloadPartitionOffset = eventPostSync.workPartitionOperation;
+        uint64_t eventAddress = event->getGpuAddress(device) + event->getSinglePacketSize() * event->getPacketsInUse();
+        if (event->isUsingContextEndOffset()) {
+            eventAddress += event->getContextEndOffset();
+        }
 
-        gpuAddress += eventPostSync.operationCount * eventPostSync.operationOffset;
-
-        NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-            *commandContainer.getCommandStream(),
-            NEO::PostSyncMode::ImmediateData,
-            gpuAddress,
-            value,
-            hwInfo,
-            pipeControlArgs);
+        bool appendLastPipeControl = false;
+        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, !!event->signalScope);
     }
 }
 
