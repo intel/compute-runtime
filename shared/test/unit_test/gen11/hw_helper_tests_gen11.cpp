@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/gen11/hw_cmds.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 
 using GfxCoreHelperTestGen11 = GfxCoreHelperTest;
 
@@ -31,7 +31,12 @@ GEN11TEST_F(GfxCoreHelperTestGen11, WhenAdjustingDefaultEngineTypeThenEngineType
 }
 
 GEN11TEST_F(GfxCoreHelperTestGen11, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
-    whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(pDevice->getHardwareInfo());
+    EXPECT_EQ(3u, gpgpuEngines.size());
+    EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[2].first);
     EXPECT_EQ(3u, pDevice->allEngines.size());
 }
 

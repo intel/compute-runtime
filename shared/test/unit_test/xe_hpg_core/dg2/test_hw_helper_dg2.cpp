@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -20,10 +21,12 @@ DG2TEST_F(GfxCoreHelperTestDg2, GivenDifferentSteppingWhenComputeSlmSizeIsCalled
     using SHARED_LOCAL_MEMORY_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     __REVID revisions[] = {REVISION_A0, REVISION_B};
-    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+
     const auto &productHelper = *ProductHelper::get(productFamily);
 
-    auto hwInfo = *defaultHwInfo;
+    auto hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
         for (auto &testInput : computeSlmValuesXeHPAndLaterTestsInput) {

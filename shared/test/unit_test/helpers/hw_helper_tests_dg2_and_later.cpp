@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,9 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CacheP
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(GfxCoreHelperHw<FamilyType>::get());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(gfxCoreHelper);
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = true;
@@ -38,8 +40,9 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStat
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-
-    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(GfxCoreHelperHw<FamilyType>::get());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(gfxCoreHelper);
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = true;
@@ -50,8 +53,9 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStat
 HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsNotSet, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-
-    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(GfxCoreHelperHw<FamilyType>::get());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(gfxCoreHelper);
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = false;
     helper.setL1CachePolicy(useL1Cache, &surfaceState, defaultHwInfo.get());

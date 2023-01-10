@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,7 +25,6 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/flattened_id_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_shared_tests.cpp
