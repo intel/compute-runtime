@@ -8,13 +8,13 @@
 #if SUPPORT_XE_HPC_CORE
 #ifdef SUPPORT_PVC
 DEVICE(0x0BD0, PvcHwConfig)
-DEVICE(0x0BD5, PvcHwConfig)
-DEVICE(0x0BD6, PvcHwConfig)
-DEVICE(0x0BD7, PvcHwConfig)
-DEVICE(0x0BD8, PvcHwConfig)
-DEVICE(0x0BD9, PvcHwConfig)
-DEVICE(0x0BDA, PvcHwConfig)
-DEVICE(0x0BDB, PvcHwConfig)
+NAMEDDEVICE(0x0BD5, PvcHwConfig, "Intel(R) Data Center GPU Max 1550")
+NAMEDDEVICE(0x0BD6, PvcHwConfig, "Intel(R) Data Center GPU Max 1550")
+NAMEDDEVICE(0x0BD7, PvcHwConfig, "Intel(R) Data Center GPU Max 1350")
+NAMEDDEVICE(0x0BD8, PvcHwConfig, "Intel(R) Data Center GPU Max 1350")
+NAMEDDEVICE(0x0BD9, PvcHwConfig, "Intel(R) Data Center GPU Max 1100")
+NAMEDDEVICE(0x0BDA, PvcHwConfig, "Intel(R) Data Center GPU Max 1100")
+NAMEDDEVICE(0x0BDB, PvcHwConfig, "Intel(R) Data Center GPU Max 1100")
 #endif
 #endif
 
@@ -55,8 +55,8 @@ NAMEDDEVICE(0x56A1, Dg2HwConfig, "Intel(R) Arc(TM) A750 Graphics")
 NAMEDDEVICE(0x56A2, Dg2HwConfig, "Intel(R) Arc(TM) A580 Graphics")
 NAMEDDEVICE(0x56A5, Dg2HwConfig, "Intel(R) Arc(TM) A380 Graphics")
 NAMEDDEVICE(0x56A6, Dg2HwConfig, "Intel(R) Arc(TM) A310 Graphics")
-NAMEDDEVICE(0x56C0, Dg2HwConfig, "Intel(R) Data Center GPU Flex Series 170")
-NAMEDDEVICE(0x56C1, Dg2HwConfig, "Intel(R) Data Center GPU Flex Series 140")
+NAMEDDEVICE(0x56C0, Dg2HwConfig, "Intel(R) Data Center GPU Flex 170")
+NAMEDDEVICE(0x56C1, Dg2HwConfig, "Intel(R) Data Center GPU Flex 140")
 #endif
 #endif
 
