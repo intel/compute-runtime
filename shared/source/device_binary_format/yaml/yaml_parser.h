@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -473,7 +473,7 @@ struct YamlParser {
         return (0U == nodes.size());
     }
 
-    const Node *getRoot() {
+    const Node *getRoot() const {
         return &nodes[0];
     }
 
