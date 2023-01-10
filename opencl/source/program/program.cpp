@@ -22,6 +22,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"

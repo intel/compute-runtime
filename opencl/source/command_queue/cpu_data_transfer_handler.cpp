@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
 
 #include "opencl/source/command_queue/command_queue.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/device/device.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace {
 struct ReusableAllocationRequirements {

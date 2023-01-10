@@ -26,6 +26,7 @@
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/sharing_factory.h"

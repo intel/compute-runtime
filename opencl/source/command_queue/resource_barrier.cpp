@@ -14,6 +14,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_validators.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
 BarrierCommand::BarrierCommand(CommandQueue *commandQueue, const cl_resource_barrier_descriptor_intel *descriptors, uint32_t numDescriptors) : numSurfaces(numDescriptors) {

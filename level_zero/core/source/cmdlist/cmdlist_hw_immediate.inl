@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"

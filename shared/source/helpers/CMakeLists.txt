@@ -51,6 +51,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enable_product.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h

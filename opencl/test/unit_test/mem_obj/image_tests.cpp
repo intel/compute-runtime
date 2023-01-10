@@ -21,6 +21,7 @@
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"

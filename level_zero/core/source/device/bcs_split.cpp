@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/core/source/device/bcs_split.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 

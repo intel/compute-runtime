@@ -32,6 +32,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/lookup_array.h"
 

@@ -6,29 +6,30 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/copy_engine_state.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/task_information.h"
 
 #include <atomic>
 #include <cstdint>
 #include <vector>
 
 namespace NEO {
+class Command;
+class TagNodeBase;
+class FlushStampTracker;
 template <typename TagType>
 class TagNode;
 class CommandQueue;
 class Context;
 class Device;
 class TimestampPacketContainer;
+enum class WaitStatus;
 
 template <>
 struct OpenCLObjectMapper<_cl_event> {
@@ -140,11 +141,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     static cl_int waitForEvents(cl_uint numEvents,
                                 const cl_event *eventList);
 
-    void setCommand(std::unique_ptr<Command> newCmd) {
-        UNRECOVERABLE_IF(cmdToSubmit.load());
-        cmdToSubmit.exchange(newCmd.release());
-        eventWithoutCommand = false;
-    }
+    void setCommand(std::unique_ptr<Command> newCmd);
+
     Command *peekCommand() {
         return cmdToSubmit;
     }

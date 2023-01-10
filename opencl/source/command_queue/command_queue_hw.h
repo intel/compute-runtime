@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"

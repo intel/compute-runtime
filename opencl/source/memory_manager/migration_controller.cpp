@@ -14,6 +14,7 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 

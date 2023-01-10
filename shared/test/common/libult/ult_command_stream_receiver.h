@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/surface.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_experimental_command_buffer.h"

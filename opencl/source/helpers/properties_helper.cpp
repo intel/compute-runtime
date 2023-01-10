@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/helpers/mipmap.h"

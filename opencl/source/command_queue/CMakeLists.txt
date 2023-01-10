@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,6 +15,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cpu_data_transfer_handler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/csr_selection_args.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_selection_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_barrier.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_common.h

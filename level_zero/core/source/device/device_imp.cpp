@@ -30,6 +30,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"

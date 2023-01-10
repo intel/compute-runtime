@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/performance_counters.h"
+#include "shared/source/utilities/reference_tracked_object.h"
 
 namespace NEO {
 class BindlessHeapsHelper;

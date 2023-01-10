@@ -5,6 +5,8 @@
  *
  */
 
+#include "opencl/source/mem_obj/buffer.h"
+
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"

@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 namespace NEO {

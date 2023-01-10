@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/surface.h"
 
