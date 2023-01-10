@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,11 +63,6 @@ class Sampler : public BaseObject<_cl_sampler> {
             float lodMin,
             float lodMax);
 
-    Sampler(Context *context,
-            cl_bool normalizedCoordinates,
-            cl_addressing_mode addressingMode,
-            cl_filter_mode filterMode);
-
     unsigned int getSnapWaValue() const;
 
     cl_context context;
@@ -100,13 +95,6 @@ struct SamplerHw : public Sampler {
               float lodMax)
         : Sampler(context, normalizedCoordinates, addressingMode, filterMode,
                   mipFilterMode, lodMin, lodMax) {
-    }
-
-    SamplerHw(Context *context,
-              cl_bool normalizedCoordinates,
-              cl_addressing_mode addressingMode,
-              cl_filter_mode filterMode)
-        : Sampler(context, normalizedCoordinates, addressingMode, filterMode) {
     }
 
     static Sampler *create(Context *context,

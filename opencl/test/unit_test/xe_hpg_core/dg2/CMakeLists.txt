@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,7 +15,6 @@ if(TESTS_DG2)
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/buffer_pool_alloc_tests_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_dg2.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_device_caps_dg2.cpp
   )

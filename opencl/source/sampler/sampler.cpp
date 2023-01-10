@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,14 +28,6 @@ Sampler::Sampler(Context *context, cl_bool normalizedCoordinates,
     : context(context), normalizedCoordinates(normalizedCoordinates),
       addressingMode(addressingMode), filterMode(filterMode),
       mipFilterMode(mipFilterMode), lodMin(lodMin), lodMax(lodMax) {
-}
-
-Sampler::Sampler(Context *context,
-                 cl_bool normalizedCoordinates,
-                 cl_addressing_mode addressingMode,
-                 cl_filter_mode filterMode)
-    : Sampler(context, normalizedCoordinates, addressingMode, filterMode,
-              CL_FILTER_NEAREST, 0.0f, std::numeric_limits<float>::max()) {
 }
 
 Sampler *Sampler::create(Context *context, cl_bool normalizedCoordinates,

@@ -20,7 +20,9 @@ void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwa
 
     auto isMirrorAddressMode = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR == samplerState->getTcxAddressControlMode();
     auto isNearestFilter = SAMPLER_STATE::MIN_MODE_FILTER_NEAREST == samplerState->getMinModeFilter();
-    if (isNearestFilter && isMirrorAddressMode && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo, *this)) {
+    auto isWorkaroundRequired = (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo, *this)) ||
+                                (DG2::isG11(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this));
+    if (isNearestFilter && isMirrorAddressMode && isWorkaroundRequired) {
         samplerState->setRAddressMinFilterRoundingEnable(true);
         samplerState->setRAddressMagFilterRoundingEnable(true);
     }
