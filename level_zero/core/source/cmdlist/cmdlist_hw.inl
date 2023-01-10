@@ -380,10 +380,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
     auto event = Event::fromHandle(hEvent);
 
-    uint64_t baseAddr = event->getGpuAddress(this->device);
-    uint32_t packetsToReset = event->getPacketsInUse();
-    bool appendPipeControlWithPostSync = false;
-
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -395,65 +391,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
-    if (event->isUsingContextEndOffset()) {
-        baseAddr += event->getContextEndOffset();
-    }
-
-    if (event->isEventTimestampFlagSet()) {
-        packetsToReset = event->getMaxPacketsCount();
-    }
     event->resetPackets(false);
     event->disableHostCaching(this->cmdListType == CommandList::CommandListType::TYPE_REGULAR);
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
-    const auto &hwInfo = this->device->getHwInfo();
-    if (isCopyOnly()) {
-        NEO::MiFlushArgs args;
-        args.commandWithPostSync = true;
-        for (uint32_t i = 0u; i < packetsToReset; i++) {
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
-                                                              baseAddr,
-                                                              Event::STATE_CLEARED, args, hwInfo);
-            baseAddr += event->getSinglePacketSize();
-        }
-        if ((this->signalAllEventPackets) && (packetsToReset < event->getMaxPacketsCount())) {
-            setRemainingEventPackets(event, Event::STATE_CLEARED);
-        }
-    } else {
-        bool applyScope = event->signalScope;
-        uint32_t packetsToResetUsingSdi = packetsToReset;
-        if (applyScope || event->isEventTimestampFlagSet()) {
-            UNRECOVERABLE_IF(packetsToReset == 0);
-            packetsToResetUsingSdi = packetsToReset - 1;
-            appendPipeControlWithPostSync = true;
-        }
 
-        for (uint32_t i = 0u; i < packetsToResetUsingSdi; i++) {
-            NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
-                *commandContainer.getCommandStream(),
-                baseAddr,
-                Event::STATE_CLEARED,
-                0u,
-                false,
-                false);
-            baseAddr += event->getSinglePacketSize();
-        }
+    // default state of event is single packet, handle case when reset is used 1st, launchkernel 2nd - just reset all packets then, use max
+    bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
 
-        if ((this->signalAllEventPackets) && (packetsToReset < event->getMaxPacketsCount())) {
-            setRemainingEventPackets(event, Event::STATE_CLEARED);
-        }
+    bool appendPipeControlWithPostSync = (!isCopyOnly()) && (!!event->signalScope || event->isEventTimestampFlagSet());
+    dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync);
 
-        if (appendPipeControlWithPostSync) {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
-            NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-                *commandContainer.getCommandStream(),
-                NEO::PostSyncMode::ImmediateData,
-                baseAddr,
-                Event::STATE_CLEARED,
-                hwInfo,
-                args);
-        }
-
+    if (!isCopyOnly()) {
         if (this->partitionCount > 1) {
             appendMultiTileBarrier(*neoDevice);
         }
@@ -1847,38 +1795,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
     } else {
         event->resetKernelCountAndPacketUsedCount();
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
-        uint64_t baseAddr = event->getGpuAddress(this->device);
-        if (event->isUsingContextEndOffset()) {
-            baseAddr += event->getContextEndOffset();
-        }
 
-        const auto &hwInfo = this->device->getHwInfo();
-        if (isCopyOnly()) {
-            NEO::MiFlushArgs args;
-            args.commandWithPostSync = true;
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), baseAddr, Event::STATE_SIGNALED,
-                                                              args, hwInfo);
-            if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
-                setRemainingEventPackets(event, Event::STATE_SIGNALED);
-            }
-        } else {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
-            if (this->partitionCount > 1) {
-                args.workloadPartitionOffset = true;
-                event->setPacketsInUse(this->partitionCount);
-            }
-            if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
-                setRemainingEventPackets(event, Event::STATE_SIGNALED);
-            }
-            NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-                *commandContainer.getCommandStream(),
-                NEO::PostSyncMode::ImmediateData,
-                baseAddr,
-                Event::STATE_SIGNALED,
-                hwInfo,
-                args);
-        }
+        event->setPacketsInUse(this->partitionCount);
+        dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, !isCopyOnly());
     }
 }
 
@@ -1895,9 +1814,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
         NEO::MiFlushArgs args;
         const auto &hwInfo = this->device->getHwInfo();
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, hwInfo);
-        if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
-            setRemainingEventPackets(event, Event::STATE_SIGNALED);
-        }
+        dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false);
     }
     appendWriteKernelTimestamp(event, beforeWalker, false, false);
 }
@@ -2017,7 +1934,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     event->resetKernelCountAndPacketUsedCount();
 
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
-    uint64_t baseAddr = event->getGpuAddress(this->device);
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -2028,53 +1944,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
             ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
-    size_t eventSignalOffset = 0;
 
-    if (event->isUsingContextEndOffset()) {
-        eventSignalOffset = event->getContextEndOffset();
-    }
-
-    const auto &hwInfo = this->device->getHwInfo();
-    if (isCopyOnly()) {
-        NEO::MiFlushArgs args;
-        args.commandWithPostSync = true;
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset),
-                                                          Event::STATE_SIGNALED, args, hwInfo);
-
-        if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
-            setRemainingEventPackets(event, Event::STATE_SIGNALED);
-        }
-    } else {
-        NEO::PipeControlArgs args;
-        bool applyScope = !!event->signalScope;
-        args.dcFlushEnable = getDcFlushRequired(applyScope);
-        if (this->partitionCount > 1) {
-            event->setPacketsInUse(this->partitionCount);
-            args.workloadPartitionOffset = true;
-        }
-
-        if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
-            setRemainingEventPackets(event, Event::STATE_SIGNALED);
-        }
-
-        if (applyScope || event->isEventTimestampFlagSet()) {
-            NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-                *commandContainer.getCommandStream(),
-                NEO::PostSyncMode::ImmediateData,
-                ptrOffset(baseAddr, eventSignalOffset),
-                Event::STATE_SIGNALED,
-                hwInfo,
-                args);
-        } else {
-            NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
-                *commandContainer.getCommandStream(),
-                ptrOffset(baseAddr, eventSignalOffset),
-                Event::STATE_SIGNALED,
-                0u,
-                false,
-                args.workloadPartitionOffset);
-        }
-    }
+    event->setPacketsInUse(this->partitionCount);
+    bool appendPipeControlWithPostSync = (!isCopyOnly()) && (!!event->signalScope || event->isEventTimestampFlagSet());
+    dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
@@ -2232,9 +2105,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             bool workloadPartition = setupTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, beforeWalker, true, workloadPartition);
         } else {
-            if (this->signalAllEventPackets && (event->getPacketsInUse() < event->getMaxPacketsCount())) {
-                setRemainingEventPackets(event, Event::STATE_SIGNALED);
-            }
+            dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false);
 
             const auto &hwInfo = this->device->getHwInfo();
             NEO::PipeControlArgs args;
@@ -2844,56 +2715,6 @@ void CommandListCoreFamily<gfxCoreFamily>::allocateKernelPrivateMemoryIfNeeded(K
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::setRemainingEventPackets(Event *event, uint32_t value) {
-    uint32_t packetUsed = event->getPacketsInUse();
-    uint32_t packetsRemaining = event->getMaxPacketsCount() - packetUsed;
-    if (packetsRemaining == 0) {
-        return;
-    }
-
-    uint64_t gpuAddress = event->getGpuAddress(this->device);
-    size_t packetSize = event->getSinglePacketSize();
-    gpuAddress += packetSize * packetUsed;
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
-
-    uint32_t operationsRemaining = packetsRemaining;
-    size_t operationOffset = packetSize;
-    bool partitionEnabled = false;
-
-    if ((this->partitionCount > 1) && (packetsRemaining % this->partitionCount == 0)) {
-        operationsRemaining = operationsRemaining / this->partitionCount;
-        operationOffset = operationOffset * this->partitionCount;
-        partitionEnabled = true;
-    }
-
-    for (uint32_t i = 0; i < operationsRemaining; i++) {
-        if (isCopyOnly()) {
-            const auto &hwInfo = this->device->getHwInfo();
-            NEO::MiFlushArgs args;
-            args.commandWithPostSync = true;
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(
-                *commandContainer.getCommandStream(),
-                gpuAddress,
-                value,
-                args,
-                hwInfo);
-        } else {
-            NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
-                *commandContainer.getCommandStream(),
-                gpuAddress,
-                value,
-                0u,
-                false,
-                partitionEnabled);
-        }
-
-        gpuAddress += operationOffset;
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::waitOnRemainingEventPackets(Event *event) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
@@ -2916,6 +2737,99 @@ void CommandListCoreFamily<gfxCoreFamily>::waitOnRemainingEventPackets(Event *ev
                                                                    Event::STATE_CLEARED,
                                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         gpuAddress += packetSize;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+CmdListEventOperation CommandListCoreFamily<gfxCoreFamily>::estimateEventPostSync(Event *event, uint32_t operations) {
+    CmdListEventOperation ret;
+
+    UNRECOVERABLE_IF(operations & (this->partitionCount - 1));
+
+    ret.operationCount = operations / this->partitionCount;
+    ret.operationOffset = event->getSinglePacketSize() * this->partitionCount;
+    ret.workPartitionOperation = this->partitionCount > 1;
+
+    return ret;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition) {
+    const auto &hwInfo = this->device->getHwInfo();
+
+    NEO::MiFlushArgs miFlushArgs;
+    miFlushArgs.commandWithPostSync = true;
+    NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(
+        *commandContainer.getCommandStream(),
+        gpuAddress,
+        value,
+        miFlushArgs,
+        hwInfo);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition) {
+    NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
+        *commandContainer.getCommandStream(),
+        gpuAddress,
+        value,
+        0u,
+        false,
+        workloadPartition);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value) {
+    decltype(&CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute) dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute;
+    if (isCopyOnly()) {
+        dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy;
+    }
+
+    for (uint32_t i = 0; i < eventOperations.operationCount; i++) {
+        (this->*dispatchFunction)(gpuAddress, value, eventOperations.workPartitionOperation);
+
+        gpuAddress += eventOperations.operationOffset;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl) {
+    uint32_t packets = event->getPacketsInUse();
+    if (this->signalAllEventPackets || useMax) {
+        packets = event->getMaxPacketsCount();
+    }
+    auto eventPostSync = estimateEventPostSync(event, packets);
+
+    uint64_t gpuAddress = event->getGpuAddress(this->device);
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
+    if (omitFirstOperation) {
+        gpuAddress += eventPostSync.operationOffset;
+        eventPostSync.operationCount--;
+    }
+    if (useLastPipeControl) {
+        eventPostSync.operationCount--;
+    }
+
+    dispatchPostSyncCommands(eventPostSync, gpuAddress, value);
+
+    if (useLastPipeControl) {
+        const auto &hwInfo = this->device->getHwInfo();
+
+        NEO::PipeControlArgs pipeControlArgs;
+        pipeControlArgs.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
+        pipeControlArgs.workloadPartitionOffset = eventPostSync.workPartitionOperation;
+
+        gpuAddress += eventPostSync.operationCount * eventPostSync.operationOffset;
+
+        NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+            *commandContainer.getCommandStream(),
+            NEO::PostSyncMode::ImmediateData,
+            gpuAddress,
+            value,
+            hwInfo,
+            pipeControlArgs);
     }
 }
 

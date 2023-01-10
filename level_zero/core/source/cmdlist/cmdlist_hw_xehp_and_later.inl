@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -294,8 +294,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (l3FlushEnable) {
             programEventL3Flush<gfxCoreFamily>(event, this->device, partitionCount, commandContainer);
         }
-        if (this->signalAllEventPackets) {
-            setRemainingEventPackets(event, Event::STATE_SIGNALED);
+        if (this->signalAllEventPackets && event->getPacketsInUse() < event->getMaxPacketsCount()) {
+            uint32_t packets = event->getMaxPacketsCount() - event->getPacketsInUse();
+            CmdListEventOperation remainingPacketsOperation = estimateEventPostSync(event, packets);
+
+            uint64_t eventAddress = event->getGpuAddress(device) + event->getSinglePacketSize() * event->getPacketsInUse();
+            if (event->isUsingContextEndOffset()) {
+                eventAddress += event->getContextEndOffset();
+            }
+
+            dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED);
         }
     }
 

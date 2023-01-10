@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,12 @@ struct CmdListFillKernelArguments {
     uint32_t leftRemainingBytes = 0;
     uint32_t rightRemainingBytes = 0;
     uint32_t patternSizeInEls = 0;
+};
+
+struct CmdListEventOperation {
+    size_t operationOffset = 0;
+    uint32_t operationCount = 0;
+    bool workPartitionOperation = false;
 };
 
 struct EventPool;
@@ -294,8 +300,12 @@ struct CommandListCoreFamily : CommandListImp {
                compactL3FlushEvent(dcFlush);
     }
     void allocateKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
-    void setRemainingEventPackets(Event *event, uint32_t value);
     void waitOnRemainingEventPackets(Event *event);
+    CmdListEventOperation estimateEventPostSync(Event *event, uint32_t operations);
+    void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
+    void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
+    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value);
+    void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl);
 
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -553,76 +553,6 @@ HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
     testAppendLaunchKernelAndL3Flush<gfxCoreFamily>(input, arg);
 }
 
-HWTEST2_F(CommandListTests, GivenCopyCommandListWhenSettingRemainingEventPacketsThenExpectMiDwordFlushCommandsProgrammingPackets, IsAtLeastXeHpCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
-    DebugManagerStateRestore restorer;
-
-    NEO::DebugManager.flags.UseDynamicEventPacketsCount.set(1);
-    NEO::DebugManager.flags.SignalAllEventPackets.set(1);
-    NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
-    NEO::DebugManager.flags.CompactL3FlushEventPacket.set(0);
-
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto cmdStream = commandList->commandContainer.getCommandStream();
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = 0;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    eventDesc.signal = 0;
-
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    ASSERT_NE(nullptr, event.get());
-
-    uint32_t packetUsed = event->getPacketsInUse();
-    uint32_t remainingPackets = event->getMaxPacketsCount() - packetUsed;
-
-    size_t sizeBefore = cmdStream->getUsed();
-    commandList->setRemainingEventPackets(event.get(), Event::STATE_SIGNALED);
-    size_t sizeAfter = cmdStream->getUsed();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdStream->getCpuBase(), sizeBefore),
-        (sizeAfter - sizeBefore)));
-
-    uint32_t expectedMiFlushCount = remainingPackets;
-    if (NEO::EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
-        expectedMiFlushCount *= 2;
-    }
-
-    auto miFlushList = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(expectedMiFlushCount, static_cast<uint32_t>(miFlushList.size()));
-
-    uint64_t gpuAddress = event->getGpuAddress(device);
-    gpuAddress += (packetUsed * event->getSinglePacketSize());
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
-
-    for (uint32_t i = 0; i < expectedMiFlushCount; i++) {
-        if ((expectedMiFlushCount == 2 * remainingPackets) && (i % 2 == 0)) {
-            continue;
-        }
-        auto cmd = genCmdCast<MI_FLUSH_DW *>(*miFlushList[i]);
-        EXPECT_EQ(gpuAddress, cmd->getDestinationAddress());
-        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
-        EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, cmd->getPostSyncOperation());
-
-        gpuAddress += event->getSinglePacketSize();
-    }
-}
-
 template <uint32_t multiTile, uint32_t limitEventPacketes, uint32_t copyOnly>
 struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
     void setUp() {
@@ -719,7 +649,8 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
                 gpuAddress += event->getContextEndOffset();
             }
 
-            for (uint32_t i = extraCleanupStoreDataImm; i < itorStoreDataImm.size(); i++) {
+            uint32_t startIndex = extraCleanupStoreDataImm;
+            for (uint32_t i = startIndex; i < remainingPackets + extraCleanupStoreDataImm; i++) {
                 auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
                 EXPECT_EQ(gpuAddress, cmd->getAddress());
                 EXPECT_FALSE(cmd->getStoreQword());
@@ -739,6 +670,8 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
         using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+        using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         auto engineType = copyOnly == 1 ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::Compute;
@@ -802,6 +735,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         } else {
             auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+            auto itorPipeControl = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
             uint64_t gpuAddress = event->getGpuAddress(device);
             if (event->isUsingContextEndOffset()) {
@@ -825,29 +759,34 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
                     } else {
                         EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
                     }
+                } else {
+                    uint32_t postSyncPipeControls = 0;
+                    for (auto it : itorPipeControl) {
+                        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+                        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                            postSyncPipeControls++;
+                            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+                            EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+                            if constexpr (multiTile == 1) {
+                                EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+                            } else {
+                                EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
+                            }
+                        }
+                    }
+                    EXPECT_EQ(1u, postSyncPipeControls);
                 }
             } else {
-                uint32_t packetUsed = event->getPacketsInUse();
-                uint32_t remainingPackets = event->getMaxPacketsCount() - packetUsed;
-                EXPECT_EQ(0u, remainingPackets % commandList->partitionCount);
-                remainingPackets /= commandList->partitionCount;
-                ASSERT_EQ(remainingPackets + extraSignalStoreDataImm, static_cast<uint32_t>(itorStoreDataImm.size()));
-
-                if (extraSignalStoreDataImm == 1) {
-                    auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[itorStoreDataImm.size() - 1]);
-                    EXPECT_EQ(gpuAddress, cmd->getAddress());
-                    EXPECT_FALSE(cmd->getStoreQword());
-                    EXPECT_EQ(Event::STATE_SIGNALED, cmd->getDataDword0());
-                    if constexpr (multiTile == 1) {
-                        EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
-                    } else {
-                        EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
-                    }
+                uint32_t packets = event->getMaxPacketsCount();
+                EXPECT_EQ(0u, packets % commandList->partitionCount);
+                packets /= commandList->partitionCount;
+                if (extraSignalStoreDataImm == 0) {
+                    packets--;
                 }
 
-                gpuAddress += (packetUsed * event->getSinglePacketSize());
+                ASSERT_EQ(packets, static_cast<uint32_t>(itorStoreDataImm.size()));
 
-                for (uint32_t i = 0; i < itorStoreDataImm.size() - extraSignalStoreDataImm; i++) {
+                for (uint32_t i = 0; i < packets; i++) {
                     auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
                     EXPECT_EQ(gpuAddress, cmd->getAddress());
                     EXPECT_FALSE(cmd->getStoreQword());
@@ -858,6 +797,24 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
                         EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
                     }
                     gpuAddress += (event->getSinglePacketSize() * commandList->partitionCount);
+                }
+
+                if (extraSignalStoreDataImm == 0) {
+                    uint32_t postSyncPipeControls = 0;
+                    for (auto it : itorPipeControl) {
+                        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+                        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                            postSyncPipeControls++;
+                            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+                            EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+                            if constexpr (multiTile == 1) {
+                                EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+                            } else {
+                                EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
+                            }
+                        }
+                    }
+                    EXPECT_EQ(1u, postSyncPipeControls);
                 }
             }
         }
@@ -938,6 +895,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
         using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+        using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         auto engineType = copyOnly == 1 ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::Compute;
@@ -971,6 +929,11 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
 
+        uint64_t gpuAddress = event->getGpuAddress(device);
+        if (event->isUsingContextEndOffset()) {
+            gpuAddress += event->getContextEndOffset();
+        }
+
         if constexpr (copyOnly == 1) {
             auto itorFlushDw = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
@@ -982,11 +945,6 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             uint32_t expectedFlushDw = event->getMaxPacketsCount();
             expectedFlushDw *= flushCmdWaFactor;
             ASSERT_EQ(expectedFlushDw, itorFlushDw.size());
-
-            uint64_t gpuAddress = event->getGpuAddress(device);
-            if (event->isUsingContextEndOffset()) {
-                gpuAddress += event->getContextEndOffset();
-            }
 
             uint32_t startingSignalCmd = 0;
             if (eventPoolFlags != 0) {
@@ -1013,23 +971,46 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         } else {
             auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+            auto itorPipeControl = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+            uint32_t expectedPostSyncPipeControls = 0;
+            if (eventPoolFlags == 0) {
+                expectedPostSyncPipeControls = 1;
+            }
 
             if constexpr (limitEventPacketes == 1) {
                 constexpr uint32_t expectedStoreDataImm = 0;
                 ASSERT_EQ(expectedStoreDataImm, itorStoreDataImm.size());
-            } else {
-                uint32_t packetUsed = event->getPacketsInUse();
-                uint32_t remainingPackets = event->getMaxPacketsCount() - packetUsed;
-                remainingPackets /= commandList->partitionCount;
-                ASSERT_EQ(remainingPackets, static_cast<uint32_t>(itorStoreDataImm.size()));
 
-                uint64_t gpuAddress = event->getGpuAddress(device);
-                gpuAddress += (packetUsed * event->getSinglePacketSize());
-                if (event->isUsingContextEndOffset()) {
-                    gpuAddress += event->getContextEndOffset();
+                uint32_t postSyncPipeControls = 0;
+                for (auto it : itorPipeControl) {
+                    auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+                    if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                        postSyncPipeControls++;
+                        EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+                        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+                        if constexpr (multiTile == 1) {
+                            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+                        } else {
+                            EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
+                        }
+                    }
+                }
+                EXPECT_EQ(expectedPostSyncPipeControls, postSyncPipeControls);
+
+            } else {
+                uint32_t packets = event->getMaxPacketsCount();
+                EXPECT_EQ(0u, packets % commandList->partitionCount);
+                packets /= commandList->partitionCount;
+                packets--;
+
+                ASSERT_EQ(packets, static_cast<uint32_t>(itorStoreDataImm.size()));
+
+                if (eventPoolFlags != 0) {
+                    gpuAddress += (event->getSinglePacketSize() * commandList->partitionCount);
                 }
 
-                for (uint32_t i = 0; i < remainingPackets; i++) {
+                for (uint32_t i = 0; i < packets; i++) {
                     auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
                     EXPECT_EQ(gpuAddress, cmd->getAddress());
                     EXPECT_FALSE(cmd->getStoreQword());
@@ -1041,12 +1022,22 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
                     }
                     gpuAddress += (event->getSinglePacketSize() * commandList->partitionCount);
                 }
-                if (remainingPackets > 0) {
-                    auto lastIterator = itorStoreDataImm[itorStoreDataImm.size() - 1];
-                    ++lastIterator;
-                    auto cmd = genCmdCast<PIPE_CONTROL *>(*lastIterator);
-                    EXPECT_NE(nullptr, cmd);
+
+                uint32_t postSyncPipeControls = 0;
+                for (auto it : itorPipeControl) {
+                    auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+                    if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                        postSyncPipeControls++;
+                        EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+                        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+                        if constexpr (multiTile == 1) {
+                            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+                        } else {
+                            EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
+                        }
+                    }
                 }
+                EXPECT_EQ(expectedPostSyncPipeControls, postSyncPipeControls);
             }
         }
     }
@@ -1116,6 +1107,8 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
         using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+        using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         auto engineType = copyOnly == 1 ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::Compute;
@@ -1146,6 +1139,11 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+        uint64_t gpuAddress = event->getGpuAddress(device);
+        if (event->isUsingContextEndOffset()) {
+            gpuAddress += event->getContextEndOffset();
+        }
+
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
             cmdList,
@@ -1163,11 +1161,6 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             uint32_t expectedFlushDw = event->getMaxPacketsCount() * flushCmdWaFactor;
             ASSERT_EQ(expectedFlushDw, itorFlushDw.size());
 
-            uint64_t gpuAddress = event->getGpuAddress(device);
-            if (event->isUsingContextEndOffset()) {
-                gpuAddress += event->getContextEndOffset();
-            }
-
             for (uint32_t i = 0; i < expectedFlushDw; i++) {
                 auto cmd = genCmdCast<MI_FLUSH_DW *>(*itorFlushDw[i]);
                 if (flushCmdWaFactor == 2) {
@@ -1183,6 +1176,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         } else {
             auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+            auto itorPipeControl = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
             uint32_t extraCleanupStoreDataImm = 0;
             if constexpr (multiTile == 1) {
@@ -1190,70 +1184,49 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
                 extraCleanupStoreDataImm = 2;
             }
 
-            if constexpr (limitEventPacketes == 1) { // single packet for single tile, two packets for two tiles
-                uint32_t expectedStoreDataImm = 0;   // single packet will be reset by PC or SDI - assume here PC is used for timestamp event
+            uint32_t expectedStoreDataImm = event->getMaxPacketsCount() / commandList->partitionCount;
+            if constexpr (limitEventPacketes == 1) {
+                // single packet will be reset by PC or SDI
+                expectedStoreDataImm = 1;
+            }
+
+            uint32_t expectedPostSyncPipeControls = 0;
+            // last packet is reset by PIPE_CONTROL w/ post sync
+            if (eventPoolFlags == ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
+                expectedStoreDataImm--;
+                expectedPostSyncPipeControls = 1;
+            }
+
+            ASSERT_EQ(expectedStoreDataImm + extraCleanupStoreDataImm, static_cast<uint32_t>(itorStoreDataImm.size()));
+
+            for (uint32_t i = 0; i < expectedStoreDataImm; i++) {
+                auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
+                EXPECT_EQ(gpuAddress, cmd->getAddress());
+                EXPECT_FALSE(cmd->getStoreQword());
+                EXPECT_EQ(Event::STATE_CLEARED, cmd->getDataDword0());
                 if constexpr (multiTile == 1) {
-                    expectedStoreDataImm = 1; // single SDI to reset second packet
-                }
-                if (eventPoolFlags == 0) {
-                    expectedStoreDataImm++; // but for immediate events, SDI is used instead PC, then add 1 here
-                }
-                ASSERT_EQ(expectedStoreDataImm + extraCleanupStoreDataImm, itorStoreDataImm.size());
-            } else {
-                // TS events reset uses getMaxPacketsCount(), no need to reset not used packets
-                if (eventPoolFlags == ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
-                    uint64_t gpuAddress = event->getGpuAddress(device);
-                    gpuAddress += event->getContextEndOffset();
-                    // last packet is reset by PIPE_CONTROL w/ post sync
-                    uint32_t expectedStoreDataImm = event->getMaxPacketsCount() - 1;
-
-                    ASSERT_EQ(expectedStoreDataImm + extraCleanupStoreDataImm, static_cast<uint32_t>(itorStoreDataImm.size()));
-                    for (uint32_t i = 0; i < expectedStoreDataImm; i++) {
-                        auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
-                        EXPECT_EQ(gpuAddress, cmd->getAddress());
-                        EXPECT_FALSE(cmd->getStoreQword());
-                        EXPECT_EQ(Event::STATE_CLEARED, cmd->getDataDword0());
-                        gpuAddress += event->getSinglePacketSize();
-                    }
+                    EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
                 } else {
-                    uint32_t packetUsed = event->getPacketsInUse();
-                    uint32_t remainingResetSdiCommands = event->getMaxPacketsCount() - packetUsed;
+                    EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
+                }
 
-                    uint32_t packetOffsetFactor = 1;
-                    uint32_t usePacketSignalStoreDataImm = 1; // single SDI to reset single packet in single tile
-                    bool usePartitioningWrite = false;
-                    if (this->alignEventPacketsForReset) {
-                        remainingResetSdiCommands /= commandList->partitionCount;
-                        packetOffsetFactor = commandList->partitionCount;
-
-                        if constexpr (multiTile == 1) {
-                            usePacketSignalStoreDataImm++; // and two SDI to reset two packets in multi tile
-                            usePartitioningWrite = true;   // only when number of not used packets is aligned to partition count, multi-tile reset can be split to both tiles
-                        }
-                    }
-
-                    ASSERT_EQ(remainingResetSdiCommands + usePacketSignalStoreDataImm + extraCleanupStoreDataImm, static_cast<uint32_t>(itorStoreDataImm.size()));
-
-                    uint64_t gpuAddress = event->getGpuAddress(device);
-                    gpuAddress += (packetUsed * event->getSinglePacketSize());
-                    if (event->isUsingContextEndOffset()) {
-                        gpuAddress += event->getContextEndOffset();
-                    }
-
-                    for (uint32_t i = usePacketSignalStoreDataImm; i < itorStoreDataImm.size() - extraCleanupStoreDataImm; i++) {
-                        auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
-                        EXPECT_EQ(gpuAddress, cmd->getAddress());
-                        EXPECT_FALSE(cmd->getStoreQword());
-                        EXPECT_EQ(Event::STATE_CLEARED, cmd->getDataDword0());
-                        if (usePartitioningWrite) {
-                            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
-                        } else {
-                            EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
-                        }
-                        gpuAddress += (event->getSinglePacketSize() * packetOffsetFactor);
+                gpuAddress += event->getSinglePacketSize() * commandList->partitionCount;
+            }
+            uint32_t postSyncPipeControls = 0;
+            for (auto it : itorPipeControl) {
+                auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+                if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                    postSyncPipeControls++;
+                    EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+                    EXPECT_EQ(Event::STATE_CLEARED, cmd->getImmediateData());
+                    if constexpr (multiTile == 1) {
+                        EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+                    } else {
+                        EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
                     }
                 }
             }
+            EXPECT_EQ(expectedPostSyncPipeControls, postSyncPipeControls);
         }
     }
 

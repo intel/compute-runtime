@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -407,7 +407,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false) +
-                          ((packets - 1) * sizeof(MI_STORE_DATA_IMM)) +
                           commandList->estimateBufferSizeMultiTileBarrier(hwInfo);
     size_t usedSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, usedSize);
@@ -418,10 +417,9 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         cmdStream->getCpuBase(),
         usedSize));
 
-    auto itorSdi = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorSdi);
-    EXPECT_EQ(gpuAddress, cmd->getAddress());
-    gpuAddress += event->getSinglePacketSize();
+    auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    // multi tile barrier self-cleanup commands
+    ASSERT_EQ(2u, itorSdi.size());
 
     auto pipeControlList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, pipeControlList.size());
@@ -434,8 +432,9 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncFound++;
-            gpuAddress += event->getSinglePacketSize();
+            gpuAddress += event->getSinglePacketSize() * commandList->partitionCount;
             postSyncPipeControlItor = it;
         }
     }

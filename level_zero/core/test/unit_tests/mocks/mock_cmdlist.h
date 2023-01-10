@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
-    using BaseClass::setRemainingEventPackets;
     using BaseClass::setupTimestampEventForMultiTile;
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateComputeModeTracking;
