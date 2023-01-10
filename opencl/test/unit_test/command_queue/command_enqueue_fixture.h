@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,7 +127,8 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
         auto kernel = dispatchInfo.begin()->getKernel();
         EXPECT_FALSE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
 
-        if (GfxCoreHelperHw<FamilyType>::get().isStatelessToStatefulWithOffsetSupported()) {
+        auto &gfxCoreHelper = kernel->getContext().getDevice(0)->getGfxCoreHelper();
+        if (gfxCoreHelper.isStatelessToStatefulWithOffsetSupported()) {
             EXPECT_TRUE(kernel->allBufferArgsStateful);
         }
 

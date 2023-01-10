@@ -131,9 +131,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledButDebugVariable
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(13u, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(13u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -163,9 +163,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledWhenIsCooperativ
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(12u, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(12u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -194,9 +194,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBcsDisabledWhenIsCooperative
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -239,9 +239,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenOneBcsEnabledWhenIsCooperati
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -290,9 +290,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenIsCoope
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -334,9 +334,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenOneCcsEnabledWhenIsCooperati
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -384,9 +384,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenIsCoo
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -440,9 +440,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedE
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -496,9 +496,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedE
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo());
     EXPECT_EQ(numEngines, engines.size());
 
     struct EnginePropertiesMap {
@@ -547,9 +547,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCcsDisabledAndNumberOfCcsEna
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(3u, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);
@@ -565,9 +565,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCcsDisabledWhenGetGpgpuEngin
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 0;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(3u, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(3u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);

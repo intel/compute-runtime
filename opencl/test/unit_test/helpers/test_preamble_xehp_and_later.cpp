@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,9 @@ using namespace NEO;
 
 using ThreadArbitrationXeHPAndLater = PreambleFixture;
 HWTEST2_F(ThreadArbitrationXeHPAndLater, whenGetDefaultThreadArbitrationPolicyIsCalledThenCorrectPolicyIsReturned, IsXeHpOrXeHpgCore) {
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, gfxCoreHelper.getDefaultThreadArbitrationPolicy());
 }
 
 using ProgramPipelineXeHPAndLater = PreambleFixture;
