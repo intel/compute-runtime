@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,12 +133,12 @@ struct OaMetricGroupImp : MetricGroup {
     void copyValue(const MetricsDiscovery::TTypedValue_1_0 &source,
                    zet_typed_value_t &destination) const;
 
-    bool getCalculatedMetricCount(const size_t rawDataSize,
-                                  uint32_t &metricValueCount);
+    ze_result_t getCalculatedMetricCount(const size_t rawDataSize,
+                                         uint32_t &metricValueCount);
 
-    bool getCalculatedMetricValues(const zet_metric_group_calculation_type_t, const size_t rawDataSize, const uint8_t *pRawData,
-                                   uint32_t &metricValueCount,
-                                   zet_typed_value_t *pCalculatedData);
+    ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t, const size_t rawDataSize, const uint8_t *pRawData,
+                                          uint32_t &metricValueCount,
+                                          zet_typed_value_t *pCalculatedData);
 
     // Cached metrics.
     std::vector<Metric *> metrics;
