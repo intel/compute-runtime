@@ -246,6 +246,7 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
 
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
+            osContextLinux->setHangDetected();
             return true;
         }
     }
@@ -1609,12 +1610,13 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
     auto &drmContextIds = osContext.getDrmContextIds();
     UNRECOVERABLE_IF(numActiveTiles > drmContextIds.size());
     auto completionFenceCpuAddress = address;
+    static constexpr int64_t defaultTimeout = -1;
+    const auto selectedTimeout = osContext.isHangDetected() ? 1 : defaultTimeout;
+
     for (auto drmIterator = 0u; drmIterator < numActiveTiles; drmIterator++) {
         if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < value) {
-            constexpr int64_t timeout = -1;
-            constexpr uint16_t flags = 0;
-            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::U64, timeout, flags);
-
+            static constexpr uint16_t flags = 0;
+            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::U64, selectedTimeout, flags);
             if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
                 std::cout << "Completion fence waited."
                           << " Status: " << retVal

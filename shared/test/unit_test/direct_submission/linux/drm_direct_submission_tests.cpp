@@ -254,6 +254,29 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
     EXPECT_EQ(osContext->getDrmContextIds().size(), drm->waitUserFenceParams.size());
 }
 
+HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndHangingContextWhenDestroyingThenWaitForUserFenceIsCalledWithSmallTimeout) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(1);
+
+    auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+
+    ASSERT_TRUE(drm->completionFenceSupport());
+
+    drm->waitUserFenceParams.clear();
+
+    osContext->setHangDetected();
+    {
+        MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
+        directSubmission.completionFenceValue = 10;
+    }
+
+    EXPECT_EQ(osContext->getDrmContextIds().size(), drm->waitUserFenceParams.size());
+    EXPECT_EQ(1, drm->waitUserFenceParams[0].timeout);
+    EXPECT_EQ(10u, drm->waitUserFenceParams[0].value);
+    EXPECT_EQ(Drm::ValueWidth::U64, drm->waitUserFenceParams[0].dataWidth);
+}
+
 HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotCompletedWhenWaitOnSpecificAddressesPerOsContext) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableDrmCompletionFence.set(1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,12 @@ class OsContextLinux : public OsContext {
     void waitForPagingFence();
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;
+    void setHangDetected() {
+        contextHangDetected = true;
+    }
+    bool isHangDetected() const {
+        return contextHangDetected;
+    }
 
   protected:
     void initializeContext() override;
@@ -53,5 +59,6 @@ class OsContextLinux : public OsContext {
     std::vector<uint32_t> drmContextIds;
     std::vector<uint32_t> drmVmIds;
     Drm &drm;
+    bool contextHangDetected = false;
 };
 } // namespace NEO

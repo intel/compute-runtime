@@ -470,3 +470,24 @@ TEST(DrmBufferObjectTestPrelim, givenProvidedNoCtxIdWhenCallingWaitUserFenceThen
     EXPECT_EQ(value, waitUserFence->value);
     EXPECT_EQ(2, waitUserFence->timeout);
 }
+
+TEST(DrmTestPrelim, givenHungContextWhenCallingWaitUserFenceThenSmallTimeoutIsPassed) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    OsContextLinux osContext(drm, 0, 10u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+    osContext.setHangDetected();
+
+    uint64_t memory = 0;
+    uint64_t value = 20;
+    drm.waitOnUserFences(osContext, reinterpret_cast<uint64_t>(&memory), value, 1, 0);
+
+    EXPECT_EQ(osContext.getDrmContextIds().size(), drm.context.waitUserFenceCalled);
+    const auto &waitUserFence = drm.context.receivedWaitUserFence;
+    ASSERT_TRUE(waitUserFence);
+    EXPECT_EQ(DrmPrelimHelper::getU64WaitUserFenceFlag(), waitUserFence->mask);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(&memory), waitUserFence->addr);
+    EXPECT_EQ(0u, waitUserFence->flags);
+    EXPECT_EQ(value, waitUserFence->value);
+    EXPECT_EQ(1, waitUserFence->timeout);
+}
