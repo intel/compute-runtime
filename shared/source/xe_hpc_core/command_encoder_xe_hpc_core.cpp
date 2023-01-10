@@ -51,11 +51,6 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
                 const uint32_t tilesCount = device.getNumSubDevices();
                 availableThreadCount *= tilesCount;
             }
-            if (numGrf >= GrfConfig::LargeGrfNumber) {
-                // on top of numGrf used in calculateAvailableThreadCount
-                constexpr uint32_t threadCountAdjustmentForLargeGrf = 2;
-                availableThreadCount /= threadCountAdjustmentForLargeGrf;
-            }
             uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
             uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
             UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
