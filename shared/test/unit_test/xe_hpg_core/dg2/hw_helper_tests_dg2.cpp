@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,9 +41,9 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDon
     productHelper->configureHardwareCustom(&hwInfo, nullptr);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(8u, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(8u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -69,9 +69,9 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledButDebugVariableSetWhenGetGpgpuE
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     EXPECT_EQ(9u, device->allEngines.size());
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(9u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);

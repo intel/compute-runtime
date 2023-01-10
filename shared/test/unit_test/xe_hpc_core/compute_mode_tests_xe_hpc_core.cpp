@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,13 +9,16 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/unit_test/command_stream/compute_mode_tests.h"
 
 using namespace NEO;
 
 using ThreadArbitrationXeHpc = ::testing::Test;
 HWTEST2_F(ThreadArbitrationXeHpc, givenXeHpcWhenCallgetDefaultThreadArbitrationPolicyThenAgeBasedisReturned, IsXeHpcCore) {
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, gfxCoreHelper.getDefaultThreadArbitrationPolicy());
 }
 
 using XeHpcComputeModeRequirements = ComputeModeRequirements;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -182,8 +182,8 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenForceBCSForInternalCopyEngineVariab
     DebugManager.flags.ForceBCSForInternalCopyEngine.set(2);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
-    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
     EXPECT_GE(engines.size(), 9u);
 
     bool found = false;
@@ -200,7 +200,7 @@ HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWh
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     hwInfo.featureTable.flags.ftrCCSNode = true;
-    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
