@@ -342,8 +342,8 @@ struct CompressionMemoryTest : public MemoryTest {
 HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressionIfPossible, IsAtLeastSkl) {
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
     auto &hwInfo = device->getHwInfo();
-    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    auto &gfxCoreHelper = NEO::GfxCoreHelperHw<FamilyType>::get();
+    auto &l0GfxCoreHelper = device->getL0GfxCoreHelper();
+    auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
 
     // Default path
     {

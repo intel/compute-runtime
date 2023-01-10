@@ -2132,7 +2132,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, WhenStoppingRingWithoutSubmissio
 HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenAskingForRelaxedOrderingSupportThenEnable) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
 
-    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
 
     {
         DebugManager.flags.DirectSubmissionRelaxedOrdering.set(-1);

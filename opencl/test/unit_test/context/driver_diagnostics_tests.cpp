@@ -773,8 +773,8 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
 
     graphicsAllocation->setDefaultGmm(gmm);
-
-    if (!GfxCoreHelperHw<FamilyType>::get().checkResourceCompatibility(*graphicsAllocation)) {
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (!gfxCoreHelper.checkResourceCompatibility(*graphicsAllocation)) {
         GTEST_SKIP();
     }
 

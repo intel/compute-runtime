@@ -441,7 +441,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverT
     EXPECT_EQ(ThreadArbitrationPolicy::NotPresent, pCommandStreamReceiver->peekThreadArbitrationPolicy());
 
     flushTask(*pCommandStreamReceiver);
-    EXPECT_EQ(GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(), pCommandStreamReceiver->peekThreadArbitrationPolicy());
+
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pCommandStreamReceiver->peekThreadArbitrationPolicy());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML3WasSentThenDontProgramL3) {

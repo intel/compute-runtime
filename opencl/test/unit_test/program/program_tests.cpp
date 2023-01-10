@@ -2101,7 +2101,8 @@ HWTEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimiz
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
 
-    if (GfxCoreHelperHw<FamilyType>::get().isStatelessToStatefulWithOffsetSupported()) {
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    if (gfxCoreHelper.isStatelessToStatefulWithOffsetSupported()) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));
     } else {
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));

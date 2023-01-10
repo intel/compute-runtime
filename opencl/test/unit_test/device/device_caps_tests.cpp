@@ -439,7 +439,8 @@ HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSuppo
     const auto &caps = device->getSharedDeviceInfo();
 
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
-    expectedSize = std::min(expectedSize, GfxCoreHelperHw<FamilyType>::get().getMaxMemAllocSize());
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    expectedSize = std::min(expectedSize, gfxCoreHelper.getMaxMemAllocSize());
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }
 
@@ -1058,7 +1059,8 @@ HWTEST_F(DeviceGetCapsTest, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThe
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
     auto &deviceInfo = device->deviceInfo;
 
-    auto simdSizeUsed = GfxCoreHelperHw<FamilyType>::get().getMinimalSIMDSize();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto simdSizeUsed = gfxCoreHelper.getMinimalSIMDSize();
 
     auto productHelper = ProductHelper::get(myHwInfo.platform.eProductFamily);
     auto expectedMaxWGS = productHelper->getMaxThreadsForWorkgroupInDSSOrSS(myHwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice),

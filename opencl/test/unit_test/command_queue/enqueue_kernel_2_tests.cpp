@@ -758,7 +758,9 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr,
         nullptr);
     pCommandQueue->flush();
-    EXPECT_EQ(GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
+
+    auto &gfxCoreHelper = clDeviceFactory.rootDevices[0]->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(),
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     pCommandQueue->enqueueKernel(
@@ -784,7 +786,8 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr,
         nullptr);
     pCommandQueue->flush();
-    EXPECT_EQ(GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
+
+    EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(),
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
