@@ -69,7 +69,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
         kernelObjsForAuxTranslation = kernel->fillWithKernelObjsForAuxTranslation();
 
         if (!kernelObjsForAuxTranslation->empty()) {
-            auxTranslationMode = GfxCoreHelperHw<GfxFamily>::get().getAuxTranslationMode(device->getHardwareInfo());
+            auxTranslationMode = GfxCoreHelperHw<GfxFamily>::getAuxTranslationMode(device->getHardwareInfo());
         }
         multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
     }
@@ -1410,7 +1410,7 @@ template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo) {
     return multiDispatchInfo.getKernelObjsForAuxTranslation() &&
            (multiDispatchInfo.getKernelObjsForAuxTranslation()->size() > 0) &&
-           (GfxCoreHelperHw<GfxFamily>::get().getAuxTranslationMode(device->getHardwareInfo()) == AuxTranslationMode::Blit);
+           (GfxCoreHelperHw<GfxFamily>::getAuxTranslationMode(device->getHardwareInfo()) == AuxTranslationMode::Blit);
 }
 
 } // namespace NEO

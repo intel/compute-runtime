@@ -80,8 +80,8 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     setPostSyncOffset();
 
     dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, *hwInfo);
-
-    relaxedOrderingEnabled = GfxCoreHelperHw<GfxFamily>::get().isRelaxedOrderingSupported();
+    auto &gfxCoreHelper = inputParams.rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    relaxedOrderingEnabled = gfxCoreHelper.isRelaxedOrderingSupported();
 
     if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != -1) {
         relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
