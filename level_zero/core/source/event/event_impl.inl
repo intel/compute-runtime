@@ -161,9 +161,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
         if (packets < getMaxPacketsCount()) {
             uint32_t remainingPackets = getMaxPacketsCount() - packets;
             auto remainingPacketSyncAddress = ptrOffset(this->hostAddress, packets * this->singlePacketSize);
-            if (isUsingContextEndOffset()) {
-                remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->contextEndOffset);
-            }
+            remainingPacketSyncAddress = ptrOffset(remainingPacketSyncAddress, this->getCompletionFieldOffset());
             for (uint32_t i = 0; i < remainingPackets; i++) {
                 void const *queryAddress = remainingPacketSyncAddress;
                 bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
@@ -266,10 +264,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
         return hostEventSetValueTimestamps(eventVal);
     }
 
-    auto packetHostAddr = this->hostAddress;
-    if (isUsingContextEndOffset()) {
-        packetHostAddr = ptrOffset(packetHostAddr, this->contextEndOffset);
-    }
+    auto packetHostAddr = getCompletionFieldHostAddress();
 
     uint32_t packets = 0;
     for (uint32_t i = 0; i < kernelCount; i++) {

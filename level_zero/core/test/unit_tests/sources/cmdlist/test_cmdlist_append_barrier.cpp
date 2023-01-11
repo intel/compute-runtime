@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -317,10 +317,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
-    uint64_t eventGpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        eventGpuAddress += event->getContextEndOffset();
-    }
+    uint64_t eventGpuAddress = event->getCompletionFieldGpuAddress(device);
     ze_event_handle_t eventHandle = event->toHandle();
 
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());

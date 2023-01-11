@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -719,10 +719,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
         EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
         auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-        uint64_t gpuAddress = event->getGpuAddress(device);
-        if (event->isUsingContextEndOffset()) {
-            gpuAddress += event->getContextEndOffset();
-        }
+        uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
         EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
     }

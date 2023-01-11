@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,10 +51,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWait
 
         auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-        uint64_t gpuAddress = event->getGpuAddress(device);
-        if (event->isUsingContextEndOffset()) {
-            gpuAddress += event->getContextEndOffset();
-        }
+        uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
         EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
         EXPECT_EQ(cmd->getWaitMode(),
@@ -106,10 +103,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
     EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
 
-    auto eventGpuAddr = event->getGpuAddress(this->device);
-    if (event->isUsingContextEndOffset()) {
-        eventGpuAddr += event->getContextEndOffset();
-    }
+    auto eventGpuAddr = event->getCompletionFieldGpuAddress(this->device);
 
     // conditional bb_start
     auto lrmCmd = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(++lrrCmd);
@@ -290,10 +284,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenTwoEventsWhenWaitOnEventsAppendedThe
 
     auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-    uint64_t gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     for (int i = 0; i < 2; i++) {
         auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor[i]);
@@ -501,10 +492,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTim
 
     auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-    uint64_t gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
     EXPECT_EQ(cmd->getWaitMode(),
@@ -561,10 +549,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
     EXPECT_EQ(expectedConsumedSpace, usedSpaceAfter);
     EXPECT_NE(oldCommandBuffer, newCommandBuffer);
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,

@@ -42,10 +42,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenStor
                                                       ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
     auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
     uint32_t sdiFound = 0;
     ASSERT_NE(0u, itorSdi.size());
@@ -88,10 +85,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
@@ -171,10 +165,7 @@ HWTEST_F(CommandListAppendEventReset, givenCopyOnlyCmdlistWhenResetEventAppended
     ASSERT_NE(0u, itorPC.size());
     bool postSyncFound = false;
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     for (auto it : itorPC) {
         auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
@@ -346,10 +337,7 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     commandList->appendEventReset(event->toHandle());
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

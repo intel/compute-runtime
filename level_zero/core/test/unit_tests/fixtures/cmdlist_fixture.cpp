@@ -190,10 +190,7 @@ void CommandListEventUsedPacketSignalFixture::setUp() {
 void TbxImmediateCommandListFixture::setEvent() {
     auto mockEvent = static_cast<Event *>(event.get());
 
-    size_t offset = 0;
-    if (event->isUsingContextEndOffset()) {
-        offset = event->getContextEndOffset();
-    }
+    size_t offset = event->getCompletionFieldOffset();
     void *completionAddress = ptrOffset(mockEvent->hostAddress, offset);
     size_t packets = event->getPacketsInUse();
     EventFieldType signaledValue = Event::STATE_SIGNALED;

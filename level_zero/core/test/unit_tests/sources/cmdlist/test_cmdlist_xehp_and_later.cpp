@@ -643,11 +643,8 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             remainingPackets /= commandList->partitionCount;
             ASSERT_EQ(remainingPackets + extraCleanupStoreDataImm, static_cast<uint32_t>(itorStoreDataImm.size()));
 
-            uint64_t gpuAddress = event->getGpuAddress(device);
+            uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
             gpuAddress += (packetUsed * event->getSinglePacketSize());
-            if (event->isUsingContextEndOffset()) {
-                gpuAddress += event->getContextEndOffset();
-            }
 
             uint32_t startIndex = extraCleanupStoreDataImm;
             for (uint32_t i = startIndex; i < remainingPackets + extraCleanupStoreDataImm; i++) {
@@ -715,10 +712,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             uint32_t expectedFlushDw = event->getMaxPacketsCount() * flushCmdWaFactor;
             ASSERT_EQ(expectedFlushDw, itorFlushDw.size());
 
-            uint64_t gpuAddress = event->getGpuAddress(device);
-            if (event->isUsingContextEndOffset()) {
-                gpuAddress += event->getContextEndOffset();
-            }
+            uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
             for (uint32_t i = 0; i < expectedFlushDw; i++) {
                 auto cmd = genCmdCast<MI_FLUSH_DW *>(*itorFlushDw[i]);
@@ -737,10 +731,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
             auto itorPipeControl = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
-            uint64_t gpuAddress = event->getGpuAddress(device);
-            if (event->isUsingContextEndOffset()) {
-                gpuAddress += event->getContextEndOffset();
-            }
+            uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
             uint32_t extraSignalStoreDataImm = 0;
             if (eventPoolFlags == 0) {
@@ -868,11 +859,8 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             remainingPackets /= commandList->partitionCount;
             ASSERT_EQ(remainingPackets, static_cast<uint32_t>(itorStoreDataImm.size()));
 
-            uint64_t gpuAddress = event->getGpuAddress(device);
+            uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
             gpuAddress += (packetUsed * event->getSinglePacketSize());
-            if (event->isUsingContextEndOffset()) {
-                gpuAddress += event->getContextEndOffset();
-            }
 
             for (uint32_t i = 0; i < remainingPackets; i++) {
                 auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
@@ -929,10 +917,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
 
-        uint64_t gpuAddress = event->getGpuAddress(device);
-        if (event->isUsingContextEndOffset()) {
-            gpuAddress += event->getContextEndOffset();
-        }
+        uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
         if constexpr (copyOnly == 1) {
             auto itorFlushDw = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
@@ -1087,10 +1072,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             uint32_t allPackets = event->getMaxPacketsCount();
             ASSERT_EQ(allPackets, static_cast<uint32_t>(itorSemWait.size()));
 
-            uint64_t gpuAddress = event->getGpuAddress(device);
-            if (event->isUsingContextEndOffset()) {
-                gpuAddress += event->getContextEndOffset();
-            }
+            uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
             for (uint32_t i = 0; i < allPackets; i++) {
                 auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itorSemWait[i]);
@@ -1139,10 +1121,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        uint64_t gpuAddress = event->getGpuAddress(device);
-        if (event->isUsingContextEndOffset()) {
-            gpuAddress += event->getContextEndOffset();
-        }
+        uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

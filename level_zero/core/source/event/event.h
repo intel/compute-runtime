@@ -76,7 +76,15 @@ struct Event : _ze_event_handle_t {
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
     virtual void setGpuStartTimestamp() = 0;
     virtual void setGpuEndTimestamp() = 0;
-
+    size_t getCompletionFieldOffset() {
+        return this->isUsingContextEndOffset() ? this->getContextEndOffset() : 0;
+    }
+    uint64_t getCompletionFieldGpuAddress(Device *device) {
+        return this->getGpuAddress(device) + getCompletionFieldOffset();
+    }
+    void *getCompletionFieldHostAddress() {
+        return ptrOffset(getHostAddress(), getCompletionFieldOffset());
+    }
     size_t getContextStartOffset() const {
         return contextStartOffset;
     }

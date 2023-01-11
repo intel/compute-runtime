@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,10 +38,7 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenM
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
-    auto baseAddr = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        baseAddr += event->getContextEndOffset();
-    }
+    auto baseAddr = event->getCompletionFieldGpuAddress(device);
     auto itor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(itor, cmdList.end());
     auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
@@ -323,10 +320,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     commandList->appendSignalEventPostWalker(event.get());
     EXPECT_EQ(packets, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
@@ -502,10 +496,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     auto itorMiFlush = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(expectedMiFlushCount, static_cast<uint32_t>(itorMiFlush.size()));
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     for (uint32_t i = 0; i < expectedMiFlushCount; i++) {
         if ((expectedMiFlushCount == 2) && (i % 2 == 0)) {
@@ -548,10 +539,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     auto itorMiFlush = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(expectedMiFlushCount, static_cast<uint32_t>(itorMiFlush.size()));
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     for (uint32_t i = 0; i < expectedMiFlushCount; i++) {
         if ((expectedMiFlushCount == 2) && (i % 2 == 0)) {

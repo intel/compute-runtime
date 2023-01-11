@@ -858,10 +858,7 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
         EXPECT_FALSE(event->isUsingContextEndOffset());
     }
 
-    uint32_t *eventCompletionMemory = reinterpret_cast<uint32_t *>(event->getHostAddress());
-    if (event->isUsingContextEndOffset()) {
-        eventCompletionMemory = ptrOffset(eventCompletionMemory, event->getContextEndOffset());
-    }
+    uint32_t *eventCompletionMemory = reinterpret_cast<uint32_t *>(event->getCompletionFieldHostAddress());
     uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
         maxPacketsCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
@@ -1203,10 +1200,7 @@ TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIp
                                                                                                                        device)));
     EXPECT_NE(nullptr, event0);
 
-    uint32_t *hostAddr = static_cast<uint32_t *>(event0->getHostAddress());
-    if (event0->isUsingContextEndOffset()) {
-        hostAddr = ptrOffset(hostAddr, event0->getContextEndOffset());
-    }
+    uint32_t *hostAddr = static_cast<uint32_t *>(event0->getCompletionFieldHostAddress());
     EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
 
     // change state
@@ -1221,10 +1215,7 @@ TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIp
                                                                                                                        device)));
     EXPECT_NE(nullptr, event1);
 
-    uint32_t *hostAddr1 = static_cast<uint32_t *>(event1->getHostAddress());
-    if (event1->isUsingContextEndOffset()) {
-        hostAddr1 = ptrOffset(hostAddr1, event1->getContextEndOffset());
-    }
+    uint32_t *hostAddr1 = static_cast<uint32_t *>(event1->getCompletionFieldHostAddress());
     EXPECT_EQ(*hostAddr1, Event::STATE_SIGNALED);
 
     // create another event from the pool with the same index, but this time, since isImportedIpcPool is false, reset should happen
@@ -1235,10 +1226,7 @@ TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIp
                                                                                                                        device)));
     EXPECT_NE(nullptr, event2);
 
-    uint32_t *hostAddr2 = static_cast<uint32_t *>(event2->getHostAddress());
-    if (event2->isUsingContextEndOffset()) {
-        hostAddr2 = ptrOffset(hostAddr2, event2->getContextEndOffset());
-    }
+    uint32_t *hostAddr2 = static_cast<uint32_t *>(event2->getCompletionFieldHostAddress());
     EXPECT_EQ(*hostAddr2, Event::STATE_INITIAL);
 }
 
@@ -2054,10 +2042,7 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
                                                                                                                            device)));
     ASSERT_NE(event, nullptr);
 
-    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
-    if (event->isUsingContextEndOffset()) {
-        hostAddr = ptrOffset(hostAddr, event->getContextEndOffset());
-    }
+    uint32_t *hostAddr = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
     EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
     EXPECT_EQ(1u, event->getPacketsInUse());
 
@@ -2080,10 +2065,7 @@ TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThe
                                                                                                                            device)));
     ASSERT_NE(event, nullptr);
 
-    size_t eventOffset = 0;
-    if (event->isUsingContextEndOffset()) {
-        eventOffset = event->getContextEndOffset();
-    }
+    size_t eventOffset = event->getCompletionFieldOffset();
 
     uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventOffset));
 
@@ -2334,10 +2316,7 @@ HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocat
 
     auto event = whiteboxCast(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
-    size_t offset = 0;
-    if (event->isUsingContextEndOffset()) {
-        offset = event->getContextEndOffset();
-    }
+    size_t offset = event->getCompletionFieldOffset();
     void *completionAddress = ptrOffset(event->hostAddress, offset);
     size_t packets = event->getPacketsInUse();
     uint32_t signaledValue = Event::STATE_SIGNALED;
@@ -2368,10 +2347,7 @@ HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequire
         EXPECT_FALSE(ultCsr.downloadAllocationsCalled);
         EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 
-        size_t offset = 0;
-        if (event->isUsingContextEndOffset()) {
-            offset = event->getContextEndOffset();
-        }
+        size_t offset = event->getCompletionFieldOffset();
         void *completionAddress = ptrOffset(event->hostAddress, offset);
         size_t packets = event->getPacketsInUse();
         uint32_t signaledValue = Event::STATE_SIGNALED;
@@ -2423,10 +2399,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(3u, mockMemIface->isResidentCalledCount);
     EXPECT_EQ(1, mockMemIface->makeResidentCalledCount);
 
-    size_t offset = 0;
-    if (event->isUsingContextEndOffset()) {
-        offset = event->getContextEndOffset();
-    }
+    size_t offset = event->getCompletionFieldOffset();
     void *completionAddress = ptrOffset(event->hostAddress, offset);
     size_t packets = event->getPacketsInUse();
     uint32_t signaledValue = Event::STATE_SIGNALED;
@@ -2853,10 +2826,7 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
 
     uint32_t maxPackets = event->getMaxPacketsCount();
     size_t packetSize = event->getSinglePacketSize();
-    void *firstPacketAddress = event->getHostAddress();
-    if (event->isUsingContextEndOffset()) {
-        firstPacketAddress = ptrOffset(firstPacketAddress, event->getContextEndOffset());
-    }
+    void *firstPacketAddress = event->getCompletionFieldHostAddress();
     void *eventHostAddress = firstPacketAddress;
     for (uint32_t i = 0; i < usedPackets; i++) {
         uint32_t *completionField = reinterpret_cast<uint32_t *>(eventHostAddress);

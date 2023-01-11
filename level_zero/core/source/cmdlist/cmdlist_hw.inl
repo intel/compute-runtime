@@ -2009,12 +2009,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
-        gpuAddr = event->getGpuAddress(this->device);
+        gpuAddr = event->getCompletionFieldGpuAddress(this->device);
         uint32_t packetsToWait = event->getPacketsInUse();
 
-        if (event->isUsingContextEndOffset()) {
-            gpuAddr += event->getContextEndOffset();
-        }
         for (uint32_t i = 0u; i < packetsToWait; i++) {
             if (relaxedOrdering) {
                 NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddr, eventStateClear,
@@ -2645,20 +2642,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         auto event = Event::fromHandle(hSignalEvent);
 
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
-        uint64_t baseAddr = event->getGpuAddress(this->device);
-        size_t eventSignalOffset = 0;
+        uint64_t eventGpuAddr = event->getCompletionFieldGpuAddress(this->device);
 
         if (isCopyOnly()) {
             NEO::MiFlushArgs args;
             args.commandWithPostSync = true;
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset),
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), eventGpuAddr,
                                                               Event::STATE_SIGNALED, args, hwInfo);
         } else {
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
+            args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
             NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandContainer.getCommandStream(), NEO::PostSyncMode::ImmediateData,
-                ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED,
+                eventGpuAddr, Event::STATE_SIGNALED,
                 hwInfo,
                 args);
         }
@@ -2724,12 +2720,9 @@ void CommandListCoreFamily<gfxCoreFamily>::waitOnRemainingEventPackets(Event *ev
         return;
     }
 
-    uint64_t gpuAddress = event->getGpuAddress(this->device);
+    uint64_t gpuAddress = event->getCompletionFieldGpuAddress(this->device);
     size_t packetSize = event->getSinglePacketSize();
     gpuAddress += packetSize * packetUsed;
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
 
     for (uint32_t i = 0; i < packetsRemaining; i++) {
         NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
@@ -2821,10 +2814,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event 
     }
     auto eventPostSync = estimateEventPostSync(event, packets);
 
-    uint64_t gpuAddress = event->getGpuAddress(this->device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    uint64_t gpuAddress = event->getCompletionFieldGpuAddress(this->device);
     if (omitFirstOperation) {
         gpuAddress += eventPostSync.operationOffset;
         eventPostSync.operationCount--;
@@ -2839,10 +2829,8 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
         uint32_t packets = event->getMaxPacketsCount() - event->getPacketsInUse();
         CmdListEventOperation remainingPacketsOperation = estimateEventPostSync(event, packets);
 
-        uint64_t eventAddress = event->getGpuAddress(device) + event->getSinglePacketSize() * event->getPacketsInUse();
-        if (event->isUsingContextEndOffset()) {
-            eventAddress += event->getContextEndOffset();
-        }
+        uint64_t eventAddress = event->getCompletionFieldGpuAddress(device);
+        eventAddress += event->getSinglePacketSize() * event->getPacketsInUse();
 
         bool appendLastPipeControl = false;
         dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, !!event->signalScope);

@@ -432,7 +432,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndHostS
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            auto gpuAddress = event->getGpuAddress(this->device);
+            auto gpuAddress = event->getCompletionFieldGpuAddress(this->device);
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
             postSyncFound = true;
@@ -482,7 +482,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndNoSco
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            auto gpuAddress = event->getGpuAddress(this->device);
+            auto gpuAddress = event->getCompletionFieldGpuAddress(this->device);
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_FALSE(cmd->getDcFlushEnable());
             postSyncFound = true;
@@ -530,7 +530,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemOnBcsWithSignalEventAnd
         auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
         if (cmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            auto gpuAddress = event->getGpuAddress(device);
+            auto gpuAddress = event->getCompletionFieldGpuAddress(device);
             EXPECT_EQ(cmd->getDestinationAddress(), gpuAddress);
             postSyncFound = true;
         }
