@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/map_operation_type.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/utilities/iflist.h"
@@ -30,11 +31,6 @@ class HwTimeStamps;
 class TimestampPacketContainer;
 template <class T>
 class TagNode;
-
-enum MapOperationType {
-    MAP,
-    UNMAP
-};
 
 struct KernelOperation {
   protected:

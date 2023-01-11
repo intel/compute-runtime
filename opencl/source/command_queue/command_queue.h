@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/map_operation_type.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/sku_info/sku_info_base.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -18,7 +19,6 @@
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/properties_helper.h"
-#include "opencl/source/helpers/task_information.h"
 
 #include <cstdint>
 

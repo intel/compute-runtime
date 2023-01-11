@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"

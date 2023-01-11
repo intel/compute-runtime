@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"

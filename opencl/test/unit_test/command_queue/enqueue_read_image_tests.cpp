@@ -15,6 +15,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/enqueue_read_image_fixture.h"
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"

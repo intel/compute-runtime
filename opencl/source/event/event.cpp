@@ -29,6 +29,7 @@
 #include "opencl/source/event/event_tracker.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/task_information.h"
 
 #include <algorithm>
 

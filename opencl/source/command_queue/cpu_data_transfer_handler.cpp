@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/utilities/logger.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"

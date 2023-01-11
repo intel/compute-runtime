@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,9 +44,9 @@ struct MiMath : public AUBFixture, public ::testing::Test {
         dispatchFlags.guardCommandBufferWithPipeControl = true;
 
         csr->flushTask(*taskStream, 0,
-                       &csr->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::DYNAMIC_STATE, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::INDIRECT_OBJECT, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::SURFACE_STATE, 0u),
                        0u, dispatchFlags, device->getDevice());
 
         csr->flushBatchedSubmissions();

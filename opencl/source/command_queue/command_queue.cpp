@@ -41,6 +41,7 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/helpers/queue_helpers.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/migration_controller.h"
@@ -885,15 +886,15 @@ bool CommandQueue::isTextureCacheFlushNeeded(uint32_t commandType) const {
     return (commandType == CL_COMMAND_COPY_IMAGE || commandType == CL_COMMAND_WRITE_IMAGE) && getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
 }
 
-IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
+IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeapType heapType, size_t minRequiredSize) {
     return getGpgpuCommandStreamReceiver().getIndirectHeap(heapType, minRequiredSize);
 }
 
-void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap) {
+void CommandQueue::allocateHeapMemory(IndirectHeapType heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap) {
     getGpgpuCommandStreamReceiver().allocateHeapMemory(heapType, minRequiredSize, indirectHeap);
 }
 
-void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
+void CommandQueue::releaseIndirectHeap(IndirectHeapType heapType) {
     getGpgpuCommandStreamReceiver().releaseIndirectHeap(heapType);
 }
 

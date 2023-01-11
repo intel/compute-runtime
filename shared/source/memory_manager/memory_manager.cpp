@@ -24,6 +24,7 @@
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/deferrable_allocation_deletion.h"
 #include "shared/source/memory_manager/deferred_deleter.h"

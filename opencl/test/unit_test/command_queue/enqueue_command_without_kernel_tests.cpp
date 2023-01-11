@@ -20,6 +20,7 @@
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/enqueue_properties.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"

@@ -1,19 +1,17 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/bit_helpers.h"
-#include "shared/source/memory_manager/allocation_properties.h"
-
-#include "memory_properties_flags.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
-
+struct AllocationProperties;
 struct HardwareInfo;
+struct MemoryProperties;
 
 class MemoryPropertiesHelper {
   public:

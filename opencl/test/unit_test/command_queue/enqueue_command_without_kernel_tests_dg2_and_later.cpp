@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "opencl/source/command_queue/resource_barrier.h"
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/memory_manager/resource_surface.h"
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
