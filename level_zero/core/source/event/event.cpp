@@ -221,8 +221,10 @@ void Event::setGpuStartTimestamp() {
 void Event::setGpuEndTimestamp() {
     if (isEventTimestampFlagSet()) {
         auto resolution = this->device->getNEODevice()->getDeviceInfo().outProfilingTimerResolution;
-        auto cpuEndTimestamp = this->device->getNEODevice()->getOSTime()->getCpuRawTimestamp() / resolution;
-        this->gpuEndTimestamp = gpuStartTimestamp + (cpuEndTimestamp - cpuStartTimestamp);
+        uint64_t cpuEndTimestamp = 0;
+        this->device->getNEODevice()->getOSTime()->getCpuTime(&cpuEndTimestamp);
+        cpuEndTimestamp = cpuEndTimestamp / resolution;
+        this->gpuEndTimestamp = gpuStartTimestamp + std::max<size_t>(1u, (cpuEndTimestamp - cpuStartTimestamp));
     }
 }
 

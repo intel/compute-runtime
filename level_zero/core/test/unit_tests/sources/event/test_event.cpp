@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -23,6 +24,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/event_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
@@ -2904,6 +2906,37 @@ TEST_F(TimestampEventAllPacketSignalSinglePacketUseTest, givenSignalAllEventPack
 using ImmediateEventAllPacketSignalSinglePacketUseTest = Test<EventUsedPacketSignalFixture<1, 0, 1, 1>>;
 TEST_F(ImmediateEventAllPacketSignalSinglePacketUseTest, givenSignalAllEventPacketWhenQueryingAndSignalingImmediateEventThenUseEventMaxPackets) {
     testQueryAllPackets(event.get(), true);
+}
+
+using EventTimestampTest = Test<DeviceFixture>;
+HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyRegionsIsCalledWhenCopyTimeIsLessThanDeviceTimestampResolutionThenReturnTimstampDifferenceAsOne, IsXeHpcCore) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    neoDevice->setOSTime(new NEO::MockOSTimeWithConstTimestamp());
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    constexpr uint32_t copySize = 1024;
+    auto hostPtr = new char[copySize];
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *devicePtr;
+    context->allocDeviceMem(device->toHandle(), &deviceDesc, copySize, 1u, &devicePtr);
+    cmdList.appendMemoryCopy(devicePtr, hostPtr, copySize, event->toHandle(), 0, nullptr);
+
+    ze_kernel_timestamp_result_t result = {};
+    event->queryKernelTimestamp(&result);
+    EXPECT_EQ(result.context.kernelEnd - result.context.kernelStart, 1u);
+
+    delete[] hostPtr;
+    context->freeMem(devicePtr);
 }
 
 } // namespace ult
