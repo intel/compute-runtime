@@ -12,6 +12,7 @@
 
 #include <limits>
 #include <memory>
+#include <string>
 
 namespace NEO {
 struct PhysicalDevicePciBusInfo;
