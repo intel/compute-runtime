@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,11 +49,13 @@ class AILConfiguration {
 
     virtual void modifyKernelIfRequired(std::string &kernel) = 0;
 
+    virtual void forceFallbackToPatchtokensIfRequired(const std::string &kernelSources, bool &requiresFallback) = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
 
-    bool sourcesContainKernel(const std::string &kernelSources, std::string_view kernelName) const;
+    bool sourcesContain(const std::string &sources, std::string_view contentToFind) const;
     MOCKABLE_VIRTUAL bool isKernelHashCorrect(const std::string &kernelSources, uint64_t expectedHash) const;
 };
 
@@ -70,6 +72,7 @@ class AILConfigurationHw : public AILConfiguration {
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override;
 
     void modifyKernelIfRequired(std::string &kernel) override;
+    void forceFallbackToPatchtokensIfRequired(const std::string &kernelSources, bool &requiresFallback) override;
 };
 
 template <PRODUCT_FAMILY product>

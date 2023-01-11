@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/ail/ail_configuration.h"
+#include "shared/source/ail/ail_configuration_base.inl"
 #include "shared/source/helpers/hw_info.h"
 
 #include <algorithm>
@@ -62,7 +62,7 @@ void AILConfigurationHw<IGFX_DG2>::modifyKernelIfRequired(std::string &kernelsSo
 
     if (it != applicationsKernelFixesDG2.end()) {
 
-        if (sourcesContainKernel(kernelsSources, it->kernelName) && isKernelHashCorrect(kernelsSources, it->kernelHash)) {
+        if (sourcesContain(kernelsSources, it->kernelName) && isKernelHashCorrect(kernelsSources, it->kernelHash)) {
             kernelsSources.insert(it->fixStartPosition, it->fixCode);
         }
     }

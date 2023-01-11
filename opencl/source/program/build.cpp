@@ -117,6 +117,10 @@ cl_int Program::build(
                 NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
             }
 
+            if (this->enforceFallbackToPatchtokens) {
+                CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
+            }
+
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
             inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
             inputArgs.GTPinInput = gtpinGetIgcInit();

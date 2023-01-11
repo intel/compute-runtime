@@ -623,7 +623,19 @@ HWTEST_F(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
     EXPECT_TRUE(csr1.requiresInstructionCacheFlush);
 }
 
-TEST_F(ProgramFromSourceTest, givenEmptyAilWhenCreateProgramWithSourcesThenSourcesDoNotChange) {
+void MinimumProgramFixture::SetUp() {
+    PlatformFixture::setUp();
+    cl_device_id device = pPlatform->getClDevice(0);
+    rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
+    NEO::ContextFixture::setUp(1, &device);
+}
+
+void MinimumProgramFixture::TearDown() {
+    NEO::ContextFixture::tearDown();
+    NEO::PlatformFixture::tearDown();
+}
+
+TEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSourcesDoNotChange) {
 
     VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
     ailConfigurationTable[productFamily] = nullptr;
@@ -641,6 +653,53 @@ TEST_F(ProgramFromSourceTest, givenEmptyAilWhenCreateProgramWithSourcesThenSourc
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_STREQ(sources[0], pProgram->sourceCode.c_str());
+    pProgram->release();
+}
+
+HWTEST2_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesAndWithDummyKernelThenDoNotSetFallbackRequired, IsICLLPOrTGLLP) {
+
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+    ailConfigurationTable[productFamily] = nullptr;
+    const char *dummyKernelSources[] = {"kernel void _(){}"}; // if detected - should trigger fallback to CTNI
+    size_t knownSourceSize = strlen(dummyKernelSources[0]);
+
+    auto pProgram = Program::create<MockProgram>(
+        pContext,
+        1,
+        dummyKernelSources,
+        &knownSourceSize,
+        retVal);
+
+    ASSERT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(pProgram->enforceFallbackToPatchtokens);
+    pProgram->release();
+}
+
+TEST_F(MinimumProgramFixture, givenEnforceLegacyBinaryFormatFlagSetWhenBuildingProgramThenInternalOptionsShouldContainDisableZebinOption) {
+    const char *kernelSources[] = {"some source code"};
+    size_t knownSourceSize = strlen(kernelSources[0]);
+
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    auto pProgram = Program::create<SucceedingGenBinaryProgram>(
+        pContext,
+        1,
+        kernelSources,
+        &knownSourceSize,
+        retVal);
+
+    ASSERT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    pProgram->enforceFallbackToPatchtokens = true;
+    retVal = pProgram->build(pProgram->getDevices(), "", false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::disableZebin));
     pProgram->release();
 }
 

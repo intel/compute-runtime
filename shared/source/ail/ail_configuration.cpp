@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,8 +20,8 @@ bool AILConfiguration::isKernelHashCorrect(const std::string &kernelsSources, ui
     return hash == expectedHash;
 }
 
-bool AILConfiguration::sourcesContainKernel(const std::string &kernelsSources, std::string_view kernelName) const {
-    return (kernelsSources.find(kernelName) != std::string::npos);
+bool AILConfiguration::sourcesContain(const std::string &sources, std::string_view contentToFind) const {
+    return (sources.find(contentToFind) != std::string::npos);
 }
 
 } // namespace NEO

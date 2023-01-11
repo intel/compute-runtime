@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class AILMock : public AILConfigurationHw<productFamily> {
   public:
     using AILConfiguration::isKernelHashCorrect;
     using AILConfiguration::processName;
-    using AILConfiguration::sourcesContainKernel;
+    using AILConfiguration::sourcesContain;
 };
 
 HWTEST2_F(AILTests, givenInitializedTemplateWhenGetAILConfigurationThenNullptrIsNotReturned, IsSKL) {
@@ -131,8 +131,8 @@ __kernel void CopyBufferToBufferMiddle(
     uint4 loaded = vload4(gid, pSrc);
     vstore4(loaded, gid, pDst);)";
 
-    EXPECT_TRUE(ail.sourcesContainKernel(kernelSources, "CopyBufferToBufferMiddle"));
-    EXPECT_FALSE(ail.sourcesContainKernel(kernelSources, "CopyBufferToBufferMiddleStateless"));
+    EXPECT_TRUE(ail.sourcesContain(kernelSources, "CopyBufferToBufferMiddle"));
+    EXPECT_FALSE(ail.sourcesContain(kernelSources, "CopyBufferToBufferMiddleStateless"));
 }
 
 HWTEST2_F(AILTests, whenCheckingIsKernelHashCorrectThenCorrectResultIsReturned, IsAtLeastGen12lp) {

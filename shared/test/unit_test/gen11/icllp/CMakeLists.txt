@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ if(TESTS_ICLLP)
                  ${NEO_SHARED_tests_gen11_icllp}
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_icllp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_program_media_sampler_icllp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/ail_tests_icllp.cpp
   )
 
   add_subdirectories()

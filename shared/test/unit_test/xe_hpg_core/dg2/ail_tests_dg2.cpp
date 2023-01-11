@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCall
     class AILMock : public AILConfigurationHw<productFamily> {
       public:
         using AILConfiguration::processName;
-        using AILConfiguration::sourcesContainKernel;
+        using AILConfiguration::sourcesContain;
 
         bool isKernelHashCorrect(const std::string &kernelSources, uint64_t expectedHash) const override {
             return hashCorrect;
@@ -46,7 +46,7 @@ HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCall
             kernelSources.resize(16480u, 'a');
             auto copyKernelSources = kernelSources;
 
-            EXPECT_FALSE(ail.sourcesContainKernel(kernelSources, "findBlocksWithInteractions"));
+            EXPECT_FALSE(ail.sourcesContain(kernelSources, "findBlocksWithInteractions"));
 
             // sources should not change
             ail.modifyKernelIfRequired(kernelSources);
@@ -62,7 +62,7 @@ HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCall
             kernelSources.resize(16480u, 'a');
             kernelSources.insert(1024u, "findBlocksWithInteractions");
             auto copyKernelSources = kernelSources;
-            EXPECT_TRUE(ail.sourcesContainKernel(kernelSources, "findBlocksWithInteractions"));
+            EXPECT_TRUE(ail.sourcesContain(kernelSources, "findBlocksWithInteractions"));
 
             // sources should change
             ail.modifyKernelIfRequired(kernelSources);
@@ -85,7 +85,7 @@ HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCall
             kernelSources.insert(1024u, "findBlocksWithInteractions");
             auto copyKernelSources = kernelSources;
 
-            EXPECT_TRUE(ail.sourcesContainKernel(kernelSources, "findBlocksWithInteractions"));
+            EXPECT_TRUE(ail.sourcesContain(kernelSources, "findBlocksWithInteractions"));
 
             // sources should not change
             ail.modifyKernelIfRequired(kernelSources);

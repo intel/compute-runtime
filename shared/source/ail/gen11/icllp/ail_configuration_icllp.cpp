@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,18 @@ inline void AILConfigurationHw<IGFX_ICELAKE_LP>::applyExt(RuntimeCapabilityTable
                 break;
             }
         }
+    }
+}
+
+//  To avoid a known oneDNN issue in ZEBin handling, affecting ICL and TGL platforms,
+//  fall back to legacy (patchtoken) format when dummy kernel used by nGen is detected.
+//  Only this specific kernel with that exact source code will be affected.
+
+template <>
+inline void AILConfigurationHw<IGFX_ICELAKE_LP>::forceFallbackToPatchtokensIfRequired(const std::string &kernelSources, bool &setFallback) {
+    std::string_view dummyKernelSource{"kernel void _(){}"};
+    if (sourcesContain(kernelSources, dummyKernelSource)) {
+        setFallback = true;
     }
 }
 
