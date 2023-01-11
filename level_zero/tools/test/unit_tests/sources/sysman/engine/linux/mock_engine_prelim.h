@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,16 +31,12 @@ constexpr uint32_t numberOfMockedEnginesForMultiTileDevice = 2u;
 struct MockMemoryManagerInEngineSysman : public MemoryManagerMock {
     MockMemoryManagerInEngineSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
-class EngineNeoDrm : public Drm {
-  public:
+
+struct MockEngineNeoDrm : public Drm {
     using Drm::engineInfo;
     using Drm::setupIoctlHelper;
     const int mockFd = 0;
-    EngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-};
-
-struct MockEngineNeoDrm : public EngineNeoDrm {
-    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : EngineNeoDrm(rootDeviceEnvironment) {}
+    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
     bool mockReadSysmanQueryEngineInfo = false;
     bool mockReadSysmanQueryEngineInfoMultiDevice = false;
@@ -105,14 +101,9 @@ struct MockEngineNeoDrm : public EngineNeoDrm {
     }
 };
 
-class MockPmuInterfaceImp : public PmuInterfaceImp {
-  public:
+struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
     using PmuInterfaceImp::perfEventOpen;
-    MockPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
-};
-
-struct MockEnginePmuInterfaceImp : public MockPmuInterfaceImp {
-    MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImp(pLinuxSysmanImp) {}
+    MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
     bool mockPmuRead = false;
     bool mockPerfEventOpenRead = false;
@@ -146,10 +137,7 @@ struct MockEnginePmuInterfaceImp : public MockPmuInterfaceImp {
     }
 };
 
-class EngineSysfsAccess : public SysfsAccess {};
-class EngineFsAccess : public FsAccess {};
-
-struct MockEngineFsAccess : public EngineFsAccess {
+struct MockEngineFsAccess : public FsAccess {
 
     bool mockReadVal = false;
 
@@ -169,7 +157,7 @@ struct MockEngineFsAccess : public EngineFsAccess {
     }
 };
 
-struct MockEngineSysfsAccess : public EngineSysfsAccess {
+struct MockEngineSysfsAccess : public SysfsAccess {
 
     bool mockReadSymLinkFailure = false;
     bool mockReadSymLinkSuccess = false;

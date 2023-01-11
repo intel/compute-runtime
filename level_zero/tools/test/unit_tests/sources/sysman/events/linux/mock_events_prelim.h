@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,14 +25,10 @@ constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t errorCount = 10u;
 constexpr uint64_t mockTimeStamp = 1100u;
 
-class MockPmuInterfaceImp : public PmuInterfaceImp {
-  public:
+struct MockPmuInterfaceImpForEvents : public PmuInterfaceImp {
     using PmuInterfaceImp::perfEventOpen;
-    MockPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
-};
+    MockPmuInterfaceImpForEvents(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
-struct MockPmuInterfaceImpForEvents : public MockPmuInterfaceImp {
-    MockPmuInterfaceImpForEvents(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImp(pLinuxSysmanImp) {}
     bool mockPmuReadFail = false;
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
@@ -55,9 +51,7 @@ struct MockPmuInterfaceImpForEvents : public MockPmuInterfaceImp {
     }
 };
 
-class EventsFsAccess : public FsAccess {};
-
-struct MockEventsFsAccess : public EventsFsAccess {
+struct MockEventsFsAccess : public FsAccess {
 
     bool mockReadValSuccess = false;
     bool mockReadValOne = false;
@@ -159,8 +153,7 @@ struct MockEventsFsAccess : public EventsFsAccess {
     MockEventsFsAccess() = default;
 };
 
-class EventsSysfsAccess : public SysfsAccess {};
-struct MockEventsSysfsAccess : public EventsSysfsAccess {
+struct MockEventsSysfsAccess : public SysfsAccess {
 
     bool mockSymLinkFailure = false;
     bool mockReadMemHealthDegraded = false;

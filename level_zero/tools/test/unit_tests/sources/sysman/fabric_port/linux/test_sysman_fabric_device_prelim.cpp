@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,6 @@
 #include <limits>
 
 extern bool sysmanUltsEnable;
-
-using ::testing::Invoke;
-using ::testing::Matcher;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,7 @@ const std::string ueventDetachFile("/var/lib/libze_intel_gpu/remove-pci-0000_03_
 const std::string ueventAttachFile("/var/lib/libze_intel_gpu/add-pci-0000_03_00_0");
 const std::string deviceDir("device");
 
-class EventsFsAccess : public FsAccess {};
-
-struct MockEventsFsAccess : public EventsFsAccess {
+struct MockEventsFsAccess : public FsAccess {
     std::vector<ze_result_t> mockReadStatus{ZE_RESULT_SUCCESS};
     uint32_t mockReadVal = 2;
 
@@ -41,9 +39,7 @@ struct MockEventsFsAccess : public EventsFsAccess {
     MockEventsFsAccess() = default;
 };
 
-class EventsSysfsAccess : public SysfsAccess {};
-
-struct MockEventsSysfsAccess : public EventsSysfsAccess {
+struct MockEventsSysfsAccess : public SysfsAccess {
     ze_result_t mockReadSymLinkFailureError = ZE_RESULT_SUCCESS;
 
     ze_result_t readSymLink(const std::string file, std::string &val) override {

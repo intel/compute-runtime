@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,16 +29,12 @@ const std::string deviceDir("device");
 struct MockMemoryManagerInEngineSysman : public MemoryManagerMock {
     MockMemoryManagerInEngineSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
-class EngineNeoDrm : public Drm {
-  public:
+
+struct MockEngineNeoDrm : public Drm {
     using Drm::getEngineInfo;
     using Drm::setupIoctlHelper;
     const int mockFd = 0;
-    EngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-};
-
-struct MockEngineNeoDrm : public EngineNeoDrm {
-    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : EngineNeoDrm(rootDeviceEnvironment) {}
+    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
     bool mockSysmanQueryEngineInfoReturnFalse = true;
     bool sysmanQueryEngineInfo() override {
@@ -65,14 +61,9 @@ struct MockEngineNeoDrm : public EngineNeoDrm {
     }
 };
 
-class MockPmuInterfaceImp : public PmuInterfaceImp {
-  public:
+struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
     using PmuInterfaceImp::perfEventOpen;
-    MockPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
-};
-
-struct MockEnginePmuInterfaceImp : public MockPmuInterfaceImp {
-    MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImp(pLinuxSysmanImp) {}
+    MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
     int64_t mockPerfEventFailureReturnValue = 0;
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
@@ -95,10 +86,7 @@ struct MockEnginePmuInterfaceImp : public MockPmuInterfaceImp {
     }
 };
 
-class EngineSysfsAccess : public SysfsAccess {};
-class EngineFsAccess : public FsAccess {};
-
-struct MockEngineFsAccess : public EngineFsAccess {
+struct MockEngineFsAccess : public FsAccess {
     uint32_t mockReadVal = 23;
     ze_result_t mockReadErrorVal = ZE_RESULT_SUCCESS;
     ze_result_t readResult = ZE_RESULT_SUCCESS;
@@ -112,7 +100,7 @@ struct MockEngineFsAccess : public EngineFsAccess {
     }
 };
 
-struct MockEngineSysfsAccess : public EngineSysfsAccess {
+struct MockEngineSysfsAccess : public SysfsAccess {
     ze_result_t mockReadSymLinkError = ZE_RESULT_SUCCESS;
     ze_result_t readSymLinkResult = ZE_RESULT_SUCCESS;
     uint32_t readSymLinkCalled = 0u;

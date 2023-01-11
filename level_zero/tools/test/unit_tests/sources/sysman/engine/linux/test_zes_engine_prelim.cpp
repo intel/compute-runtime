@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::Matcher;
-using ::testing::Return;
 class OsEngine;
 namespace L0 {
 namespace ult {
@@ -248,7 +246,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
 
     pPmuInterface->mockPerfEventOpenRead = true;
 
-    MockPmuInterfaceImp pPmuInterfaceImp(pLinuxSysmanImp);
+    MockEnginePmuInterfaceImp pPmuInterfaceImp(pLinuxSysmanImp);
     EXPECT_EQ(-1, pPmuInterface->pmuInterfaceOpen(0, -1, 0));
 }
 

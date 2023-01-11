@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,11 +10,6 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::_;
-using ::testing::Matcher;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 
