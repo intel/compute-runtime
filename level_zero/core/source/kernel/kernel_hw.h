@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"

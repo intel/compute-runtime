@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"

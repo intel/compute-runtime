@@ -16,6 +16,7 @@
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/elf/zeinfo_enum_lookup.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -42,6 +43,7 @@ extern const char *dxcoreDllName;
 }
 
 namespace NEO {
+class OsLibrary;
 void __attribute__((destructor)) platformsDestructor();
 extern const DeviceDescriptor deviceDescriptorTable[];
 } // namespace NEO

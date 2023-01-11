@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_kernel_info.h"

@@ -14,6 +14,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/queue_helpers.h"

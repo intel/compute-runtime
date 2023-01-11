@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
 #include <tuple>

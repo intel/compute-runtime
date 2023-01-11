@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"

@@ -43,6 +43,7 @@
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/event/event.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/cl_validators.h"

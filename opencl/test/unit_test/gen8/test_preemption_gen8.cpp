@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/cl_preemption_helper.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/fixtures/cl_preemption_fixture.h"
 
 using namespace NEO;

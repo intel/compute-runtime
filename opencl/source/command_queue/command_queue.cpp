@@ -30,12 +30,14 @@
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/convert_color.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/helpers/queue_helpers.h"
@@ -893,6 +895,13 @@ void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType, size_t minReq
 
 void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
     getGpgpuCommandStreamReceiver().releaseIndirectHeap(heapType);
+}
+
+void CommandQueue::releaseVirtualEvent() {
+    if (this->virtualEvent != nullptr) {
+        this->virtualEvent->decRefInternal();
+        this->virtualEvent = nullptr;
+    }
 }
 
 void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, CommandStreamReceiver &csr) {

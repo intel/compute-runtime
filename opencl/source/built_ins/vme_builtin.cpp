@@ -18,6 +18,8 @@
 #include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/program/program.h"
 
+#include <sstream>
+
 namespace NEO {
 
 static const char *blockMotionEstimateIntelSrc = {

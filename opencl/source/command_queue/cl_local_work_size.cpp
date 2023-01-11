@@ -12,6 +12,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/local_work_size.h"
+#include "shared/source/utilities/logger.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"

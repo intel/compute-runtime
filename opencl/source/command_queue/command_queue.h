@@ -6,21 +6,29 @@
  */
 
 #pragma once
+#include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/sku_info/sku_info_base.h"
+#include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/range.h"
 
+#include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/copy_engine_state.h"
-#include "opencl/source/command_queue/csr_selection_args.h"
-#include "opencl/source/event/event.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/enqueue_properties.h"
+#include "opencl/source/helpers/properties_helper.h"
 #include "opencl/source/helpers/task_information.h"
 
 #include <cstdint>
 
+enum InternalMemoryType : uint32_t;
+
 namespace NEO {
+struct BuiltinOpParams;
+struct CsrSelectionArgs;
+class PrintfHandler;
+enum class WaitStatus;
 class BarrierCommand;
 class Buffer;
 class LinearStream;
@@ -246,23 +254,18 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     }
 
     MOCKABLE_VIRTUAL LinearStream &getCS(size_t minRequiredSize);
-    IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType,
+    IndirectHeap &getIndirectHeap(IndirectHeapType heapType,
                                   size_t minRequiredSize);
 
-    void allocateHeapMemory(IndirectHeap::Type heapType,
+    void allocateHeapMemory(IndirectHeapType heapType,
                             size_t minRequiredSize, IndirectHeap *&indirectHeap);
 
     static bool isAssignEngineRoundRobinEnabled();
     static bool isTimestampWaitEnabled();
 
-    MOCKABLE_VIRTUAL void releaseIndirectHeap(IndirectHeap::Type heapType);
+    MOCKABLE_VIRTUAL void releaseIndirectHeap(IndirectHeapType heapType);
 
-    void releaseVirtualEvent() {
-        if (this->virtualEvent != nullptr) {
-            this->virtualEvent->decRefInternal();
-            this->virtualEvent = nullptr;
-        }
-    }
+    void releaseVirtualEvent();
 
     cl_command_queue_properties getCommandQueueProperties() const {
         return commandQueueProperties;

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"

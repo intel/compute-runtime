@@ -8,6 +8,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -16,6 +17,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
