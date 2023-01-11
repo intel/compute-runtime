@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -787,10 +787,10 @@ HWTEST2_F(L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactEnabledTest,
     EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo));
 }
 
-TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForSignalAllEventPacketThenReturnFalse) {
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForSignalAllEventPacketThenReturnTrue) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     bool defaultValue = L0::L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
-    EXPECT_FALSE(defaultValue);
+    EXPECT_TRUE(defaultValue);
 }
 
 } // namespace ult
