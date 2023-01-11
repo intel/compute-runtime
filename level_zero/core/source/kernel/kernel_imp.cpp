@@ -271,6 +271,12 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if (this->groupSize[0] == groupSizeX &&
+        this->groupSize[1] == groupSizeY &&
+        this->groupSize[2] == groupSizeZ) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     auto numChannels = kernelImmData->getDescriptor().kernelAttributes.numLocalIdChannels;
     Vec3<size_t> groupSize{groupSizeX, groupSizeY, groupSizeZ};
     auto itemsInGroup = Math::computeTotalElementsCount(groupSize);
@@ -873,6 +879,14 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         this->dynamicStateHeapDataSize = kernelImmData->getDynamicStateHeapDataSize();
     }
 
+    if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
+        pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
+        *pImplicitArgs = {};
+        pImplicitArgs->structSize = sizeof(NEO::ImplicitArgs);
+        pImplicitArgs->structVersion = 0;
+        pImplicitArgs->simdWidth = kernelDescriptor.kernelAttributes.simdSize;
+    }
+
     if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] > 0) {
         auto *reqdSize = kernelDescriptor.kernelAttributes.requiredWorkgroupSize;
         UNRECOVERABLE_IF(reqdSize[1] == 0);
@@ -895,13 +909,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         this->privateMemoryGraphicsAllocation = allocatePrivateMemoryGraphicsAllocation();
         this->patchCrossthreadDataWithPrivateAllocation(this->privateMemoryGraphicsAllocation);
         this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation);
-    }
-    if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
-        pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
-        *pImplicitArgs = {};
-        pImplicitArgs->structSize = sizeof(NEO::ImplicitArgs);
-        pImplicitArgs->structVersion = 0;
-        pImplicitArgs->simdWidth = kernelDescriptor.kernelAttributes.simdSize;
     }
 
     this->createPrintfBuffer();
