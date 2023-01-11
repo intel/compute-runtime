@@ -271,20 +271,20 @@ DG2TEST_F(ProductHelperTestDg2, givenB0rCSteppingWhenAskingIfTile64With3DSurface
     }
 }
 
-DG2TEST_F(ProductHelperTestDg2, givenA0SteppingAnd128EuWhenConfigureCalledThenDisableCompression) {
+DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0WhenConfigureCalledThenDisableCompression) {
     auto &productHelper = getHelper<ProductHelper>();
 
     for (uint8_t revision : {REVISION_A0, REVISION_A1}) {
-        for (uint32_t euCount : {127, 128, 129}) {
+        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
             HardwareInfo hwInfo = *defaultHwInfo;
             hwInfo.featureTable.flags.ftrE2ECompression = true;
 
             hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
-            hwInfo.gtSystemInfo.EUCount = euCount;
+            hwInfo.platform.usDeviceID = deviceId;
 
             productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
-            auto compressionExpected = (euCount == 128) ? true : (revision != REVISION_A0);
+            auto compressionExpected = DG2::isG10(hwInfo) ? (revision != REVISION_A0) : true;
 
             EXPECT_EQ(compressionExpected, hwInfo.capabilityTable.ftrRenderCompressedBuffers);
             EXPECT_EQ(compressionExpected, hwInfo.capabilityTable.ftrRenderCompressedImages);
