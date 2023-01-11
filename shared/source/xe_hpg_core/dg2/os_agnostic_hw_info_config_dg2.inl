@@ -82,8 +82,7 @@ bool ProductHelperHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const H
 
 template <>
 bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
-    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
-    return (REVISION_A0 == stepping && DG2::isG10(hwInfo));
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo, *this);
 }
 
 template <>
@@ -103,12 +102,15 @@ void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const statePtr, cons
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
-    return getSteppingFromHwRevId(hwInfo) >= REVISION_B || DG2::isG11(hwInfo) || DG2::isG12(hwInfo);
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
+        return false;
+    }
+    return true;
 }
 
 template <>
@@ -129,12 +131,12 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMo
 
 template <>
 bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
-    return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>

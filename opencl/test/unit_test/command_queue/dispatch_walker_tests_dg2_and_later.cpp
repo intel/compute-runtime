@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,34 +73,6 @@ struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
 using WalkerDispatchTestDg2AndLater = ::testing::Test;
 using Dg2AndLaterDispatchWalkerBasicTest = Test<Dg2AndLaterDispatchWalkerBasicFixture>;
 using matcherDG2AndLater = IsAtLeastXeHpgCore;
-
-HWTEST2_F(WalkerDispatchTestDg2AndLater, whenProgramComputeWalkerThenApplyL3WAForSpecificPlatformAndRevision, matcherDG2AndLater) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    auto hwInfo = *defaultHwInfo;
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
-
-    KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
-    {
-        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
-
-        EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
-    }
-
-    {
-        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
-
-        if (hwInfo.platform.eProductFamily == IGFX_DG2) {
-            EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());
-        } else {
-            EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
-        }
-    }
-}
-
 HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramComputeWalkerThenApplyL3PrefetchAppropriately, matcherDG2AndLater) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     DebugManagerStateRestore restore;

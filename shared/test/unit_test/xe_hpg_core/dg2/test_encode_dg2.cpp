@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -51,6 +52,30 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_MAX_2, pScm->getPixelAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_64, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_TRUE(pScm->getLargeGrfMode());
+}
+
+DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    MockExecutionEnvironment executionEnvironment{};
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto hwInfo = *defaultHwInfo;
+
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
+            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+            hwInfo.platform.usDeviceID = deviceId;
+            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+
+            if (DG2::isG10(hwInfo) && revision < REVISION_B) {
+                EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());
+            } else {
+                EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
+            }
+        }
+    }
 }
 
 using Dg2SbaTest = SbaTest;

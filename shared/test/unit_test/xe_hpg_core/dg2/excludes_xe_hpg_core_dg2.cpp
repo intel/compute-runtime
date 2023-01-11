@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,3 +32,4 @@ HWTEST_EXCLUDE_PRODUCT(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendEx
 HWTEST_EXCLUDE_PRODUCT(XeHpgSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramWBPL1CachePolicy, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimestampWaitSupportForEventsThenReturnFalse, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesAndSettingRevIDToDifferentValuesWhenSetAdditionalInfoIsCalledThenCorrectValuesAreSet_IsXeHpgCore, IGFX_DG2);

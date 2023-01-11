@@ -116,40 +116,56 @@ DG2TEST_F(ProductHelperTestDg2, givenG12DevIdWhenIsDisableOverdispatchAvailableC
 }
 
 DG2TEST_F(ProductHelperTestDg2, whenAdjustingDefaultEngineTypeThenSelectEngineTypeBasedOnRevisionId) {
-    auto hardwareInfo = *defaultHwInfo;
-    hardwareInfo.featureTable.flags.ftrCCSNode = true;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = getHelper<ProductHelper>();
 
-    hardwareInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
-    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
-
-    hardwareInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
-    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
-    EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
+            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+            hwInfo.platform.usDeviceID = deviceId;
+            hwInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
+            gfxCoreHelper.adjustDefaultEngineType(&hwInfo);
+            if (DG2::isG10(hwInfo) && revision < REVISION_B) {
+                EXPECT_EQ(aub_stream::ENGINE_RCS, hwInfo.capabilityTable.defaultEngineType);
+            } else {
+                EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
+            }
+        }
+    }
 }
 
-DG2TEST_F(ProductHelperTestDg2, givenA0OrA1SteppingWhenAskingIfWAIsRequiredThenReturnTrue) {
+DG2TEST_F(ProductHelperTestDg2, givenDg2G11OrG12WhenAskingIfMaxThreadsForWorkgroupWAIsRequiredThenReturnFalse) {
     auto &productHelper = getHelper<ProductHelper>();
-    std::array<std::pair<uint32_t, bool>, 4> revisions = {
-        {{REVISION_A0, true},
-         {REVISION_A1, true},
-         {REVISION_B, false},
-         {REVISION_C, false}}};
+    auto hwInfo = *defaultHwInfo;
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        for (auto deviceId : {dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
+            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+            hwInfo.platform.usDeviceID = deviceId;
 
-    for (const auto &[revision, paramBool] : revisions) {
-        auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+            EXPECT_FALSE(productHelper.isMaxThreadsForWorkgroupWARequired(hwInfo));
+        }
+    }
+}
 
-        productHelper.configureHardwareCustom(&hwInfo, nullptr);
+DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0OrA1SteppingWhenAskingIfWAIsRequiredThenReturnTrue) {
+    auto &productHelper = getHelper<ProductHelper>();
+    auto hwInfo = *defaultHwInfo;
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
+            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+            hwInfo.platform.usDeviceID = deviceId;
 
-        EXPECT_EQ(paramBool, productHelper.isDefaultEngineTypeAdjustmentRequired(hwInfo));
-        EXPECT_EQ(paramBool, productHelper.isAllocationSizeAdjustmentRequired(hwInfo));
-        EXPECT_EQ(paramBool, productHelper.isPrefetchDisablingRequired(hwInfo));
+            productHelper.configureHardwareCustom(&hwInfo, nullptr);
+
+            auto expectedValue = DG2::isG10(hwInfo) && revision < REVISION_B;
+
+            EXPECT_EQ(expectedValue, productHelper.isDefaultEngineTypeAdjustmentRequired(hwInfo));
+            EXPECT_EQ(expectedValue, productHelper.isAllocationSizeAdjustmentRequired(hwInfo));
+            EXPECT_EQ(expectedValue, productHelper.isPrefetchDisablingRequired(hwInfo));
+        }
     }
 }
 

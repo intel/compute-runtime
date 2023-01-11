@@ -22,11 +22,11 @@ const PLATFORM DG2::platform = {
     PCH_UNKNOWN,
     IGFX_XE_HPG_CORE,
     IGFX_XE_HPG_CORE,
-    PLATFORM_NONE, // default init
-    0,             // usDeviceID
-    0,             // usRevId. 0 sets the stepping to A0
-    0,             // usDeviceID_PCH
-    0,             // usRevId_PCH
+    PLATFORM_NONE,      // default init
+    dg2G10DeviceIds[0], // usDeviceID
+    0,                  // usRevId. 0 sets the stepping to A0
+    0,                  // usDeviceID_PCH
+    0,                  // usRevId_PCH
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable DG2::capabilityTable{

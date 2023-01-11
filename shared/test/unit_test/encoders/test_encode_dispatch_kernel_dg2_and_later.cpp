@@ -85,22 +85,11 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesAndSettin
         {64 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K},
     };
 
-    const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTestForDg2AStep = {
-        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-        {16 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-        {32 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-        {64 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-    };
-
     const std::array<REVID, 5> revs{REVISION_A0, REVISION_B, REVISION_C, REVISION_D, REVISION_K};
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     for (auto rev : revs) {
         hwInfo.platform.usRevId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
-        if ((hwInfo.platform.eProductFamily == IGFX_DG2) && (rev == REVISION_A0)) {
-            verifyPreferredSlmValues<FamilyType>(valuesToTestForDg2AStep, pDevice->getRootDeviceEnvironment());
-        } else {
-            verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
-        }
+        verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
     }
 }
 
