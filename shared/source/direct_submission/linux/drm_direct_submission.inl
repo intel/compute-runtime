@@ -35,6 +35,8 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
         this->completionFenceValue = static_cast<decltype(completionFenceValue)>(DebugManager.flags.OverrideUserFenceStartValue.get());
     }
 
+    this->tlbFlushRequired = inputParams.rootDeviceEnvironment.getProductHelper().isTlbFlushRequired();
+
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
 
     auto subDevices = osContextLinux->getDeviceBitfield();
@@ -162,7 +164,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    auto newResourcesBound = osContextLinux->isTlbFlushRequired();
+    auto newResourcesBound = this->tlbFlushRequired && osContextLinux->isTlbFlushRequired();
 
     if (DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get() != -1) {
         newResourcesBound = DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,5 +42,6 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     TagData currentTagData{};
     volatile TagAddressType *tagAddress;
     TaskCountType completionFenceValue{};
+    bool tlbFlushRequired = true;
 };
 } // namespace NEO
