@@ -1255,6 +1255,7 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
                                                      MemoryManager::maxOsContextCount,
                                                      0x1234};
 };
+
 HWTEST2_F(CommandListCreate, givenZeroAsPitchAndSlicePitchWhenMemoryCopyRegionCalledThenSizesEqualOffsetPlusCopySize, IsAtLeastSkl) {
     MockCommandListForRegionSize<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);

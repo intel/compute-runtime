@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -347,4 +347,10 @@ HWTEST2_F(BlitTests, givenBlockCopyCommandWhenAppendTilingTypeThenNothingChanged
     BlitProperties properties = {};
     NEO::BlitCommandsHelper<FamilyType>::appendTilingType(GMM_NOT_TILED, GMM_NOT_TILED, bltCmd);
     EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_BLOCK_COPY_BLT)), 0);
+}
+HWTEST2_F(BlitTests, givenCopyCommandListWhenBytesPerPixelIsCalledForNonBlitCopySupportedPlatformThenExpectOne, IsXeHpcCore) {
+    size_t copySize{}, srcSize{}, dstSize{};
+    uint32_t srcOrigin{}, dstOrigin{};
+    uint32_t bytesPerPixel = NEO::BlitCommandsHelper<FamilyType>::getAvailableBytesPerPixel(copySize, srcOrigin, dstOrigin, srcSize, dstSize);
+    EXPECT_EQ(bytesPerPixel, 1u);
 }
