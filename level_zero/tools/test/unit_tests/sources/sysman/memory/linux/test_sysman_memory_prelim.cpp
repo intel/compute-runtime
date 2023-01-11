@@ -13,8 +13,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::Matcher;
-using ::testing::Return;
 namespace L0 {
 namespace ult {
 

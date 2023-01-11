@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,9 +102,7 @@ const std::string sysfsPahTelem3 = "/sys/class/intel_pmt/telem3";
 const std::string sysfsPahTelem4 = "/sys/class/intel_pmt/telem4";
 const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
 
-class MemorySysfsAccess : public SysfsAccess {};
-
-struct MockMemorySysfsAccess : public MemorySysfsAccess {
+struct MockMemorySysfsAccess : public SysfsAccess {
 
     std::vector<ze_result_t> mockReadReturnStatus{};
     std::vector<std::string> mockReadStringValue{};
@@ -213,18 +211,13 @@ struct MockMemoryManagerSysman : public MemoryManagerMock {
     MockMemoryManagerSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
 
-class MemoryNeoDrm : public Drm {
-  public:
+struct MockMemoryNeoDrm : public Drm {
     using Drm::ioctlHelper;
     const int mockFd = 33;
-    MemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-};
-
-struct MockMemoryNeoDrm : public MemoryNeoDrm {
     std::vector<bool> mockQuerySystemInfoReturnValue{};
     bool isRepeated = false;
     bool mockReturnEmptyRegions = false;
-    MockMemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : MemoryNeoDrm(rootDeviceEnvironment) {}
+    MockMemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
     std::vector<uint8_t> getMemoryRegions() override {
         if (mockReturnEmptyRegions == true) {
@@ -274,13 +267,9 @@ struct MockMemoryNeoDrm : public MemoryNeoDrm {
     }
 };
 
-class MemoryPmt : public PlatformMonitoringTech {
-  public:
-    MemoryPmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
-    using PlatformMonitoringTech::keyOffsetMap;
-};
+struct MockMemoryPmt : public PlatformMonitoringTech {
 
-struct MockMemoryPmt : public MemoryPmt {
+    using PlatformMonitoringTech::keyOffsetMap;
     std::vector<ze_result_t> mockReadValueReturnStatus{};
     std::vector<uint32_t> mockReadArgumentValue{};
     ze_result_t mockIdiReadValueFailureReturnStatus = ZE_RESULT_SUCCESS;
@@ -291,8 +280,7 @@ struct MockMemoryPmt : public MemoryPmt {
     bool mockVfid1Status = false;
     bool isRepeated = false;
 
-    MockMemoryPmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : MemoryPmt(pFsAccess, onSubdevice, subdeviceId) {}
-
+    MockMemoryPmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     ze_result_t readValue(const std::string key, uint32_t &val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -455,9 +443,7 @@ struct MockMemoryPmt : public MemoryPmt {
     }
 };
 
-class MemoryFsAccess : public FsAccess {};
-
-struct MockMemoryFsAccess : public MemoryFsAccess {
+struct MockMemoryFsAccess : public FsAccess {
     ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {
         if (directory.compare(baseTelemSysFS) == 0) {
             listOfTelemNodes.push_back("telem1");

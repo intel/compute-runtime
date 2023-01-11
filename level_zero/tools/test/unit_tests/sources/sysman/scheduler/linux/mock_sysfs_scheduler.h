@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,6 @@ const std::string defaultHeartbeatIntervalMilliSecs(".defaults/heartbeat_interva
 const std::string engineDir("engine");
 const std::vector<std::string> listOfMockedEngines = {"rcs0", "bcs0", "vcs0", "vcs1", "vecs0"};
 
-class SchedulerSysfsAccess : public SysfsAccess {};
 typedef struct SchedulerConfigValues {
     uint64_t defaultVal;
     uint64_t actualVal;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,7 @@ const std::string baseScaleSubDevice1("gt/gt1/base_freq_factor.scale");
 const std::string pwrBalance("sys_pwr_balance");
 class PerformanceSysfsAccess : public SysfsAccess {};
 
-template <>
-struct Mock<PerformanceSysfsAccess> : public PerformanceSysfsAccess {
+struct MockPerformanceSysfsAccess : public PerformanceSysfsAccess {
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
     ze_result_t mockCanReadResult = ZE_RESULT_SUCCESS;
     ze_bool_t isComputeInvalid = false;
@@ -152,7 +151,7 @@ struct Mock<PerformanceSysfsAccess> : public PerformanceSysfsAccess {
     double mockMultiplierMedia = 512.0;
     double mockScale = 0.00390625;
     double mockPwrBalance = 0.0;
-    Mock<PerformanceSysfsAccess>() = default;
+    MockPerformanceSysfsAccess() = default;
 };
 
 class PublicLinuxPerformanceImp : public L0::LinuxPerformanceImp {

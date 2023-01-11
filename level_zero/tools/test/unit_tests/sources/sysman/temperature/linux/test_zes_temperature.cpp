@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ const std::string sampleGuid2 = "0x490e01";
 class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
     std::unique_ptr<PublicLinuxTemperatureImp> pPublicLinuxTemperatureImp;
-    std::unique_ptr<Mock<TemperatureFsAccess>> pFsAccess;
+    std::unique_ptr<MockTemperatureFsAccess> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     PRODUCT_FAMILY productFamily;
@@ -40,7 +40,7 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
             handle = nullptr;
         }
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();
-        pFsAccess = std::make_unique<Mock<TemperatureFsAccess>>();
+        pFsAccess = std::make_unique<MockTemperatureFsAccess>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
@@ -58,8 +58,8 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
         for (auto &deviceHandle : deviceHandles) {
             ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-            auto pPmt = new Mock<TemperaturePmt>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                                 deviceProperties.subdeviceId);
+            auto pPmt = new MockTemperaturePmt(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                               deviceProperties.subdeviceId);
             pPmt->mockedInit(pFsAccess.get());
             // Get keyOffsetMap
             auto keyOffsetMapEntry = guidToKeyOffsetMap.find(sampleGuid1);
@@ -167,7 +167,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueF
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = static_cast<Mock<TemperaturePmt> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        auto pPmt = static_cast<MockTemperaturePmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
         pPmt->mockReadValueResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -182,7 +182,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueF
 class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<PublicLinuxTemperatureImp> pPublicLinuxTemperatureImp;
-    std::unique_ptr<Mock<TemperatureFsAccess>> pFsAccess;
+    std::unique_ptr<MockTemperatureFsAccess> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     PRODUCT_FAMILY productFamily;
@@ -192,7 +192,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        pFsAccess = std::make_unique<Mock<TemperatureFsAccess>>();
+        pFsAccess = std::make_unique<MockTemperatureFsAccess>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
@@ -210,8 +210,8 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         for (auto &deviceHandle : deviceHandles) {
             ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-            auto pPmt = new Mock<TemperaturePmt>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                                 deviceProperties.subdeviceId);
+            auto pPmt = new MockTemperaturePmt(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                               deviceProperties.subdeviceId);
             pPmt->mockedInit(pFsAccess.get());
             // Get keyOffsetMap
             auto keyOffsetMapEntry = guidToKeyOffsetMap.find(sampleGuid2);
@@ -268,7 +268,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndReadCoreTempera
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = static_cast<Mock<TemperaturePmt> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        auto pPmt = static_cast<MockTemperaturePmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
         pPmt->mockReadCoreTempResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -291,7 +291,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndReadComputeTemp
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = static_cast<Mock<TemperaturePmt> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        auto pPmt = static_cast<MockTemperaturePmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
         pPmt->mockReadComputeTempResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -331,7 +331,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsW
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = static_cast<Mock<TemperaturePmt> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        auto pPmt = static_cast<MockTemperaturePmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
         pPmt->mockReadValueResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     for (auto &handle : handles) {
@@ -361,7 +361,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidateEnumerateRootTelemIndexWheng
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidatePmtReadValueWhenkeyOffsetMapIsNotThereThenFailureReturned) {
-    auto pPmt = std::make_unique<Mock<TemperaturePmt>>(pFsAccess.get(), 0, 0);
+    auto pPmt = std::make_unique<MockTemperaturePmt>(pFsAccess.get(), 0, 0);
     pPmt->mockedInit(pFsAccess.get());
     // Get keyOffsetMap
     auto keyOffsetMapEntry = guidToKeyOffsetMap.find(sampleGuid2);

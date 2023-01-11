@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,24 +39,20 @@ const std::string sysfsPahTelem2 = "/sys/class/intel_pmt/telem2";
 const std::string sysfsPahTelem3 = "/sys/class/intel_pmt/telem3";
 const std::string sysfsPahTelem4 = "/sys/class/intel_pmt/telem4";
 const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
-class TemperaturePmt : public PlatformMonitoringTech {
-  public:
-    TemperaturePmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+
+struct MockTemperaturePmt : public PlatformMonitoringTech {
+    MockTemperaturePmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     using PlatformMonitoringTech::closeFunction;
     using PlatformMonitoringTech::keyOffsetMap;
     using PlatformMonitoringTech::openFunction;
     using PlatformMonitoringTech::preadFunction;
     using PlatformMonitoringTech::telemetryDeviceEntry;
-};
 
-template <>
-struct Mock<TemperaturePmt> : public TemperaturePmt {
     ze_result_t mockReadValueResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadCoreTempResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadComputeTempResult = ZE_RESULT_SUCCESS;
 
-    Mock<TemperaturePmt>(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : TemperaturePmt(pFsAccess, onSubdevice, subdeviceId) {}
-    ~Mock() override {
+    ~MockTemperaturePmt() override {
         rootDeviceTelemNodeIndex = 0;
     }
 
@@ -127,10 +123,7 @@ struct Mock<TemperaturePmt> : public TemperaturePmt {
     }
 };
 
-class TemperatureFsAccess : public FsAccess {};
-
-template <>
-struct Mock<TemperatureFsAccess> : public TemperatureFsAccess {
+struct MockTemperatureFsAccess : public FsAccess {
     ze_result_t mockErrorListDirectory = ZE_RESULT_SUCCESS;
     ze_result_t mockErrorGetRealPath = ZE_RESULT_SUCCESS;
     ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {
@@ -168,7 +161,7 @@ struct Mock<TemperatureFsAccess> : public TemperatureFsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<TemperatureFsAccess>() = default;
+    MockTemperatureFsAccess() = default;
 };
 
 class PublicLinuxTemperatureImp : public L0::LinuxTemperatureImp {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,6 @@
 extern bool sysmanUltsEnable;
 
 using namespace NEO;
-
-using ::testing::DoDefault;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {

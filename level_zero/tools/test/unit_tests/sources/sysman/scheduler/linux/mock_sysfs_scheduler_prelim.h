@@ -29,16 +29,11 @@ const std::vector<std::string> listOfMockedEngines = {"rcs0", "bcs0", "vcs0", "v
 uint32_t tileCount = 2u;
 uint32_t numberOfEnginesInSched = 34u;
 
-class SchedulerNeoDrm : public Drm {
-  public:
+struct MockSchedulerNeoDrm : public Drm {
     using Drm::getEngineInfo;
     using Drm::setupIoctlHelper;
     const int mockFd = 0;
-    SchedulerNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-};
-
-struct MockSchedulerNeoDrm : public SchedulerNeoDrm {
-    MockSchedulerNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : SchedulerNeoDrm(rootDeviceEnvironment) {}
+    MockSchedulerNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
     bool sysmanQueryEngineInfo() override {
 

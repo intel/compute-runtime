@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::_;
-using ::testing::DoDefault;
-using ::testing::InSequence;
-using ::testing::Matcher;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 
@@ -25,7 +19,7 @@ constexpr double halfOfMaxPerformanceFactor = 50;
 constexpr double minPerformanceFactor = 0;
 class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
   protected:
-    std::unique_ptr<Mock<PerformanceSysfsAccess>> ptestSysfsAccess;
+    std::unique_ptr<MockPerformanceSysfsAccess> ptestSysfsAccess;
     std::vector<ze_device_handle_t> deviceHandles;
     SysfsAccess *pOriginalSysfsAccess = nullptr;
     void SetUp() override {
@@ -33,7 +27,7 @@ class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
             GTEST_SKIP();
         }
         SysmanMultiDeviceFixture::SetUp();
-        ptestSysfsAccess = std::make_unique<Mock<PerformanceSysfsAccess>>();
+        ptestSysfsAccess = std::make_unique<MockPerformanceSysfsAccess>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         for (auto &handle : pSysmanDeviceImp->pPerformanceHandleContext->handleList) {

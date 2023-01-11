@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,6 @@
 #include "mock_sysfs_performance.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::_;
-using ::testing::Matcher;
 
 namespace L0 {
 namespace ult {

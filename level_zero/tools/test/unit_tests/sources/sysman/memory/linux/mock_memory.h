@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,15 +31,10 @@ struct MockMemoryManagerSysman : public MemoryManagerMock {
     MockMemoryManagerSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
 
-class MemoryNeoDrm : public Drm {
-  public:
+struct MockMemoryNeoDrm : public Drm {
     using Drm::memoryInfo;
     const int mockFd = 33;
-    MemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-};
-
-struct MockMemoryNeoDrm : public MemoryNeoDrm {
-    MockMemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : MemoryNeoDrm(rootDeviceEnvironment) {}
+    MockMemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
     std::vector<bool> mockQueryMemoryInfoReturnStatus{};
     bool queryMemoryInfo() override {
         if (!mockQueryMemoryInfoReturnStatus.empty()) {
