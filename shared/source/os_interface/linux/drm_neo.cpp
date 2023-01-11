@@ -655,9 +655,6 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) const {
 }
 
 void Drm::setNewResourceBoundToVM(uint32_t vmHandleId) {
-    if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired()) {
-        return;
-    }
     const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
     for (const auto &engine : engines) {
         if (engine.osContext->getDeviceBitfield().test(vmHandleId)) {
