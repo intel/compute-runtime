@@ -203,4 +203,37 @@ EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t nu
     return eventPool.release();
 }
 
+uint64_t Event::getGpuAddress(Device *device) const {
+    return getAllocation(device).getGpuAddress() + this->eventPoolOffset;
+}
+
+NEO::GraphicsAllocation &Event::getAllocation(Device *device) const {
+    return *this->eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
+}
+
+void Event::setGpuStartTimestamp() {
+    if (isEventTimestampFlagSet()) {
+        this->device->getGlobalTimestamps(&cpuStartTimestamp, &gpuStartTimestamp);
+        cpuStartTimestamp = cpuStartTimestamp / this->device->getNEODevice()->getDeviceInfo().outProfilingTimerResolution;
+    }
+}
+
+void Event::setGpuEndTimestamp() {
+    if (isEventTimestampFlagSet()) {
+        auto resolution = this->device->getNEODevice()->getDeviceInfo().outProfilingTimerResolution;
+        auto cpuEndTimestamp = this->device->getNEODevice()->getOSTime()->getCpuRawTimestamp() / resolution;
+        this->gpuEndTimestamp = gpuStartTimestamp + (cpuEndTimestamp - cpuStartTimestamp);
+    }
+}
+
+void Event::resetPackets(bool resetAllPackets) {
+    if (resetAllPackets) {
+        resetKernelCountAndPacketUsedCount();
+    }
+    cpuStartTimestamp = 0;
+    gpuStartTimestamp = 0;
+    gpuEndTimestamp = 0;
+    this->csr = this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+}
+
 } // namespace L0

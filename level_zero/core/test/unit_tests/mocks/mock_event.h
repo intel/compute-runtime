@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
     using BaseClass::csr;
+    using BaseClass::Event;
     using BaseClass::hostAddress;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;
@@ -75,7 +76,7 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::maxKernelCount;
     using ::L0::Event::signalAllEventPackets;
 
-    MockEvent() {
+    MockEvent() : Event(nullptr, 0, nullptr) {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                              NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                              reinterpret_cast<void *>(0x1234),
@@ -94,11 +95,11 @@ class MockEvent : public ::L0::Event {
         this->maxKernelCount = EventPacketsCount::maxKernelSplit;
         this->maxPacketCount = EventPacketsCount::eventPackets;
     }
-    NEO::GraphicsAllocation &getAllocation(L0::Device *device) override {
+    NEO::GraphicsAllocation &getAllocation(L0::Device *device) const override {
         return *mockAllocation.get();
     }
 
-    uint64_t getGpuAddress(L0::Device *device) override {
+    uint64_t getGpuAddress(L0::Device *device) const override {
         return mockAllocation->getGpuAddress();
     }
 

@@ -63,26 +63,26 @@ struct Event : _ze_event_handle_t {
 
     inline ze_event_handle_t toHandle() { return this; }
 
-    virtual NEO::GraphicsAllocation &getAllocation(Device *device) = 0;
+    MOCKABLE_VIRTUAL NEO::GraphicsAllocation &getAllocation(Device *device) const;
 
-    virtual uint64_t getGpuAddress(Device *device) = 0;
+    MOCKABLE_VIRTUAL uint64_t getGpuAddress(Device *device) const;
     virtual uint32_t getPacketsInUse() const = 0;
     virtual uint32_t getPacketsUsedInLastKernel() = 0;
     virtual uint64_t getPacketAddress(Device *device) = 0;
-    virtual void resetPackets(bool resetAllPackets) = 0;
+    MOCKABLE_VIRTUAL void resetPackets(bool resetAllPackets);
     virtual void resetKernelCountAndPacketUsedCount() = 0;
-    void *getHostAddress() { return hostAddress; }
+    void *getHostAddress() const { return hostAddress; }
     virtual void setPacketsInUse(uint32_t value) = 0;
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
-    virtual void setGpuStartTimestamp() = 0;
-    virtual void setGpuEndTimestamp() = 0;
-    size_t getCompletionFieldOffset() {
+    MOCKABLE_VIRTUAL void setGpuStartTimestamp();
+    MOCKABLE_VIRTUAL void setGpuEndTimestamp();
+    size_t getCompletionFieldOffset() const {
         return this->isUsingContextEndOffset() ? this->getContextEndOffset() : 0;
     }
-    uint64_t getCompletionFieldGpuAddress(Device *device) {
+    uint64_t getCompletionFieldGpuAddress(Device *device) const {
         return this->getGpuAddress(device) + getCompletionFieldOffset();
     }
-    void *getCompletionFieldHostAddress() {
+    void *getCompletionFieldHostAddress() const {
         return ptrOffset(getHostAddress(), getCompletionFieldOffset());
     }
     size_t getContextStartOffset() const {
@@ -176,11 +176,16 @@ struct Event : _ze_event_handle_t {
     MetricStreamer *metricStreamer = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
     void *hostAddress = nullptr;
+    Device *device = nullptr;
+    EventPool *eventPool = nullptr;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
 
+    int index = 0;
+
   protected:
+    Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
     std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
 
     size_t contextStartOffset = 0u;
@@ -220,7 +225,7 @@ template <typename TagSizeT>
 struct EventImp : public Event {
 
     EventImp(EventPool *eventPool, int index, Device *device, bool downloadAllocationRequired)
-        : device(device), index(index), eventPool(eventPool), downloadAllocationRequired(downloadAllocationRequired) {
+        : Event(eventPool, index, device), downloadAllocationRequired(downloadAllocationRequired) {
         contextStartOffset = NEO::TimestampPackets<TagSizeT>::getContextStartOffset();
         contextEndOffset = NEO::TimestampPackets<TagSizeT>::getContextEndOffset();
         globalStartOffset = NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset();
@@ -242,11 +247,6 @@ struct EventImp : public Event {
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
     ze_result_t queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override;
 
-    NEO::GraphicsAllocation &getAllocation(Device *device) override;
-
-    uint64_t getGpuAddress(Device *device) override;
-
-    void resetPackets(bool resetAllPackets) override;
     void resetDeviceCompletionData(bool resetAllPackets);
     void resetKernelCountAndPacketUsedCount() override;
 
@@ -254,14 +254,9 @@ struct EventImp : public Event {
     uint32_t getPacketsInUse() const override;
     uint32_t getPacketsUsedInLastKernel() override;
     void setPacketsInUse(uint32_t value) override;
-    void setGpuStartTimestamp() override;
-    void setGpuEndTimestamp() override;
 
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
 
-    Device *device;
-    int index;
-    EventPool *eventPool;
     const bool downloadAllocationRequired = false;
 
   protected:

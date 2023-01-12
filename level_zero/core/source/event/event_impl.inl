@@ -65,17 +65,6 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 }
 
 template <typename TagSizeT>
-uint64_t EventImp<TagSizeT>::getGpuAddress(Device *device) {
-    auto alloc = eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
-    return (alloc->getGpuAddress() + this->eventPoolOffset);
-}
-
-template <typename TagSizeT>
-NEO::GraphicsAllocation &EventImp<TagSizeT>::getAllocation(Device *device) {
-    return *this->eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
-}
-
-template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
     constexpr uint32_t skipL3EventPacketIndex = 2u;
     globalStartTS = kernelEventCompletionData[0].getGlobalStartValue(0);
@@ -448,17 +437,6 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *pCo
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::resetPackets(bool resetAllPackets) {
-    if (resetAllPackets) {
-        resetKernelCountAndPacketUsedCount();
-    }
-    cpuStartTimestamp = 0;
-    gpuStartTimestamp = 0;
-    gpuEndTimestamp = 0;
-    this->csr = this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-}
-
-template <typename TagSizeT>
 uint32_t EventImp<TagSizeT>::getPacketsInUse() const {
     uint32_t packetsInUse = 0;
     for (uint32_t i = 0; i < kernelCount; i++) {
@@ -493,23 +471,6 @@ uint64_t EventImp<TagSizeT>::getPacketAddress(Device *device) {
                    singlePacketSize;
     }
     return address;
-}
-
-template <typename TagSizeT>
-void EventImp<TagSizeT>::setGpuStartTimestamp() {
-    if (isEventTimestampFlagSet()) {
-        this->device->getGlobalTimestamps(&cpuStartTimestamp, &gpuStartTimestamp);
-        cpuStartTimestamp = cpuStartTimestamp / this->device->getNEODevice()->getDeviceInfo().outProfilingTimerResolution;
-    }
-}
-
-template <typename TagSizeT>
-void EventImp<TagSizeT>::setGpuEndTimestamp() {
-    if (isEventTimestampFlagSet()) {
-        auto resolution = this->device->getNEODevice()->getDeviceInfo().outProfilingTimerResolution;
-        auto cpuEndTimestamp = this->device->getNEODevice()->getOSTime()->getCpuRawTimestamp() / resolution;
-        this->gpuEndTimestamp = gpuStartTimestamp + (cpuEndTimestamp - cpuStartTimestamp);
-    }
 }
 
 template <typename TagSizeT>
