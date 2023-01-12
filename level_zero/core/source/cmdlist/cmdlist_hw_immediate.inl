@@ -117,8 +117,8 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         false,                                                       // memoryMigrationRequired
         false,                                                       // textureCacheFlush
         hasStallingCmds,                                             // hasStallingCmds
-        hasRelaxedOrderingDependencies                               // hasRelaxedOrderingDependencies
-    );
+        hasRelaxedOrderingDependencies,                              // hasRelaxedOrderingDependencies
+        false);                                                      // stateCacheInvalidation
 
     this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
     this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());

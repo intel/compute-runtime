@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,36 +68,37 @@ struct DispatchFlags {
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
                   bool requiresCoherencyP, bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
                   bool usePerDSSbackedBufferP, bool useGlobalAtomicsP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
-                  bool hasStallingCmds, bool hasRelaxedOrderingDependencies) : csrDependencies(csrDependenciesP),
-                                                                               barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
-                                                                               pipelineSelectArgs(pipelineSelectArgsP),
-                                                                               flushStampReference(flushStampReferenceP),
-                                                                               throttle(throttleP),
-                                                                               preemptionMode(preemptionModeP),
-                                                                               numGrfRequired(numGrfRequiredP),
-                                                                               l3CacheSettings(l3CacheSettingsP),
-                                                                               threadArbitrationPolicy(threadArbitrationPolicyP),
-                                                                               additionalKernelExecInfo(additionalKernelExecInfoP),
-                                                                               kernelExecutionType(kernelExecutionTypeP),
-                                                                               memoryCompressionState(memoryCompressionStateP),
-                                                                               sliceCount(sliceCountP),
-                                                                               blocking(blockingP),
-                                                                               dcFlush(dcFlushP),
-                                                                               useSLM(useSLMP),
-                                                                               guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControlP),
-                                                                               gsba32BitRequired(gsba32BitRequiredP),
-                                                                               requiresCoherency(requiresCoherencyP),
-                                                                               lowPriority(lowPriorityP),
-                                                                               implicitFlush(implicitFlushP),
-                                                                               outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
-                                                                               epilogueRequired(epilogueRequiredP),
-                                                                               usePerDssBackedBuffer(usePerDSSbackedBufferP),
-                                                                               useGlobalAtomics(useGlobalAtomicsP),
-                                                                               areMultipleSubDevicesInContext(areMultipleSubDevicesInContextP),
-                                                                               memoryMigrationRequired(memoryMigrationRequiredP),
-                                                                               textureCacheFlush(textureCacheFlush),
-                                                                               hasStallingCmds(hasStallingCmds),
-                                                                               hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies){};
+                  bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool stateCacheInvalidation) : csrDependencies(csrDependenciesP),
+                                                                                                            barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
+                                                                                                            pipelineSelectArgs(pipelineSelectArgsP),
+                                                                                                            flushStampReference(flushStampReferenceP),
+                                                                                                            throttle(throttleP),
+                                                                                                            preemptionMode(preemptionModeP),
+                                                                                                            numGrfRequired(numGrfRequiredP),
+                                                                                                            l3CacheSettings(l3CacheSettingsP),
+                                                                                                            threadArbitrationPolicy(threadArbitrationPolicyP),
+                                                                                                            additionalKernelExecInfo(additionalKernelExecInfoP),
+                                                                                                            kernelExecutionType(kernelExecutionTypeP),
+                                                                                                            memoryCompressionState(memoryCompressionStateP),
+                                                                                                            sliceCount(sliceCountP),
+                                                                                                            blocking(blockingP),
+                                                                                                            dcFlush(dcFlushP),
+                                                                                                            useSLM(useSLMP),
+                                                                                                            guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControlP),
+                                                                                                            gsba32BitRequired(gsba32BitRequiredP),
+                                                                                                            requiresCoherency(requiresCoherencyP),
+                                                                                                            lowPriority(lowPriorityP),
+                                                                                                            implicitFlush(implicitFlushP),
+                                                                                                            outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
+                                                                                                            epilogueRequired(epilogueRequiredP),
+                                                                                                            usePerDssBackedBuffer(usePerDSSbackedBufferP),
+                                                                                                            useGlobalAtomics(useGlobalAtomicsP),
+                                                                                                            areMultipleSubDevicesInContext(areMultipleSubDevicesInContextP),
+                                                                                                            memoryMigrationRequired(memoryMigrationRequiredP),
+                                                                                                            textureCacheFlush(textureCacheFlush),
+                                                                                                            hasStallingCmds(hasStallingCmds),
+                                                                                                            hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies),
+                                                                                                            stateCacheInvalidation(stateCacheInvalidation){};
 
     CsrDependencies csrDependencies;
     TimestampPacketContainer *barrierTimestampPacketNodes = nullptr;
@@ -131,6 +132,7 @@ struct DispatchFlags {
     bool hasStallingCmds = false;
     bool hasRelaxedOrderingDependencies = false;
     bool disableEUFusion = false;
+    bool stateCacheInvalidation = false;
 };
 
 struct CsrSizeRequestFlags {

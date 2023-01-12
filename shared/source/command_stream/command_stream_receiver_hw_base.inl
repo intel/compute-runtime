@@ -325,6 +325,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
         args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
         args.workloadPartitionOffset = isMultiTileOperationEnabled();
+        args.stateCacheInvalidationEnable = dispatchFlags.stateCacheInvalidation;
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             commandStreamTask,
             PostSyncMode::ImmediateData,
@@ -550,7 +551,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programStateSip(commandStreamCSR, device);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
-
     if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             PipeControlArgs args;

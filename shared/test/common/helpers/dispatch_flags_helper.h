@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,8 @@ struct DispatchFlagsHelper {
             false,                                   // memoryMigrationRequired
             false,                                   // textureCacheFlush
             false,                                   // hasStallingCmds
-            false                                    // hasRelaxedOrderingDependencies
+            false,                                   // hasRelaxedOrderingDependencies
+            false                                    // stateCacheInvalidation
         );
     }
 };

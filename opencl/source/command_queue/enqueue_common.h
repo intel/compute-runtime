@@ -844,7 +844,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->requiresMemoryMigration(),                                                                      // memoryMigrationRequired
         isTextureCacheFlushNeeded(commandType),                                                                 // textureCacheFlush
         false,                                                                                                  // hasStallingCmds
-        false);                                                                                                 // hasRelaxedOrderingDependencies
+        false,                                                                                                  // hasRelaxedOrderingDependencies
+        false);                                                                                                 // stateCacheInvalidation
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
@@ -1060,6 +1061,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         for (auto surface : createRange(surfaces, surfaceCount)) {
             surface->makeResident(getGpgpuCommandStreamReceiver());
         }
+        bool stateCacheInvalidationNeeded = false;
+        if (getGpgpuCommandStreamReceiver().getDcFlushSupport() && enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
+            stateCacheInvalidationNeeded = true;
+        }
 
         auto rootDeviceIndex = getDevice().getRootDeviceIndex();
         DispatchFlags dispatchFlags(
@@ -1092,7 +1097,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             false,                                                               // memoryMigrationRequired
             false,                                                               // textureCacheFlush
             false,                                                               // hasStallingCmds
-            false);                                                              // hasRelaxedOrderingDependencies
+            false,                                                               // hasRelaxedOrderingDependencies
+            stateCacheInvalidationNeeded);                                       // stateCacheInvalidation
 
         const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 

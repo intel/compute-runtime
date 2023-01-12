@@ -366,6 +366,43 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
     EXPECT_EQ(GrfConfig::NotApplicable, mockCsr->passedDispatchFlags.numGrfRequired);
 }
 
+HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKernelThenDispatchFlagStateCacheInvalidationInFlushTaskIsSetCorrectly) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    setUpImpl<CsrType>();
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+    mockCsr->skipBlitCalls = true;
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), 0, 1, nullptr, retVal));
+    auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;
+
+    auto blocking = true;
+    TimestampPacketDependencies timestampPacketDependencies;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    BuiltinOpParams builtinOpParams;
+    builtinOpParams.srcMemObj = buffer.get();
+    builtinOpParams.dstPtr = reinterpret_cast<void *>(0x1234);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setBuiltinOpParams(builtinOpParams);
+    CsrDependencies csrDeps;
+
+    BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
+                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, nullptr);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    blitPropertiesContainer.push_back(blitProperties);
+
+    EnqueueProperties enqueueProperties(true, false, false, false, false, &blitPropertiesContainer);
+    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
+                                          eventsRequest, eventBuilder, 0, csrDeps, &bcsCsr);
+
+    auto expectedValue = mockCmdQ->getGpgpuCommandStreamReceiver().getDcFlushSupport();
+    EXPECT_EQ(expectedValue, mockCsr->passedDispatchFlags.stateCacheInvalidation);
+}
+
 HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenAllowOutOfOrderExecution) {
     using CsrType = MockCsrHw2<FamilyType>;
     DebugManager.flags.EnableTimestampPacket.set(1);
