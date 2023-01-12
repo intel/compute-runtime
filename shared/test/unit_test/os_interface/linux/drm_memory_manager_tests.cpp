@@ -823,6 +823,32 @@ TEST_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleThenSucceeds)
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhichRequiresHostMapThenCorrectAlignmentReturned) {
+    mock->ioctl_expected.primeFdToHandle = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemMmapOffset = 1;
+
+    osHandle handle = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+
+    this->mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    this->mock->queryEngineInfo();
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, true, false);
+    DrmAllocation *drmAlloc = (DrmAllocation *)graphicsAllocation;
+
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(drmAlloc->getMmapPtr()));
+
+    memoryManager->closeSharedHandle(graphicsAllocation);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 TEST_F(DrmMemoryManagerTest, GivenAllocationWhenFreeingThenSucceeds) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 1;

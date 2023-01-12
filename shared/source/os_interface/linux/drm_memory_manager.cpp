@@ -2019,7 +2019,18 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         size_t size = lseekFunction(handle, 0, SEEK_END);
 
         bo = new BufferObject(&drm, patIndex, boHandle, size, maxOsContextCount);
-        cpuPointer = this->mmapFunction(0, size, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+        if (properties.allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER) {
+            cpuPointer = this->mmapFunction(0, size + MemoryConstants::pageSize64k, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+            auto alignedAddr = alignUp(cpuPointer, MemoryConstants::pageSize64k);
+            auto notUsedSize = ptrDiff(alignedAddr, cpuPointer);
+            // call unmap to free the unaligned pages preceding the system allocation and
+            // adjust the pointer to the correct aligned Address.
+            munmapFunction(cpuPointer, notUsedSize);
+            cpuPointer = alignedAddr;
+        } else {
+            cpuPointer = this->mmapFunction(0, size, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        }
 
         if (cpuPointer == MAP_FAILED) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
