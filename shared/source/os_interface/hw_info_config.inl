@@ -51,6 +51,11 @@ template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {}
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hwInfo) const {
     hwInfo->capabilityTable.blitterOperationsSupported = obtainBlitterPreference(*hwInfo);
 
