@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,13 +72,9 @@ struct MockMemoryManagerInRasSysman : public MemoryManagerMock {
     MockMemoryManagerInRasSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
 
-class MockPmuInterfaceImpForRas : public PmuInterfaceImp {
-  public:
+struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
     using PmuInterfaceImp::perfEventOpen;
-    MockPmuInterfaceImpForRas(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
-};
-template <>
-struct Mock<MockPmuInterfaceImpForRas> : public MockPmuInterfaceImpForRas {
+    MockRasPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
     int32_t mockPmuReadCount = 0;
     int32_t mockPmuReadCountAfterClear = 0;
@@ -89,8 +85,6 @@ struct Mock<MockPmuInterfaceImpForRas> : public MockPmuInterfaceImpForRas {
     bool mockPmuReadResult = false;
     bool mockPerfEvent = false;
     bool mockPmuReadTile = false;
-
-    Mock<MockPmuInterfaceImpForRas>(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForRas(pLinuxSysmanImp) {}
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
 
@@ -246,10 +240,7 @@ struct Mock<MockPmuInterfaceImpForRas> : public MockPmuInterfaceImpForRas {
     }
 };
 
-class RasFsAccess : public FsAccess {};
-class RasSysfsAccess : public SysfsAccess {};
-template <>
-struct Mock<RasSysfsAccess> : public RasSysfsAccess {
+struct MockRasSysfsAccess : public SysfsAccess {
 
     ze_result_t mockReadSymLinkStatus = ZE_RESULT_SUCCESS;
     bool mockReadSymLinkResult = false;
@@ -347,8 +338,7 @@ struct Mock<RasSysfsAccess> : public RasSysfsAccess {
     }
 };
 
-template <>
-struct Mock<RasFsAccess> : public RasFsAccess {
+struct MockRasFsAccess : public FsAccess {
 
     ze_result_t mockListDirectoryStatus = ZE_RESULT_SUCCESS;
     bool mockReadDirectoryFailure = false;
@@ -488,13 +478,10 @@ struct Mock<RasFsAccess> : public RasFsAccess {
         return false;
     }
 
-    Mock<RasFsAccess>() = default;
+    MockRasFsAccess() = default;
 };
 
-class RasFwInterface : public FirmwareUtil {};
-
-template <>
-struct Mock<RasFwInterface> : public FirmwareUtil {
+struct MockRasFwInterface : public FirmwareUtil {
 
     bool mockMemorySuccess = false;
 
@@ -517,7 +504,7 @@ struct Mock<RasFwInterface> : public FirmwareUtil {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    Mock<RasFwInterface>() = default;
+    MockRasFwInterface() = default;
 
     ADDMETHOD_NOBASE(fwDeviceInit, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getFirstDevice, ze_result_t, ZE_RESULT_SUCCESS, (igsc_device_info * info));

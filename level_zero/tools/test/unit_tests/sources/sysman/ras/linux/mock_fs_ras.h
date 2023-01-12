@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,7 @@
 namespace L0 {
 namespace ult {
 
-class RasFsAccess : public FsAccess {};
-
-struct MockRasFsAccess : public RasFsAccess {
+struct MockRasFsAccess : public FsAccess {
     bool mockRootUser = true;
     bool isRootUser() override {
         return mockRootUser;

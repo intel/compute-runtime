@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,6 @@
 #include <string>
 
 extern bool sysmanUltsEnable;
-
-using ::testing::_;
-using ::testing::Invoke;
-using ::testing::Matcher;
-using ::testing::NiceMock;
 
 namespace L0 {
 namespace ult {
@@ -227,7 +222,7 @@ struct MockMemoryManagerPci : public MemoryManagerMock {
 class ZesPciFixture : public SysmanDeviceFixture {
 
   protected:
-    std::unique_ptr<Mock<PciSysfsAccess>> pSysfsAccess;
+    std::unique_ptr<MockPciSysfsAccess> pSysfsAccess;
     MockMemoryManagerPci *memoryManager = nullptr;
     SysfsAccess *pOriginalSysfsAccess = nullptr;
     FsAccess *pOriginalFsAccess = nullptr;
@@ -243,11 +238,11 @@ class ZesPciFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
-        memoryManager = new ::testing::NiceMock<MockMemoryManagerPci>(*neoDevice->getExecutionEnvironment());
+        memoryManager = new MockMemoryManagerPci(*neoDevice->getExecutionEnvironment());
         memoryManager->localMemorySupported[0] = false;
         device->getDriverHandle()->setMemoryManager(memoryManager);
 
-        pSysfsAccess = std::make_unique<NiceMock<Mock<PciSysfsAccess>>>();
+        pSysfsAccess = std::make_unique<MockPciSysfsAccess>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
 

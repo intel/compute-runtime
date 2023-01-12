@@ -10,11 +10,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::_;
-using ::testing::DoDefault;
-using ::testing::Matcher;
-using ::testing::NiceMock;
-using ::testing::Return;
 class OsRas;
 namespace L0 {
 namespace ult {
@@ -22,10 +17,10 @@ constexpr uint32_t mockHandleCount = 2u;
 constexpr uint32_t mockHandleCountForSubDevice = 4u;
 struct SysmanRasFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<RasFsAccess>> pFsAccess;
-    std::unique_ptr<Mock<RasSysfsAccess>> pSysfsAccess;
-    std::unique_ptr<Mock<MockPmuInterfaceImpForRas>> pPmuInterface;
-    std::unique_ptr<Mock<RasFwInterface>> pRasFwUtilInterface;
+    std::unique_ptr<MockRasFsAccess> pFsAccess;
+    std::unique_ptr<MockRasSysfsAccess> pSysfsAccess;
+    std::unique_ptr<MockRasPmuInterfaceImp> pPmuInterface;
+    std::unique_ptr<MockRasFwInterface> pRasFwUtilInterface;
     MemoryManager *pMemoryManagerOriginal = nullptr;
     std::unique_ptr<MockMemoryManagerInRasSysman> pMemoryManager;
     FsAccess *pFsAccessOriginal = nullptr;
@@ -40,12 +35,12 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pMemoryManagerOriginal = device->getDriverHandle()->getMemoryManager();
-        pMemoryManager = std::make_unique<::testing::NiceMock<MockMemoryManagerInRasSysman>>(*neoDevice->getExecutionEnvironment());
+        pMemoryManager = std::make_unique<MockMemoryManagerInRasSysman>(*neoDevice->getExecutionEnvironment());
         pMemoryManager->localMemorySupported[0] = true;
         device->getDriverHandle()->setMemoryManager(pMemoryManager.get());
-        pFsAccess = std::make_unique<NiceMock<Mock<RasFsAccess>>>();
-        pSysfsAccess = std::make_unique<NiceMock<Mock<RasSysfsAccess>>>();
-        pRasFwUtilInterface = std::make_unique<NiceMock<Mock<RasFwInterface>>>();
+        pFsAccess = std::make_unique<MockRasFsAccess>();
+        pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+        pRasFwUtilInterface = std::make_unique<MockRasFwInterface>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
@@ -53,7 +48,7 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
-        pPmuInterface = std::make_unique<NiceMock<Mock<MockPmuInterfaceImpForRas>>>(pLinuxSysmanImp);
+        pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
         for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
@@ -527,12 +522,12 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleAndHandleCountZeroWhenCallingReInitT
 
 struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
   protected:
-    std::unique_ptr<Mock<RasFsAccess>> pFsAccess;
-    std::unique_ptr<Mock<RasSysfsAccess>> pSysfsAccess;
-    std::unique_ptr<Mock<MockPmuInterfaceImpForRas>> pPmuInterface;
+    std::unique_ptr<MockRasFsAccess> pFsAccess;
+    std::unique_ptr<MockRasSysfsAccess> pSysfsAccess;
+    std::unique_ptr<MockRasPmuInterfaceImp> pPmuInterface;
     MemoryManager *pMemoryManagerOriginal = nullptr;
     std::unique_ptr<MockMemoryManagerInRasSysman> pMemoryManager;
-    std::unique_ptr<Mock<RasFwInterface>> pRasFwUtilInterface;
+    std::unique_ptr<MockRasFwInterface> pRasFwUtilInterface;
     FsAccess *pFsAccessOriginal = nullptr;
     SysfsAccess *pSysfsAccessOriginal = nullptr;
     PmuInterface *pOriginalPmuInterface = nullptr;
@@ -545,12 +540,12 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         }
         SysmanMultiDeviceFixture::SetUp();
         pMemoryManagerOriginal = device->getDriverHandle()->getMemoryManager();
-        pMemoryManager = std::make_unique<::testing::NiceMock<MockMemoryManagerInRasSysman>>(*neoDevice->getExecutionEnvironment());
+        pMemoryManager = std::make_unique<MockMemoryManagerInRasSysman>(*neoDevice->getExecutionEnvironment());
         pMemoryManager->localMemorySupported[0] = true;
         device->getDriverHandle()->setMemoryManager(pMemoryManager.get());
-        pFsAccess = std::make_unique<NiceMock<Mock<RasFsAccess>>>();
-        pSysfsAccess = std::make_unique<NiceMock<Mock<RasSysfsAccess>>>();
-        pRasFwUtilInterface = std::make_unique<NiceMock<Mock<RasFwInterface>>>();
+        pFsAccess = std::make_unique<MockRasFsAccess>();
+        pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+        pRasFwUtilInterface = std::make_unique<MockRasFwInterface>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
@@ -558,7 +553,7 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
-        pPmuInterface = std::make_unique<NiceMock<Mock<MockPmuInterfaceImpForRas>>>(pLinuxSysmanImp);
+        pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
         pFsAccess->mockReadDirectoryForMultiDevice = true;

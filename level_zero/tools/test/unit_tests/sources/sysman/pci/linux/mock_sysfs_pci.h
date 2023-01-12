@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,10 +39,7 @@ const std::vector<std::string> mockReadBytes =
         "0x0000000000000000 0x0000000000000000 0x0000000000000000",
 };
 
-class PciSysfsAccess : public SysfsAccess {};
-
-template <>
-struct Mock<PciSysfsAccess> : public PciSysfsAccess {
+struct MockPciSysfsAccess : public SysfsAccess {
 
     bool isStringSymLinkEmpty = false;
 
@@ -92,7 +89,7 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    Mock<PciSysfsAccess>() = default;
+    MockPciSysfsAccess() = default;
 };
 
 class PublicLinuxPciImp : public L0::LinuxPciImp {

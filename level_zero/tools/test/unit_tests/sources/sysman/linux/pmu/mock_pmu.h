@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,9 @@ class MockPmuInterfaceImpForSysman : public PmuInterfaceImp {
     using PmuInterfaceImp::syscallFunction;
     MockPmuInterfaceImpForSysman(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 };
-template <>
-struct Mock<MockPmuInterfaceImpForSysman> : public MockPmuInterfaceImpForSysman {
-    Mock<MockPmuInterfaceImpForSysman>(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
+
+struct MockPmuInterface : public MockPmuInterfaceImpForSysman {
+    MockPmuInterface(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     int pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override {
         data[0] = mockEventCount;
@@ -42,10 +42,7 @@ struct Mock<MockPmuInterfaceImpForSysman> : public MockPmuInterfaceImpForSysman 
     ADDMETHOD_NOBASE(getErrorNo, int, EINVAL, ());
 };
 
-class PmuFsAccess : public FsAccess {};
-
-template <>
-struct Mock<PmuFsAccess> : public PmuFsAccess {
+struct MockPmuFsAccess : public FsAccess {
     ze_result_t read(const std::string file, uint32_t &val) override {
         val = 18;
         return ZE_RESULT_SUCCESS;

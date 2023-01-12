@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,10 +29,7 @@ const std::string sysfsPahTelem3 = "/sys/class/intel_pmt/telem3";
 const std::string sysfsPahTelem4 = "/sys/class/intel_pmt/telem4";
 const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
 
-class PmtFsAccess : public FsAccess {};
-
-template <>
-struct Mock<PmtFsAccess> : public PmtFsAccess {
+struct MockPmtFsAccess : public FsAccess {
 
     ze_result_t listDirectoryResult = ZE_RESULT_SUCCESS;
     ze_result_t getRealPathResult = ZE_RESULT_SUCCESS;
@@ -42,7 +39,7 @@ struct Mock<PmtFsAccess> : public PmtFsAccess {
     ze_bool_t returnInvalidRealPath = false;
     ze_bool_t readInvalidString = false;
 
-    Mock<PmtFsAccess>() {
+    MockPmtFsAccess() {
         baseTelemSysFSNodeForSubdevice0 = baseTelemSysFS + "/" + telemNodeForSubdevice0;
         baseTelemSysFSNodeForSubdevice1 = baseTelemSysFS + "/" + telemNodeForSubdevice1;
         telemetryDeviceEntryForSubdevice0 = baseTelemSysFSNodeForSubdevice0 + "/" + telem;

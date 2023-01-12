@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::_;
-using ::testing::Matcher;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 static int fakeFileDescriptor = 123;
@@ -25,7 +21,7 @@ const std::map<std::string, uint64_t> dummyKeyOffsetMap = {
 class ZesPmtFixtureMultiDevice : public SysmanMultiDeviceFixture {
   protected:
     std::vector<ze_device_handle_t> deviceHandles;
-    std::unique_ptr<Mock<PmtFsAccess>> pTestFsAccess;
+    std::unique_ptr<MockPmtFsAccess> pTestFsAccess;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -40,7 +36,7 @@ class ZesPmtFixtureMultiDevice : public SysmanMultiDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pTestFsAccess = std::make_unique<Mock<PmtFsAccess>>();
+        pTestFsAccess = std::make_unique<MockPmtFsAccess>();
         PlatformMonitoringTech::create(deviceHandles, pTestFsAccess.get(), gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
     }
     void TearDown() override {
@@ -271,7 +267,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenNoPMTHandleInmapOfSubDeviceIdToPmtObjectWh
 class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
   protected:
     std::vector<ze_device_handle_t> deviceHandles;
-    std::unique_ptr<Mock<PmtFsAccess>> pTestFsAccess;
+    std::unique_ptr<MockPmtFsAccess> pTestFsAccess;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -286,7 +282,7 @@ class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pTestFsAccess = std::make_unique<Mock<PmtFsAccess>>();
+        pTestFsAccess = std::make_unique<MockPmtFsAccess>();
         PlatformMonitoringTech::create(deviceHandles, pTestFsAccess.get(), gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
     }
     void TearDown() override {

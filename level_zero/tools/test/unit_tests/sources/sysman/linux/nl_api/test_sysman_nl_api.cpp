@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,6 @@
 #include "mock_nl_dll.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::Invoke;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class TestRasFabricFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pMemoryManagerOriginal = device->getDriverHandle()->getMemoryManager();
-        pMemoryManager = std::make_unique<::testing::NiceMock<MockMemoryManagerInRasSysman>>(*neoDevice->getExecutionEnvironment());
+        pMemoryManager = std::make_unique<MockMemoryManagerInRasSysman>(*neoDevice->getExecutionEnvironment());
         pMemoryManager->localMemorySupported[0] = true;
         device->getDriverHandle()->setMemoryManager(pMemoryManager.get());
         pFsAccess = std::make_unique<MockRasFabricFsAccess>();
@@ -403,7 +403,7 @@ class SysmanRasFabricMultiDeviceFixture : public MultiDeviceFixture, public ::te
             delete pLinuxSysmanImp->pProcfsAccess;
             delete pLinuxSysmanImp->pFsAccess;
 
-            auto pProcfsAccess = new NiceMock<Mock<LinuxProcfsAccess>>();
+            auto pProcfsAccess = new MockLinuxProcfsAccess();
             auto pFsAccess = new MockRasFabricFsAccess();
             auto pSysfsAccess = new MockRasFabricSysFsAccess();
 

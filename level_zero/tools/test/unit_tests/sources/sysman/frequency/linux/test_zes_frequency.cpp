@@ -15,11 +15,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::DoDefault;
-using ::testing::Invoke;
-using ::testing::Matcher;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 
@@ -36,7 +31,7 @@ constexpr uint32_t numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step)
 constexpr uint32_t handleComponentCount = 1u;
 class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<FrequencySysfsAccess>> pSysfsAccess;
+    std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
 
@@ -46,7 +41,7 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<NiceMock<Mock<FrequencySysfsAccess>>>();
+        pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
 
         pSysfsAccess->setVal(minFreqFile, minFreq);
@@ -872,7 +867,7 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingFrequencyProp
 class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
   protected:
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<FrequencySysfsAccess>> pSysfsAccess;
+    std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
 
@@ -883,7 +878,7 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
         NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
         SysmanMultiDeviceFixture::SetUp();
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<NiceMock<Mock<FrequencySysfsAccess>>>();
+        pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         // delete handles created in initial SysmanDeviceHandleContext::init() call
         for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {

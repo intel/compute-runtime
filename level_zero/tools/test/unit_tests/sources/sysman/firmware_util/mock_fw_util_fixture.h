@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,14 +15,12 @@
 
 #include "gmock/gmock.h"
 
-using ::testing::_;
 using namespace NEO;
 
 namespace L0 {
 namespace ult {
 
-class FwUtilInterface : public FirmwareUtil {};
-struct MockFwUtilInterface : public FwUtilInterface {
+struct MockFwUtilInterface : public FirmwareUtil {
 
     MockFwUtilInterface() = default;
 
@@ -39,8 +37,7 @@ struct MockFwUtilInterface : public FwUtilInterface {
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 };
 
-class OsLibraryUtil : public OsLibrary {};
-struct MockFwUtilOsLibrary : public OsLibraryUtil {
+struct MockFwUtilOsLibrary : public OsLibrary {
   public:
     static bool mockLoad;
     static bool getNonNullProcAddr;

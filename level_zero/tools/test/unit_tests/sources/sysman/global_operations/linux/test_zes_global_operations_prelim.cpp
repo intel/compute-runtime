@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
 #include "mock_global_operations.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::Matcher;
 
 namespace L0 {
 namespace ult {

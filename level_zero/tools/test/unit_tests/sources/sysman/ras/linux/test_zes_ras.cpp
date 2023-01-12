@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,6 @@
 #include "mock_fs_ras.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::_;
-using ::testing::Matcher;
 
 namespace L0 {
 namespace ult {

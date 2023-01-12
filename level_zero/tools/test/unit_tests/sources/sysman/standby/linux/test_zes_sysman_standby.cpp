@@ -11,9 +11,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::_;
-using ::testing::Matcher;
-
 namespace L0 {
 namespace ult {
 
@@ -24,7 +21,7 @@ constexpr uint32_t mockHandleCount = 1u;
 uint32_t mockSubDeviceHandleCount = 0u;
 class ZesStandbyFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<StandbySysfsAccess>> ptestSysfsAccess;
+    std::unique_ptr<MockStandbySysfsAccess> ptestSysfsAccess;
     zes_standby_handle_t hSysmanStandby = {};
     SysfsAccess *pOriginalSysfsAccess = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
@@ -34,7 +31,7 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        ptestSysfsAccess = std::make_unique<NiceMock<Mock<StandbySysfsAccess>>>();
+        ptestSysfsAccess = std::make_unique<MockStandbySysfsAccess>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
@@ -305,7 +302,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeNev
 }
 
 class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
-    std::unique_ptr<Mock<StandbySysfsAccess>> ptestSysfsAccess;
+    std::unique_ptr<MockStandbySysfsAccess> ptestSysfsAccess;
     SysfsAccess *pOriginalSysfsAccess = nullptr;
 
   protected:
@@ -315,7 +312,7 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
         }
         SysmanMultiDeviceFixture::SetUp();
         mockSubDeviceHandleCount = subDeviceCount;
-        ptestSysfsAccess = std::make_unique<NiceMock<Mock<StandbySysfsAccess>>>();
+        ptestSysfsAccess = std::make_unique<MockStandbySysfsAccess>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);

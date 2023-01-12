@@ -10,15 +10,13 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::Matcher;
-using ::testing::Return;
 namespace L0 {
 namespace ult {
 struct SysmanPmuFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<MockPmuInterfaceImpForSysman>> pPmuInterface;
+    std::unique_ptr<MockPmuInterface> pPmuInterface;
     PmuInterface *pOriginalPmuInterface = nullptr;
-    std::unique_ptr<Mock<PmuFsAccess>> pFsAccess;
+    std::unique_ptr<MockPmuFsAccess> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
@@ -27,10 +25,10 @@ struct SysmanPmuFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pFsAccess = std::make_unique<NiceMock<Mock<PmuFsAccess>>>();
+        pFsAccess = std::make_unique<MockPmuFsAccess>();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
-        pPmuInterface = std::make_unique<NiceMock<Mock<MockPmuInterfaceImpForSysman>>>(pLinuxSysmanImp);
+        pPmuInterface = std::make_unique<MockPmuInterface>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
     }
     void TearDown() override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,18 +14,13 @@
 
 #include "sysman/linux/os_sysman_imp.h"
 
-using ::testing::_;
-using ::testing::NiceMock;
 using namespace NEO;
 
 namespace L0 {
 namespace ult {
 const std::string mockedDeviceName("/MOCK_DEVICE_NAME");
 
-class LinuxProcfsAccess : public ProcfsAccess {};
-
-template <>
-struct Mock<LinuxProcfsAccess> : public LinuxProcfsAccess {
+struct MockLinuxProcfsAccess : public ProcfsAccess {
     ::pid_t ourDevicePid = 0;
     int ourDeviceFd = 0;
     ze_result_t getFileName(const ::pid_t pid, const int fd, std::string &val) override {
@@ -38,7 +33,7 @@ struct Mock<LinuxProcfsAccess> : public LinuxProcfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<LinuxProcfsAccess>() = default;
+    MockLinuxProcfsAccess() = default;
 };
 
 } // namespace ult

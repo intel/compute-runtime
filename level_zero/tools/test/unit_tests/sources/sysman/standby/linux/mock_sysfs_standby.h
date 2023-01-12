@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,7 @@ const std::string standbyModeFile("gt/gt0/rc6_enable");
 const std::string standbyModeFile1("gt/gt1/rc6_enable");
 const std::string standbyModeFileLegacy("power/rc6_enable");
 
-class StandbySysfsAccess : public SysfsAccess {};
-
-template <>
-struct Mock<StandbySysfsAccess> : public StandbySysfsAccess {
+struct MockStandbySysfsAccess : public SysfsAccess {
     ze_result_t mockError = ZE_RESULT_SUCCESS;
     int mockStandbyMode = -1;
     bool isStandbyModeFileAvailable = true;
@@ -90,8 +87,8 @@ struct Mock<StandbySysfsAccess> : public StandbySysfsAccess {
         mockError = error;
     }
 
-    Mock() = default;
-    ~Mock() override = default;
+    MockStandbySysfsAccess() = default;
+    ~MockStandbySysfsAccess() override = default;
 
   private:
     bool isFileAccessible(const std::string file) {

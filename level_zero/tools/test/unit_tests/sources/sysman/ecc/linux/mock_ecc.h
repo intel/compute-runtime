@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,7 @@
 namespace L0 {
 namespace ult {
 
-class EccFwInterface : public FirmwareUtil {};
-template <>
-struct Mock<EccFwInterface> : public EccFwInterface {
+struct MockEccFwInterface : public FirmwareUtil {
     ze_result_t mockFwGetEccConfigResult = ZE_RESULT_SUCCESS;
     ze_result_t mockFwSetEccConfigResult = ZE_RESULT_SUCCESS;
 
@@ -58,8 +56,8 @@ struct Mock<EccFwInterface> : public EccFwInterface {
     ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 
-    Mock<EccFwInterface>() = default;
-    ~Mock<EccFwInterface>() override = default;
+    MockEccFwInterface() = default;
+    ~MockEccFwInterface() override = default;
 };
 
 } // namespace ult

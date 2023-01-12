@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,10 +43,7 @@ const std::string throttleReasonPL2FileLegacy("gt_throttle_reason_status_pl2");
 const std::string throttleReasonPL4FileLegacy("gt_throttle_reason_status_pl4");
 const std::string throttleReasonThermalFileLegacy("gt_throttle_reason_status_thermal");
 
-class FrequencySysfsAccess : public SysfsAccess {};
-
-template <>
-struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
+struct MockFrequencySysfsAccess : public SysfsAccess {
     double mockMin = 0;
     double mockMax = 0;
     double mockBoost = 0;
@@ -338,8 +335,8 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
         return setVal(file, val);
     }
 
-    Mock() = default;
-    ~Mock() override = default;
+    MockFrequencySysfsAccess() = default;
+    ~MockFrequencySysfsAccess() override = default;
 };
 
 class PublicLinuxFrequencyImp : public L0::LinuxFrequencyImp {

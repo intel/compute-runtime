@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,6 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/ecc/linux/mock_ecc.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::Matcher;
-
 namespace L0 {
 namespace ult {
 
@@ -19,7 +16,7 @@ static const uint8_t eccStateEnable = 0x1;
 
 class ZesEccFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<EccFwInterface>> pMockFwInterface;
+    std::unique_ptr<MockEccFwInterface> pMockFwInterface;
     FirmwareUtil *pFwUtilInterfaceOld = nullptr;
     L0::EccImp *pEccImp;
 
@@ -29,7 +26,7 @@ class ZesEccFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
-        pMockFwInterface = std::make_unique<NiceMock<Mock<EccFwInterface>>>();
+        pMockFwInterface = std::make_unique<MockEccFwInterface>();
         pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface.get();
 
         pEccImp = static_cast<L0::EccImp *>(pSysmanDeviceImp->pEcc);

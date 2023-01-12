@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -183,7 +183,7 @@ TEST(FwEccTest, GivenFwEccConfigCallFailsWhenCallingFirmwareUtilSetAndGetEccThen
     if (!sysmanUltsEnable) {
         GTEST_SKIP();
     }
-    struct IgscEccMockOsLibrary : public OsLibraryUtil {
+    struct IgscEccMockOsLibrary : public OsLibrary {
       public:
         ~IgscEccMockOsLibrary() override = default;
         void *getProcAddress(const std::string &procName) override {
@@ -225,7 +225,7 @@ TEST(LinuxFwEccTest, GivenValidFwUtilMethodWhenCallingFirmwareUtilSetAndGetEccTh
     if (!sysmanUltsEnable) {
         GTEST_SKIP();
     }
-    struct IgscEccMockOsLibrary : public OsLibraryUtil {
+    struct IgscEccMockOsLibrary : public OsLibrary {
       public:
         ~IgscEccMockOsLibrary() override = default;
         void *getProcAddress(const std::string &procName) override {
@@ -314,7 +314,7 @@ TEST(FwGetMemErrorCountTest, GivenValidFwUtilMethodWhenMemoryErrorCountIsRequest
         GTEST_SKIP();
     }
 
-    struct IgscMemErrMockOsLibrary : public OsLibraryUtil {
+    struct IgscMemErrMockOsLibrary : public OsLibrary {
       public:
         ~IgscMemErrMockOsLibrary() override = default;
         void *getProcAddress(const std::string &procName) override {

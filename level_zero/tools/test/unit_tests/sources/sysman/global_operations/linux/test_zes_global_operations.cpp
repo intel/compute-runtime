@@ -15,8 +15,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::Matcher;
-
 namespace L0 {
 namespace ult {
 

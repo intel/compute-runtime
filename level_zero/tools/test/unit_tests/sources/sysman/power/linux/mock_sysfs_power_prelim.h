@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,6 @@
 #include "sysman/sysman_imp.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::DoDefault;
-using ::testing::Matcher;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -50,10 +46,7 @@ const std::map<std::string, uint64_t> deviceKeyOffsetMapPower = {
     {"SOC_TEMPERATURES", 0x60},
     {"CORE_TEMPERATURES", 0x6c}};
 
-class PowerSysfsAccess : public SysfsAccess {};
-
-template <>
-struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
+struct MockPowerSysfsAccess : public SysfsAccess {
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadValUnsignedLongResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadPeakResult = ZE_RESULT_SUCCESS;
@@ -218,26 +211,20 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
         return getscanDirEntries(file, listOfEntries);
     }
 
-    Mock<PowerSysfsAccess>() = default;
+    MockPowerSysfsAccess() = default;
 };
 
-class PowerPmt : public PlatformMonitoringTech {
-  public:
-    PowerPmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+struct MockPowerPmt : public PlatformMonitoringTech {
+
+    MockPowerPmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     using PlatformMonitoringTech::closeFunction;
     using PlatformMonitoringTech::keyOffsetMap;
     using PlatformMonitoringTech::openFunction;
     using PlatformMonitoringTech::preadFunction;
     using PlatformMonitoringTech::telemetryDeviceEntry;
-};
-
-template <>
-struct Mock<PowerPmt> : public PowerPmt {
-    ~Mock() override {
+    ~MockPowerPmt() override {
         rootDeviceTelemNodeIndex = 0;
     }
-
-    Mock<PowerPmt>(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PowerPmt(pFsAccess, onSubdevice, subdeviceId) {}
 
     void mockedInit(FsAccess *pFsAccess) {
         std::string gpuUpstreamPortPath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
@@ -249,10 +236,7 @@ struct Mock<PowerPmt> : public PowerPmt {
     }
 };
 
-class PowerFsAccess : public FsAccess {};
-
-template <>
-struct Mock<PowerFsAccess> : public PowerFsAccess {
+struct MockPowerFsAccess : public FsAccess {
 
     ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {
         if (directory.compare(baseTelemSysFS) == 0) {
@@ -285,7 +269,7 @@ struct Mock<PowerFsAccess> : public PowerFsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<PowerFsAccess>() = default;
+    MockPowerFsAccess() = default;
 };
 
 class PublicLinuxPowerImp : public L0::LinuxPowerImp {
@@ -297,9 +281,9 @@ class PublicLinuxPowerImp : public L0::LinuxPowerImp {
 class SysmanDevicePowerFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<PublicLinuxPowerImp> pPublicLinuxPowerImp;
-    std::unique_ptr<Mock<PowerPmt>> pPmt;
-    std::unique_ptr<Mock<PowerFsAccess>> pFsAccess;
-    std::unique_ptr<Mock<PowerSysfsAccess>> pSysfsAccess;
+    std::unique_ptr<MockPowerPmt> pPmt;
+    std::unique_ptr<MockPowerFsAccess> pFsAccess;
+    std::unique_ptr<MockPowerSysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
     FsAccess *pFsAccessOriginal = nullptr;
     OsPower *pOsPowerOriginal = nullptr;
@@ -310,11 +294,11 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        pFsAccess = std::make_unique<NiceMock<Mock<PowerFsAccess>>>();
+        pFsAccess = std::make_unique<MockPowerFsAccess>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<NiceMock<Mock<PowerSysfsAccess>>>();
+        pSysfsAccess = std::make_unique<MockPowerSysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -329,8 +313,8 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
         for (auto &deviceHandle : deviceHandles) {
             ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-            auto pPmt = new NiceMock<Mock<PowerPmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                                     deviceProperties.subdeviceId);
+            auto pPmt = new MockPowerPmt(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                         deviceProperties.subdeviceId);
             pPmt->mockedInit(pFsAccess.get());
             pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
@@ -357,9 +341,9 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
 class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
   protected:
     std::unique_ptr<PublicLinuxPowerImp> pPublicLinuxPowerImp;
-    std::unique_ptr<Mock<PowerPmt>> pPmt;
-    std::unique_ptr<Mock<PowerFsAccess>> pFsAccess;
-    std::unique_ptr<Mock<PowerSysfsAccess>> pSysfsAccess;
+    std::unique_ptr<MockPowerPmt> pPmt;
+    std::unique_ptr<MockPowerFsAccess> pFsAccess;
+    std::unique_ptr<MockPowerSysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
     FsAccess *pFsAccessOriginal = nullptr;
     OsPower *pOsPowerOriginal = nullptr;
@@ -370,11 +354,11 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
             GTEST_SKIP();
         }
         SysmanMultiDeviceFixture::SetUp();
-        pFsAccess = std::make_unique<NiceMock<Mock<PowerFsAccess>>>();
+        pFsAccess = std::make_unique<MockPowerFsAccess>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<NiceMock<Mock<PowerSysfsAccess>>>();
+        pSysfsAccess = std::make_unique<MockPowerSysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -391,8 +375,8 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
             ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-            auto pPmt = new NiceMock<Mock<PowerPmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                                     deviceProperties.subdeviceId);
+            auto pPmt = new MockPowerPmt(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                         deviceProperties.subdeviceId);
             pPmt->mockedInit(pFsAccess.get());
             pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);

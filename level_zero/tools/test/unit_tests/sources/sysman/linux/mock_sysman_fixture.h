@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::_;
-using ::testing::Matcher;
-using ::testing::NiceMock;
 using namespace NEO;
 
 namespace L0 {
@@ -51,8 +48,8 @@ class PublicLinuxSysmanImp : public L0::LinuxSysmanImp {
 
 class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
   public:
-    Mock<LinuxSysfsAccess> *pSysfsAccess = nullptr;
-    Mock<LinuxProcfsAccess> *pProcfsAccess = nullptr;
+    MockLinuxSysfsAccess *pSysfsAccess = nullptr;
+    MockLinuxProcfsAccess *pProcfsAccess = nullptr;
     MockFwUtilInterface *pFwUtilInterface = nullptr;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -70,8 +67,8 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
 
         pFwUtilInterface = new MockFwUtilInterface();
-        pSysfsAccess = new Mock<LinuxSysfsAccess>;
-        pProcfsAccess = new Mock<LinuxProcfsAccess>;
+        pSysfsAccess = new MockLinuxSysfsAccess;
+        pProcfsAccess = new MockLinuxProcfsAccess;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
@@ -95,8 +92,8 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
 
 class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Test {
   public:
-    Mock<LinuxSysfsAccess> *pSysfsAccess = nullptr;
-    Mock<LinuxProcfsAccess> *pProcfsAccess = nullptr;
+    MockLinuxSysfsAccess *pSysfsAccess = nullptr;
+    MockLinuxProcfsAccess *pProcfsAccess = nullptr;
     MockFwUtilInterface *pFwUtilInterface = nullptr;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -120,8 +117,8 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
 
         pFwUtilInterface = new MockFwUtilInterface();
-        pSysfsAccess = new Mock<LinuxSysfsAccess>;
-        pProcfsAccess = new Mock<LinuxProcfsAccess>;
+        pSysfsAccess = new MockLinuxSysfsAccess;
+        pProcfsAccess = new MockLinuxProcfsAccess;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;

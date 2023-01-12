@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,16 +15,6 @@
 #include <netlink/handlers.h>
 
 extern bool sysmanUltsEnable;
-
-using ::testing::_;
-using ::testing::ByRef;
-using ::testing::DoAll;
-using ::testing::Eq;
-using ::testing::Invoke;
-using ::testing::Return;
-using ::testing::SaveArg;
-using ::testing::StrEq;
-
 struct nl_sock {
 };
 

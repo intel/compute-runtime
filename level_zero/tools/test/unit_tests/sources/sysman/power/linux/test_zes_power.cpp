@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -183,7 +183,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = static_cast<NiceMock<Mock<PowerPmt>> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
         pPmt->openFunction = openMockPower;
         pPmt->closeFunction = closeMockPower;
         pPmt->preadFunction = preadMockPower;
@@ -506,7 +506,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = static_cast<NiceMock<Mock<PowerPmt>> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
         pPmt->openFunction = openMockPower;
         pPmt->closeFunction = closeMockPower;
         pPmt->preadFunction = preadMockPower;
@@ -656,7 +656,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixture, GivenValidPowerHandleWhenGettingPowe
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = static_cast<NiceMock<Mock<PowerPmt>> *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
+        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(deviceProperties.subdeviceId));
         pPmt->openFunction = openMockPower;
         pPmt->closeFunction = closeMockPower;
         pPmt->preadFunction = preadMockPower;
