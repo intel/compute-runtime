@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -193,6 +194,7 @@ class MockCommandStreamReceiverWithFailingFlushBatchedSubmission : public MockCo
 template <typename GfxFamily>
 struct MockCommandQueueHwWithOverwrittenCsr : public CommandQueueHw<GfxFamily> {
     using CommandQueueHw<GfxFamily>::CommandQueueHw;
+    using CommandQueueHw<GfxFamily>::timestampPacketContainer;
     MockCommandStreamReceiverWithFailingFlushBatchedSubmission *csr;
     CommandStreamReceiver &getGpgpuCommandStreamReceiver() const override { return *csr; }
 };

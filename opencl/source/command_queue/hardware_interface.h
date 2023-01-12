@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ struct HardwareInterfaceWalkerArgs {
     size_t localWorkSizes[3] = {};
     TagNodeBase *hwTimeStamps = nullptr;
     TagNodeBase *hwPerfCounter = nullptr;
+    TagNodeBase *multiRootDeviceEventStamp = nullptr;
     TimestampPacketDependencies *timestampPacketDependencies = nullptr;
     TimestampPacketContainer *currentTimestampPacketNodes = nullptr;
     const Vec3<size_t> *numberOfWorkgroups = nullptr;

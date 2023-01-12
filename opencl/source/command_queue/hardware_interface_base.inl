@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,6 +133,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                     walkerArgs.currentTimestampPacketNodes);
 
     walkerArgs.currentDispatchIndex = 0;
+
     for (auto &dispatchInfo : multiDispatchInfo) {
         dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
         walkerArgs.isMainKernel = (dispatchInfo.getKernel() == mainKernel);

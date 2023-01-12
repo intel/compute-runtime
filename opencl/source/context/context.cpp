@@ -49,7 +49,9 @@ Context::Context(
 
 Context::~Context() {
     gtpinNotifyContextDestroy((cl_context)this);
-
+    if (multiRootDeviceTimestampPacketAllocator.get() != nullptr) {
+        multiRootDeviceTimestampPacketAllocator.reset();
+    }
     if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled(this)) {
         smallBufferPoolAllocator.releaseSmallBufferPool();
     }
@@ -557,6 +559,16 @@ void Context::BufferPoolAllocator::releaseSmallBufferPool() {
     DEBUG_BREAK_IF(!this->mainStorage);
     delete this->mainStorage;
     this->mainStorage = nullptr;
+}
+TagAllocatorBase *Context::getMultiRootDeviceTimestampPacketAllocator() {
+    return multiRootDeviceTimestampPacketAllocator.get();
+}
+void Context::setMultiRootDeviceTimestampPacketAllocator(std::unique_ptr<TagAllocatorBase> &allocator) {
+    multiRootDeviceTimestampPacketAllocator = std::move(allocator);
+}
+
+std::unique_lock<std::mutex> Context::obtainOwnershipForMultiRootDeviceAllocator() {
+    return std::unique_lock<std::mutex>(multiRootDeviceAllocatorMtx);
 }
 
 } // namespace NEO

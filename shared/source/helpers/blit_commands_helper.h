@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,7 @@ struct BlitProperties {
                                                    CommandStreamReceiver &gpguCsr, CommandStreamReceiver &bcsCsr);
 
     TagNodeBase *outputTimestampPacket = nullptr;
+    TagNodeBase *multiRootDeviceEventSync = nullptr;
     BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
     CsrDependencies csrDependencies;
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;

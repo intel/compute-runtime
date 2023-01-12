@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ class CsrDependencies {
         All
     };
 
-    StackVec<std::pair<TaskCountType, uint64_t>, 32> taskCountContainer;
+    StackVec<TimestampPacketContainer *, 32> multiRootTimeStampSyncContainer;
     StackVec<TimestampPacketContainer *, 32> timestampPacketContainer;
 
     void makeResident(CommandStreamReceiver &commandStreamReceiver) const;
