@@ -22,7 +22,7 @@ namespace NEO {
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
 template <>
-bool ImplicitFlushSettings<Family>::defaultSettingForNewResource = false;
+bool ImplicitFlushSettings<Family>::defaultSettingForNewResource = true;
 template <>
 bool ImplicitFlushSettings<Family>::defaultSettingForGpuIdle = true;
 template class ImplicitFlushSettings<Family>;
