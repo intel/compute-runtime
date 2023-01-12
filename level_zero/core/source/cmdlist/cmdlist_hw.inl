@@ -2589,7 +2589,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
                                                                      void *ptr,
                                                                      uint32_t data,
-                                                                     ze_event_handle_t hSignalEvent) {
+                                                                     ze_event_handle_t signalEventHandle) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     auto descriptor = reinterpret_cast<zex_wait_on_mem_desc_t *>(desc);
@@ -2617,11 +2617,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    Event *signalEvent = nullptr;
+    if (signalEventHandle) {
+        signalEvent = Event::fromHandle(signalEventHandle);
+    }
+
     auto srcAllocationStruct = getAlignedAllocation(this->device, ptr, sizeof(uint32_t), true);
     if (srcAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     UNRECOVERABLE_IF(srcAllocationStruct.alloc == nullptr);
+
+    appendEventForProfiling(signalEvent, true);
+
     commandContainer.addToResidencyContainer(srcAllocationStruct.alloc);
     uint64_t gpuAddress = static_cast<uint64_t>(srcAllocationStruct.alignedAllocationPtr);
     NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
@@ -2638,27 +2646,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, hwInfo);
     }
 
-    if (hSignalEvent) {
-        auto event = Event::fromHandle(hSignalEvent);
+    appendSignalEventPostWalker(signalEvent);
 
-        commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
-        uint64_t eventGpuAddr = event->getCompletionFieldGpuAddress(this->device);
-
-        if (isCopyOnly()) {
-            NEO::MiFlushArgs args;
-            args.commandWithPostSync = true;
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), eventGpuAddr,
-                                                              Event::STATE_SIGNALED, args, hwInfo);
-        } else {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
-            NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-                *commandContainer.getCommandStream(), NEO::PostSyncMode::ImmediateData,
-                eventGpuAddr, Event::STATE_SIGNALED,
-                hwInfo,
-                args);
-        }
-    }
     return ZE_RESULT_SUCCESS;
 }
 

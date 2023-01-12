@@ -166,10 +166,10 @@ struct Event : _ze_event_handle_t {
         return maxKernelCount;
     }
 
-    uint64_t globalStartTS;
-    uint64_t globalEndTS;
-    uint64_t contextStartTS;
-    uint64_t contextEndTS;
+    uint64_t globalStartTS = 1;
+    uint64_t globalEndTS = 1;
+    uint64_t contextStartTS = 1;
+    uint64_t contextEndTS = 1;
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
 
     // Metric streamer instance associated with the event.
@@ -205,10 +205,11 @@ struct Event : _ze_event_handle_t {
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
 
+    std::atomic<State> isCompleted{STATE_INITIAL};
+
     bool isTimestampEvent = false;
     bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
-    std::atomic<State> isCompleted{STATE_INITIAL};
 };
 
 template <typename TagSizeT>

@@ -12,6 +12,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
@@ -47,6 +48,8 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
                                               size, alignment, &ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, ptr);
+
+        signalAllPackets = L0GfxCoreHelper::useSignalAllEventPackets(device->getHwInfo());
     }
 
     void tearDown() {
@@ -62,8 +65,9 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
     std::unique_ptr<L0::ult::CommandList> commandListBcs;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
-    uint32_t waitMemData = 1u;
     void *ptr = nullptr;
+    uint32_t waitMemData = 1u;
+    bool signalAllPackets = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -393,6 +397,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndHostS
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto &commandContainer = commandList->commandContainer;
@@ -421,19 +426,40 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndHostS
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
+    auto gpuAddress = event->getCompletionFieldGpuAddress(this->device);
+
+    size_t expectedPostSyncStoreDataImm = 0;
+    uint64_t storeDataImmAddress = gpuAddress;
+    if (signalAllPackets) {
+        expectedPostSyncStoreDataImm = event->getMaxPacketsCount() - 1;
+    }
+
+    auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedPostSyncStoreDataImm, itorStoreDataImm.size());
+
+    for (size_t i = 0; i < expectedPostSyncStoreDataImm; i++) {
+        auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
+        EXPECT_EQ(storeDataImmAddress, cmd->getAddress());
+        EXPECT_FALSE(cmd->getStoreQword());
+        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getDataDword0());
+        storeDataImmAddress += event->getSinglePacketSize();
+    }
+
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+
     itor++;
     auto itorPC = findAll<PIPE_CONTROL *>(itor, cmdList.end());
     ASSERT_NE(0u, itorPC.size());
+
+    auto pipeControlAddress = storeDataImmAddress;
     bool postSyncFound = false;
     for (auto it : itorPC) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            auto gpuAddress = event->getCompletionFieldGpuAddress(this->device);
-            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_EQ(pipeControlAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
             postSyncFound = true;
         }
@@ -445,6 +471,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndNoSco
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto &commandContainer = commandList->commandContainer;
@@ -471,19 +498,40 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndNoSco
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
+    auto gpuAddress = event->getCompletionFieldGpuAddress(this->device);
+
+    size_t expectedPostSyncStoreDataImm = 0;
+    uint64_t storeDataImmAddress = gpuAddress;
+    if (signalAllPackets) {
+        expectedPostSyncStoreDataImm = event->getMaxPacketsCount() - 1;
+    }
+
+    auto itorStoreDataImm = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedPostSyncStoreDataImm, itorStoreDataImm.size());
+
+    for (size_t i = 0; i < expectedPostSyncStoreDataImm; i++) {
+        auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
+        EXPECT_EQ(storeDataImmAddress, cmd->getAddress());
+        EXPECT_FALSE(cmd->getStoreQword());
+        EXPECT_EQ(Event::STATE_SIGNALED, cmd->getDataDword0());
+        storeDataImmAddress += event->getSinglePacketSize();
+    }
+
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+
     itor++;
     auto itorPC = findAll<PIPE_CONTROL *>(itor, cmdList.end());
     ASSERT_NE(0u, itorPC.size());
+
+    auto pipeControlAddress = storeDataImmAddress;
     bool postSyncFound = false;
     for (auto it : itorPC) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            auto gpuAddress = event->getCompletionFieldGpuAddress(this->device);
-            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_EQ(pipeControlAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_FALSE(cmd->getDcFlushEnable());
             postSyncFound = true;
         }

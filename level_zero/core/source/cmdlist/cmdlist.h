@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,7 +167,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMINoop() = 0;
     virtual ze_result_t appendPipeControl(void *dstPtr, uint64_t value) = 0;
     virtual ze_result_t appendWaitOnMemory(void *desc, void *ptr,
-                                           uint32_t data, ze_event_handle_t hSignalEvent) = 0;
+                                           uint32_t data, ze_event_handle_t signalEventHandle) = 0;
     virtual ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                             uint64_t data) = 0;
 

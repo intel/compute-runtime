@@ -156,7 +156,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendMINoop() override;
     ze_result_t appendPipeControl(void *dstPtr, uint64_t value) override;
     ze_result_t appendWaitOnMemory(void *desc, void *ptr,
-                                   uint32_t data, ze_event_handle_t hSignalEvent) override;
+                                   uint32_t data, ze_event_handle_t signalEventHandle) override;
     ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                     uint64_t data) override;
 
