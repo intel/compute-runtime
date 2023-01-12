@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"

@@ -20,6 +20,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "test_traits_common.h"

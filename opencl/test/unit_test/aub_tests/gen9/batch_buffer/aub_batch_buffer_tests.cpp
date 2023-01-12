@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "aub_batch_buffer_tests.h"
+
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 

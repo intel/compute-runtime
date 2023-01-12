@@ -6,13 +6,15 @@
  */
 
 #pragma once
-#include "shared/test/common/mocks/mock_device.h"
-
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
+class MockClDevice;
 class MockClExecutionEnvironment;
-struct HardwareInfo;
+class MockDevice;
+class OsContext;
+struct RootDeviceEnvironment;
 
 struct ClDeviceFixture {
     void setUp();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 namespace NEO {
 

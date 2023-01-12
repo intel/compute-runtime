@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_debug_program.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

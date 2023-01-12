@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 namespace NEO {
 

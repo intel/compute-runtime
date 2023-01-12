@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/sip.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
 #include "gtest/gtest.h"

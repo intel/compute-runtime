@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 #include "gtest/gtest.h"
+#include <CL/cl_platform.h>
 
 using namespace NEO;
 

@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 using namespace NEO;
 struct BcsTests : public Test<ClDeviceFixture> {
