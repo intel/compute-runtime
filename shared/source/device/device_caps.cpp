@@ -184,12 +184,7 @@ void Device::initializeCaps() {
         this->preemptionMode = PreemptionMode::Disabled;
     }
 
-    std::stringstream deviceName;
-
-    deviceName << this->getDeviceName(hwInfo);
-    deviceName << " [0x" << std::hex << std::setw(4) << std::setfill('0') << hwInfo.platform.usDeviceID << "]";
-
-    deviceInfo.name = deviceName.str();
+    deviceInfo.name = this->getDeviceName(hwInfo);
 
     size_t maxParameterSizeFromIgc = getMaxParameterSizeFromIGC();
     if (maxParameterSizeFromIgc > 0) {
