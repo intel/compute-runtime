@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ namespace NEO {
 
 bool OSInterface::osEnabled64kbPages = true;
 bool OSInterface::newResourceImplicitFlush = false;
-bool OSInterface::gpuIdleImplicitFlush = false;
+bool OSInterface::gpuIdleImplicitFlush = true;
 bool OSInterface::requiresSupportForWddmTrimNotification = true;
 
 bool OSInterface::isDebugAttachAvailable() const {

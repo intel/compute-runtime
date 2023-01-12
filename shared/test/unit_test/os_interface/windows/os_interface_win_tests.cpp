@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,6 @@ TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForNewResourceImplicitFlushSuppor
     EXPECT_FALSE(OSInterface::newResourceImplicitFlush);
 }
 
-TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForGpuIdleImplicitFlushSupportThenReturnFalse) {
-    EXPECT_FALSE(OSInterface::gpuIdleImplicitFlush);
+TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForGpuIdleImplicitFlushSupportThenReturnTrue) {
+    EXPECT_TRUE(OSInterface::gpuIdleImplicitFlush);
 }

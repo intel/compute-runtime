@@ -174,10 +174,18 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenNotXE_HP_COREWhenChecking
     EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsNewResourceImplicitFlush());
 }
 
-HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenNotXE_HP_COREWhenCheckingNewResourceGpuIdleThenReturnFalse, IsAtLeastXeHpgCore) {
+HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenNotXE_HPG_COREWhenCheckingGpuIdleImplicitFlushThenReturnFalse, IsNotXeHpgCore) {
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto osContext = pDevice->getDefaultEngine().osContext;
     commandStreamReceiver.setupContext(*osContext);
 
     EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsGpuIdleImplicitFlush());
+}
+
+HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenXE_HPG_COREWhenCheckingGpuIdleImplicitFlushThenReturnTrue, IsXeHpgCore) {
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto osContext = pDevice->getDefaultEngine().osContext;
+    commandStreamReceiver.setupContext(*osContext);
+
+    EXPECT_TRUE(commandStreamReceiver.checkPlatformSupportsGpuIdleImplicitFlush());
 }

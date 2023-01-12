@@ -24,7 +24,7 @@ static auto gfxCore = IGFX_XE_HPG_CORE;
 template <>
 bool ImplicitFlushSettings<Family>::defaultSettingForNewResource = false;
 template <>
-bool ImplicitFlushSettings<Family>::defaultSettingForGpuIdle = false;
+bool ImplicitFlushSettings<Family>::defaultSettingForGpuIdle = true;
 template class ImplicitFlushSettings<Family>;
 
 template <>
