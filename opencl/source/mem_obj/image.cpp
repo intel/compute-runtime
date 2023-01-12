@@ -1259,7 +1259,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
     cl_mem_flags_intel emptyFlagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                  MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, emptyFlagsIntel, imageDesc->mem_object,
                                                                  *pContext))) {
         errcodeRet = CL_INVALID_VALUE;
@@ -1267,7 +1267,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
     }
 
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                  MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object,
                                                                  *pContext))) {
         errcodeRet = CL_INVALID_PROPERTY;

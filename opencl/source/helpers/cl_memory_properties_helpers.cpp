@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace NEO {
 
 bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                                      cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
-                                                     cl_mem_alloc_flags_intel &allocflags, MemoryPropertiesHelper::ObjType objectType, Context &context) {
+                                                     cl_mem_alloc_flags_intel &allocflags, ClMemoryPropertiesHelper::ObjType objectType, Context &context) {
     bool deviceSet = false;
     Device *pDevice = context.getDevice(0)->getDevice().getRootDevice();
     uint64_t handle = 0;
@@ -72,10 +72,10 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     memoryProperties.hostptr = hostptr;
 
     switch (objectType) {
-    case MemoryPropertiesHelper::ObjType::BUFFER:
+    case ClMemoryPropertiesHelper::ObjType::BUFFER:
         return isFieldValid(flags, MemObjHelper::validFlagsForBuffer) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForBufferIntel);
-    case MemoryPropertiesHelper::ObjType::IMAGE:
+    case ClMemoryPropertiesHelper::ObjType::IMAGE:
         return isFieldValid(flags, MemObjHelper::validFlagsForImage) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForImageIntel);
     default:

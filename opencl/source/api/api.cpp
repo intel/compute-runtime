@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3864,7 +3864,7 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
@@ -3909,7 +3909,7 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
@@ -3966,7 +3966,7 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, neoContext->getRootDeviceIndices(), subDeviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;

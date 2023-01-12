@@ -15,12 +15,6 @@ struct MemoryProperties;
 
 class MemoryPropertiesHelper {
   public:
-    enum class ObjType {
-        UNKNOWN,
-        BUFFER,
-        IMAGE,
-    };
-
     static AllocationProperties getAllocationProperties(
         uint32_t rootDeviceIndex, const MemoryProperties &memoryProperties, bool allocateMemory, size_t size,
         AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
