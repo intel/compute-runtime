@@ -1188,35 +1188,41 @@ HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubComme
     EXPECT_TRUE(csr.addAubCommentCalled);
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationForOpenCLThenMultiTagAllocationIsBeingAllocated) {
-    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationsThenSingleTagAllocationIsBeingAllocated) {
     uint32_t numRootDevices = 10u;
     UltDeviceFactory deviceFactory{numRootDevices, 0};
-    EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation());
-    EXPECT_EQ(AllocationType::TAG_BUFFER, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
-    EXPECT_TRUE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress() != nullptr);
-    EXPECT_EQ(*deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress(), initialHardwareTag);
-    auto tagsMultiAllocation = deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagsMultiAllocation();
-    auto graphicsAllocation0 = tagsMultiAllocation->getGraphicsAllocation(0);
-    EXPECT_EQ(tagsMultiAllocation->getGraphicsAllocations().size(), numRootDevices);
 
-    for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
-        if (graphicsAllocation != graphicsAllocation0) {
-            EXPECT_EQ(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation0->getUnderlyingBuffer());
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        auto tagAllocation = deviceFactory.rootDevices[rootDeviceIndex]->commandStreamReceivers[0]->getTagAllocation();
+        EXPECT_NE(nullptr, tagAllocation);
+        EXPECT_EQ(AllocationType::TAG_BUFFER, deviceFactory.rootDevices[rootDeviceIndex]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
+        EXPECT_TRUE(deviceFactory.rootDevices[rootDeviceIndex]->commandStreamReceivers[0]->getTagAddress() != nullptr);
+        EXPECT_EQ(*deviceFactory.rootDevices[rootDeviceIndex]->commandStreamReceivers[0]->getTagAddress(), initialHardwareTag);
+        auto tagsMultiAllocation = deviceFactory.rootDevices[rootDeviceIndex]->commandStreamReceivers[0]->getTagsMultiAllocation();
+        EXPECT_EQ(tagsMultiAllocation->getGraphicsAllocations().size(), numRootDevices);
+
+        for (auto i = 0u; i < numRootDevices; i++) {
+            auto allocation = tagsMultiAllocation->getGraphicsAllocation(i);
+            if (rootDeviceIndex == i) {
+                EXPECT_EQ(allocation, tagAllocation);
+            } else {
+                EXPECT_EQ(nullptr, allocation);
+            }
         }
     }
 }
-
-TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationForLevelZeroThenSingleTagAllocationIsBeingAllocated) {
-    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-    uint32_t numRootDevices = 10u;
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenEnsureTagAllocationIsCalledForIncorrectRootDeviceIndexThenFailureIsReturned) {
+    uint32_t numRootDevices = 1u;
     UltDeviceFactory deviceFactory{numRootDevices, 0};
-    EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation());
-    EXPECT_EQ(AllocationType::TAG_BUFFER, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
-    EXPECT_TRUE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress() != nullptr);
-    EXPECT_EQ(*deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress(), initialHardwareTag);
-    auto tagsMultiAllocation = deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagsMultiAllocation();
-    EXPECT_EQ(tagsMultiAllocation->getGraphicsAllocations().size(), 1u);
+
+    EXPECT_FALSE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->ensureTagAllocationForRootDeviceIndex(1));
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenEnsureTagAllocationIsCalledForRootDeviceIndexWhichHasTagAllocationThenReturnEarlySucess) {
+    uint32_t numRootDevices = 1u;
+    UltDeviceFactory deviceFactory{numRootDevices, 0};
+
+    EXPECT_TRUE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->ensureTagAllocationForRootDeviceIndex(0));
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroyedThenItDestroysTagAllocation) {
@@ -1264,7 +1270,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     }
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledInMultiRootDeviceEnvironmentThenTagAllocationIsBeingAllocated) {
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenEnsureTagAllocationForRootDeviceIndexIsCalledThenProperAllocationIsBeingAllocated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 10u);
     DeviceBitfield devices(0b1111);
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
@@ -1289,22 +1295,29 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
 
     for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
         if (graphicsAllocation != graphicsAllocation0) {
-            EXPECT_EQ(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation0->getUnderlyingBuffer());
+            EXPECT_EQ(nullptr, graphicsAllocation);
         }
     }
+
+    EXPECT_TRUE(csr->ensureTagAllocationForRootDeviceIndex(1));
+    auto graphicsAllocation = tagsMultiAllocation->getGraphicsAllocation(1);
+    EXPECT_NE(nullptr, graphicsAllocation);
+    EXPECT_EQ(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation0->getUnderlyingBuffer());
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocatedAndinitialValueIsMinusOne) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableNullHardware.set(true);
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
-    executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+TEST(CommandStreamReceiverSimpleTest, givenMemoryAllocationFailureWhenEnsuringTagAllocationThenFailureIsReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+    DeviceBitfield devices(0b11);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
+
     EXPECT_EQ(nullptr, csr->getTagAllocation());
+    executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
-    EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
-    EXPECT_EQ(*csr->getTagAddress(), static_cast<uint32_t>(-1));
+    executionEnvironment.memoryManager.reset(new FailMemoryManager(executionEnvironment));
+
+    EXPECT_FALSE(csr->ensureTagAllocationForRootDeviceIndex(1));
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThenCorrectValueIsReturned) {

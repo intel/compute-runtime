@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -415,6 +416,60 @@ TEST(MultiDeviceContextTest, givenContextWithTwoDifferentSubDevicesFromDifferent
 
     EXPECT_EQ(expectedDeviceBitfieldForRootDevice0.to_ulong(), context->getDeviceBitfieldForAllocation(deviceFactory.rootDevices[0]->getRootDeviceIndex()).to_ulong());
     EXPECT_EQ(expectedDeviceBitfieldForRootDevice1.to_ulong(), context->getDeviceBitfieldForAllocation(deviceFactory.rootDevices[1]->getRootDeviceIndex()).to_ulong());
+
+    context->release();
+}
+
+TEST(MultiDeviceContextTest, givenMultipleRootDevicesWhenCreatingMultiRootDeviceContextCrossDeviceTagAllocationsAreCreated) {
+    DebugManagerStateRestore restorer;
+
+    UltClDeviceFactory deviceFactory{3, 0};
+    cl_int retVal;
+
+    for (auto &csr : deviceFactory.pUltDeviceFactory->rootDevices[0]->commandStreamReceivers) {
+        auto tagsMultiAllocation = csr->getTagsMultiAllocation();
+        EXPECT_NE(nullptr, tagsMultiAllocation->getGraphicsAllocation(0));
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(1));
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(2));
+    }
+
+    for (auto &csr : deviceFactory.pUltDeviceFactory->rootDevices[1]->commandStreamReceivers) {
+        auto tagsMultiAllocation = csr->getTagsMultiAllocation();
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(0));
+        EXPECT_NE(nullptr, tagsMultiAllocation->getGraphicsAllocation(1));
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(2));
+    }
+
+    for (auto &csr : deviceFactory.pUltDeviceFactory->rootDevices[2]->commandStreamReceivers) {
+        auto tagsMultiAllocation = csr->getTagsMultiAllocation();
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(0));
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(1));
+        EXPECT_NE(nullptr, tagsMultiAllocation->getGraphicsAllocation(2));
+    }
+    cl_device_id devices[]{deviceFactory.rootDevices[0], deviceFactory.rootDevices[2]};
+    ClDeviceVector deviceVector(devices, 2);
+
+    auto context = Context::create<Context>(0, deviceVector, nullptr, nullptr, retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto &csr : deviceFactory.pUltDeviceFactory->rootDevices[0]->commandStreamReceivers) {
+        auto tagsMultiAllocation = csr->getTagsMultiAllocation();
+        EXPECT_NE(nullptr, tagsMultiAllocation->getGraphicsAllocation(0));
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(1));
+        EXPECT_NE(nullptr, tagsMultiAllocation->getGraphicsAllocation(2));
+    }
+    for (auto &csr : deviceFactory.pUltDeviceFactory->rootDevices[1]->commandStreamReceivers) {
+        auto tagsMultiAllocation = csr->getTagsMultiAllocation();
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(0));
+        EXPECT_NE(nullptr, tagsMultiAllocation->getGraphicsAllocation(1));
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(2));
+    }
+    for (auto &csr : deviceFactory.pUltDeviceFactory->rootDevices[2]->commandStreamReceivers) {
+        auto tagsMultiAllocation = csr->getTagsMultiAllocation();
+        EXPECT_NE(nullptr, tagsMultiAllocation->getGraphicsAllocation(0));
+        EXPECT_EQ(nullptr, tagsMultiAllocation->getGraphicsAllocation(1));
+        EXPECT_NE(nullptr, tagsMultiAllocation->getGraphicsAllocation(2));
+    }
 
     context->release();
 }

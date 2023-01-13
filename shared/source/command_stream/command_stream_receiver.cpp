@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -461,24 +461,32 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
 MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
     RootDeviceIndicesContainer rootDeviceIndices;
 
-    if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
-        rootDeviceIndices.push_back(rootDeviceIndex);
-    } else {
-        for (auto index = 0u; index < this->executionEnvironment.rootDeviceEnvironments.size(); index++) {
-            if (this->executionEnvironment.rootDeviceEnvironments[index]->getHardwareInfo()->platform.eProductFamily ==
-                this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->getHardwareInfo()->platform.eProductFamily) {
-                rootDeviceIndices.push_back(index);
-            }
-        }
-    }
+    rootDeviceIndices.push_back(rootDeviceIndex);
 
-    auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
+    auto maxRootDeviceIndex = static_cast<uint32_t>(this->executionEnvironment.rootDeviceEnvironments.size() - 1);
     auto allocations = new MultiGraphicsAllocation(maxRootDeviceIndex);
 
-    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, AllocationType::TAG_BUFFER, systemMemoryBitfield};
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndex, MemoryConstants::pageSize, AllocationType::TAG_BUFFER, systemMemoryBitfield};
 
     this->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *allocations);
     return *allocations;
+}
+bool CommandStreamReceiver::ensureTagAllocationForRootDeviceIndex(uint32_t rootDeviceIndex) {
+    UNRECOVERABLE_IF(!tagsMultiAllocation);
+    if (rootDeviceIndex >= tagsMultiAllocation->getGraphicsAllocations().size()) {
+        return false;
+    }
+    if (tagsMultiAllocation->getGraphicsAllocation(rootDeviceIndex)) {
+        return true;
+    }
+    AllocationProperties allocationProperties{rootDeviceIndex, MemoryConstants::pageSize, AllocationType::TAG_BUFFER, systemMemoryBitfield};
+    allocationProperties.flags.allocateMemory = false;
+    auto graphicsAllocation = this->getMemoryManager()->createGraphicsAllocationFromExistingStorage(allocationProperties, tagAllocation->getUnderlyingBuffer(), *tagsMultiAllocation);
+    if (!graphicsAllocation) {
+        return false;
+    }
+    tagsMultiAllocation->addAllocation(graphicsAllocation);
+    return true;
 }
 
 FlushStamp CommandStreamReceiver::obtainCurrentFlushStamp() const {

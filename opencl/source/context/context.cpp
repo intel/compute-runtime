@@ -245,6 +245,9 @@ bool Context::createImpl(const cl_context_properties *properties,
             if (pDevice->getRootDeviceIndex() == rootDeviceIndex) {
                 deviceBitfield |= pDevice->getDeviceBitfield();
             }
+            for (auto &engine : pDevice->getDevice().getAllEngines()) {
+                engine.commandStreamReceiver->ensureTagAllocationForRootDeviceIndex(rootDeviceIndex);
+            }
         }
         deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
     }

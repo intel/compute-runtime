@@ -385,6 +385,7 @@ class CommandStreamReceiver {
     }
 
     bool isTbxMode() const;
+    bool ensureTagAllocationForRootDeviceIndex(uint32_t rootDeviceIndex);
 
   protected:
     void cleanupResources();
