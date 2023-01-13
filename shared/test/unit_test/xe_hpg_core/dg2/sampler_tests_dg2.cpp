@@ -78,6 +78,37 @@ HWTEST2_F(SamplerTestDG2, giveDG2G10BelowC0WhenProgrammingSamplerForNearestFilte
     }
 }
 
+HWTEST2_F(SamplerTestDG2, giveDG2G10A0WhenProgrammingSamplerForNotNearestFilterOrWithoutMirrorAddressThenRoundEnableForRDirectionWAIsNotApplied, IsDG2) {
+    auto state = FamilyType::cmdInitSamplerState;
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
+
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+
+    state.setRAddressMinFilterRoundingEnable(false);
+    state.setRAddressMagFilterRoundingEnable(false);
+
+    state.setTcxAddressControlMode(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP);
+    state.setMinModeFilter(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST);
+
+    productHelper.adjustSamplerState(&state, hwInfo);
+    EXPECT_FALSE(state.getRAddressMinFilterRoundingEnable());
+    EXPECT_FALSE(state.getRAddressMagFilterRoundingEnable());
+
+    state.setTcxAddressControlMode(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR);
+    state.setMinModeFilter(SAMPLER_STATE::MIN_MODE_FILTER_LINEAR);
+
+    productHelper.adjustSamplerState(&state, hwInfo);
+
+    EXPECT_FALSE(state.getRAddressMinFilterRoundingEnable());
+    EXPECT_FALSE(state.getRAddressMagFilterRoundingEnable());
+}
+
 HWTEST2_F(SamplerTestDG2, giveDG2G11BelowB0WhenProgrammingSamplerForNearestFilterWithMirrorAddressThenRoundEnableForRDirectionIsEnabled, IsDG2) {
     auto state = FamilyType::cmdInitSamplerState;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
