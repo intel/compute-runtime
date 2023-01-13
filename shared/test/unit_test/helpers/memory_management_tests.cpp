@@ -9,6 +9,7 @@
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/memory_management.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"
 
@@ -19,6 +20,10 @@ using MemoryManagement::failingAllocation;
 using MemoryManagement::indexAllocation;
 using MemoryManagement::indexDeallocation;
 using MemoryManagement::numAllocations;
+
+namespace NEO {
+extern bool isStatelessCompressionSupportedForUlts;
+}
 
 TEST(allocation, GivenFailingAllocationNegativeOneWhenCreatingAllocationThenAllocationIsCreatedSuccesfully) {
     ASSERT_EQ(failingAllocation, static_cast<size_t>(-1));
@@ -50,7 +55,12 @@ TEST(allocation, GivenFailingAllocationOneWhenCreatingAllocationsThenOnlyOneAllo
 TEST(CompressionSelector, WhenAllowStatelessCompressionIsCalledThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
+    VariableBackup<bool> backup(&NEO::isStatelessCompressionSupportedForUlts);
+
+    NEO::isStatelessCompressionSupportedForUlts = false;
     EXPECT_FALSE(CompressionSelector::allowStatelessCompression());
+
+    NEO::isStatelessCompressionSupportedForUlts = true;
 
     for (auto enable : {-1, 0, 1}) {
         DebugManager.flags.EnableStatelessCompression.set(enable);

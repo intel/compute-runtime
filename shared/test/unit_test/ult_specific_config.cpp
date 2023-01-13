@@ -8,7 +8,9 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
@@ -27,6 +29,45 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() { return {}; }
 const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) { return nullptr; }
 
 void RootDeviceEnvironment::initApiGfxCoreHelper() {
+}
+
+ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
+bool isStatelessCompressionSupportedForUlts = true;
+
+bool ApiSpecificConfig::isStatelessCompressionSupported() {
+    return isStatelessCompressionSupportedForUlts;
+}
+bool ApiSpecificConfig::isBcsSplitWaSupported() {
+    return false;
+}
+bool ApiSpecificConfig::getHeapConfiguration() {
+    return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
+}
+bool ApiSpecificConfig::getBindlessConfiguration() {
+    if (DebugManager.flags.UseBindlessMode.get() != -1) {
+        return DebugManager.flags.UseBindlessMode.get();
+    } else {
+        return false;
+    }
+}
+
+bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
+    return false;
+}
+
+ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
+    return apiTypeForUlts;
+}
+
+uint64_t ApiSpecificConfig::getReducedMaxAllocSize(uint64_t maxAllocSize) {
+    return maxAllocSize / 2;
+}
+
+std::string ApiSpecificConfig::getName() {
+    return "shared";
+}
+const char *ApiSpecificConfig::getRegistryPath() {
+    return "";
 }
 
 } // namespace NEO
