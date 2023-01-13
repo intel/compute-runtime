@@ -2833,6 +2833,24 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
     memoryManager->freeGraphicsMemory(allocation1);
 }
 
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrThenGpuVaIsAlignedTo2Mb) {
+    AllocationData allocationData;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    allocationData.size = 2 * MemoryConstants::kiloByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x1234);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+
+    EXPECT_EQ(static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress(), castToUint64(allocation->getReservedAddressPtr()));
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize2Mb>(static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress()));
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize2Mb>(allocation->getReservedAddressSize()));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledButAllocationFailedThenNullPtrReturned) {
     AllocationData allocationData;
     allocationData.rootDeviceIndex = rootDeviceIndex;

@@ -215,6 +215,12 @@ uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, uint32_t rootDeviceInde
     return gmmHelper->canonize(gfxPartition->heapAllocate(heapIndex, size));
 }
 
+uint64_t DrmMemoryManager::acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment) {
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
+    return gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, size, alignment));
+}
+
 void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t rootDeviceIndex) {
     uint64_t graphicsAddress = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address));
     auto gmmHelper = getGmmHelper(rootDeviceIndex);
@@ -494,7 +500,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
 
-    auto gpuVirtualAddress = acquireGpuRange(alignedSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+    alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2Mb);
+    auto gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD, MemoryConstants::pageSize2Mb);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
