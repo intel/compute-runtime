@@ -37,7 +37,7 @@ DG2TEST_F(AggregatedSmallBuffersDg2DefaultTest, givenDifferentFlagValuesAndSingl
     // Single device context
     {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
-        EXPECT_FALSE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
+        EXPECT_TRUE(pContext->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(pContext));
     }
     {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
