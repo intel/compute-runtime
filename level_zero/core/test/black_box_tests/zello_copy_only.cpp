@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,8 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
@@ -101,8 +101,8 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
@@ -172,8 +172,8 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
         return;
@@ -304,8 +304,8 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
@@ -414,8 +414,8 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
         return;

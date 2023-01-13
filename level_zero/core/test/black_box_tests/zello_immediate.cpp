@@ -267,12 +267,12 @@ int main(int argc, char *argv[]) {
     }
 
     // Find copy queue in root device, if not found, try subdevices
-    int32_t copyQueueGroup = 0;
+    uint32_t copyQueueGroup = 0;
     bool copyQueueFound = false;
     auto copyQueueDev = devices[0];
     for (auto &rd : devices) {
         copyQueueGroup = getCopyOnlyCommandQueueOrdinal(rd);
-        if (copyQueueGroup >= 0) {
+        if (copyQueueGroup != std::numeric_limits<uint32_t>::max()) {
             copyQueueFound = true;
             copyQueueDev = rd;
             if (verbose) {
@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
         }
         copyQueueGroup = 0;
         for (auto &rd : devices) {
-            int subDevCount = 0;
+            uint32_t subDevCount = 0;
             auto subdevs = zelloGetSubDevices(rd, subDevCount);
 
             if (!subDevCount) {
@@ -298,7 +298,7 @@ int main(int argc, char *argv[]) {
             // Find subdev that has a copy engine. If not skip tests
             for (auto &sd : subdevs) {
                 copyQueueGroup = getCopyOnlyCommandQueueOrdinal(sd);
-                if (copyQueueGroup >= 0) {
+                if (copyQueueGroup != std::numeric_limits<uint32_t>::max()) {
                     copyQueueFound = true;
                     copyQueueDev = sd;
                     break;

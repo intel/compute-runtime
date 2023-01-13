@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,9 @@ bool isCircularDepTest(int argc, char *argv[]) {
         return false;
     }
 
-    std::cerr << "Circular Dependency Test mode detected" << std::endl;
+    if (verbose) {
+        std::cout << "Circular Dependency Test mode detected" << std::endl;
+    }
 
     return true;
 }
@@ -76,7 +78,7 @@ bool isVerbose(int argc, char *argv[]) {
         return false;
     }
 
-    std::cerr << "Verbose mode detected" << std::endl;
+    std::cout << "Verbose mode detected" << std::endl;
 
     return true;
 }
@@ -84,11 +86,15 @@ bool isVerbose(int argc, char *argv[]) {
 bool isSyncQueueEnabled(int argc, char *argv[]) {
     bool enabled = isParamEnabled(argc, argv, "-s", "--sync");
     if (enabled == false) {
-        std::cerr << "Async Queue detected" << std::endl;
+        if (verbose) {
+            std::cout << "Async Queue detected" << std::endl;
+        }
         return false;
     }
 
-    std::cerr << "Sync Queue detected" << std::endl;
+    if (verbose) {
+        std::cout << "Sync Queue detected" << std::endl;
+    }
 
     return true;
 }
@@ -96,11 +102,15 @@ bool isSyncQueueEnabled(int argc, char *argv[]) {
 bool isAsyncQueueEnabled(int argc, char *argv[]) {
     bool enabled = isParamEnabled(argc, argv, "-as", "--async");
     if (enabled == false) {
-        std::cerr << "Sync Queue detected" << std::endl;
+        if (verbose) {
+            std::cout << "Sync Queue detected" << std::endl;
+        }
         return false;
     }
 
-    std::cerr << "Async Queue detected" << std::endl;
+    if (verbose) {
+        std::cout << "Async Queue detected" << std::endl;
+    }
 
     return true;
 }
@@ -112,7 +122,7 @@ bool isAubMode(int argc, char *argv[]) {
     }
 
     if (verbose) {
-        std::cerr << "Aub mode detected" << std::endl;
+        std::cout << "Aub mode detected" << std::endl;
     }
 
     return true;
@@ -124,7 +134,9 @@ bool isCommandListShared(int argc, char *argv[]) {
         return false;
     }
 
-    std::cerr << "Command List shared between tests" << std::endl;
+    if (verbose) {
+        std::cout << "Command List shared between tests" << std::endl;
+    }
 
     return true;
 }
@@ -132,8 +144,12 @@ bool isCommandListShared(int argc, char *argv[]) {
 bool isImmediateFirst(int argc, char *argv[]) {
     bool enabled = isParamEnabled(argc, argv, "-i", "--immediate");
 
-    if (verbose && enabled) {
-        std::cerr << "Immediate Command List executed first" << std::endl;
+    if (verbose) {
+        if (enabled) {
+            std::cout << "Immediate Command List executed first" << std::endl;
+        } else {
+            std::cout << "Regular Command List executed first" << std::endl;
+        }
     }
 
     return enabled;
@@ -141,14 +157,16 @@ bool isImmediateFirst(int argc, char *argv[]) {
 
 bool getAllocationFlag(int argc, char *argv[], int defaultValue) {
     int value = getParamValue(argc, argv, "-A", "-allocflag", defaultValue);
-    std::cerr << "Allocation flag ";
-    if (value != defaultValue) {
-        std::cerr << "override ";
-    } else {
-        std::cerr << "default ";
+    if (verbose) {
+        std::cout << "Allocation flag ";
+        if (value != defaultValue) {
+            std::cout << "override ";
+        } else {
+            std::cout << "default ";
+        }
+        std::bitset<4> bitValue(value);
+        std::cout << "value 0b" << bitValue << std::endl;
     }
-    std::bitset<4> bitValue(value);
-    std::cerr << "value 0b" << bitValue << std::endl;
 
     return value;
 }
@@ -173,20 +191,27 @@ uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength) {
         return defaultLength;
     }
 
-    std::cerr << "Buffer length detected = " << length << std::endl;
+    if (verbose) {
+        std::cout << "Buffer length detected = " << length << std::endl;
+    }
 
     return length;
 }
 
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName, const std::string &currentTest) {
+    std::cout << std::endl
+              << blackBoxName;
+    if (!currentTest.empty()) {
+        std::cout << " " << currentTest;
+    }
+
     if (aubMode == false) {
-        std::cout << std::endl
-                  << blackBoxName;
-        if (!currentTest.empty()) {
-            std::cout << " " << currentTest;
-        }
         std::cout << " Results validation "
                   << (outputValidationSuccessful ? "PASSED" : "FAILED")
+                  << std::endl
+                  << std::endl;
+    } else {
+        std::cout << " Results validation disabled in aub mode."
                   << std::endl
                   << std::endl;
     }
@@ -201,7 +226,7 @@ uint32_t getCommandQueueOrdinal(ze_device_handle_t &device) {
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
     if (numQueueGroups == 0) {
-        std::cout << "No queue groups found!\n";
+        std::cerr << "No queue groups found!\n";
         std::terminate();
     }
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
@@ -217,17 +242,17 @@ uint32_t getCommandQueueOrdinal(ze_device_handle_t &device) {
     return computeQueueGroupOrdinal;
 }
 
-int32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
+uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
     if (numQueueGroups == 0) {
-        std::cout << "No queue groups found!\n";
+        std::cerr << "No queue groups found!\n";
         std::terminate();
     }
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups,
                                                                 queueProperties.data()));
-    int32_t copyOnlyQueueGroupOrdinal = -1;
+    uint32_t copyOnlyQueueGroupOrdinal = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < numQueueGroups; i++) {
         if (!(queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) && (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)) {
             copyOnlyQueueGroupOrdinal = i;
@@ -262,15 +287,19 @@ ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_de
     return createCommandQueue(context, device, ordinal, ZE_COMMAND_QUEUE_MODE_DEFAULT, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
 }
 
-ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList) {
+ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, uint32_t ordinal) {
     ze_command_list_desc_t descriptor = {};
     descriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
 
     descriptor.pNext = nullptr;
     descriptor.flags = 0;
-    descriptor.commandQueueGroupOrdinal = getCommandQueueOrdinal(device);
+    descriptor.commandQueueGroupOrdinal = ordinal;
 
     return zeCommandListCreate(context, device, &descriptor, &cmdList);
+}
+
+ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList) {
+    return createCommandList(context, device, cmdList, getCommandQueueOrdinal(device));
 }
 
 void createEventPoolAndEvents(ze_context_handle_t &context,
@@ -295,12 +324,14 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
     }
 }
 
-std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, int &subDevCount) {
+std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, uint32_t &subDevCount) {
     uint32_t deviceCount = 0;
     std::vector<ze_device_handle_t> subdevs(deviceCount, nullptr);
     SUCCESS_OR_TERMINATE(zeDeviceGetSubDevices(device, &deviceCount, nullptr));
     if (deviceCount == 0) {
-        std::cout << "No sub device found!\n";
+        if (verbose) {
+            std::cout << "No sub device found!\n";
+        }
         subDevCount = 0;
         return subdevs;
     }
@@ -316,7 +347,7 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
     uint32_t driverCount = 0;
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
     if (driverCount == 0) {
-        std::cout << "No driver handle found!\n";
+        std::cerr << "No driver handle found!\n";
         std::terminate();
     }
 
@@ -327,7 +358,7 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
     uint32_t deviceCount = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, nullptr));
     if (deviceCount == 0) {
-        std::cout << "No device found!\n";
+        std::cerr << "No device found!\n";
         std::terminate();
     }
     std::vector<ze_device_handle_t> devices(deviceCount, nullptr);

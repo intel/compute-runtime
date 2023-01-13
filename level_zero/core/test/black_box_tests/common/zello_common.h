@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ void printResult(bool aubMode, bool outputValidationSuccessful, const std::strin
 
 uint32_t getCommandQueueOrdinal(ze_device_handle_t &device);
 
-int32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device);
+uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device);
 
 ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device,
                                              uint32_t *ordinal, ze_command_queue_mode_t mode,
@@ -87,6 +87,7 @@ ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_de
 ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device, uint32_t *ordinal);
 
 ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList);
+ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, uint32_t ordinal);
 
 void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_device_handle_t &device,
@@ -97,7 +98,7 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_event_scope_flag_t signalScope,
                               ze_event_scope_flag_t waitScope);
 
-std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, int &subDevCount);
+std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, uint32_t &subDevCount);
 
 std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_t &context, ze_driver_handle_t &driverHandle);
 
