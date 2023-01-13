@@ -361,7 +361,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         return performCpuMemcpy(dstptr, srcptr, size, dstAllocData, srcAllocData, hSignalEvent, numWaitEvents, phWaitEvents);
     }
 
-    if (this->isAppendSplitNeeded(dstptr, srcptr, size)) {
+    auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size);
+    if (isSplitNeeded) {
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, true, (numWaitEvents > 0), [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, numWaitEvents, phWaitEvents);
         });
@@ -369,7 +370,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
                                                                      numWaitEvents, phWaitEvents);
     }
-    return flushImmediate(ret, true, false, (numWaitEvents > 0), hSignalEvent);
+    return flushImmediate(ret, true, false, (numWaitEvents > 0) || isSplitNeeded, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -393,7 +394,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
 
     ze_result_t ret;
 
-    if (this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch))) {
+    auto isSplitNeeded = this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch));
+    if (isSplitNeeded) {
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, true, (numWaitEvents > 0), [&](uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             ze_copy_region_t dstRegionLocal = {};
             ze_copy_region_t srcRegionLocal = {};
@@ -413,7 +415,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
                                                                            hSignalEvent, numWaitEvents, phWaitEvents);
     }
 
-    return flushImmediate(ret, true, false, (numWaitEvents > 0), hSignalEvent);
+    return flushImmediate(ret, true, false, (numWaitEvents > 0) || isSplitNeeded, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -467,7 +469,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 
     ze_result_t ret;
 
-    if (this->isAppendSplitNeeded(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool(), size)) {
+    auto isSplitNeeded = this->isAppendSplitNeeded(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool(), size);
+    if (isSplitNeeded) {
         uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
         uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, false, false, [&](uintptr_t dstAddressParam, uintptr_t srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
@@ -479,7 +482,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
     }
-    return flushImmediate(ret, false, false, false, nullptr);
+    return flushImmediate(ret, false, false, isSplitNeeded, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

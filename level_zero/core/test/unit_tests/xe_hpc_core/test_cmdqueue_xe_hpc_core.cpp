@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -472,6 +473,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
                             size, alignment, &srcPtr);
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList0->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -483,6 +486,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getCsr()->peekTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getCsr()->peekTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getCsr()->peekTaskCount(), 1u);
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
