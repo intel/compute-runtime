@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "zello_common.h"
+#include "zello_ipc_common.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -18,8 +19,6 @@ int sv[CHILDPROCESSES][2];
 
 size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
 
-// Helpers to send and receive the IPC handles.
-//
 // L0 uses a vector of ZE_MAX_IPC_HANDLE_SIZE bytes to send the IPC handle
 // char data[ZE_MAX_IPC_HANDLE_SIZE];
 // First four bytes (which is the sizeof(int)) of it contain the file descriptor
@@ -28,75 +27,10 @@ size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
 // For instance, the payload in the event pool's IPC handle contains the
 // number of events the pool has.
 
-static int sendmsgForIpcHandle(int socket, char *payload) {
-    int fd = 0;
-    memcpy(&fd, payload, sizeof(fd));
-
-    char sendBuf[ZE_MAX_IPC_HANDLE_SIZE] = {};
-    memcpy(sendBuf, payload + sizeof(int), sizeof(sendBuf) - sizeof(int));
-
-    char cmsgBuf[CMSG_SPACE(ZE_MAX_IPC_HANDLE_SIZE)];
-
-    struct iovec msgBuffer = {};
-    msgBuffer.iov_base = sendBuf;
-    msgBuffer.iov_len = sizeof(*sendBuf);
-
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    controlHeader->cmsg_type = SCM_RIGHTS;
-    controlHeader->cmsg_level = SOL_SOCKET;
-
-    controlHeader->cmsg_len = CMSG_LEN(sizeof(fd));
-    *(int *)CMSG_DATA(controlHeader) = fd;
-
-    ssize_t bytesSent = sendmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        std::cerr << "Error on sendmsgForIpcHandle " << strerror(errno) << "\n";
-        return -1;
-    }
-
-    return 0;
-}
-
-static int recvmsgForIpcHandle(int socket, char *payload) {
-    int fd = -1;
-    char recvBuf[ZE_MAX_IPC_HANDLE_SIZE] = {};
-    char cmsgBuf[CMSG_SPACE(ZE_MAX_IPC_HANDLE_SIZE)];
-
-    struct iovec msgBuffer;
-    msgBuffer.iov_base = recvBuf;
-    msgBuffer.iov_len = sizeof(recvBuf);
-
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-
-    ssize_t bytesSent = recvmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        std::cerr << "Error on recvmsgForIpcHandle " << strerror(errno) << "\n";
-        return -1;
-    }
-
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    memcpy(&fd, CMSG_DATA(controlHeader), sizeof(int));
-
-    memcpy(payload, &fd, sizeof(fd));
-    memcpy(payload + sizeof(int), recvBuf, sizeof(recvBuf) - sizeof(int));
-
-    return 0;
-}
-
-inline void initializeProcess(ze_context_handle_t &context,
-                              ze_device_handle_t &device,
-                              ze_command_queue_handle_t &cmdQueue,
-                              ze_command_list_handle_t &cmdList) {
+void initializeProcess(ze_context_handle_t &context,
+                       ze_device_handle_t &device,
+                       ze_command_queue_handle_t &cmdQueue,
+                       ze_command_list_handle_t &cmdList) {
     auto devices = zelloInitContextAndGetDevices(context);
     device = devices[0];
 
@@ -126,24 +60,26 @@ void runClient(int commSocket, uint32_t clientId) {
 
     // receieve the IPC handle for the memory from the other process
     ze_ipc_mem_handle_t pIpcHandle = {};
-    int ret = recvmsgForIpcHandle(commSocket, pIpcHandle.data);
-    if (ret < 0) {
+    int dmaBufFd = recvmsgForIpcHandle(commSocket, pIpcHandle.data);
+    if (dmaBufFd < 0) {
         std::cerr << "Failing to get IPC memory handle from server\n";
         std::terminate();
     }
+    memcpy(pIpcHandle.data, &dmaBufFd, sizeof(dmaBufFd));
 
     // get the allocation associated with the IPC handle
-    void *zeIpcBuffer;
+    void *zeIpcBuffer = nullptr;
     SUCCESS_OR_TERMINATE(zeMemOpenIpcHandle(context, device, pIpcHandle,
                                             0u, &zeIpcBuffer));
 
     // receieve the IPC handle for the event pool from the other process
     ze_ipc_event_pool_handle_t pIpcEventPoolHandle = {};
-    ret = recvmsgForIpcHandle(commSocket, pIpcEventPoolHandle.data);
-    if (ret < 0) {
+    dmaBufFd = recvmsgForIpcHandle(commSocket, pIpcEventPoolHandle.data);
+    if (dmaBufFd < 0) {
         std::cerr << "Failing to get IPC event pool handle from server\n";
         std::terminate();
     }
+    memcpy(pIpcEventPoolHandle.data, &dmaBufFd, sizeof(dmaBufFd));
 
     // get the event pool associated with the IPC handle
     ze_event_pool_handle_t eventPool = {};
@@ -245,24 +181,25 @@ void runServer(bool &validRet) {
         SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
 
         // Get the IPC handle for the previously allocated pointer
-        ze_ipc_mem_handle_t pIpcHandle;
+        ze_ipc_mem_handle_t pIpcHandle{};
         SUCCESS_OR_TERMINATE(zeMemGetIpcHandle(context, zeBuffer, &pIpcHandle));
 
         // Pass the IPC handle to the other process
         int commSocket = sv[i][0];
-        int ret = sendmsgForIpcHandle(commSocket, pIpcHandle.data);
-        if (ret < 0) {
-            std::cerr << "Failing to send IPC memory handle to client\n";
+        int dmaBufFd;
+        memcpy(static_cast<void *>(&dmaBufFd), pIpcHandle.data, sizeof(dmaBufFd));
+        if (sendmsgForIpcHandle(commSocket, dmaBufFd, pIpcHandle.data) < 0) {
+            std::cerr << "Failing to send IPC handle to client\n";
             std::terminate();
         }
 
         // Get the IPC handle for the event pool
-        ze_ipc_event_pool_handle_t pIpcEventPoolHandle;
+        ze_ipc_event_pool_handle_t pIpcEventPoolHandle{};
         SUCCESS_OR_TERMINATE(zeEventPoolGetIpcHandle(eventPool, &pIpcEventPoolHandle));
 
         // Pass the IPC handle to the other process
-        ret = sendmsgForIpcHandle(commSocket, pIpcEventPoolHandle.data);
-        if (ret) {
+        memcpy(static_cast<void *>(&dmaBufFd), &pIpcEventPoolHandle, sizeof(dmaBufFd));
+        if (sendmsgForIpcHandle(commSocket, dmaBufFd, pIpcEventPoolHandle.data) < 0) {
             std::cerr << "Failing to send IPC event pool handle to client\n";
             std::terminate();
         }

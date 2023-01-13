@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "zello_common.h"
+#include "zello_ipc_common.h"
 
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -17,53 +17,6 @@
 int sv[CHILDPROCESSES][2];
 
 size_t allocSize = 4194304;
-
-static int sendmsgForIpcHandle(int socket, int fd) {
-    char sendBuf[ZE_MAX_IPC_HANDLE_SIZE] = {};
-    char cmsgBuf[CMSG_SPACE(ZE_MAX_IPC_HANDLE_SIZE)];
-
-    struct iovec msgBuffer = {};
-    msgBuffer.iov_base = sendBuf;
-    msgBuffer.iov_len = ZE_MAX_IPC_HANDLE_SIZE;
-
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    controlHeader->cmsg_type = SCM_RIGHTS;
-    controlHeader->cmsg_level = SOL_SOCKET;
-    controlHeader->cmsg_len = CMSG_LEN(sizeof(fd));
-    *(int *)CMSG_DATA(controlHeader) = fd;
-    ssize_t bytesSent = sendmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        std::cerr << "Error on sendmsgForIpcHandle " << strerror(errno) << "\n";
-        return -1;
-    }
-    return 0;
-}
-static int recvmsgForIpcHandle(int socket) {
-    int fd = -1;
-    char recvBuf[ZE_MAX_IPC_HANDLE_SIZE] = {};
-    char cmsgBuf[CMSG_SPACE(ZE_MAX_IPC_HANDLE_SIZE)];
-    struct iovec msgBuffer;
-    msgBuffer.iov_base = recvBuf;
-    msgBuffer.iov_len = ZE_MAX_IPC_HANDLE_SIZE;
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-    ssize_t bytesSent = recvmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        std::cerr << "Error on recvmsgForIpcHandle " << strerror(errno) << "\n";
-        return -1;
-    }
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    memmove(&fd, CMSG_DATA(controlHeader), sizeof(int)); // NOLINT(clang-analyzer-core.NonNullParamChecker)
-    return fd;
-}
 
 inline void initializeProcess(ze_driver_handle_t &driverHandle,
                               ze_context_handle_t &context,
@@ -142,7 +95,8 @@ void runClient(int commSocket, uint32_t clientId) {
     }
 
     // receive the IPC handle for the memory from the other process
-    int handle = recvmsgForIpcHandle(commSocket);
+    char payload[ZE_MAX_IPC_HANDLE_SIZE];
+    int handle = recvmsgForIpcHandle(commSocket, payload);
     if (handle < 0) {
         std::cerr << "Failing to get IPC memory handle from server\n";
         std::terminate();
@@ -227,9 +181,9 @@ void runServer(bool &validRet) {
 
         // transmit handle to the client
         int commSocket = sv[i][0];
-        int ret = sendmsgForIpcHandle(commSocket, exportFd.fd);
-        if (ret < 0) {
-            std::cerr << "Failing to send IPC memory handle to client\n";
+        char payload[ZE_MAX_IPC_HANDLE_SIZE];
+        if (sendmsgForIpcHandle(commSocket, static_cast<int>(exportFd.fd), payload) < 0) {
+            std::cerr << "Failing to send IPC event pool handle to client\n";
             std::terminate();
         }
 

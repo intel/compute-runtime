@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,6 +15,14 @@ add_library(${L0_BLACK_BOX_TEST_SHARED_LIB} STATIC
             ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_compile.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_compile.h
 )
+
+if(UNIX)
+  target_sources(${L0_BLACK_BOX_TEST_SHARED_LIB}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_ipc_common.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_ipc_common.cpp
+  )
+endif()
 
 if(NOT DEFINED L0_BLACK_BOX_OCLOC_HEADER_DIR)
   set(L0_BLACK_BOX_OCLOC_HEADER_DIR "${NEO_SOURCE_DIR}/shared/offline_compiler/source")
@@ -69,6 +77,9 @@ foreach(TEST_NAME ${TEST_TARGETS})
       continue()
     endif()
     if(${TEST_NAME} STREQUAL "zello_export_import_memory")
+      continue()
+    endif()
+    if(${TEST_NAME} STREQUAL "zello_ipc_event")
       continue()
     endif()
   endif()
