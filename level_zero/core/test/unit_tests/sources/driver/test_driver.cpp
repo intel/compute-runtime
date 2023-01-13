@@ -391,6 +391,30 @@ TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironment
     L0::GlobalDriver = nullptr;
 }
 
+TEST(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
+    DebugManagerStateRestore restorer;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    VariableBackup<decltype(L0::GlobalDriverHandle)> mockableDriverHandle(&L0::GlobalDriverHandle);
+    VariableBackup<decltype(L0::GlobalDriver)> mockableDriver(&L0::GlobalDriver);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+
+    ASSERT_NE(nullptr, L0::GlobalDriver);
+    ASSERT_NE(0u, L0::GlobalDriver->numDevices);
+    EXPECT_FALSE(L0::GlobalDriver->devices[0]->getNEODevice()->getExecutionEnvironment()->isDebuggingEnabled());
+
+    delete L0::GlobalDriver;
+}
+
 TEST(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -454,7 +454,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalCopyThroughLock, -1, "Experimentally
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalForceCopyThroughLock, -1, "Force copy through lock pointer on zeAppendMemoryCopy for all cases -1: default 0: disable 1: enable ")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSmallBufferPoolAllocator, -1, "Experimentally enable pool allocator for clCreateBuffer under 4KB.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableSourceLevelDebugger, false, "Experimentally enable source level debugger.")
-DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableL0DebuggerForOpenCL, false, "Experimentally enable debugging OCL with L0 Debug API.")
+DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableL0DebuggerForOpenCL, false, "Experimentally enable debugging OCL with L0 Debug API. When enabled - Level Zero debugging is disabled.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableTileAttach, true, "Experimentally enable attaching to tiles (subdevices).")
 
 /*DRIVER TOGGLES*/
