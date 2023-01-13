@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,8 @@
 
 #pragma once
 
-#include "shared/source/helpers/ptr_math.h"
-
-#include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 
 namespace NEO {

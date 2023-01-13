@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,13 @@
 #pragma once
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include <memory>
 #include <vector>
 
 namespace NEO {
+struct SvmAllocationData;
 
 class CommandStreamReceiver;
 class Device;

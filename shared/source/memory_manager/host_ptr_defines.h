@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,14 +28,6 @@ enum class FragmentPosition {
     LEADING,
     MIDDLE,
     TRAILING
-};
-
-enum OverlapStatus {
-    FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER = 0,
-    FRAGMENT_WITHIN_STORED_FRAGMENT,
-    FRAGMENT_WITH_EXACT_SIZE_AS_STORED_FRAGMENT,
-    FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT,
-    FRAGMENT_NOT_CHECKED
 };
 
 enum class RequirementsStatus {

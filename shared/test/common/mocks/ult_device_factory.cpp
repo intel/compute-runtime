@@ -8,6 +8,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"

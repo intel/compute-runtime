@@ -6,18 +6,11 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/memory_manager/gfx_partition.h"
-#include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_host_ptr_manager.h"
-#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
@@ -65,17 +58,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
 
-    MockMemoryManager(bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, enableLocalMemory, executionEnvironment) {
-        hostPtrManager.reset(new MockHostPtrManager);
-    };
-
-    MockMemoryManager() : MockMemoryManager(*(new MockExecutionEnvironment(defaultHwInfo.get()))) {
-        mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));
-        mockExecutionEnvironment->initGmm();
-    };
-    MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new MockExecutionEnvironment(defaultHwInfo.get()))) {
-        mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));
-    }
+    MockMemoryManager(bool enableLocalMemory, ExecutionEnvironment &executionEnvironment);
+    MockMemoryManager();
+    MockMemoryManager(bool enable64pages, bool enableLocalMemory);
 
     ADDMETHOD_NOBASE(registerSysMemAlloc, AllocationStatus, AllocationStatus::Success, (GraphicsAllocation * allocation));
     ADDMETHOD_NOBASE(registerLocalMemAlloc, AllocationStatus, AllocationStatus::Success, (GraphicsAllocation * allocation, uint32_t rootDeviceIndex));
@@ -122,13 +107,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return false;
     }
 
-    void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) override {
-        waitForEnginesCompletionCalled++;
-        if (waitAllocations.get()) {
-            waitAllocations->addAllocation(&graphicsAllocation);
-        }
-        MemoryManager::waitForEnginesCompletion(graphicsAllocation);
-    }
+    void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) override;
 
     void handleFenceCompletion(GraphicsAllocation *graphicsAllocation) override {
         handleFenceCompletionCalled++;
@@ -159,7 +138,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool isLimitedGPU(uint32_t rootDeviceIndex) override {
         return limitedGPU;
     }
-    void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size()); }
+    void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range);
 
     bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) override {
         memAdviseFlags = flags;
@@ -175,12 +154,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemPrefetch(gfxAllocation, subDeviceIds, rootDeviceIndex);
     }
 
-    bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override {
-        if (DebugManager.flags.UseKmdMigration.get() != -1) {
-            return !!DebugManager.flags.UseKmdMigration.get();
-        }
-        return false;
-    }
+    bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;
 
     struct CopyMemoryToAllocationBanksParams {
         GraphicsAllocation *graphicsAllocation = nullptr;
@@ -291,11 +265,7 @@ class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
         return ptrRestrictions;
     }
 
-    void *allocateSystemMemory(size_t size, size_t alignment) override {
-        constexpr size_t minAlignment = 16;
-        alignment = std::max(alignment, minAlignment);
-        return alignedMalloc(size, alignment);
-    }
+    void *allocateSystemMemory(size_t size, size_t alignment) override;
 
     AlignedMallocRestrictions testRestrictions;
     AlignedMallocRestrictions *ptrRestrictions;
@@ -393,39 +363,22 @@ class MockMemoryManagerFailFirstAllocation : public MockMemoryManager {
     GraphicsAllocation *baseAllocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
         return OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
     }
-    GraphicsAllocation *allocateNonSystemGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
-        auto allocation = baseAllocateGraphicsMemoryInDevicePool(allocationData, status);
-        if (!allocation) {
-            allocation = allocateGraphicsMemory(allocationData);
-        }
-        static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
-        return allocation;
-    }
+
+    GraphicsAllocation *allocateNonSystemGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status);
 };
 
 class MockMemoryManagerOsAgnosticContext : public MockMemoryManager {
   public:
     MockMemoryManagerOsAgnosticContext(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
-                                          const EngineDescriptor &engineDescriptor) override {
-        auto osContext = new OsContext(commandStreamReceiver->getRootDeviceIndex(), 0, engineDescriptor);
-        osContext->incRefInternal();
-        registeredEngines.emplace_back(commandStreamReceiver, osContext);
-        return osContext;
-    }
+                                          const EngineDescriptor &engineDescriptor) override;
 };
 
 class MockMemoryManagerWithDebuggableOsContext : public MockMemoryManager {
   public:
     MockMemoryManagerWithDebuggableOsContext(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
-                                          const EngineDescriptor &engineDescriptor) override {
-        auto osContext = new MockOsContext(0, engineDescriptor);
-        osContext->debuggableContext = true;
-        osContext->incRefInternal();
-        registeredEngines.emplace_back(commandStreamReceiver, osContext);
-        return osContext;
-    }
+                                          const EngineDescriptor &engineDescriptor) override;
 };
 
 class MockMemoryManagerWithCapacity : public MockMemoryManager {

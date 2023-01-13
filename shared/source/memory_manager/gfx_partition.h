@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,11 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/os_memory.h"
-#include "shared/source/utilities/heap_allocator.h"
 
 #include <array>
 
 namespace NEO {
+class HeapAllocator;
 
 enum class HeapIndex : uint32_t {
     HEAP_INTERNAL_DEVICE_MEMORY = 0u,
@@ -110,9 +110,9 @@ class GfxPartition {
         uint64_t getBase() const { return base; }
         uint64_t getSize() const { return size; }
         uint64_t getLimit() const { return size ? base + size - 1 : 0; }
-        uint64_t allocate(size_t &size) { return alloc->allocate(size); }
-        uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) { return alloc->allocateWithCustomAlignment(sizeToAllocate, alignment); }
-        void free(uint64_t ptr, size_t size) { alloc->free(ptr, size); }
+        uint64_t allocate(size_t &size);
+        uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment);
+        void free(uint64_t ptr, size_t size);
 
       protected:
         uint64_t base = 0, size = 0;

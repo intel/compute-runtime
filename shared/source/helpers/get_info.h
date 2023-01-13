@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 // Need for linux compatibility with memcpy_s
 #include "shared/source/helpers/string.h"
 
-#include <cstring>
 #include <limits>
 
 namespace GetInfo {

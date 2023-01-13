@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/cpu_info.h"
+#include "shared/source/utilities/heap_allocator.h"
 
 namespace NEO {
 
@@ -132,6 +133,18 @@ void GfxPartition::Heap::initFrontWindow(uint64_t base, uint64_t size) {
     this->size = size;
 
     alloc = std::make_unique<HeapAllocator>(base, size, MemoryConstants::pageSize, 0u);
+}
+
+uint64_t GfxPartition::Heap::allocate(size_t &size) {
+    return alloc->allocate(size);
+}
+
+uint64_t GfxPartition::Heap::allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
+    return alloc->allocateWithCustomAlignment(sizeToAllocate, alignment);
+}
+
+void GfxPartition::Heap::free(uint64_t ptr, size_t size) {
+    alloc->free(ptr, size);
 }
 
 void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
