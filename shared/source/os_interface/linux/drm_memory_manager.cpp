@@ -873,6 +873,13 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         bo->setUnmapSize(size);
         bo->setRootDeviceIndex(properties.rootDeviceIndex);
 
+        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
+                         "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
+                         bo->peekHandle(),
+                         bo->peekAddress(),
+                         ptrOffset(bo->peekAddress(), bo->peekSize()),
+                         bo->peekSize());
+
         pushSharedBufferObject(bo);
     }
 
@@ -2066,6 +2073,13 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         bo->setUnmapSize(size);
         bo->setRootDeviceIndex(properties.rootDeviceIndex);
+
+        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
+                         "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
+                         bo->peekHandle(),
+                         bo->peekAddress(),
+                         ptrOffset(bo->peekAddress(), bo->peekSize()),
+                         bo->peekSize());
 
         pushSharedBufferObject(bo);
 

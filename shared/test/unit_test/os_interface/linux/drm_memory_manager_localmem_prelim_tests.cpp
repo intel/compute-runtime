@@ -2064,6 +2064,56 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsC
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(DrmMemoryManagerTestPrelim,
+       whenPrintBOCreateDestroyResultFlagIsSetAndCallToCreateSharedAllocationForHostAllocationThenExpectedMessageIsPrinted) {
+    mock->ioctl_expected.primeFdToHandle = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemMmapOffset = 1;
+
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+
+    osHandle handle = 1u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::BUFFER_HOST_MEMORY, false, {});
+
+    testing::internal::CaptureStdout();
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, true, true);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, graphicsAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(this->mock->inputFd, (int)handle);
+    EXPECT_EQ(this->mock->setTilingHandle, 0u);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
+    EXPECT_NE(0llu, bo->peekAddress());
+    EXPECT_EQ(1u, bo->getRefCount());
+    EXPECT_EQ(size, bo->peekSize());
+
+    char addressBufferString[17];
+    sprintf(addressBufferString, "%lx",
+            graphicsAllocation->getGpuAddress());
+
+    char addressBufferOffsetString[17];
+    sprintf(addressBufferOffsetString, "%lx",
+            ptrOffset(graphicsAllocation->getGpuAddress(), MemoryConstants::pageSize));
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    std::string expectedOutput("Created BO-0 range: ");
+    expectedOutput += addressBufferString;
+    expectedOutput += " - ";
+    expectedOutput += addressBufferOffsetString;
+    expectedOutput += ", size: 4096 from PRIME_FD_TO_HANDLE\nCalling gem close on handle: BO-0\n";
+    EXPECT_EQ(expectedOutput, output);
+}
+
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledWithBufferHostMemoryAllocationTypeThenGraphicsAllocationIsReturned) {
     mock->ioctl_expected.primeFdToHandle = 1;
     mock->ioctl_expected.gemWait = 1;

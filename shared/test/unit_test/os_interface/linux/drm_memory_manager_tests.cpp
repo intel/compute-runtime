@@ -3423,6 +3423,47 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
 }
 
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
+     whenPrintBOCreateDestroyResultFlagIsSetAndCallToCreateSharedAllocationThenExpectedMessageIsPrinted) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    const uint32_t rootDeviceIndex = 0u;
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+    auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+    TestedDrmMemoryManager memoryManger(executionEnvironment);
+
+    osHandle handle = 1u;
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
+
+    testing::internal::CaptureStdout();
+    auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, false);
+    ASSERT_NE(nullptr, allocation);
+
+    char addressBufferString[17];
+    sprintf(addressBufferString, "%lx",
+            allocation->getGpuAddress());
+
+    char addressBufferOffsetString[17];
+    sprintf(addressBufferOffsetString, "%lx",
+            ptrOffset(allocation->getGpuAddress(), MemoryConstants::pageSize));
+
+    memoryManger.freeGraphicsMemory(allocation);
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    std::string expectedOutput("Created BO-0 range: ");
+    expectedOutput += addressBufferString;
+    expectedOutput += " - ";
+    expectedOutput += addressBufferOffsetString;
+    expectedOutput += ", size: 4096 from PRIME_FD_TO_HANDLE\nCalling gem close on handle: BO-0\n";
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
      givenCallToCreateSharedAllocationWithReuseSharedAllocationThenAllocationsSuccedAndAddressesAreTheSame) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     const uint32_t rootDeviceIndex = 0u;
