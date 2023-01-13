@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,7 +136,7 @@ void LinuxGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERT
 
 void LinuxGlobalOperationsImp::getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) {
     NEO::Device *neoDevice = pDevice->getNEODevice();
-    std::string deviceModelName = neoDevice->getDeviceName(neoDevice->getHardwareInfo());
+    std::string deviceModelName = neoDevice->getDeviceName();
     std::strncpy(modelName, deviceModelName.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 

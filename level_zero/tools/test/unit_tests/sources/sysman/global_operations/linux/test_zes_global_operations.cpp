@@ -100,7 +100,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pGlobalOperationsImp = static_cast<L0::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
         pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
         pGlobalOperationsImp->pOsGlobalOperations = nullptr;
-        expectedModelName = neoDevice->getDeviceName(neoDevice->getHardwareInfo());
+        expectedModelName = neoDevice->getDeviceName();
     }
 
     void TearDown() override {

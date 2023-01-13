@@ -55,6 +55,25 @@ TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
 }
 
+TEST(Device, givenDeviceWithBrandingStringNameWhenGettingDeviceNameThenBrandingStringIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.capabilityTable.deviceName = "Custom Device";
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    EXPECT_STREQ("Custom Device", device->getDeviceName().c_str());
+}
+
+TEST(Device, givenDeviceWithoutBrandingStringNameWhenGettingDeviceNameThenGenericNameWithHexadecimalDeviceIdIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.capabilityTable.deviceName = "";
+    hwInfo.platform.usDeviceID = 0x1AB;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    EXPECT_STREQ("Intel(R) Graphics [0x01ab]", device->getDeviceName().c_str());
+}
+
 using DeviceTest = Test<DeviceFixture>;
 
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledAndRtBackedBufferIsNullptrThenMemoryBackedBufferIsCreated) {

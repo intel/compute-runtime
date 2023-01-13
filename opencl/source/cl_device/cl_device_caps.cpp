@@ -79,7 +79,7 @@ void ClDevice::initializeCaps() {
     if (DebugManager.flags.OverrideDeviceName.get() != "unk") {
         name.assign(DebugManager.flags.OverrideDeviceName.get().c_str());
     } else {
-        name = getClDeviceName(hwInfo);
+        name = getClDeviceName();
         if (driverInfo) {
             name.assign(driverInfo->getDeviceName(name).c_str());
         }
@@ -449,7 +449,7 @@ void ClDevice::initializeOpenclCAllVersions() {
     }
 }
 
-const std::string ClDevice::getClDeviceName(const HardwareInfo &hwInfo) const {
+const std::string ClDevice::getClDeviceName() const {
     return this->getDevice().getDeviceInfo().name;
 }
 

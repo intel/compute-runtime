@@ -119,7 +119,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(nullptr, caps.builtInKernels);
 
     std::string strDriverName = caps.name;
-    std::string strDeviceName = device->getClDeviceName(*defaultHwInfo.get());
+    std::string strDeviceName = device->getClDeviceName();
 
     EXPECT_NE(std::string::npos, strDriverName.find(strDeviceName));
 
@@ -1230,7 +1230,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionTh
 
     const auto &caps = device->getDeviceInfo();
 
-    std::string tempName = device->getClDeviceName(*defaultHwInfo.get());
+    std::string tempName = device->getClDeviceName();
 
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)

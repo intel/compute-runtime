@@ -184,7 +184,7 @@ void Device::initializeCaps() {
         this->preemptionMode = PreemptionMode::Disabled;
     }
 
-    deviceInfo.name = this->getDeviceName(hwInfo);
+    deviceInfo.name = this->getDeviceName();
 
     size_t maxParameterSizeFromIgc = getMaxParameterSizeFromIGC();
     if (maxParameterSizeFromIgc > 0) {

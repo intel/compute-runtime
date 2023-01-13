@@ -99,7 +99,7 @@ class Device : public ReferenceTrackedObject<Device> {
     NEO::SourceLevelDebugger *getSourceLevelDebugger();
     DebuggerL0 *getL0Debugger();
     const EnginesT &getAllEngines() const;
-    const std::string getDeviceName(const HardwareInfo &hwInfo) const;
+    const std::string getDeviceName() const;
 
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const RootDeviceEnvironment &getRootDeviceEnvironment() const;
