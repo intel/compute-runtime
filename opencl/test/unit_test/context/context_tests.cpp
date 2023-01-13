@@ -314,6 +314,7 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
         deleter = new MockDeferredDeleter();
 
         device->allEngines.clear();
+        device->device.regularEngineGroups.clear();
         device->injectMemoryManager(memoryManager);
         device->createEngines();
         memoryManager->setDeferredDeleter(deleter);

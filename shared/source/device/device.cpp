@@ -40,6 +40,10 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex)
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {
     this->executionEnvironment->incRefInternal();
+
+    if (DebugManager.flags.NumberOfRegularContextsPerEngine.get() > 1) {
+        this->numberOfRegularContextsPerEngine = static_cast<uint32_t>(DebugManager.flags.NumberOfRegularContextsPerEngine.get());
+    }
 }
 
 Device::~Device() {
@@ -322,7 +326,14 @@ void Device::addEngineToEngineGroup(EngineControl &engine) {
         this->regularEngineGroups.push_back(EngineGroupT{});
         this->regularEngineGroups.back().engineGroupType = engineGroupType;
     }
-    this->regularEngineGroups.back().engines.push_back(engine);
+
+    auto &engines = this->regularEngineGroups.back().engines;
+
+    if (engines.size() > 0 && engines.back().getEngineType() == engine.getEngineType()) {
+        return; // Type already added. Exposing multiple contexts for the same engine is disabled.
+    }
+
+    engines.push_back(engine);
 }
 
 std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() const {
@@ -372,11 +383,15 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     commandStreamReceiver->createKernelArgsBufferAllocation();
 
     if (isDefaultEngine) {
-        defaultEngineIndex = deviceCsrIndex;
+        bool defaultEngineAlreadySet = (allEngines.size() > defaultEngineIndex) && (allEngines[defaultEngineIndex].getEngineType() == engineType);
 
-        if (osContext->isDebuggableContext()) {
-            if (SubmissionStatus::SUCCESS != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
-                return false;
+        if (!defaultEngineAlreadySet) {
+            defaultEngineIndex = deviceCsrIndex;
+
+            if (osContext->isDebuggableContext()) {
+                if (SubmissionStatus::SUCCESS != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
+                    return false;
+                }
             }
         }
     }
@@ -909,5 +924,15 @@ CompilerInterface *Device::getCompilerInterface() const {
 
 BuiltIns *Device::getBuiltIns() const {
     return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getBuiltIns();
+}
+
+EngineControl &Device::getNextEngineForMultiRegularContextMode() {
+    UNRECOVERABLE_IF(defaultEngineIndex != 0);
+
+    auto maxIndex = numberOfRegularContextsPerEngine - 1; // 1 for internal engine
+
+    auto indexToAssign = regularContextPerEngineAssignmentHelper.fetch_add(1) % maxIndex;
+
+    return allEngines[indexToAssign];
 }
 } // namespace NEO

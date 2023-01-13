@@ -224,6 +224,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceZeDeviceCanAccessPerReturnValue, -1, "-1: d
 DECLARE_DEBUG_VARIABLE(int32_t, AdjustThreadGroupDispatchSize, -1, "-1: default, 0: do not adjust thread group dispatch size 1: adjust thread group dispatch size (PVC)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceNonblockingExecbufferCalls, -1, "-1: default, 0: make execbuffer call blocking, 1: make execbuffer call nonblocking. Supported only in prelim i915 kernels.")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlush, -1, "-1: default, 0: disable 1: Enable all flushing bits in ComputeWalker->PostSync")
+DECLARE_DEBUG_VARIABLE(int32_t, NumberOfRegularContextsPerEngine, -1, "-1: default, >0: Create more than 1 Regular contexts for the same engine")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

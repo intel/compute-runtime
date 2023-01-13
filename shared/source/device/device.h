@@ -81,6 +81,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getNextEngineForCommandQueue();
+    EngineControl &getNextEngineForMultiRegularContextMode();
     EngineControl &getInternalEngine();
     EngineControl *getInternalCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
@@ -152,6 +153,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void getAdapterMask(uint32_t &nodeMask);
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
+    uint32_t getNumberOfRegularContextsPerEngine() const { return numberOfRegularContextsPerEngine; }
 
     std::atomic<uint32_t> debugExecutionCounter = 0;
 
@@ -203,8 +205,10 @@ class Device : public ReferenceTrackedObject<Device> {
     uint32_t defaultEngineIndex = 0;
     uint32_t numSubDevices = 0;
     std::atomic_uint32_t regularCommandQueuesCreatedWithinDeviceCount{0};
+    std::atomic<uint8_t> regularContextPerEngineAssignmentHelper = 0;
     std::bitset<8> availableEnginesForCommandQueueusRoundRobin = 0;
     uint32_t queuesPerEngineCount = 1;
+    uint32_t numberOfRegularContextsPerEngine = 1;
     void initializeEngineRoundRobinControls();
     bool hasGenericSubDevices = false;
     bool engineInstanced = false;

@@ -677,7 +677,7 @@ class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
     const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
         EngineInstancesContainer result{};
         for (int i = 0; i < ccsCount; i++) {
-            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            result.push_back({static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + i), EngineUsage::Regular});
         }
         for (int i = 0; i < bcsCount; i++) {
             result.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});

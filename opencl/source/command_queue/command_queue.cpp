@@ -177,7 +177,9 @@ void CommandQueue::initializeGpgpu() const {
                 !(getCmdQueueProperties<cl_queue_priority_khr>(propertiesVector.data(), CL_QUEUE_PRIORITY_KHR) & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) &&
                 engineRoundRobinAvailable;
 
-            if (assignEngineRoundRobin) {
+            if (device->getDevice().getNumberOfRegularContextsPerEngine() > 1) {
+                this->gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode();
+            } else if (assignEngineRoundRobin) {
                 this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
             } else {
                 this->gpgpuEngine = &device->getDefaultEngine();

@@ -2748,6 +2748,50 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     EXPECT_TRUE(osContext.isInitialized());
 }
 
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenCreatingCmdQueueThenAssignNextRegularContext) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.NumberOfRegularContextsPerEngine.set(4);
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::ENGINE_CCS));
+
+    class MyMockGfxCoreHelper : public GfxCoreHelperHw<FamilyType> {
+      public:
+        const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+            EngineInstancesContainer result{};
+
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Internal});
+
+            return result;
+        }
+
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
+            return EngineGroupType::Compute;
+        }
+    };
+
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MyMockGfxCoreHelper>();
+
+    MockContext context{};
+    auto &device = static_cast<MockDevice &>(context.getDevice(0)->getDevice());
+    EXPECT_EQ(0u, device.defaultEngineIndex);
+
+    uint32_t expectedIndex = 0;
+
+    for (uint32_t i = 0; i < 8; i++) {
+        MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), nullptr);
+        queue.initializeGpgpu();
+
+        EXPECT_EQ(queue.gpgpuEngine, &device.allEngines[expectedIndex]);
+
+        expectedIndex++;
+        if (expectedIndex == 3) {
+            expectedIndex = 0;
+        }
+    }
+}
+
 TEST_F(MultiTileFixture, givenMultiSubDeviceAndCommandQueueUsingMainCopyEngineWhenReleaseMainCopyEngineThenDeviceAndSubdeviceSelectorReset) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
