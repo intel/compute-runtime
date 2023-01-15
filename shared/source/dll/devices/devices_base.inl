@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ NAMEDDEVICE(0x4692, AdlsHwConfig, "Intel(R) UHD Graphics 730")
 NAMEDDEVICE(0x4693, AdlsHwConfig, "Intel(R) UHD Graphics 710")
 NAMEDDEVICE(0xA780, AdlsHwConfig, "Intel(R) UHD Graphics 770")
 DEVICE(0xA781, AdlsHwConfig)
-DEVICE(0xA782, AdlsHwConfig)
+NAMEDDEVICE(0xA782, AdlsHwConfig, "Intel(R) UHD Graphics 730")
 DEVICE(0xA783, AdlsHwConfig)
 DEVICE(0xA788, AdlsHwConfig)
 DEVICE(0xA789, AdlsHwConfig)
@@ -73,8 +73,8 @@ DEVICE(0xA78B, AdlsHwConfig)
 #endif
 
 #ifdef SUPPORT_ADLN
-DEVICE(0x46D0, AdlnHwConfig)
-DEVICE(0x46D1, AdlnHwConfig)
+NAMEDDEVICE(0x46D0, AdlnHwConfig, "Intel(R) UHD Graphics")
+NAMEDDEVICE(0x46D1, AdlnHwConfig, "Intel(R) UHD Graphics")
 DEVICE(0x46D2, AdlnHwConfig)
 #endif
 
