@@ -354,12 +354,12 @@ TEST_F(MemoryExportImportObtainFdTest,
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = static_cast<EventPoolImp *>(EventPool::create(driverHandle.get(),
-                                                                   context.get(),
-                                                                   1,
-                                                                   &deviceHandle,
-                                                                   &eventPoolDesc,
-                                                                   result));
+    auto eventPool = EventPool::create(driverHandle.get(),
+                                       context.get(),
+                                       1,
+                                       &deviceHandle,
+                                       &eventPoolDesc,
+                                       result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, eventPool);
 
@@ -382,12 +382,12 @@ TEST_F(MemoryExportImportObtainFdTest,
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = static_cast<EventPoolImp *>(EventPool::create(driverHandle.get(),
-                                                                   context.get(),
-                                                                   1,
-                                                                   &deviceHandle,
-                                                                   &eventPoolDesc,
-                                                                   result));
+    auto eventPool = EventPool::create(driverHandle.get(),
+                                       context.get(),
+                                       1,
+                                       &deviceHandle,
+                                       &eventPoolDesc,
+                                       result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, eventPool);
     eventPool->isShareableEventMemory = true;

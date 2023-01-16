@@ -47,7 +47,7 @@ struct Mock<Event> : public Event {
     ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(queryKernelTimestamp, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_timestamp_result_t * dstptr));
-    ADDMETHOD_NOBASE(queryTimestampsExp, ze_result_t, ZE_RESULT_SUCCESS, (::L0::Device * device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps));
+    ADDMETHOD_NOBASE(queryTimestampsExp, ze_result_t, ZE_RESULT_SUCCESS, (::L0::Device * device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps));
 
     // Fake an allocation for event memory
     alignas(16) uint32_t memory = -1;
@@ -61,8 +61,7 @@ struct Mock<EventPool> : public EventPool {
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_event_pool_handle_t * ipcHandle));
     ADDMETHOD_NOBASE(closeIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, ());
-    ADDMETHOD_NOBASE(createEvent, ze_result_t, ZE_RESULT_SUCCESS, (const ze_event_desc_t *desc, ze_event_handle_t *phEvent));
-    ADDMETHOD_NOBASE(getDevice, Device *, nullptr, ());
+    ADDMETHOD_NOBASE(createEvent, ze_result_t, ZE_RESULT_SUCCESS, (const ze_event_desc_t *desc, ze_event_handle_t *eventHandle));
 
     using EventPool::eventPoolAllocations;
 };
@@ -121,7 +120,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override {
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t queryTimestampsExp(L0::Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override {
+    ze_result_t queryTimestampsExp(L0::Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) override {
         return ZE_RESULT_SUCCESS;
     }
     uint32_t getPacketsUsedInLastKernel() override { return 1; }

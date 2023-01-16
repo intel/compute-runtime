@@ -55,7 +55,7 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t queryStatus() = 0;
     virtual ze_result_t reset() = 0;
     virtual ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) = 0;
-    virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) = 0;
+    virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) = 0;
     enum State : uint32_t {
         STATE_SIGNALED = 0u,
         HOST_CACHING_DISABLED_PERMANENT = std::numeric_limits<uint32_t>::max() - 2,
@@ -254,7 +254,7 @@ struct EventImp : public Event {
     ze_result_t reset() override;
 
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
-    ze_result_t queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override;
+    ze_result_t queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) override;
 
     void resetDeviceCompletionData(bool resetAllPackets);
     void resetKernelCountAndPacketUsedCount() override;
@@ -278,13 +278,15 @@ struct EventImp : public Event {
 };
 
 struct EventPool : _ze_event_pool_handle_t {
-    static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc, ze_result_t &result);
-    virtual ~EventPool() = default;
-    virtual ze_result_t destroy() = 0;
-    virtual ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) = 0;
-    virtual ze_result_t closeIpcHandle() = 0;
-    virtual ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) = 0;
-    virtual Device *getDevice() = 0;
+    static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles, const ze_event_pool_desc_t *desc, ze_result_t &result);
+    EventPool(const ze_event_pool_desc_t *desc) : EventPool(desc->count) {
+        eventPoolFlags = desc->flags;
+    }
+    virtual ~EventPool();
+    MOCKABLE_VIRTUAL ze_result_t destroy();
+    MOCKABLE_VIRTUAL ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle);
+    MOCKABLE_VIRTUAL ze_result_t closeIpcHandle();
+    MOCKABLE_VIRTUAL ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *eventHandle);
 
     static EventPool *fromHandle(ze_event_pool_handle_t handle) {
         return static_cast<EventPool *>(handle);
@@ -292,7 +294,7 @@ struct EventPool : _ze_event_pool_handle_t {
 
     inline ze_event_pool_handle_t toHandle() { return this; }
 
-    virtual NEO::MultiGraphicsAllocation &getAllocation() { return *eventPoolAllocations; }
+    MOCKABLE_VIRTUAL NEO::MultiGraphicsAllocation &getAllocation() { return *eventPoolAllocations; }
 
     uint32_t getEventSize() const { return eventSize; }
     void setEventSize(uint32_t size) { eventSize = size; }
@@ -301,9 +303,9 @@ struct EventPool : _ze_event_pool_handle_t {
     uint32_t getEventMaxPackets() const { return eventPackets; }
     size_t getEventPoolSize() const { return eventPoolSize; }
 
-    bool isEventPoolTimestampFlagSet();
+    bool isEventPoolTimestampFlagSet() const;
 
-    bool isEventPoolDeviceAllocationFlagSet() {
+    bool isEventPoolDeviceAllocationFlagSet() const {
         if (!(eventPoolFlags & ZE_EVENT_POOL_FLAG_HOST_VISIBLE)) {
             return true;
         }
@@ -314,10 +316,21 @@ struct EventPool : _ze_event_pool_handle_t {
         return maxKernelCount;
     }
 
+    ze_result_t initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
+
+    void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+
+    Device *getDevice() const { return devices[0]; }
+
+    std::vector<Device *> devices;
     std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
+    void *eventPoolPtr = nullptr;
+    ContextImp *context = nullptr;
     ze_event_pool_flags_t eventPoolFlags;
     bool isDeviceEventPoolAllocation = false;
     bool isHostVisibleEventPoolAllocation = false;
+    bool isImportedIpcPool = false;
+    bool isShareableEventMemory = false;
 
   protected:
     EventPool() = default;
@@ -329,34 +342,6 @@ struct EventPool : _ze_event_pool_handle_t {
     uint32_t eventSize = 0;
     uint32_t eventPackets = 0;
     uint32_t maxKernelCount = 0;
-};
-
-struct EventPoolImp : public EventPool {
-    EventPoolImp(const ze_event_pool_desc_t *desc) : EventPool(desc->count) {
-        eventPoolFlags = desc->flags;
-    }
-
-    ze_result_t initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices);
-
-    ~EventPoolImp() override;
-
-    ze_result_t destroy() override;
-
-    ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) override;
-
-    ze_result_t closeIpcHandle() override;
-
-    ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) override;
-
-    void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
-
-    Device *getDevice() override { return devices[0]; }
-
-    std::vector<Device *> devices;
-    void *eventPoolPtr = nullptr;
-    ContextImp *context = nullptr;
-    bool isImportedIpcPool = false;
-    bool isShareableEventMemory = false;
 };
 
 } // namespace L0

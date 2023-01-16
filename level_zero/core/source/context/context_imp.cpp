@@ -589,11 +589,11 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t EventPoolImp::closeIpcHandle() {
+ze_result_t EventPool::closeIpcHandle() {
     return this->destroy();
 }
 
-ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
+ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     // L0 uses a vector of ZE_MAX_IPC_HANDLE_SIZE bytes to send the IPC handle, i.e.
     // char data[ZE_MAX_IPC_HANDLE_SIZE];
     // First four bytes (which is of size sizeof(int)) of it contain the file descriptor
@@ -624,7 +624,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
 
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     desc.count = static_cast<uint32_t>(poolData.numEvents);
-    auto eventPool = new EventPoolImp(&desc);
+    auto eventPool = new EventPool(&desc);
     eventPool->isDeviceEventPoolAllocation = poolData.isDeviceEventPoolAllocation;
     eventPool->isHostVisibleEventPoolAllocation = poolData.isHostVisibleEventPoolAllocation;
 

@@ -188,8 +188,7 @@ TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagThenHasTimestampEv
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
-    EXPECT_TRUE(eventPoolImp->isEventPoolTimestampFlagSet());
+    EXPECT_TRUE(eventPool->isEventPoolTimestampFlagSet());
 }
 
 TEST_F(EventPoolCreate, givenEventPoolCreatedWithNoTimestampFlagThenHasTimestampEventsReturnsFalse) {
@@ -200,8 +199,7 @@ TEST_F(EventPoolCreate, givenEventPoolCreatedWithNoTimestampFlagThenHasTimestamp
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
-    EXPECT_FALSE(eventPoolImp->isEventPoolTimestampFlagSet());
+    EXPECT_FALSE(eventPool->isEventPoolTimestampFlagSet());
 }
 
 TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagAndOverrideTimestampEventsFlagThenHasTimestampEventsReturnsFalse) {
@@ -216,8 +214,7 @@ TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagAndOverrideTimesta
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
-    EXPECT_FALSE(eventPoolImp->isEventPoolTimestampFlagSet());
+    EXPECT_FALSE(eventPool->isEventPoolTimestampFlagSet());
 }
 
 TEST_F(EventPoolCreate, givenEventPoolCreatedWithoutTimestampFlagAndOverrideTimestampEventsFlagThenHasTimestampEventsReturnsTrue) {
@@ -232,8 +229,7 @@ TEST_F(EventPoolCreate, givenEventPoolCreatedWithoutTimestampFlagAndOverrideTime
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
-    EXPECT_TRUE(eventPoolImp->isEventPoolTimestampFlagSet());
+    EXPECT_TRUE(eventPool->isEventPoolTimestampFlagSet());
 }
 
 TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsDeviceCommandStreamReceiver) {
@@ -477,7 +473,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsC
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto ipcEventPool = static_cast<L0::EventPoolImp *>(L0::EventPool::fromHandle(ipcEventPoolHandle));
+    auto ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
 
     EXPECT_EQ(ipcEventPool->getEventSize(), eventPool->getEventSize());
     EXPECT_EQ(numEvents, static_cast<uint32_t>(ipcEventPool->getNumEvents()));
@@ -516,7 +512,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithHostVisibleT
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto ipcEventPool = static_cast<L0::EventPoolImp *>(L0::EventPool::fromHandle(ipcEventPoolHandle));
+    auto ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
 
     EXPECT_EQ(ipcEventPool->isHostVisibleEventPoolAllocation, eventPool->isHostVisibleEventPoolAllocation);
     EXPECT_TRUE(ipcEventPool->isHostVisibleEventPoolAllocation);
@@ -558,7 +554,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithDeviceAllocT
     auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
     EXPECT_TRUE(ipcHandleData.isDeviceEventPoolAllocation);
 
-    auto ipcEventPool = static_cast<L0::EventPoolImp *>(L0::EventPool::fromHandle(ipcEventPoolHandle));
+    auto ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
 
     EXPECT_TRUE(ipcEventPool->isDeviceEventPoolAllocation);
 
@@ -589,9 +585,8 @@ TEST_F(EventPoolIPCHandleTests, GivenEventPoolWithIPCEventFlagAndDeviceMemoryThe
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    L0::EventPoolImp *eventPoolImp = reinterpret_cast<L0::EventPoolImp *>(eventPool.get());
 
-    EXPECT_TRUE(eventPoolImp->isShareableEventMemory);
+    EXPECT_TRUE(eventPool->isShareableEventMemory);
 }
 
 TEST_F(EventPoolIPCHandleTests, GivenEventPoolWithIPCEventFlagAndHostMemoryThenShareableEventMemoryIsFalse) {
@@ -1167,17 +1162,16 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForT
 using EventPoolIPCEventResetTests = Test<DeviceFixture>;
 
 TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIpcFlagThenEventsInNewPoolAreNotReset) {
-    std::unique_ptr<L0::EventPoolImp> eventPool = nullptr;
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    eventPool = std::unique_ptr<L0::EventPoolImp>(static_cast<L0::EventPoolImp *>(L0::EventPool::create(driverHandle.get(),
-                                                                                                        context,
-                                                                                                        0,
-                                                                                                        nullptr,
-                                                                                                        &eventPoolDesc,
-                                                                                                        result)));
+    std::unique_ptr<L0::EventPool> eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(),
+                                                                                                    context,
+                                                                                                    0,
+                                                                                                    nullptr,
+                                                                                                    &eventPoolDesc,
+                                                                                                    result));
     EXPECT_NE(nullptr, eventPool);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1952,7 +1946,7 @@ TEST_F(EventPoolCreateNegativeTest, whenInitializingEventPoolButMemoryManagerFai
     result = zeDeviceGet(driverHandle.get(), &deviceCount, devices);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto eventPool = new L0::EventPoolImp(&eventPoolDesc);
+    auto eventPool = new L0::EventPool(&eventPoolDesc);
     EXPECT_NE(nullptr, eventPool);
 
     result = eventPool->initialize(driverHandle.get(), context, numRootDevices, devices);
@@ -2140,7 +2134,7 @@ struct EventSizeFixture : public DeviceFixture {
 
     DebugManagerStateRestore restore;
     ze_device_handle_t hDevice = 0;
-    std::unique_ptr<EventPoolImp> eventPool;
+    std::unique_ptr<L0::EventPool> eventPool;
     std::unique_ptr<L0::Event> eventObj0;
     std::unique_ptr<L0::Event> eventObj1;
 };
@@ -2149,7 +2143,7 @@ using EventSizeTests = Test<EventSizeFixture>;
 
 HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result)));
+    eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &hwInfo = device->getHwInfo();
@@ -2201,7 +2195,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
         DebugManager.flags.OverrideTimestampPacketSize.set(4);
 
         ze_result_t result = ZE_RESULT_SUCCESS;
-        eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result)));
+        eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         auto singlePacketSize = TimestampPackets<uint32_t>::getSinglePacketSize();
 
@@ -2222,7 +2216,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
         DebugManager.flags.OverrideTimestampPacketSize.set(8);
 
         ze_result_t result = ZE_RESULT_SUCCESS;
-        eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result)));
+        eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         auto singlePacketSize = TimestampPackets<uint64_t>::getSinglePacketSize();
 

@@ -95,7 +95,7 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenOpeningIpcHandleForEventPoolWithHo
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto ipcEventPool = static_cast<L0::EventPoolImp *>(L0::EventPool::fromHandle(ipcEventPoolHandle));
+    auto ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
 
     EXPECT_EQ(ipcEventPool->isDeviceEventPoolAllocation, eventPool->isDeviceEventPoolAllocation);
     EXPECT_TRUE(ipcEventPool->isDeviceEventPoolAllocation);

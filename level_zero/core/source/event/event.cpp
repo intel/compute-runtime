@@ -40,7 +40,7 @@ namespace L0 {
 template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *);
 template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *);
 
-ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices) {
+ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     this->context = static_cast<ContextImp *>(context);
 
     RootDeviceIndicesContainer rootDeviceIndices;
@@ -60,7 +60,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         Device *eventDevice = nullptr;
 
         if (useDevicesFromApi) {
-            eventDevice = Device::fromHandle(phDevices[i]);
+            eventDevice = Device::fromHandle(deviceHandles[i]);
         } else {
             eventDevice = driverHandleImp->devices[i];
         }
@@ -81,7 +81,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     this->isDeviceEventPoolAllocation |= l0GfxCoreHelper.alwaysAllocateEventInLocalMem();
 
-    initializeSizeParameters(numDevices, phDevices, *driverHandleImp, rootDeviceEnvironment);
+    initializeSizeParameters(numDevices, deviceHandles, *driverHandleImp, rootDeviceEnvironment);
 
     NEO::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
                                                                        : NEO::AllocationType::BUFFER_HOST_MEMORY;
@@ -135,7 +135,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     return ZE_RESULT_SUCCESS;
 }
 
-EventPoolImp::~EventPoolImp() {
+EventPool::~EventPool() {
     if (eventPoolAllocations) {
         auto graphicsAllocations = eventPoolAllocations->getGraphicsAllocations();
         auto memoryManager = devices[0]->getDriverHandle()->getMemoryManager();
@@ -145,25 +145,25 @@ EventPoolImp::~EventPoolImp() {
     }
 }
 
-ze_result_t EventPoolImp::destroy() {
+ze_result_t EventPool::destroy() {
     delete this;
 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t EventPoolImp::createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) {
+ze_result_t EventPool::createEvent(const ze_event_desc_t *desc, ze_event_handle_t *eventHandle) {
     if (desc->index > (getNumEvents() - 1)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     auto &l0GfxCoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    *phEvent = l0GfxCoreHelper.createEvent(this, desc, getDevice());
+    *eventHandle = l0GfxCoreHelper.createEvent(this, desc, getDevice());
 
     return ZE_RESULT_SUCCESS;
 }
 
-void EventPoolImp::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
 
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
@@ -188,22 +188,22 @@ ze_result_t Event::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc, ze_result_t &result) {
-    auto eventPool = std::make_unique<EventPoolImp>(desc);
+EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles, const ze_event_pool_desc_t *desc, ze_result_t &result) {
+    auto eventPool = std::make_unique<EventPool>(desc);
     if (!eventPool) {
         result = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         DEBUG_BREAK_IF(true);
         return nullptr;
     }
 
-    result = eventPool->initialize(driver, context, numDevices, phDevices);
+    result = eventPool->initialize(driver, context, numDevices, deviceHandles);
     if (result) {
         return nullptr;
     }
     return eventPool.release();
 }
 
-bool EventPool::isEventPoolTimestampFlagSet() {
+bool EventPool::isEventPoolTimestampFlagSet() const {
     if (NEO::DebugManager.flags.OverrideTimestampEvents.get() != -1) {
         auto timestampOverride = !!NEO::DebugManager.flags.OverrideTimestampEvents.get();
         return timestampOverride;

@@ -54,10 +54,9 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     }
     event->setUsingContextEndOffset(useContextEndOffset);
 
-    EventPoolImp *eventPoolImp = static_cast<struct EventPoolImp *>(eventPool);
     // do not reset even if it has been imported, since event pool
     // might have been imported after events being already signaled
-    if (eventPoolImp->isImportedIpcPool == false) {
+    if (eventPool->isImportedIpcPool == false) {
         event->resetDeviceCompletionData(true);
     }
 
@@ -384,7 +383,7 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) {
+ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) {
     uint32_t timestampPacket = 0;
     uint64_t globalStartTs, globalEndTs, contextStartTs, contextEndTs;
     globalStartTs = globalEndTs = contextStartTs = contextEndTs = Event::STATE_INITIAL;
@@ -404,14 +403,14 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *pCo
         numPacketsUsed = this->getPacketsInUse();
     }
 
-    if ((*pCount == 0) ||
-        (*pCount > numPacketsUsed)) {
-        *pCount = numPacketsUsed;
+    if ((*count == 0) ||
+        (*count > numPacketsUsed)) {
+        *count = numPacketsUsed;
         return ZE_RESULT_SUCCESS;
     }
 
-    for (auto i = 0u; i < *pCount; i++) {
-        ze_kernel_timestamp_result_t &result = *(pTimestamps + i);
+    for (auto i = 0u; i < *count; i++) {
+        ze_kernel_timestamp_result_t &result = *(timestamps + i);
 
         auto queryTsEventAssignFunc = [&](uint64_t &timestampFieldForWriting, uint64_t &timestampFieldToCopy) {
             memcpy_s(&timestampFieldForWriting, sizeof(uint64_t), static_cast<void *>(&timestampFieldToCopy), sizeof(uint64_t));
