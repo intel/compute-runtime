@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -937,6 +938,54 @@ TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQue
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     EXPECT_EQ(commandQueue->getCsr(), csr);
     commandQueue->destroy();
+}
+
+struct CommandQueueCreateWithMultipleRegularContextsTests : public DeviceCreateCommandQueueTest {
+    void SetUp() override {
+        DebugManager.flags.NumberOfRegularContextsPerEngine.set(numberOfRegularContextsPerEngine);
+        DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
+
+        backupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
+        defaultHwInfo->featureTable.flags.ftrCCSNode = true;
+
+        DeviceCreateCommandQueueTest::SetUp();
+
+        if (device->getHwInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled == 0) {
+            GTEST_SKIP();
+        }
+
+        auto &engineGroups = device->getNEODevice()->getRegularEngineGroups();
+
+        for (uint32_t i = 0; i < engineGroups.size(); i++) {
+            if (engineGroups[i].engineGroupType == EngineGroupType::Compute) {
+                computeOrdinal = i;
+                break;
+            }
+        }
+    }
+
+    std::unique_ptr<VariableBackup<HardwareInfo>> backupHwInfo;
+    const uint32_t numberOfRegularContextsPerEngine = 5;
+    uint32_t computeOrdinal = 0;
+    DebugManagerStateRestore restore;
+};
+
+HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenSupportedRequestWhenCreatingCommandQueueThenAssignNextAvailableContext) {
+    uint32_t expectedIndex = 0;
+    constexpr uint32_t iterationCount = 3;
+
+    for (uint32_t i = 0; i < (numberOfRegularContextsPerEngine * iterationCount); i++) {
+        NEO::CommandStreamReceiver *csr = nullptr;
+        device->getCsrForOrdinalAndIndex(&csr, computeOrdinal, 0u);
+        ASSERT_NE(nullptr, csr);
+
+        EXPECT_EQ(csr, device->getNEODevice()->getAllEngines()[expectedIndex].commandStreamReceiver);
+
+        expectedIndex++;
+        if (expectedIndex == (numberOfRegularContextsPerEngine - 1)) {
+            expectedIndex = 0;
+        }
+    }
 }
 
 TEST_F(DeviceCreateCommandQueueTest,

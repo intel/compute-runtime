@@ -1408,10 +1408,17 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     }
 
     if (ordinal < numEngineGroups) {
-        if (index >= engineGroups[ordinal].engines.size()) {
+        auto &engines = engineGroups[ordinal].engines;
+        if (index >= engines.size()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        *csr = engineGroups[ordinal].engines[index].commandStreamReceiver;
+        *csr = engines[index].commandStreamReceiver;
+
+        auto &osContext = (*csr)->getOsContext();
+
+        if (neoDevice->getNumberOfRegularContextsPerEngine() > 1 && !osContext.isRootDevice() && NEO::EngineHelpers::isCcs(osContext.getEngineType())) {
+            *csr = neoDevice->getNextEngineForMultiRegularContextMode().commandStreamReceiver;
+        }
     } else {
         auto subDeviceOrdinal = ordinal - numEngineGroups;
         if (index >= this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines.size()) {
