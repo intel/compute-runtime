@@ -44,6 +44,6 @@ TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForNewResourceImplicitFlushSuppor
     EXPECT_TRUE(OSInterface::newResourceImplicitFlush);
 }
 
-TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForGpuIdleImplicitFlushSupportThenReturnTrue) {
-    EXPECT_TRUE(OSInterface::gpuIdleImplicitFlush);
+TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForGpuIdleImplicitFlushSupportThenReturnFalse) {
+    EXPECT_FALSE(OSInterface::gpuIdleImplicitFlush);
 }

@@ -896,7 +896,7 @@ void CommandStreamReceiver::checkForNewResources(TaskCountType submittedTaskCoun
 
 bool CommandStreamReceiver::checkImplicitFlushForGpuIdle() {
     if (useGpuIdleImplicitFlush) {
-        if (this->latestFlushedTaskCount == *getTagAddress()) {
+        if (this->taskCount == *getTagAddress()) {
             return true;
         }
     }

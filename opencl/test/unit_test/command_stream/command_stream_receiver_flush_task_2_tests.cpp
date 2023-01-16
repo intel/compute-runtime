@@ -1453,7 +1453,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenGpuIsIdleWhenCsrIsEnabledToFl
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.dispatchMode = DispatchMode::BatchedDispatch;
     commandStreamReceiver.useGpuIdleImplicitFlush = true;
-    commandStreamReceiver.latestFlushedTaskCount = 1u;
+    commandStreamReceiver.taskCount = 1u;
     *commandStreamReceiver.getTagAddress() = 1u;
 
     flushTask(commandStreamReceiver);

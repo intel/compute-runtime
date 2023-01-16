@@ -1476,7 +1476,7 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckEnabledWhenG
 
     csr.useGpuIdleImplicitFlush = true;
     csr.mockTagAddress[0] = 1u;
-    csr.latestFlushedTaskCount = 1u;
+    csr.taskCount = 1u;
     EXPECT_TRUE(csr.checkImplicitFlushForGpuIdle());
 }
 
