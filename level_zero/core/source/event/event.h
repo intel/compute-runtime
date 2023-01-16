@@ -31,6 +31,17 @@ struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
 
+#pragma pack(1)
+struct IpcEventPoolData {
+    uint64_t handle = 0;
+    size_t numEvents = 0;
+    uint32_t rootDeviceIndex = 0;
+    bool isDeviceEventPoolAllocation = false;
+    bool isHostVisibleEventPoolAllocation = false;
+};
+#pragma pack()
+static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
 namespace EventPacketsCount {
 inline constexpr uint32_t maxKernelSplit = 3;
 inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketSizeControl::preferredPacketCount;
@@ -270,7 +281,7 @@ struct EventPool : _ze_event_pool_handle_t {
     static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc, ze_result_t &result);
     virtual ~EventPool() = default;
     virtual ze_result_t destroy() = 0;
-    virtual ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) = 0;
+    virtual ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) = 0;
     virtual ze_result_t closeIpcHandle() = 0;
     virtual ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) = 0;
     virtual Device *getDevice() = 0;
@@ -331,7 +342,7 @@ struct EventPoolImp : public EventPool {
 
     ze_result_t destroy() override;
 
-    ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) override;
+    ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) override;
 
     ze_result_t closeIpcHandle() override;
 

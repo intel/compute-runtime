@@ -593,7 +593,7 @@ ze_result_t EventPoolImp::closeIpcHandle() {
     return this->destroy();
 }
 
-ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
+ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     // L0 uses a vector of ZE_MAX_IPC_HANDLE_SIZE bytes to send the IPC handle, i.e.
     // char data[ZE_MAX_IPC_HANDLE_SIZE];
     // First four bytes (which is of size sizeof(int)) of it contain the file descriptor
@@ -606,51 +606,31 @@ ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    uint64_t handle = 0;
-    this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), handle);
-
-    memcpy_s(pIpcHandle->data, sizeof(int), &handle, sizeof(int));
-
-    memcpy_s(pIpcHandle->data + sizeof(int), sizeof(this->numEvents), &this->numEvents, sizeof(this->numEvents));
-
-    uint32_t rootDeviceIndex = this->getDevice()->getRootDeviceIndex();
-    memcpy_s(pIpcHandle->data + sizeof(int) + sizeof(this->numEvents),
-             sizeof(rootDeviceIndex), &rootDeviceIndex, sizeof(rootDeviceIndex));
-
-    memcpy_s(pIpcHandle->data + sizeof(int) + sizeof(this->numEvents) + sizeof(uint32_t),
-             sizeof(this->isDeviceEventPoolAllocation), &this->isDeviceEventPoolAllocation, sizeof(this->isDeviceEventPoolAllocation));
-
-    memcpy_s(pIpcHandle->data + sizeof(int) + sizeof(this->numEvents) + sizeof(uint32_t) + sizeof(bool),
-             sizeof(this->isHostVisibleEventPoolAllocation), &this->isHostVisibleEventPoolAllocation, sizeof(this->isHostVisibleEventPoolAllocation));
+    IpcEventPoolData &poolData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle->data);
+    poolData = {};
+    this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), poolData.handle);
+    poolData.numEvents = this->numEvents;
+    poolData.rootDeviceIndex = this->getDevice()->getRootDeviceIndex();
+    poolData.isDeviceEventPoolAllocation = this->isDeviceEventPoolAllocation;
+    poolData.isHostVisibleEventPoolAllocation = this->isHostVisibleEventPoolAllocation;
 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &hIpc,
-                                               ze_event_pool_handle_t *phEventPool) {
-    uint64_t handle = 0u;
-    memcpy_s(&handle, sizeof(int), hIpc.data, sizeof(int));
+ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle,
+                                               ze_event_pool_handle_t *eventPoolHandle) {
 
-    size_t numEvents = 0;
-    memcpy_s(&numEvents, sizeof(numEvents), hIpc.data + sizeof(int), sizeof(numEvents));
+    const IpcEventPoolData &poolData = *reinterpret_cast<const IpcEventPoolData *>(ipcEventPoolHandle.data);
 
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    desc.count = static_cast<uint32_t>(numEvents);
+    desc.count = static_cast<uint32_t>(poolData.numEvents);
     auto eventPool = new EventPoolImp(&desc);
-
-    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
-    memcpy_s(&rootDeviceIndex, sizeof(rootDeviceIndex),
-             hIpc.data + sizeof(int) + sizeof(numEvents), sizeof(rootDeviceIndex));
-
-    memcpy_s(&eventPool->isDeviceEventPoolAllocation, sizeof(eventPool->isDeviceEventPoolAllocation),
-             hIpc.data + sizeof(int) + sizeof(numEvents) + sizeof(rootDeviceIndex), sizeof(eventPool->isDeviceEventPoolAllocation));
-
-    memcpy_s(&eventPool->isHostVisibleEventPoolAllocation, sizeof(eventPool->isHostVisibleEventPoolAllocation),
-             hIpc.data + sizeof(int) + sizeof(numEvents) + sizeof(rootDeviceIndex) + sizeof(bool), sizeof(eventPool->isDeviceEventPoolAllocation));
+    eventPool->isDeviceEventPoolAllocation = poolData.isDeviceEventPoolAllocation;
+    eventPool->isHostVisibleEventPoolAllocation = poolData.isHostVisibleEventPoolAllocation;
 
     auto device = Device::fromHandle(this->devices.begin()->second);
     auto neoDevice = device->getNEODevice();
-    NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
+    NEO::osHandle osHandle = static_cast<NEO::osHandle>(poolData.handle);
 
     eventPool->initializeSizeParameters(this->numDevices, this->deviceHandles.data(), *this->driverHandle, neoDevice->getRootDeviceEnvironment());
 
@@ -659,7 +639,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
         allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
     }
 
-    NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
+    NEO::AllocationProperties unifiedMemoryProperties{poolData.rootDeviceIndex,
                                                       eventPool->getEventPoolSize(),
                                                       allocationType,
                                                       systemMemoryBitfield};
@@ -686,7 +666,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     eventPool->isImportedIpcPool = true;
 
     for (auto currDeviceIndex : this->rootDeviceIndices) {
-        if (currDeviceIndex == rootDeviceIndex) {
+        if (currDeviceIndex == poolData.rootDeviceIndex) {
             continue;
         }
 
@@ -710,7 +690,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
         eventPool->eventPoolAllocations->addAllocation(graphicsAllocation);
     }
 
-    *phEventPool = eventPool;
+    *eventPoolHandle = eventPool;
 
     return ZE_RESULT_SUCCESS;
 }

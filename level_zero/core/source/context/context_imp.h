@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,8 +127,8 @@ struct ContextImp : Context {
                                              size_t size,
                                              ze_memory_access_attribute_t *access,
                                              size_t *outSize) override;
-    ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &hIpc,
-                                       ze_event_pool_handle_t *phEventPool) override;
+    ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle,
+                                       ze_event_pool_handle_t *eventPoolHandle) override;
     ze_result_t createEventPool(const ze_event_pool_desc_t *desc,
                                 uint32_t numDevices,
                                 ze_device_handle_t *phDevices,

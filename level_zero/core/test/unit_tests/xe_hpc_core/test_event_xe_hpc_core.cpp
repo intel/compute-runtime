@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,25 +56,13 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenGettingIpcHandleForEventPoolWithDe
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    int handle = -1;
-    memcpy_s(&handle, sizeof(int), ipcHandle.data, sizeof(int));
-    EXPECT_NE(handle, -1);
-
-    uint32_t expectedNumEvents = 0;
-    memcpy_s(&expectedNumEvents, sizeof(expectedNumEvents), ipcHandle.data + sizeof(int), sizeof(expectedNumEvents));
-    EXPECT_EQ(numEvents, expectedNumEvents);
-
-    uint32_t rootDeviceIndex = 0;
-    memcpy_s(&rootDeviceIndex, sizeof(rootDeviceIndex), ipcHandle.data + sizeof(int) + sizeof(size_t), sizeof(rootDeviceIndex));
-    EXPECT_EQ(0u, rootDeviceIndex);
-
-    bool deviceAlloc = 0;
-    memcpy_s(&deviceAlloc, sizeof(deviceAlloc), ipcHandle.data + sizeof(int) + sizeof(size_t) + sizeof(rootDeviceIndex), sizeof(deviceAlloc));
-    EXPECT_TRUE(deviceAlloc);
-
-    bool isHostVisible = 0;
-    memcpy_s(&isHostVisible, sizeof(isHostVisible), ipcHandle.data + sizeof(int) + sizeof(size_t) + sizeof(rootDeviceIndex) + sizeof(bool), sizeof(isHostVisible));
-    EXPECT_TRUE(isHostVisible);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
+    EXPECT_EQ(numEvents, ipcHandleData.numEvents);
+    EXPECT_EQ(0u, ipcHandleData.rootDeviceIndex);
+    EXPECT_TRUE(ipcHandleData.isDeviceEventPoolAllocation);
+    EXPECT_TRUE(ipcHandleData.isHostVisibleEventPoolAllocation);
 
     res = eventPool->destroy();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);

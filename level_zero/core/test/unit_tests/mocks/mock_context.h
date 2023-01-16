@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(unMapVirtualMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, size_t size));
     ADDMETHOD_NOBASE(setVirtualMemAccessAttribute, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, size_t size, ze_memory_access_attribute_t access));
     ADDMETHOD_NOBASE(getVirtualMemAccessAttribute, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, size_t size, ze_memory_access_attribute_t *access, size_t *outSize));
-    ADDMETHOD_NOBASE(openEventPoolIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (const ze_ipc_event_pool_handle_t &hIpc, ze_event_pool_handle_t *phEventPool));
+    ADDMETHOD_NOBASE(openEventPoolIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle));
     ADDMETHOD_NOBASE(createEventPool, ze_result_t, ZE_RESULT_SUCCESS, (const ze_event_pool_desc_t *desc, uint32_t numDevices, ze_device_handle_t *phDevices, ze_event_pool_handle_t *phEventPool));
     ADDMETHOD_NOBASE(createImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage));
 };

@@ -333,13 +333,10 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNum
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    int handle = -1;
-    memcpy_s(&handle, sizeof(int), ipcHandle.data, sizeof(int));
-    EXPECT_NE(handle, -1);
-
-    uint32_t expectedNumEvents = 0;
-    memcpy_s(&expectedNumEvents, sizeof(expectedNumEvents), ipcHandle.data + sizeof(int), sizeof(expectedNumEvents));
-    EXPECT_EQ(numEvents, expectedNumEvents);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
+    EXPECT_EQ(numEvents, ipcHandleData.numEvents);
 
     res = eventPool->destroy();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
@@ -368,13 +365,11 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndIsH
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    int handle = -1;
-    memcpy_s(&handle, sizeof(int), ipcHandle.data, sizeof(int));
-    EXPECT_NE(handle, -1);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
 
-    bool isHostVisible = 0;
-    memcpy_s(&isHostVisible, sizeof(isHostVisible), ipcHandle.data + sizeof(int) + sizeof(size_t) + sizeof(uint32_t) + sizeof(bool), sizeof(isHostVisible));
-    EXPECT_TRUE(isHostVisible);
+    EXPECT_TRUE(ipcHandleData.isHostVisibleEventPoolAllocation);
 
     res = eventPool->destroy();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
@@ -409,21 +404,15 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWithDeviceAllocT
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    int handle = -1;
-    memcpy_s(&handle, sizeof(int), ipcHandle.data, sizeof(int));
-    EXPECT_NE(handle, -1);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
 
-    uint32_t expectedNumEvents = 0;
-    memcpy_s(&expectedNumEvents, sizeof(expectedNumEvents), ipcHandle.data + sizeof(int), sizeof(expectedNumEvents));
-    EXPECT_EQ(numEvents, expectedNumEvents);
+    EXPECT_EQ(numEvents, ipcHandleData.numEvents);
 
-    uint32_t rootDeviceIndex = 0;
-    memcpy_s(&rootDeviceIndex, sizeof(rootDeviceIndex), ipcHandle.data + sizeof(int) + sizeof(size_t), sizeof(rootDeviceIndex));
-    EXPECT_EQ(0u, rootDeviceIndex);
+    EXPECT_EQ(0u, ipcHandleData.rootDeviceIndex);
 
-    bool deviceAlloc = false;
-    memcpy_s(&deviceAlloc, sizeof(deviceAlloc), ipcHandle.data + sizeof(int) + sizeof(size_t) + sizeof(rootDeviceIndex), sizeof(deviceAlloc));
-    EXPECT_TRUE(deviceAlloc);
+    EXPECT_TRUE(ipcHandleData.isDeviceEventPoolAllocation);
 
     res = eventPool->destroy();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
@@ -566,9 +555,8 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithDeviceAllocT
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    bool deviceAlloc = false;
-    memcpy_s(&deviceAlloc, sizeof(deviceAlloc), ipcHandle.data + sizeof(int) + sizeof(size_t) + sizeof(uint32_t), sizeof(deviceAlloc));
-    EXPECT_TRUE(deviceAlloc);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    EXPECT_TRUE(ipcHandleData.isDeviceEventPoolAllocation);
 
     auto ipcEventPool = static_cast<L0::EventPoolImp *>(L0::EventPool::fromHandle(ipcEventPoolHandle));
 
