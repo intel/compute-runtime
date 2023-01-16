@@ -2260,15 +2260,18 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequiredTargetProductProperly) {
     ZebinTestData::ValidEmptyProgram emptyProgram;
 
-    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+    auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
+    auto compilerProductHelper = NEO::CompilerProductHelper::get(copyHwInfo.platform.eProductFamily);
 
-    emptyProgram.elfHeader->machine = hwInfo.platform.eProductFamily;
+    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+
+    emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTuValid(this->device);
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    emptyProgram.elfHeader->machine = hwInfo.platform.eProductFamily;
+    emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     ++emptyProgram.elfHeader->machine;
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
     result = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
@@ -2310,9 +2313,12 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPacked
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions) {
     ZebinTestData::ValidEmptyProgram zebin;
 
-    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+    auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
+    auto compilerProductHelper = NEO::CompilerProductHelper::get(copyHwInfo.platform.eProductFamily);
 
-    zebin.elfHeader->machine = hwInfo.platform.eProductFamily;
+    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTu(this->device);
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
@@ -3628,7 +3634,12 @@ TEST_F(ModuleWithZebinTest, givenNonZebinaryFormatWhenGettingDebugInfoThenDebugZ
 HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpdateKernelsBarrierCount) {
     ZebinTestData::ZebinWithExternalFunctionsInfo zebin;
 
-    zebin.setProductFamily(static_cast<uint16_t>(device->getHwInfo().platform.eProductFamily));
+    auto copyHwInfo = device->getHwInfo();
+    auto compilerProductHelper = NEO::CompilerProductHelper::get(copyHwInfo.platform.eProductFamily);
+
+    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.setProductFamily(static_cast<uint16_t>(copyHwInfo.platform.eProductFamily));
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;

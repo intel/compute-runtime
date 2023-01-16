@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/elf/zeinfo_enum_lookup.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
@@ -63,6 +64,18 @@ class DecodeZeInfoKernelEntryFixture {
   private:
     std::unique_ptr<Yaml::YamlParser> yamlParser;
 };
+
+TEST(ZebinValidateTargetTest, givenTargetDeviceCreatedUsingHelperFunctionWhenValidatingAgainstAdjustedHwInfoForIgcThenSuccessIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+    compilerProductHelper->adjustHwInfoForIgc(hwInfo);
+
+    auto targetDevice = getTargetDevice(rootDeviceEnvironment);
+
+    EXPECT_TRUE(validateTargetDevice(targetDevice, Elf::EI_CLASS_32, hwInfo.platform.eProductFamily, hwInfo.platform.eRenderCoreFamily, AOT::UNKNOWN_ISA, {}));
+}
 
 using decodeZeInfoKernelEntryTest = Test<DecodeZeInfoKernelEntryFixture>;
 

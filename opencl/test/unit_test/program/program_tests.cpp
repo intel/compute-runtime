@@ -1976,7 +1976,13 @@ TEST_F(ProgramTests, whenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions
     }
 
     ZebinTestData::ValidEmptyProgram zebin;
-    zebin.elfHeader->machine = defaultHwInfo->platform.eProductFamily;
+
+    auto copyHwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::get(copyHwInfo.platform.eProductFamily);
+
+    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, mockRootDeviceIndex));
     auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));

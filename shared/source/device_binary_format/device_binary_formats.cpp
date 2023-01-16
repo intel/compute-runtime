@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -22,9 +23,11 @@ std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary binary, std::stri
 }
 
 TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+    compilerProductHelper->adjustHwInfoForIgc(hwInfo);
     TargetDevice targetDevice = {};
 
     targetDevice.coreFamily = hwInfo.platform.eRenderCoreFamily;
