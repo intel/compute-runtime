@@ -3445,24 +3445,18 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, false);
     ASSERT_NE(nullptr, allocation);
 
-    char addressBufferString[17];
-    sprintf(addressBufferString, "%lx",
-            allocation->getGpuAddress());
-
-    char addressBufferOffsetString[17];
-    sprintf(addressBufferOffsetString, "%lx",
-            ptrOffset(allocation->getGpuAddress(), MemoryConstants::pageSize));
+    std::stringstream expectedOutput;
+    expectedOutput << "Created BO-0 range: ";
+    expectedOutput << std::hex << allocation->getGpuAddress();
+    expectedOutput << " - ";
+    expectedOutput << std::hex << ptrOffset(allocation->getGpuAddress(), MemoryConstants::pageSize);
+    expectedOutput << ", size: 4096 from PRIME_FD_TO_HANDLE\nCalling gem close on handle: BO-0\n";
 
     memoryManger.freeGraphicsMemory(allocation);
 
     std::string output = testing::internal::GetCapturedStdout();
 
-    std::string expectedOutput("Created BO-0 range: ");
-    expectedOutput += addressBufferString;
-    expectedOutput += " - ";
-    expectedOutput += addressBufferOffsetString;
-    expectedOutput += ", size: 4096 from PRIME_FD_TO_HANDLE\nCalling gem close on handle: BO-0\n";
-    EXPECT_EQ(expectedOutput, output);
+    EXPECT_EQ(expectedOutput.str(), output);
 }
 
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,

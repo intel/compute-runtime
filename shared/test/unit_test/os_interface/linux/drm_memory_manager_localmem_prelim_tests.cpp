@@ -2095,24 +2095,18 @@ TEST_F(DrmMemoryManagerTestPrelim,
     EXPECT_EQ(1u, bo->getRefCount());
     EXPECT_EQ(size, bo->peekSize());
 
-    char addressBufferString[17];
-    sprintf(addressBufferString, "%lx",
-            graphicsAllocation->getGpuAddress());
-
-    char addressBufferOffsetString[17];
-    sprintf(addressBufferOffsetString, "%lx",
-            ptrOffset(graphicsAllocation->getGpuAddress(), MemoryConstants::pageSize));
+    std::stringstream expectedOutput;
+    expectedOutput << "Created BO-0 range: ";
+    expectedOutput << std::hex << graphicsAllocation->getGpuAddress();
+    expectedOutput << " - ";
+    expectedOutput << std::hex << ptrOffset(graphicsAllocation->getGpuAddress(), MemoryConstants::pageSize);
+    expectedOutput << ", size: 4096 from PRIME_FD_TO_HANDLE\nCalling gem close on handle: BO-0\n";
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 
     std::string output = testing::internal::GetCapturedStdout();
 
-    std::string expectedOutput("Created BO-0 range: ");
-    expectedOutput += addressBufferString;
-    expectedOutput += " - ";
-    expectedOutput += addressBufferOffsetString;
-    expectedOutput += ", size: 4096 from PRIME_FD_TO_HANDLE\nCalling gem close on handle: BO-0\n";
-    EXPECT_EQ(expectedOutput, output);
+    EXPECT_EQ(expectedOutput.str(), output);
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledWithBufferHostMemoryAllocationTypeThenGraphicsAllocationIsReturned) {
