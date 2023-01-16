@@ -172,7 +172,7 @@ TEST_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingD
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
     session->clientHandleToConnection[session->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
-
+    session->synchronousInternalEventRead = true;
     session->initialize();
 
     ASSERT_EQ(numSubDevices, session->tileSessions.size());

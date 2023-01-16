@@ -257,6 +257,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::clientHandleClosed;
     using L0::DebugSessionLinux::clientHandleToConnection;
     using L0::DebugSessionLinux::closeAsyncThread;
+    using L0::DebugSessionLinux::closeInternalEventsThread;
     using L0::DebugSessionLinux::createTileSessionsIfEnabled;
     using L0::DebugSessionLinux::debugArea;
     using L0::DebugSessionLinux::euControlInterruptSeqno;
@@ -272,6 +273,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::handleEventsAsync;
     using L0::DebugSessionLinux::handleVmBindEvent;
     using L0::DebugSessionLinux::internalEventQueue;
+    using L0::DebugSessionLinux::internalEventThread;
     using L0::DebugSessionLinux::interruptImp;
     using L0::DebugSessionLinux::ioctl;
     using L0::DebugSessionLinux::ioctlHandler;
@@ -402,9 +404,19 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return L0::DebugSessionLinux::checkThreadIsResumed(threadID);
     }
 
+    float getThreadStartLimitTime() override {
+        if (threadStartLimit >= 0.0) {
+            return threadStartLimit;
+        }
+        return L0::DebugSessionLinux::getThreadStartLimitTime();
+    }
+
     void startInternalEventsThread() override {
         if (synchronousInternalEventRead) {
             internalThreadHasStarted = true;
+            return;
+        }
+        if (failInternalEventsThreadStart) {
             return;
         }
         return DebugSessionLinux::startInternalEventsThread();
@@ -449,6 +461,8 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
 
     std::atomic<int> getInternalEventCounter = 0;
     bool synchronousInternalEventRead = false;
+    bool failInternalEventsThreadStart = false;
+    float threadStartLimit = -1.0;
 };
 
 struct MockAsyncThreadDebugSessionLinux : public MockDebugSessionLinux {

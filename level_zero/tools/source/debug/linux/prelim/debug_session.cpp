@@ -285,7 +285,7 @@ ze_result_t DebugSessionLinux::initialize() {
         } else {
             timeDelta = float(clock() - timeStart) / CLOCKS_PER_SEC;
         }
-    } while ((eventAvailable && !allEventsCollected) && timeDelta < 0.5);
+    } while ((eventAvailable && !allEventsCollected) && timeDelta < getThreadStartLimitTime());
 
     internalThreadHasStarted = false;
 
@@ -390,7 +390,7 @@ std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
         std::unique_lock<std::mutex> lock(internalEventThreadMutex);
 
         if (internalEventQueue.empty()) {
-            apiEventCondition.wait_for(lock, std::chrono::milliseconds(100));
+            internalEventCondition.wait_for(lock, std::chrono::milliseconds(100));
         }
 
         if (!internalEventQueue.empty()) {

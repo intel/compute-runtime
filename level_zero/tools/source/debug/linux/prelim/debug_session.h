@@ -238,6 +238,9 @@ struct DebugSessionLinux : DebugSessionImp {
     void handleEventsAsync();
     void readInternalEventsAsync();
     MOCKABLE_VIRTUAL std::unique_ptr<uint64_t[]> getInternalEvent();
+    MOCKABLE_VIRTUAL float getThreadStartLimitTime() {
+        return 0.5;
+    }
 
     bool handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
     void handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam);
