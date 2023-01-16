@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/common/mocks/mock_device.h"
 
 namespace NEO {
+
 class MockDevice;
 
 struct DeviceFixture {

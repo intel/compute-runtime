@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/gtest_helpers.h"

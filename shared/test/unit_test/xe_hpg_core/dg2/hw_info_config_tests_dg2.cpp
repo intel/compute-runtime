@@ -12,6 +12,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/xe_hpg_core/dg2/product_configs_dg2.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"

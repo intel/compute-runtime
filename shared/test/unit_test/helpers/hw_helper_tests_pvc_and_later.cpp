@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using GfxCoreHelperTestPvcAndLater = GfxCoreHelperTest;

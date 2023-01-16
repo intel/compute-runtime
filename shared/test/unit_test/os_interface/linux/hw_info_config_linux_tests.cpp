@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -15,6 +16,7 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include <cstring>
 
