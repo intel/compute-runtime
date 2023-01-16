@@ -7,7 +7,6 @@
 
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
-#include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/events/linux/mock_events_prelim.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
@@ -28,8 +27,6 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
     OsEvents *pOsEventsPrev = nullptr;
     L0::EventsImp *pEventsImp;
-    GlobalOperations *pGlobalOperationsOriginal = nullptr;
-    std::unique_ptr<GlobalOperationsImp> pGlobalOperations;
     std::unique_ptr<MockEventsSysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOriginal = nullptr;
     std::unique_ptr<MockPmuInterfaceImpForEvents> pPmuInterface;
@@ -56,12 +53,6 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pUdevLib = new UdevLibMock();
         pLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
         pEventsImp->pOsEvents = pLinuxEventsImp;
-
-        pGlobalOperations = std::make_unique<GlobalOperationsImp>(pLinuxSysmanImp);
-        pGlobalOperationsOriginal = pSysmanDeviceImp->pGlobalOperations;
-        pSysmanDeviceImp->pGlobalOperations = pGlobalOperations.get();
-        pSysmanDeviceImp->pGlobalOperations->init();
-
         pPmuInterface = std::make_unique<MockPmuInterfaceImpForEvents>(pLinuxSysmanImp);
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
@@ -94,7 +85,6 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pEventsImp = nullptr;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
-        pSysmanDeviceImp->pGlobalOperations = pGlobalOperationsOriginal;
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         SysmanDeviceFixture::TearDown();
     }
@@ -130,6 +120,10 @@ TEST_F(SysmanEventsFixture, GivenLibUdevLibraryNotFoundWhenListeningForEventsThe
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleAndListeningForEventsWhenEventGenerationSourceDeviceIsNotDrmAndPlatformThenEventListenReturnFalse) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
@@ -180,6 +174,7 @@ TEST_F(SysmanEventsFixture,
     pEventsImp->pOsEvents = pOsEventOriginal;
     delete pUdevLibLocal;
     delete pPublicLinuxEventsImp;
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture,
@@ -287,6 +282,10 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleAndListeningEventsWhenNullEven
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleAndListeningForEventsWhenUdevCallToAllocateDeviceFailsThenEventListenReturnFalse) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
@@ -335,9 +334,14 @@ TEST_F(SysmanEventsFixture,
     pEventsImp->pOsEvents = pOsEventOriginal;
     delete pUdevLibLocal;
     delete pPublicLinuxEventsImp;
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
@@ -389,6 +393,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
     pEventsImp->pOsEvents = pOsEventOriginal;
     delete pUdevLibLocal;
     delete pPublicLinuxEventsImp;
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenEventRegisterIsCalledThenSuccessIsReturned) {
@@ -397,6 +402,10 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenEventRegisterIsCalledThenS
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfUeventReceivedWithWrongPropertyValueThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
@@ -447,10 +456,15 @@ TEST_F(SysmanEventsFixture,
     pEventsImp->pOsEvents = pOsEventOriginal;
     delete pUdevLibLocal;
     delete pPublicLinuxEventsImp;
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfDrmEventReceivedButChangeEventNotReceivedThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
@@ -502,10 +516,15 @@ TEST_F(SysmanEventsFixture,
     pEventsImp->pOsEvents = pOsEventOriginal;
     delete pUdevLibLocal;
     delete pPublicLinuxEventsImp;
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfUeventReceivedWithNullPropertyValueThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
@@ -556,6 +575,68 @@ TEST_F(SysmanEventsFixture,
     pEventsImp->pOsEvents = pOsEventOriginal;
     delete pUdevLibLocal;
     delete pPublicLinuxEventsImp;
+    delete pMockFwInterface;
+}
+
+HWTEST2_F(SysmanEventsFixture,
+          GivenValidDeviceHandleWhenListeningForResetRequiredEventsAfterInFieldRepairAndIfUeventReceivedWithNullPropertyValueThenEventListenAPIReturnsResetEvent, IsPVC) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
+            return fabricDeviceFd;
+        } else {
+            return drmDeviceFd;
+        }
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        if (fd == fabricDeviceFd) {
+            buf->st_rdev = 10;
+        } else {
+            buf->st_rdev = 0;
+        }
+        return 0;
+    });
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new UdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
+    pUdevLibLocal->getEventPropertyValueResult = nullptr;
+
+    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
+    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
+    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+
+    // Step 3: Backup original pOsEvent created during set up
+    auto pOsEventOriginal = pEventsImp->pOsEvents;
+    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+
+    // Step 4: Call APIs for validation
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    pMockFwInterface->mockIfrStatus = true;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    pEventsImp->pOsEvents = pOsEventOriginal;
+    delete pUdevLibLocal;
+    delete pPublicLinuxEventsImp;
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForCurrentlyUnsupportedEventsThenEventListenAPIWaitForTimeoutIfEventNotReceived) {

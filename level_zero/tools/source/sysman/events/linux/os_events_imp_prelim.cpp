@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,8 +75,6 @@ bool LinuxEventsImp::isResetRequired(void *dev, zes_event_type_flags_t &pEvent) 
         return true;
     }
 
-    // ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED event could also be received when, reset Reason is
-    // ZES_RESET_REASON_FLAG_REPAIR.
     return false;
 }
 
@@ -282,6 +280,16 @@ bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeou
             } else {
                 registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS);
             }
+            return true;
+        }
+    }
+
+    // check if any reset required for reason field repair
+    if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
+        zes_device_state_t deviceState = {};
+        pLinuxSysmanImp->getSysmanDeviceImp()->pGlobalOperations->deviceGetState(&deviceState);
+        if (deviceState.reset & ZES_RESET_REASON_FLAG_REPAIR) {
+            pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
             return true;
         }
     }

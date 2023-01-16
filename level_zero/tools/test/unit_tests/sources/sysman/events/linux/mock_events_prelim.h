@@ -10,6 +10,7 @@
 
 #include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/events/linux/os_events_imp_prelim.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 
 namespace L0 {
 namespace ult {
@@ -209,6 +210,27 @@ class UdevLibMock : public UdevLib {
     ADDMETHOD_NOBASE(getEventPropertyValue, const char *, "MOCK", (void *dev, const char *key));
     ADDMETHOD_NOBASE(allocateDeviceToReceiveData, void *, (void *)(0x12345678), ());
     ADDMETHOD_NOBASE_VOIDRETURN(dropDeviceReference, (void *dev));
+};
+
+struct MockEventsFwInterface : public FirmwareUtil {
+    bool mockIfrStatus = false;
+    ze_result_t fwIfrApplied(bool &ifrStatus) override {
+        ifrStatus = mockIfrStatus;
+        return ZE_RESULT_SUCCESS;
+    }
+    MockEventsFwInterface() = default;
+
+    ADDMETHOD_NOBASE(fwDeviceInit, ze_result_t, ZE_RESULT_SUCCESS, (void));
+    ADDMETHOD_NOBASE(getFirstDevice, ze_result_t, ZE_RESULT_SUCCESS, (igsc_device_info * info));
+    ADDMETHOD_NOBASE(getFwVersion, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, std::string &firmwareVersion));
+    ADDMETHOD_NOBASE(flashFirmware, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, void *pImage, uint32_t size));
+    ADDMETHOD_NOBASE(fwSupportedDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::vector<std::string> & supportedDiagTests));
+    ADDMETHOD_NOBASE(fwRunDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::string & osDiagType, zes_diag_result_t *pResult));
+    ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
+    ADDMETHOD_NOBASE(fwGetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t * currentState, uint8_t *pendingState));
+    ADDMETHOD_NOBASE(fwSetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t newState, uint8_t *currentState, uint8_t *pendingState));
+    ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
+    ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
 };
 
 class PublicLinuxEventsImp : public L0::LinuxEventsImp {
