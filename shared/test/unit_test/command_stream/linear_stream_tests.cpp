@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/linear_stream_fixture.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 

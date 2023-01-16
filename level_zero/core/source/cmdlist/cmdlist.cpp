@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"

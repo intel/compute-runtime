@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/mock_wddm_interface20.h"

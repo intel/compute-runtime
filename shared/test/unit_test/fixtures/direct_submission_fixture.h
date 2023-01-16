@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include <atomic>
 #include <memory>

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 

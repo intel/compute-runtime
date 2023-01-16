@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"

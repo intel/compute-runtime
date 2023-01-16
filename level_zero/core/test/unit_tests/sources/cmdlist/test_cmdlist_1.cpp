@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"

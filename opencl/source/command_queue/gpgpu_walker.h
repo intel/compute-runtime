@@ -17,7 +17,7 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
 namespace NEO {
-
+class Surface;
 struct RootDeviceEnvironment;
 
 template <typename GfxFamily>

@@ -6,14 +6,11 @@
  */
 
 #pragma once
-
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/timestamp_packet.h"
 
 #include <level_zero/ze_api.h>
 
 #include <bitset>
-#include <chrono>
 #include <limits>
 
 struct _ze_event_handle_t {};
@@ -293,16 +290,7 @@ struct EventPool : _ze_event_pool_handle_t {
     uint32_t getEventMaxPackets() const { return eventPackets; }
     size_t getEventPoolSize() const { return eventPoolSize; }
 
-    bool isEventPoolTimestampFlagSet() {
-        if (NEO::DebugManager.flags.OverrideTimestampEvents.get() != -1) {
-            auto timestampOverride = !!NEO::DebugManager.flags.OverrideTimestampEvents.get();
-            return timestampOverride;
-        }
-        if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
-            return true;
-        }
-        return false;
-    }
+    bool isEventPoolTimestampFlagSet();
 
     bool isEventPoolDeviceAllocationFlagSet() {
         if (!(eventPoolFlags & ZE_EVENT_POOL_FLAG_HOST_VISIBLE)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 namespace NEO {
 

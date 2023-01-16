@@ -11,19 +11,19 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
-#include "shared/source/memory_manager/memory_pool.h"
 
-#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 
 #include "igfxfmid.h"
 
 namespace NEO {
+enum class MemoryPool;
 enum class ImageType;
 class LogicalStateHelper;
 } // namespace NEO
 
 namespace L0 {
+enum class Builtin : uint32_t;
 #pragma pack(1)
 struct EventData {
     uint64_t address;

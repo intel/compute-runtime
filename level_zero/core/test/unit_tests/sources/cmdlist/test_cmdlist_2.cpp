@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"

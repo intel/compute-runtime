@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;

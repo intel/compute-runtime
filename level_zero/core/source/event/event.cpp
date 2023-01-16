@@ -203,6 +203,17 @@ EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t nu
     return eventPool.release();
 }
 
+bool EventPool::isEventPoolTimestampFlagSet() {
+    if (NEO::DebugManager.flags.OverrideTimestampEvents.get() != -1) {
+        auto timestampOverride = !!NEO::DebugManager.flags.OverrideTimestampEvents.get();
+        return timestampOverride;
+    }
+    if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
+        return true;
+    }
+    return false;
+}
+
 uint64_t Event::getGpuAddress(Device *device) const {
     return getAllocation(device).getGpuAddress() + this->eventPoolOffset;
 }

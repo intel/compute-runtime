@@ -40,6 +40,7 @@
 #include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device.h"

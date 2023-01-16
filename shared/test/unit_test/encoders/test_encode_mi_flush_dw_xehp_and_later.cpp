@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/definitions/mi_flush_args.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 using namespace NEO;

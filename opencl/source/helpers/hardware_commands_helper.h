@@ -1,24 +1,23 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/per_thread_data.h"
 
-#include "opencl/source/kernel/kernel.h"
-
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 
 namespace NEO {
 class CommandQueue;
+class Device;
+class Kernel;
 class LinearStream;
 class IndirectHeap;
+enum PreemptionMode : uint32_t;
 struct CrossThreadInfo;
 struct MultiDispatchInfo;
 

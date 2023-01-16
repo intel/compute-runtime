@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 namespace NEO {
-struct HardwareInfo;
+class MockDevice;
 
 struct DeviceFixture {
     void setUp();

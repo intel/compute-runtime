@@ -11,6 +11,7 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 using namespace NEO;
