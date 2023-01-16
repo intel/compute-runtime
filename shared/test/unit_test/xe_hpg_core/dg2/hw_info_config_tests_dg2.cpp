@@ -309,6 +309,46 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0WhenConfigureCalledThenDisableCompr
     }
 }
 
+DG2TEST_F(ProductHelperTestDg2, givenDg2G10WhenAskingForTile64For3dSurfaceOnBcsSupportThenReturnSuccessOnlyForCStepping) {
+    auto &productHelper = getHelper<ProductHelper>();
+
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        HardwareInfo hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
+
+        auto expectedValue = revision == REVISION_C;
+
+        EXPECT_EQ(expectedValue, productHelper.isTile64With3DSurfaceOnBCSSupported(hwInfo));
+    }
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenDg2G11WhenAskingForTile64For3dSurfaceOnBcsSupportThenReturnSuccessOnlyForHigherThanAStepping) {
+    auto &productHelper = getHelper<ProductHelper>();
+
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        HardwareInfo hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usDeviceID = dg2G11DeviceIds[0];
+
+        auto expectedValue = revision >= REVISION_B;
+
+        EXPECT_EQ(expectedValue, productHelper.isTile64With3DSurfaceOnBCSSupported(hwInfo));
+    }
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenDg2G12WhenAskingForTile64For3dSurfaceOnBcsSupportThenReturnSuccess) {
+    auto &productHelper = getHelper<ProductHelper>();
+
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        HardwareInfo hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
+
+        EXPECT_TRUE(productHelper.isTile64With3DSurfaceOnBCSSupported(hwInfo));
+    }
+}
+
 DG2TEST_F(ProductHelperTestDg2, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
     uint32_t steppings[] = {
         REVISION_A0,

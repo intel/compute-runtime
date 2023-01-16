@@ -158,7 +158,13 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
-    return getSteppingFromHwRevId(hwInfo) >= REVISION_C;
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo, *this)) {
+        return false;
+    }
+    if (DG2::isG11(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
+        return false;
+    }
+    return true;
 }
 
 template <>
