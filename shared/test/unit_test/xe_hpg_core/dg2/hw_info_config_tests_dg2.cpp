@@ -158,14 +158,46 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0OrA1SteppingWhenAskingIfWAIsRequire
             hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
 
-            productHelper.configureHardwareCustom(&hwInfo, nullptr);
-
             auto expectedValue = DG2::isG10(hwInfo) && revision < REVISION_B;
 
             EXPECT_EQ(expectedValue, productHelper.isDefaultEngineTypeAdjustmentRequired(hwInfo));
             EXPECT_EQ(expectedValue, productHelper.isAllocationSizeAdjustmentRequired(hwInfo));
             EXPECT_EQ(expectedValue, productHelper.isPrefetchDisablingRequired(hwInfo));
         }
+    }
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenDg2G10WhenAskingForSBAWaThenReturnSuccessOnlyForBStepping) {
+    auto &productHelper = getHelper<ProductHelper>();
+    auto hwInfo = *defaultHwInfo;
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
+
+        auto expectedValue = revision == REVISION_B;
+        EXPECT_EQ(expectedValue, productHelper.isAdditionalStateBaseAddressWARequired(hwInfo));
+    }
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenDg2G11WhenAskingForSBAWaThenReturnSuccess) {
+    auto &productHelper = getHelper<ProductHelper>();
+    auto hwInfo = *defaultHwInfo;
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usDeviceID = dg2G11DeviceIds[0];
+
+        EXPECT_TRUE(productHelper.isAdditionalStateBaseAddressWARequired(hwInfo));
+    }
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenDg2G12WhenAskingForSBAWaThenReturnSuccess) {
+    auto &productHelper = getHelper<ProductHelper>();
+    auto hwInfo = *defaultHwInfo;
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        hwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
+
+        EXPECT_FALSE(productHelper.isAdditionalStateBaseAddressWARequired(hwInfo));
     }
 }
 

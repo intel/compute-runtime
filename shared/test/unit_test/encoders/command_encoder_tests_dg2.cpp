@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,15 +31,37 @@ HWTEST2_F(DG2CommandEncoderTest, givenDG2WhenGettingRequiredSizeForStateBaseAddr
 
     auto container = MockCommandContainer();
     container.clearHeaps();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
-    EXPECT_EQ(size, 176ul);
+
+    auto &hwInfo = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    auto &productHelper = pDevice->getProductHelper();
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        auto expectedSize = 88ull;
+        if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+            expectedSize += sizeof(typename FamilyType::STATE_BASE_ADDRESS);
+        }
+        size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
+        EXPECT_EQ(size, expectedSize);
+    }
 }
 
 HWTEST2_F(DG2CommandEncoderTest, givenDG2AndCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsDG2) {
     auto container = CommandContainer();
     container.setHeapDirty(HeapType::SURFACE_STATE);
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
-    EXPECT_EQ(size, 192ul);
+
+    auto &hwInfo = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    auto &productHelper = pDevice->getProductHelper();
+    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        auto expectedSize = 104ull;
+        if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+            expectedSize += sizeof(typename FamilyType::STATE_BASE_ADDRESS);
+        }
+        size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
+        EXPECT_EQ(size, expectedSize);
+    }
 }
 
 HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGroupDispatchSizeVariableIsDefaultThenThreadGroupDispatchSizeIsNotChanged, IsDG2) {

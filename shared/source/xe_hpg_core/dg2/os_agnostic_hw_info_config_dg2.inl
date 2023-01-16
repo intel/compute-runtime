@@ -72,12 +72,13 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo
 
 template <>
 bool ProductHelperHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
-    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
-    if (stepping <= REVISION_B) {
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_C, hwInfo, *this)) {
         return true;
-    } else {
-        return false;
     }
+    if (DG2::isG11(hwInfo)) {
+        return true;
+    }
+    return false;
 }
 
 template <>

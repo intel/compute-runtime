@@ -18,7 +18,7 @@ namespace L0 {
 namespace ult {
 using CommandQueueTestDG2 = Test<DeviceFixture>;
 
-HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledOnDG2ThenReturnedSizeOf2SBAAndPCAnd3DBindingTablePoolPool, IsDG2) {
+HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledOnDG2ThenReturnedSizeOfSBAAndPCAnd3DBindingTablePoolPool, IsDG2) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -29,7 +29,15 @@ HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenEstimateStateBaseAddressC
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr.get(), &desc);
     auto size = commandQueue->estimateStateBaseAddressCmdSize();
-    auto expectedSize = 2 * sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+    auto expectedSize = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+
+    auto &productHelper = neoDevice->getProductHelper();
+    auto &hwInfo = neoDevice->getHardwareInfo();
+
+    if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+        expectedSize += sizeof(STATE_BASE_ADDRESS);
+    }
+
     EXPECT_EQ(size, expectedSize);
 }
 
