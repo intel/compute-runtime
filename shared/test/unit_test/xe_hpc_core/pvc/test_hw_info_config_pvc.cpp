@@ -28,7 +28,7 @@ PVCTEST_F(PvcProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
 }
 
 PVCTEST_F(PvcProductHelper, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
-    EXPECT_TRUE(productHelper->isTlbFlushRequired());
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }
 
 PVCTEST_F(PvcProductHelper, givenPVCRevId3AndAboveWhenGettingThreadEuRatioForScratchThen16IsReturned) {
