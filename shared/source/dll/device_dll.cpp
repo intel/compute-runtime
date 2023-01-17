@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,10 @@
 namespace NEO {
 
 bool Device::isBlitSplitEnabled() {
+    return true;
+}
+
+bool Device::isInitDeviceWithFirstSubmissionEnabled() {
     return true;
 }
 

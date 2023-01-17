@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@ struct UltHwConfig {
     bool forceOsAgnosticMemoryManager = true;
     bool useWaitForTimestamps = false;
     bool useBlitSplit = false;
+    bool useFirstSubmissionInitDevice = false;
 
     bool csrFailInitDirectSubmission = false;
     bool csrBaseCallDirectSubmissionAvailable = false;
