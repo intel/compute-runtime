@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/kernel/kernel.h"

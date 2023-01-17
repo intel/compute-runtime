@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/engine_node_helper.h"

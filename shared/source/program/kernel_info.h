@@ -33,28 +33,6 @@ struct RootDeviceEnvironemnt;
 
 static const float YTilingRatioValue = 1.3862943611198906188344642429164f;
 
-struct WorkSizeInfo {
-    uint32_t maxWorkGroupSize;
-    uint32_t minWorkGroupSize;
-    bool hasBarriers;
-    uint32_t simdSize;
-    uint32_t slmTotalSize;
-    GFXCORE_FAMILY coreFamily;
-    uint32_t numThreadsPerSubSlice;
-    uint32_t localMemSize;
-    bool imgUsed = false;
-    bool yTiledSurfaces = false;
-    bool useRatio = false;
-    bool useStrictRatio = false;
-    float targetRatio = 0;
-
-    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion);
-
-    void setIfUseImg(const KernelInfo &kernelInfo);
-    void setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironemnt, bool disableEUFusion);
-    void checkRatio(const size_t workItems[3]);
-};
-
 struct DeviceInfoKernelPayloadConstants {
     void *slmWindow = nullptr;
     uint32_t slmWindowSize = 0U;

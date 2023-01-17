@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/async_events_handler.h"

@@ -12,6 +12,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/program/work_size_info.h"
 
 #include <cmath>
 #include <cstdint>

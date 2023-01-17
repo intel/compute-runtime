@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/map_operations_handler.h"

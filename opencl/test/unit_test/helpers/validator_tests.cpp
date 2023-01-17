@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/validators.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"

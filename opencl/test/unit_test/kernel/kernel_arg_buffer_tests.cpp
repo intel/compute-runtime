@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
