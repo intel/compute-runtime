@@ -133,7 +133,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                     walkerArgs.currentTimestampPacketNodes);
 
     walkerArgs.currentDispatchIndex = 0;
-
     for (auto &dispatchInfo : multiDispatchInfo) {
         dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
         walkerArgs.isMainKernel = (dispatchInfo.getKernel() == mainKernel);

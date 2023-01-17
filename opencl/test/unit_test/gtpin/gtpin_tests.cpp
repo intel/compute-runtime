@@ -2435,7 +2435,7 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
 
     gtpinNotifyKernelSubmit(kernel.mockMultiDeviceKernel, mockCmdQ.get());
 
-    std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1, nullptr));
+    std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1));
     CompletionStamp stamp = command->submit(20, false);
 
     ASSERT_EQ(1u, kernelExecQueue.size());

@@ -212,7 +212,7 @@ HWTEST2_F(KernelWithCacheFlushTests, givenCacheFlushRequiredWhenEstimatingThenAd
     {
         EXPECT_FALSE(mockKernel->mockKernel->Kernel::requiresCacheFlushCommand(*cmdQ));
 
-        initialSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, csrDeps, false, false, false, *cmdQ, multiDispatchInfo, false, false, nullptr);
+        initialSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, csrDeps, false, false, false, *cmdQ, multiDispatchInfo, false, false);
     }
 
     {
@@ -226,7 +226,7 @@ HWTEST2_F(KernelWithCacheFlushTests, givenCacheFlushRequiredWhenEstimatingThenAd
         ultCsr.multiOsContextCapable = false;
         EXPECT_TRUE(mockKernel->mockKernel->Kernel::requiresCacheFlushCommand(*cmdQ));
 
-        sizeWithCacheFlush = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, csrDeps, false, false, false, *cmdQ, multiDispatchInfo, false, false, nullptr);
+        sizeWithCacheFlush = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, csrDeps, false, false, false, *cmdQ, multiDispatchInfo, false, false);
     }
 
     EXPECT_EQ(initialSize + expectedDiff, sizeWithCacheFlush);

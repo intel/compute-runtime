@@ -115,7 +115,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     void addTimestampPacketNodes(const TimestampPacketContainer &inputTimestampPacketContainer);
     TimestampPacketContainer *getTimestampPacketNodes() const;
-    TimestampPacketContainer *getMultiRootDeviceTimestampPacketNodes() const;
 
     bool isPerfCountersEnabled() const {
         return perfCountersEnabled;
@@ -130,7 +129,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     TagNodeBase *getHwPerfCounterNode();
-    TagNodeBase *getMultiRootTimestampSyncNode();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::atomic<TaskCountType> taskLevel;
@@ -386,10 +384,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     bool perfCountersEnabled;
     TagNodeBase *timeStampNode = nullptr;
     TagNodeBase *perfCounterNode = nullptr;
-    TagNodeBase *multiRootTimeStampSyncNode = nullptr;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
     // number of events this event depends on
-    std::unique_ptr<TimestampPacketContainer> multiRootDeviceTimestampPacketContainer;
     std::atomic<int> parentCount;
     // event parents
     std::vector<Event *> parentEvents;

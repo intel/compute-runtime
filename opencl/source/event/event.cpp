@@ -131,9 +131,6 @@ Event::~Event() {
         if (timeStampNode != nullptr) {
             timeStampNode->returnTag();
         }
-        if (multiRootTimeStampSyncNode != nullptr) {
-            multiRootTimeStampSyncNode->returnTag();
-        }
         if (perfCounterNode != nullptr) {
             cmdQueue->getPerfCounters()->deleteQuery(perfCounterNode->getQueryHandleRef());
             perfCounterNode->getQueryHandleRef() = {};
@@ -886,6 +883,7 @@ TagNodeBase *Event::getHwTimeStampNode() {
 }
 
 TagNodeBase *Event::getHwPerfCounterNode() {
+
     if (!perfCounterNode && cmdQueue->getPerfCounters()) {
         const uint32_t gpuReportSize = HwPerfCounter::getSize(*(cmdQueue->getPerfCounters()));
         perfCounterNode = cmdQueue->getGpgpuCommandStreamReceiver().getEventPerfCountAllocator(gpuReportSize)->getTag();
@@ -893,27 +891,11 @@ TagNodeBase *Event::getHwPerfCounterNode() {
     return perfCounterNode;
 }
 
-TagNodeBase *Event::getMultiRootTimestampSyncNode() {
-    auto lock = getContext()->obtainOwnershipForMultiRootDeviceAllocator();
-    if (getContext()->getMultiRootDeviceTimestampPacketAllocator() == nullptr) {
-        auto allocator = cmdQueue->getGpgpuCommandStreamReceiver().createMultiRootDeviceTimestampPacketAllocator(getContext()->getRootDeviceIndices());
-        getContext()->setMultiRootDeviceTimestampPacketAllocator(allocator);
-    }
-    lock.unlock();
-    if (multiRootDeviceTimestampPacketContainer.get() == nullptr) {
-        multiRootDeviceTimestampPacketContainer = std::make_unique<TimestampPacketContainer>();
-    }
-    multiRootTimeStampSyncNode = getContext()->getMultiRootDeviceTimestampPacketAllocator()->getTag();
-    multiRootDeviceTimestampPacketContainer->add(multiRootTimeStampSyncNode);
-    return multiRootTimeStampSyncNode;
-}
-
 void Event::addTimestampPacketNodes(const TimestampPacketContainer &inputTimestampPacketContainer) {
     timestampPacketContainer->assignAndIncrementNodesRefCounts(inputTimestampPacketContainer);
 }
 
 TimestampPacketContainer *Event::getTimestampPacketNodes() const { return timestampPacketContainer.get(); }
-TimestampPacketContainer *Event::getMultiRootDeviceTimestampPacketNodes() const { return multiRootDeviceTimestampPacketContainer.get(); }
 
 bool Event::checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
     bool userEventsDependencies = false;

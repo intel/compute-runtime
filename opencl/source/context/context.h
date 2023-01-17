@@ -37,7 +37,6 @@ class SharingFunctions;
 class SVMAllocsManager;
 class Program;
 class Platform;
-class TagAllocatorBase;
 
 template <>
 struct OpenCLObjectMapper<_cl_context> {
@@ -224,9 +223,6 @@ class Context : public BaseObject<_cl_context> {
     BufferPoolAllocator &getBufferPoolAllocator() {
         return this->smallBufferPoolAllocator;
     }
-    TagAllocatorBase *getMultiRootDeviceTimestampPacketAllocator();
-    std::unique_lock<std::mutex> obtainOwnershipForMultiRootDeviceAllocator();
-    void setMultiRootDeviceTimestampPacketAllocator(std::unique_ptr<TagAllocatorBase> &allocator);
 
   protected:
     struct BuiltInKernel {
@@ -267,8 +263,6 @@ class Context : public BaseObject<_cl_context> {
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     cl_bool preferD3dSharedResources = 0u;
     ContextType contextType = ContextType::CONTEXT_TYPE_DEFAULT;
-    std::unique_ptr<TagAllocatorBase> multiRootDeviceTimestampPacketAllocator;
-    std::mutex multiRootDeviceAllocatorMtx;
 
     bool interopUserSync = false;
     bool resolvesRequiredInKernels = false;

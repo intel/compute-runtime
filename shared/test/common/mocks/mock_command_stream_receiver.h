@@ -18,7 +18,6 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 
 #include <optional>
@@ -95,7 +94,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     };
 
     TagAllocatorBase *getTimestampPacketAllocator() override { return nullptr; }
-    std::unique_ptr<TagAllocatorBase> createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer rootDeviceIndices) override { return std::unique_ptr<TagAllocatorBase>(nullptr); }
 
     CompletionStamp flushTask(
         LinearStream &commandStream,

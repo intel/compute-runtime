@@ -391,8 +391,7 @@ class CommandQueueHw : public CommandQueue {
                         EventsRequest &eventsRequest,
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> &&printfHandler,
-                        CommandStreamReceiver *bcsCsr,
-                        TagNodeBase *multiRootDeviceSyncNode);
+                        CommandStreamReceiver *bcsCsr);
 
     CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,
                                                 size_t surfaceCount,
@@ -423,7 +422,7 @@ class CommandQueueHw : public CommandQueue {
                                                  TimestampPacketDependencies &timestampPacketDependencies,
                                                  const EventsRequest &eventsRequest,
                                                  LinearStream *commandStream,
-                                                 uint32_t commandType, bool queueBlocked, TagNodeBase *multiRootDeviceEventSync);
+                                                 uint32_t commandType, bool queueBlocked);
     void submitCacheFlush(Surface **surfaces,
                           size_t numSurfaces,
                           LinearStream *commandStream,
@@ -434,8 +433,6 @@ class CommandQueueHw : public CommandQueue {
     bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, TaskCountType taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override;
 
     MOCKABLE_VIRTUAL bool isCacheFlushForBcsRequired() const;
-    void processSignalMultiRootDeviceNode(LinearStream *commandStream,
-                                          TagNodeBase *node);
 
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};
@@ -476,7 +473,7 @@ class CommandQueueHw : public CommandQueue {
             blockedCommandsData = std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
         } else {
             commandStream = &getCommandStream<GfxFamily, commandType>(*this, csrDependencies, profilingRequired, perfCountersRequired,
-                                                                      blitEnqueue, multiDispatchInfo, surfaces, numSurfaces, isMarkerWithProfiling, eventsRequest.numEventsInWaitList > 0, eventsRequest.outEvent);
+                                                                      blitEnqueue, multiDispatchInfo, surfaces, numSurfaces, isMarkerWithProfiling, eventsRequest.numEventsInWaitList > 0);
         }
         return commandStream;
     }

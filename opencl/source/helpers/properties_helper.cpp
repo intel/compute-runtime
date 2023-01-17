@@ -26,6 +26,7 @@ namespace NEO {
 void flushDependentCsr(CommandStreamReceiver &dependentCsr, CsrDependencies &csrDeps) {
     auto csrOwnership = dependentCsr.obtainUniqueOwnership();
     dependentCsr.updateTagFromWait();
+    csrDeps.taskCountContainer.push_back({dependentCsr.peekTaskCount(), reinterpret_cast<uint64_t>(dependentCsr.getTagAddress())});
 }
 
 void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr, CsrDependencies::DependenciesType depsType) const {
@@ -59,7 +60,6 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
                 if (productHelper.isDcFlushAllowed()) {
                     if (!dependentCsr.isLatestTaskCountFlushed()) {
                         flushDependentCsr(dependentCsr, csrDeps);
-                        // csrDeps.taskCountContainer.push_back({dependentCsr.peekTaskCount(), reinterpret_cast<uint64_t>(dependentCsr.getTagAddress())});
                         currentCsr.makeResident(*dependentCsr.getTagAllocation());
                     }
                 }
@@ -68,22 +68,23 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
     }
 }
 
-void EventsRequest::fillCsrDependenciesForRootDevices(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr) const {
+void EventsRequest::fillCsrDependenciesForTaskCountContainer(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr) const {
     for (cl_uint i = 0; i < this->numEventsInWaitList; i++) {
         auto event = castToObjectOrAbort<Event>(this->eventWaitList[i]);
         if (event->isUserEvent() || CompletionStamp::notReady == event->peekTaskCount()) {
             continue;
         }
+
         if (event->getCommandQueue() && event->getCommandQueue()->getDevice().getRootDeviceIndex() != currentCsr.getRootDeviceIndex()) {
-            auto timestampPacketContainer = event->getMultiRootDeviceTimestampPacketNodes();
-            if (!timestampPacketContainer || timestampPacketContainer->peekNodes().empty()) {
-                continue;
-            }
             auto &dependentCsr = event->getCommandQueue()->getGpgpuCommandStreamReceiver();
             if (!dependentCsr.isLatestTaskCountFlushed()) {
                 flushDependentCsr(dependentCsr, csrDeps);
+            } else {
+                csrDeps.taskCountContainer.push_back({event->peekTaskCount(), reinterpret_cast<uint64_t>(dependentCsr.getTagAddress())});
             }
-            csrDeps.multiRootTimeStampSyncContainer.push_back(timestampPacketContainer);
+
+            auto graphicsAllocation = event->getCommandQueue()->getGpgpuCommandStreamReceiver().getTagsMultiAllocation()->getGraphicsAllocation(currentCsr.getRootDeviceIndex());
+            currentCsr.getResidencyAllocations().push_back(graphicsAllocation);
         }
     }
 }
