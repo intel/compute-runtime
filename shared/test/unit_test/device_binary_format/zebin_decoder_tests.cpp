@@ -69,9 +69,6 @@ TEST(ZebinValidateTargetTest, givenTargetDeviceCreatedUsingHelperFunctionWhenVal
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    compilerProductHelper.adjustHwInfoForIgc(hwInfo);
-
     auto targetDevice = getTargetDevice(rootDeviceEnvironment);
 
     EXPECT_TRUE(validateTargetDevice(targetDevice, Elf::EI_CLASS_32, hwInfo.platform.eProductFamily, hwInfo.platform.eRenderCoreFamily, AOT::UNKNOWN_ISA, {}));

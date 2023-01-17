@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,13 +82,8 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
 
     const auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
 
-    auto copyHwInfo = hwInfo;
-    if (compilerProductHelper) {
-        compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
-    }
-
-    populateIgcPlatform(*igcPlatform, copyHwInfo);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), copyHwInfo.gtSystemInfo);
+    populateIgcPlatform(*igcPlatform, hwInfo);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
 
     populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper);
 

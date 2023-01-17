@@ -187,12 +187,7 @@ ZebinWithL0TestCommonModule::ZebinWithL0TestCommonModule(const NEO::HardwareInfo
     if (forceRecompilation) {
         elfHeader.machine = NEO::Elf::EM_NONE;
     } else {
-        auto compilerProductHelper = NEO::CompilerProductHelper::get(hwInfo.platform.eProductFamily);
-        auto copyHwInfo = hwInfo;
-
-        compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
-
-        elfHeader.machine = copyHwInfo.platform.eProductFamily;
+        elfHeader.machine = hwInfo.platform.eProductFamily;
     }
 
     const uint8_t testKernelData[0xac0] = {0u};
@@ -242,12 +237,7 @@ ZebinCopyBufferSimdModule<numBits>::ZebinCopyBufferSimdModule(const NEO::Hardwar
     auto &elfHeader = elfEncoder.getElfFileHeader();
     elfHeader.type = NEO::Elf::ET_ZEBIN_EXE;
 
-    auto compilerProductHelper = NEO::CompilerProductHelper::get(hwInfo.platform.eProductFamily);
-    auto copyHwInfo = hwInfo;
-
-    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
-
-    elfHeader.machine = copyHwInfo.platform.eProductFamily;
+    elfHeader.machine = hwInfo.platform.eProductFamily;
 
     const uint8_t testKernelData[0x2c0] = {0u};
 

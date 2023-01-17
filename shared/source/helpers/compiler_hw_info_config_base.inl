@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,5 @@ template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerProductHelperHw<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) const {
     return L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(isDebuggerActive);
 }
-
-template <PRODUCT_FAMILY gfxProduct>
-void CompilerProductHelperHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {}
 
 } // namespace NEO

@@ -1058,10 +1058,6 @@ const NEO::ProductHelper &DeviceImp::getProductHelper() {
     return this->neoDevice->getProductHelper();
 }
 
-const NEO::CompilerProductHelper &DeviceImp::getCompilerProductHelper() {
-    return this->neoDevice->getCompilerProductHelper();
-}
-
 NEO::OSInterface &DeviceImp::getOsInterface() { return *neoDevice->getRootDeviceEnvironment().osInterface; }
 
 uint32_t DeviceImp::getPlatformInfo() const {
