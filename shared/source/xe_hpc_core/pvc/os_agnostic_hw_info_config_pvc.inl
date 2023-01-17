@@ -164,11 +164,6 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const Hardwar
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const {
     return true;
 }
