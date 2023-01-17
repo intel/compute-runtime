@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -222,7 +222,7 @@ class Drm : public DriverModel {
 
     void waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, uint32_t postSyncOffset);
 
-    void setNewResourceBoundToVM(uint32_t vmHandleId);
+    void setNewResourceBoundToVM(BufferObject *bo, uint32_t vmHandleId);
 
     const std::vector<int> &getSliceMappings(uint32_t deviceIndex);
 

@@ -119,7 +119,8 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
         using OsContextLinux::lastFlushedTlbFlushCounter;
     };
 
-    mock->setNewResourceBoundToVM(1u);
+    BufferObject mockBo(mock, 3, 1, 0, 1);
+    mock->setNewResourceBoundToVM(&mockBo, 1u);
 
     for (const auto &engine : device->getAllEngines()) {
         auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
@@ -137,17 +138,35 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
     }
 
     auto mock2 = executionEnvironment->rootDeviceEnvironments[1u]->osInterface->getDriverModel()->as<DrmQueryMock>();
-    mock2->setNewResourceBoundToVM(0u);
+    mock2->setNewResourceBoundToVM(&mockBo, 0u);
 
     for (const auto &engine : devices[1]->getAllEngines()) {
-        auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
+        auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
         if (osContexLinux->getDeviceBitfield().test(0u) && executionEnvironment->rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired()) {
             EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
         } else {
             EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
         }
+
+        osContexLinux->lastFlushedTlbFlushCounter.store(osContexLinux->peekTlbFlushCounter());
     }
     for (const auto &engine : device->getAllEngines()) {
+        auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
+        EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
+    }
+
+    mockBo.setAddress(0x1234);
+    mock->setNewResourceBoundToVM(&mockBo, 1u);
+
+    for (const auto &engine : device->getAllEngines()) {
+        auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
+        if (osContexLinux->getDeviceBitfield().test(1u)) {
+            EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
+        }
+
+        osContexLinux->lastFlushedTlbFlushCounter.store(osContexLinux->peekTlbFlushCounter());
+    }
+    for (const auto &engine : devices[1]->getAllEngines()) {
         auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
         EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
     }

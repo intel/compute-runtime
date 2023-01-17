@@ -350,7 +350,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     }
 
     auto mmapAlignment = cAlignment;
-    if (svmCpuAllocation && alignedStorageSize >= 2 * MemoryConstants::megaByte) {
+    if (alignedStorageSize >= 2 * MemoryConstants::megaByte) {
         mmapAlignment = MemoryConstants::pageSize2Mb;
     }
 

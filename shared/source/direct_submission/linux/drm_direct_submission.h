@@ -42,6 +42,5 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     TagData currentTagData{};
     volatile TagAddressType *tagAddress;
     TaskCountType completionFenceValue{};
-    bool tlbFlushRequired = true;
 };
 } // namespace NEO

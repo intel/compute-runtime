@@ -15,6 +15,7 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -654,8 +655,8 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) const {
     return 0;
 }
 
-void Drm::setNewResourceBoundToVM(uint32_t vmHandleId) {
-    if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired()) {
+void Drm::setNewResourceBoundToVM(BufferObject *bo, uint32_t vmHandleId) {
+    if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired() && isAligned(bo->peekAddress(), MemoryConstants::pageSize2Mb)) {
         return;
     }
     const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
@@ -1452,7 +1453,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                 break;
             }
 
-            drm->setNewResourceBoundToVM(vmHandleId);
+            drm->setNewResourceBoundToVM(bo, vmHandleId);
         } else {
             vmBind.handle = 0u;
             ret = ioctlHelper->vmUnbind(vmBind);
