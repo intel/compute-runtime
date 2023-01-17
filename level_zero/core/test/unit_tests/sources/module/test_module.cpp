@@ -15,6 +15,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/os_interface/os_inc_base.h"

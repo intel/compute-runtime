@@ -13,6 +13,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_type.h"

@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/blit_properties_container.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/vec.h"
@@ -35,7 +36,6 @@ class TagNodeBase;
 struct BlitProperties;
 struct HardwareInfo;
 struct TimestampPacketDependencies;
-using BlitPropertiesContainer = StackVec<BlitProperties, 16>;
 
 struct BlitProperties {
     static BlitProperties constructPropertiesForReadWrite(BlitterConstants::BlitDirection blitDirection,

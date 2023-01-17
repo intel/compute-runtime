@@ -8,6 +8,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_stream/aub_subcapture_status.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"

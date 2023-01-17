@@ -6,27 +6,24 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/aub_subcapture_status.h"
-#include "shared/source/command_stream/csr_definitions.h"
-#include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/command_stream/submissions_aggregator.h"
-#include "shared/source/command_stream/task_count_helper.h"
-#include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_properties_container.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
-#include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/spinlock.h"
 
-#include <chrono>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
+#include <functional>
 
 namespace NEO {
+struct BatchBuffer;
+struct WaitParams;
+class SubmissionAggregator;
+class FlushStampTracker;
 class Thread;
 class FlatBatchBufferHelper;
 class AllocationsList;
@@ -52,6 +49,8 @@ class LogicalStateHelper;
 class KmdNotifyHelper;
 class GfxCoreHelper;
 class ProductHelper;
+enum class WaitStatus;
+struct AubSubCaptureStatus;
 
 template <typename TSize>
 class TimestampPackets;
@@ -177,7 +176,7 @@ class CommandStreamReceiver {
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
 
     FlatBatchBufferHelper &getFlatBatchBufferHelper() const { return *flatBatchBufferHelper; }
-    void overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) { flatBatchBufferHelper.reset(newHelper); }
+    void overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper);
 
     MOCKABLE_VIRTUAL void initProgrammingFlags();
     virtual AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName);
@@ -425,7 +424,7 @@ class CommandStreamReceiver {
     volatile DebugPauseState *debugPauseStateAddress = nullptr;
     SpinLock debugPauseStateLock;
     static void *asyncDebugBreakConfirmation(void *arg);
-    std::function<void()> debugConfirmationFunction = []() { std::cin.get(); };
+    static std::function<void()> debugConfirmationFunction;
     std::function<void(GraphicsAllocation &)> downloadAllocationImpl;
 
     GraphicsAllocation *tagAllocation = nullptr;

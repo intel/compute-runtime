@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"

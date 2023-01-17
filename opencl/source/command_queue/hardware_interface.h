@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/helpers/vec.h"
 
 #include <cstdint>
 
@@ -22,6 +23,7 @@ class HwPerfCounter;
 class HwTimeStamps;
 struct KernelOperation;
 struct MultiDispatchInfo;
+struct TimestampPacketDependencies;
 
 template <class T>
 class TagNode;

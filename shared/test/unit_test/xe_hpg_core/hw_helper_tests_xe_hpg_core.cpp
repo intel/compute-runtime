@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

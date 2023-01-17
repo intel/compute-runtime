@@ -12,8 +12,8 @@
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/dirty_state_helpers.h"
-
 namespace NEO {
+class TagNodeBase;
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver;
 struct PipeControlArgs;

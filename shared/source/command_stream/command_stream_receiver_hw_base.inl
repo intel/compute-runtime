@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/submission_status.h"
+#include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"

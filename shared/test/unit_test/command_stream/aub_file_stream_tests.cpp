@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "shared/source/helpers/address_patch.h"
+#include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/neo_driver_version.h"
 #include "shared/source/os_interface/os_context.h"

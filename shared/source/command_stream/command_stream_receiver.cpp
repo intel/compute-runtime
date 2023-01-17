@@ -9,10 +9,12 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/aub_subcapture_status.h"
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/submission_status.h"
+#include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -23,6 +25,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
@@ -43,6 +46,8 @@
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
+
+#include <iostream>
 
 namespace AubMemDump {
 #include "aub_services.h"
@@ -504,6 +509,10 @@ void CommandStreamReceiver::setRequiredScratchSizes(uint32_t newRequiredScratchS
 
 GraphicsAllocation *CommandStreamReceiver::getScratchAllocation() {
     return scratchSpaceController->getScratchSpaceAllocation();
+}
+
+void CommandStreamReceiver::overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) {
+    flatBatchBufferHelper.reset(newHelper);
 }
 
 void CommandStreamReceiver::initProgrammingFlags() {
@@ -1001,4 +1010,6 @@ uint64_t CommandStreamReceiver::getCompletionAddress() const {
     completionFenceAddress += TagAllocationLayout::completionFenceOffset;
     return completionFenceAddress;
 }
+
+std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };
 } // namespace NEO

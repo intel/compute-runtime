@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/utilities/wait_util.h"
 
+#include <iostream>
 #include <memory>
 
 namespace NEO {

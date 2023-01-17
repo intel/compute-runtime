@@ -14,6 +14,8 @@
 #include "gtest/gtest.h"
 #include <CL/cl_platform.h>
 
+#include <thread>
+
 using namespace NEO;
 
 namespace ULT {

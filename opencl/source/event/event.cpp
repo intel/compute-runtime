@@ -32,6 +32,7 @@
 #include "opencl/source/helpers/task_information.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace NEO {
 Event::Event(
