@@ -594,27 +594,19 @@ ze_result_t EventPool::closeIpcHandle() {
 }
 
 ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
-    // L0 uses a vector of ZE_MAX_IPC_HANDLE_SIZE bytes to send the IPC handle, i.e.
-    // char data[ZE_MAX_IPC_HANDLE_SIZE];
-    // First four bytes (which is of size sizeof(int)) of it contain the file descriptor
-    // associated with the dma-buf,
-    // Rest is payload to communicate extra info to the other processes.
-    // For the event pool, this contains:
-    // - the number of events the pool has.
-    // - the id for the device used during pool creation
     if (!this->isShareableEventMemory) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     IpcEventPoolData &poolData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle->data);
     poolData = {};
-    this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), poolData.handle);
     poolData.numEvents = this->numEvents;
     poolData.rootDeviceIndex = this->getDevice()->getRootDeviceIndex();
     poolData.isDeviceEventPoolAllocation = this->isDeviceEventPoolAllocation;
     poolData.isHostVisibleEventPoolAllocation = this->isHostVisibleEventPoolAllocation;
 
-    return ZE_RESULT_SUCCESS;
+    int retCode = this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), poolData.handle);
+    return retCode == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
 }
 
 ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle,
