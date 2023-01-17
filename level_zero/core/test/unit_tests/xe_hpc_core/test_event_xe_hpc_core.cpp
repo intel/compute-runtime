@@ -14,9 +14,9 @@
 namespace L0 {
 namespace ult {
 
-class MemoryManagerEventPoolIPCMock : public NEO::MockMemoryManager {
+class MemoryManagerEventPoolIPCMockXeHpc : public NEO::MockMemoryManager {
   public:
-    MemoryManagerEventPoolIPCMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(executionEnvironment) {}
+    MemoryManagerEventPoolIPCMockXeHpc(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(executionEnvironment) {}
     void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
         alloc = new NEO::MockGraphicsAllocation(&buffer, sizeof(buffer));
         alloc->isShareableHostMemory = true;
@@ -40,7 +40,7 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenGettingIpcHandleForEventPoolWithDe
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto curMemoryManager = driverHandle->getMemoryManager();
-    MemoryManagerEventPoolIPCMock *mockMemoryManager = new MemoryManagerEventPoolIPCMock(*neoDevice->executionEnvironment);
+    MemoryManagerEventPoolIPCMockXeHpc *mockMemoryManager = new MemoryManagerEventPoolIPCMockXeHpc(*neoDevice->executionEnvironment);
     driverHandle->setMemoryManager(mockMemoryManager);
     auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -81,7 +81,7 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenOpeningIpcHandleForEventPoolWithHo
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto curMemoryManager = driverHandle->getMemoryManager();
-    MemoryManagerEventPoolIPCMock *mockMemoryManager = new MemoryManagerEventPoolIPCMock(*neoDevice->executionEnvironment);
+    MemoryManagerEventPoolIPCMockXeHpc *mockMemoryManager = new MemoryManagerEventPoolIPCMockXeHpc(*neoDevice->executionEnvironment);
     driverHandle->setMemoryManager(mockMemoryManager);
     auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

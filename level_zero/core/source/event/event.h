@@ -218,6 +218,7 @@ struct Event : _ze_event_handle_t {
     bool isTimestampEvent = false;
     bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
+    bool isFromIpcPool = false;
 };
 
 template <typename TagSizeT>

@@ -43,6 +43,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->csr = csr;
     event->maxKernelCount = eventPool->getMaxKernelCount();
     event->maxPacketCount = eventPool->getEventMaxPackets();
+    event->isFromIpcPool = eventPool->isImportedIpcPool;
 
     event->kernelEventCompletionData =
         std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
@@ -180,7 +181,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         this->csr->downloadAllocation(this->getAllocation(this->device));
     }
 
-    if (isAlreadyCompleted()) {
+    if (!this->isFromIpcPool && isAlreadyCompleted()) {
         return ZE_RESULT_SUCCESS;
     } else {
         return queryStatusEventPackets();

@@ -301,9 +301,18 @@ class MemoryManagerEventPoolIPCMock : public NEO::MockMemoryManager {
         alloc->isShareableHostMemory = true;
         multiGraphicsAllocation.addAllocation(alloc);
         return reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
-    };
-    char buffer[64];
+    }
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override {
+        if (callParentCreateGraphicsAllocationFromSharedHandle) {
+            return NEO::MockMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation);
+        }
+        alloc = new NEO::MockGraphicsAllocation(&buffer, sizeof(buffer));
+        alloc->isShareableHostMemory = true;
+        return alloc;
+    }
+    char buffer[256];
     NEO::MockGraphicsAllocation *alloc;
+    bool callParentCreateGraphicsAllocationFromSharedHandle = true;
 };
 
 using EventPoolIPCHandleTests = Test<DeviceFixture>;
@@ -608,6 +617,64 @@ TEST_F(EventPoolIPCHandleTests, GivenEventPoolWithIPCEventFlagAndHostMemoryThenS
     EXPECT_GE(allocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->getUnderlyingBufferSize(),
               minAllocationSize);
     EXPECT_FALSE(allocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->isShareableHostMemory);
+}
+
+TEST_F(EventPoolIPCHandleTests, GivenIpcEventPoolWhenCreatingEventFromIpcPoolThenExpectIpcFlag) {
+    uint32_t numEvents = 1;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIPCMock *mockMemoryManager = new MemoryManagerEventPoolIPCMock(*neoDevice->executionEnvironment);
+    mockMemoryManager->callParentCreateGraphicsAllocationFromSharedHandle = false;
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
+    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
+
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        0,
+        0};
+
+    auto event = whiteboxCast(Event::create<uint32_t>(ipcEventPool, &eventDesc, device));
+    ASSERT_NE(nullptr, event);
+    EXPECT_TRUE(event->isFromIpcPool);
+
+    res = ipcEventPool->closeIpcHandle();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    uint32_t *data = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+    for (uint32_t i = 0; i < event->getPacketsInUse(); i++) {
+        *data = L0::Event::STATE_CLEARED;
+        data = ptrOffset(data, event->getSinglePacketSize());
+    }
+    event->setIsCompleted();
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    event->destroy();
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
 }
 
 using EventPoolOpenIPCHandleFailTests = Test<DeviceFixture>;
