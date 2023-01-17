@@ -60,6 +60,20 @@ TEST_F(AubCommandStreamReceiverTests, givenStructureWhenMisalignedUint64ThenUseS
     EXPECT_EQ(value, cmdServicesMemTraceDumpCompress.getSurfaceAddress());
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenDebugFlagSetWhenCreatingContextThenAppendFlags) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AppendAubStreamContextFlags.set(0x123);
+
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    MockAubManager mockAubManager;
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
+    aubCsr->aubManager = &mockAubManager;
+
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    EXPECT_EQ(0x123u, mockAubManager.contextFlags);
+}
+
 TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
     HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
