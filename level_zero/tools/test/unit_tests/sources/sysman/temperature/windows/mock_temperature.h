@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,12 @@
 namespace L0 {
 namespace ult {
 
+constexpr uint32_t temperatureHandleComponentCount = 3u;
 class TemperatureKmdSysManager : public Mock<MockKmdSysManager> {};
 
 template <>
 struct Mock<TemperatureKmdSysManager> : public TemperatureKmdSysManager {
-
+    uint32_t mockTempDomainCount = temperatureHandleComponentCount;
     uint32_t mockTempGlobal = 26;
     uint32_t mockTempGPU = 25;
     uint32_t mockTempMemory = 23;
@@ -38,6 +39,12 @@ struct Mock<TemperatureKmdSysManager> : public TemperatureKmdSysManager {
         }
 
         switch (pRequest->inRequestId) {
+        case KmdSysman::Requests::Temperature::NumTemperatureDomains: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockTempDomainCount;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
         case KmdSysman::Requests::Temperature::TempCriticalEventSupported:
         case KmdSysman::Requests::Temperature::TempThreshold1EventSupported:
         case KmdSysman::Requests::Temperature::TempThreshold2EventSupported: {

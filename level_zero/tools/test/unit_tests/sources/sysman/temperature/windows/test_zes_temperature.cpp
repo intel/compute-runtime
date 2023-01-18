@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,10 @@ extern bool sysmanUltsEnable;
 namespace L0 {
 namespace ult {
 
-constexpr uint32_t temperatureHandleComponentCount = 3u;
 class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
 
   protected:
-    Mock<TemperatureKmdSysManager> *pKmdSysManager = nullptr;
+    std::unique_ptr<Mock<TemperatureKmdSysManager>> pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
@@ -27,10 +26,11 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
 
-        pKmdSysManager = new Mock<TemperatureKmdSysManager>;
+        pKmdSysManager.reset(new Mock<TemperatureKmdSysManager>);
+        pKmdSysManager->allowSetCalls = true;
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
-        pWddmSysmanImp->pKmdSysManager = pKmdSysManager;
+        pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
         for (auto handle : pSysmanDeviceImp->pTempHandleContext->handleList) {
             delete handle;
@@ -46,18 +46,14 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        getTempHandles(0);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
+
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
-        if (pKmdSysManager != nullptr) {
-            delete pKmdSysManager;
-            pKmdSysManager = nullptr;
-        }
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_temp_handle_t> getTempHandles(uint32_t count) {
@@ -67,13 +63,13 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, temperatureHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenInvalidComponentCountWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenInvalidComponentCountWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, temperatureHandleComponentCount);
@@ -83,7 +79,7 @@ TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenInvalidComponentCountWhenEn
     EXPECT_EQ(count, temperatureHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidPowerHandlesIsReturned) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidPowerHandlesIsReturned) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, temperatureHandleComponentCount);
@@ -95,7 +91,7 @@ TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenComponentCountZeroWhenEnume
     }
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidPowerHandleWhenGettingTemperaturePropertiesAllowSetToTrueThenCallSucceeds) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleWhenGettingTemperaturePropertiesAllowSetToTrueThenCallSucceeds) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     uint32_t sensorTypeIndex = 0;
     for (auto handle : handles) {
@@ -114,35 +110,35 @@ TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidPowerHandleWhenGetting
     }
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidTempHandleWhenGettingMemoryTemperatureThenValidTemperatureReadingsRetrieved) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingMemoryTemperatureThenValidTemperatureReadingsRetrieved) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_MEMORY], &temperature));
     EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempMemory));
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidTempHandleWhenGettingGPUTemperatureThenValidTemperatureReadingsRetrieved) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUTemperatureThenValidTemperatureReadingsRetrieved) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GPU], &temperature));
     EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGPU));
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidTempHandleWhenGettingGlobalTemperatureThenValidTemperatureReadingsRetrieved) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGlobalTemperatureThenValidTemperatureReadingsRetrieved) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GLOBAL], &temperature));
     EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGlobal));
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidTempHandleWhenGettingUnsupportedSensorsTemperatureThenUnsupportedReturned) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupportedSensorsTemperatureThenUnsupportedReturned) {
     auto pTemperatureImpMemory = std::make_unique<TemperatureImp>(deviceHandles[0], pOsSysman, ZES_TEMP_SENSORS_GLOBAL_MIN);
     auto pWddmTemperatureImp = static_cast<WddmTemperatureImp *>(pTemperatureImpMemory->pOsTemperature.get());
     double pTemperature = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmTemperatureImp->getSensorTemperature(&pTemperature));
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidTempHandleWhenGettingTemperatureConfigThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureConfigThenUnsupportedIsReturned) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     for (auto handle : handles) {
         zes_temp_config_t config = {};
@@ -150,7 +146,7 @@ TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidTempHandleWhenGettingT
     }
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, DISABLED_GivenValidTempHandleWhenSettingTemperatureConfigThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTemperatureConfigThenUnsupportedIsReturned) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     for (auto handle : handles) {
         zes_temp_config_t config = {};

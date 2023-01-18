@@ -32,7 +32,7 @@ ze_result_t WddmTemperatureImp::getProperties(zes_temp_properties_t *pProperties
         request.paramInfo = KmdSysman::TemperatureDomainsType::TemperatureDomainDGPU;
         break;
     case ZES_TEMP_SENSORS_MEMORY:
-        request.paramInfo = KmdSysman::TemperatureDomainsType::TemperatureDomainPackage;
+        request.paramInfo = KmdSysman::TemperatureDomainsType::TemperatureDomainHBM;
         break;
     default:
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -144,5 +144,4 @@ std::unique_ptr<OsTemperature> OsTemperature::create(OsSysman *pOsSysman, ze_boo
     pWddmTemperatureImp->setSensorType(sensorType);
     return std::move(pWddmTemperatureImp);
 }
-
 } // namespace L0
