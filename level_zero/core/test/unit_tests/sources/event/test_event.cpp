@@ -29,6 +29,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -820,33 +821,52 @@ TEST_F(EventPoolOpenIPCHandleFailTests, givenFailureToAllocateMemoryWhenOpeningI
     driverHandle->setMemoryManager(originalMemoryManager);
 }
 
-class MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager : public FailMemoryManager {
+class MultiDeviceEventPoolOpenIpcHandleMemoryManager : public FailMemoryManager {
   public:
-    MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : FailMemoryManager(executionEnvironment) {}
+    MultiDeviceEventPoolOpenIpcHandleMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : FailMemoryManager(executionEnvironment) {}
 
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override {
         return &mockAllocation0;
     }
 
     GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override {
-        if (calls == 0) {
+        NEO::GraphicsAllocation *mock1Alloc = nullptr;
+        if (calls < maxCalls) {
             calls++;
-            return &mockAllocation1;
+            uint32_t rootDeviceIndex = properties.rootDeviceIndex;
+            mock1Alloc = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+            if (mock1Alloc == nullptr) {
+                mock1Alloc = new NEO::MockGraphicsAllocation(rootDeviceIndex, nullptr, 0);
+                mockAllocations1.push_back(std::unique_ptr<NEO::GraphicsAllocation>(mock1Alloc));
+            }
         }
-        return nullptr;
+        return mock1Alloc;
     }
 
     void freeGraphicsMemory(GraphicsAllocation *gfxAllocation) override {
+        if (gfxAllocation == &mockAllocation0) {
+            alloc0FreeCall++;
+        }
+
+        auto iter = std::find_if(mockAllocations1.begin(), mockAllocations1.end(), [&gfxAllocation](const auto &elem) {
+            return elem.get() == gfxAllocation;
+        });
+        if (iter != mockAllocations1.end()) {
+            alloc1FreeCall++;
+        }
     }
 
     NEO::MockGraphicsAllocation mockAllocation0;
-    NEO::MockGraphicsAllocation mockAllocation1;
+    std::vector<std::unique_ptr<NEO::GraphicsAllocation>> mockAllocations1;
     uint32_t calls = 0;
+    uint32_t maxCalls = 0;
+    uint32_t alloc0FreeCall = 0;
+    uint32_t alloc1FreeCall = 0;
 };
 
-using MultiDeviceEventPoolOpenIPCHandleFailTests = Test<MultiDeviceFixture>;
+using MultiDeviceEventPoolOpenIpcHandleFailTests = Test<MultiDeviceFixture>;
 
-TEST_F(MultiDeviceEventPoolOpenIPCHandleFailTests,
+TEST_F(MultiDeviceEventPoolOpenIpcHandleFailTests,
        givenFailureToAllocateMemoryWhenOpeningIpcHandleForEventPoolWithMultipleDevicesThenOutOfHostMemoryIsReturned) {
     uint32_t numEvents = 4;
     ze_event_pool_desc_t eventPoolDesc = {
@@ -871,15 +891,18 @@ TEST_F(MultiDeviceEventPoolOpenIPCHandleFailTests,
 
     {
         NEO::MemoryManager *prevMemoryManager = nullptr;
-        NEO::MemoryManager *currMemoryManager = nullptr;
+        MultiDeviceEventPoolOpenIpcHandleMemoryManager *currMemoryManager = nullptr;
 
         prevMemoryManager = driverHandle->getMemoryManager();
-        currMemoryManager = new MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager(*neoDevice->executionEnvironment);
+        currMemoryManager = new MultiDeviceEventPoolOpenIpcHandleMemoryManager(*neoDevice->executionEnvironment);
         driverHandle->setMemoryManager(currMemoryManager);
-
+        currMemoryManager->maxCalls = 1;
         ze_event_pool_handle_t ipcEventPoolHandle = {};
         res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
         EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY);
+
+        EXPECT_EQ(1u, currMemoryManager->alloc0FreeCall);
+        EXPECT_EQ(1u, currMemoryManager->alloc1FreeCall);
 
         driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
@@ -887,6 +910,60 @@ TEST_F(MultiDeviceEventPoolOpenIPCHandleFailTests,
 
     res = eventPool->destroy();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(originalMemoryManager);
+}
+
+TEST_F(EventPoolCreateMultiDevice, GivenContextCreatedWithAllDriverDevicesWhenOpeningIpcEventPoolUsingContextThenExpectAllContextDevicesStoredInIpcEventPool) {
+    uint32_t numEvents = 1;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto deviceHandle = driverHandle->devices[0]->toHandle();
+    NEO::MockDevice *neoDevice = static_cast<NEO::MockDevice *>(driverHandle->devices[0]->getNEODevice());
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    result = eventPool->getIpcHandle(&ipcHandle);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    auto prevMemoryManager = driverHandle->getMemoryManager();
+    auto currMemoryManager = new MultiDeviceEventPoolOpenIpcHandleMemoryManager(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(currMemoryManager);
+    currMemoryManager->maxCalls = 4;
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    result = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ipcEventPoolHandle);
+    EXPECT_EQ(3u, currMemoryManager->calls);
+
+    auto ipcEventPool = EventPool::fromHandle(ipcEventPoolHandle);
+    ASSERT_EQ(driverHandle->devices.size(), ipcEventPool->devices.size());
+    for (uint32_t i = 0; i < driverHandle->devices.size(); i++) {
+        EXPECT_EQ(driverHandle->devices[i], ipcEventPool->devices[i]);
+    }
+
+    ipcEventPool->closeIpcHandle();
+    EXPECT_EQ(1u, currMemoryManager->alloc0FreeCall);
+    EXPECT_EQ(3u, currMemoryManager->alloc1FreeCall);
+
+    driverHandle->setMemoryManager(prevMemoryManager);
+    delete currMemoryManager;
+
+    result = eventPool->destroy();
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
     delete mockMemoryManager;
     driverHandle->setMemoryManager(originalMemoryManager);
 }

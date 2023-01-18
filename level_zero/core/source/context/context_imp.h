@@ -167,6 +167,10 @@ struct ContextImp : Context {
             this->deviceHandles.assign(deviceHandles, deviceHandles + numDevices);
         }
     }
+    void addDeviceHandle(ze_device_handle_t deviceHandle) {
+        this->deviceHandles.push_back(deviceHandle);
+        this->numDevices = static_cast<uint32_t>(this->deviceHandles.size());
+    }
 
   protected:
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);

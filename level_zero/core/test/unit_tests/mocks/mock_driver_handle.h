@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ namespace ult {
 
 template <>
 struct WhiteBox<::L0::DriverHandle> : public ::L0::DriverHandleImp {
+    using ::L0::DriverHandleImp::devices;
     using ::L0::DriverHandleImp::enableProgramDebugging;
     using ::L0::DriverHandleImp::svmAllocsManager;
 };

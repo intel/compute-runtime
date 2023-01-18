@@ -670,7 +670,9 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
         std::make_unique<NEO::MultiGraphicsAllocation>(static_cast<uint32_t>(this->rootDeviceIndices.size()));
     eventPool->eventPoolAllocations->addAllocation(alloc);
     eventPool->eventPoolPtr = reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
-    eventPool->devices.push_back(device);
+    for (auto &deviceHandle : this->deviceHandles) {
+        eventPool->devices.push_back(Device::fromHandle(deviceHandle));
+    }
     eventPool->isImportedIpcPool = true;
 
     for (auto currDeviceIndex : this->rootDeviceIndices) {
@@ -686,10 +688,6 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
                                                                                              eventPool->eventPoolPtr,
                                                                                              eventPool->getAllocation());
         if (!graphicsAllocation) {
-            for (auto gpuAllocation : eventPool->getAllocation().getGraphicsAllocations()) {
-                memoryManager->freeGraphicsMemory(gpuAllocation);
-            }
-            memoryManager->freeGraphicsMemory(alloc);
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         eventPool->eventPoolAllocations->addAllocation(graphicsAllocation);
