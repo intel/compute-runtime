@@ -329,7 +329,7 @@ class MemoryManagerEventPoolIpcMock : public NEO::MockMemoryManager {
         return alloc;
     }
     char buffer[256];
-    EventPoolIpcMockGraphicsAllocation *alloc;
+    EventPoolIpcMockGraphicsAllocation *alloc = nullptr;
     bool callParentCreateGraphicsAllocationFromSharedHandle = true;
     bool callParentAllocateGraphicsMemoryWithProperties = true;
 };
@@ -554,6 +554,49 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithHostVisibleT
     driverHandle->setMemoryManager(curMemoryManager);
 }
 
+TEST_F(EventPoolIPCHandleTests,
+       GivenRemoteEventPoolHasTwoEventPacketsWhenContextWithSinglePacketOpensIpcEventPoolFromIpcHandleThenDiffrentMaxEventPacketsCauseInvalidArgumentError) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    uint32_t numEvents = 1;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    eventPool->eventPackets = 2;
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    ::testing::internal::CaptureStderr();
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expectedOutput("IPC handle max event packets 2 does not match context devices max event packet 1\n");
+    EXPECT_EQ(expectedOutput, output);
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
 TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithDeviceAllocThenEventPoolIsCreatedAsDeviceBufferAndDeviceAllocIsSet) {
     uint32_t numEvents = 4;
     ze_event_pool_desc_t eventPoolDesc = {
@@ -730,7 +773,7 @@ TEST_F(EventPoolIPCHandleTests, givenIpcEventPoolWhenGettingIpcHandleAndFailingT
 
 using EventPoolOpenIPCHandleFailTests = Test<DeviceFixture>;
 
-TEST_F(EventPoolOpenIPCHandleFailTests, givenFailureToAllocateMemoryWhenOpeningIpcHandleForEventPoolThenInvalidArgumentIsReturned) {
+TEST_F(EventPoolOpenIPCHandleFailTests, givenFailureToAllocateMemoryWhenOpeningIpcHandleForEventPoolThenOutOfDeviceMemoryIsReturned) {
     uint32_t numEvents = 4;
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -761,7 +804,7 @@ TEST_F(EventPoolOpenIPCHandleFailTests, givenFailureToAllocateMemoryWhenOpeningI
 
         ze_event_pool_handle_t ipcEventPoolHandle = {};
         res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
-        EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 
         driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;

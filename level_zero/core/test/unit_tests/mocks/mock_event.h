@@ -33,6 +33,7 @@ using Event = WhiteBox<::L0::Event>;
 template <>
 struct WhiteBox<::L0::EventPool> : public ::L0::EventPool {
     using BaseClass = ::L0::EventPool;
+    using BaseClass::eventPackets;
 };
 
 using EventPool = WhiteBox<::L0::EventPool>;

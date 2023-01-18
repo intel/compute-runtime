@@ -604,6 +604,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     poolData.rootDeviceIndex = this->getDevice()->getRootDeviceIndex();
     poolData.isDeviceEventPoolAllocation = this->isDeviceEventPoolAllocation;
     poolData.isHostVisibleEventPoolAllocation = this->isHostVisibleEventPoolAllocation;
+    poolData.maxEventPackets = this->getEventMaxPackets();
 
     int retCode = this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), poolData.handle);
     return retCode == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -616,7 +617,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
 
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     desc.count = static_cast<uint32_t>(poolData.numEvents);
-    auto eventPool = new EventPool(&desc);
+    auto eventPool = std::make_unique<EventPool>(&desc);
     eventPool->isDeviceEventPoolAllocation = poolData.isDeviceEventPoolAllocation;
     eventPool->isHostVisibleEventPoolAllocation = poolData.isHostVisibleEventPoolAllocation;
 
@@ -625,6 +626,13 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(poolData.handle);
 
     eventPool->initializeSizeParameters(this->numDevices, this->deviceHandles.data(), *this->driverHandle, neoDevice->getRootDeviceEnvironment());
+    if (eventPool->getEventMaxPackets() != poolData.maxEventPackets) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(),
+                           stderr,
+                           "IPC handle max event packets %u does not match context devices max event packet %u\n",
+                           poolData.maxEventPackets, eventPool->getEventMaxPackets());
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     NEO::AllocationType allocationType = NEO::AllocationType::BUFFER_HOST_MEMORY;
     if (eventPool->isDeviceEventPoolAllocation) {
@@ -645,8 +653,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
                                                                                              false);
 
     if (alloc == nullptr) {
-        delete eventPool;
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
     eventPool->context = this;
@@ -674,15 +681,12 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
                 memoryManager->freeGraphicsMemory(gpuAllocation);
             }
             memoryManager->freeGraphicsMemory(alloc);
-
-            delete eventPool;
-
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         eventPool->eventPoolAllocations->addAllocation(graphicsAllocation);
     }
 
-    *eventPoolHandle = eventPool;
+    *eventPoolHandle = eventPool.release();
 
     return ZE_RESULT_SUCCESS;
 }
