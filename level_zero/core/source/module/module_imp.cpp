@@ -1008,14 +1008,14 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
         auto deviceSymbolIt = symbols.find(pGlobalName);
         if (deviceSymbolIt != symbols.end()) {
             if (deviceSymbolIt->second.symbol.segment == NEO::SegmentType::Instructions) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                return ZE_RESULT_ERROR_INVALID_GLOBAL_NAME;
             }
         } else {
             if (!this->isGlobalSymbolExportEnabled) {
                 PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            return ZE_RESULT_ERROR_INVALID_GLOBAL_NAME;
         }
         address = deviceSymbolIt->second.gpuAddress;
         size = deviceSymbolIt->second.symbol.size;

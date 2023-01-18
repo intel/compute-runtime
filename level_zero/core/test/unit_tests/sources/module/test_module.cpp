@@ -3098,7 +3098,7 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThatIsAnInstucti
     void *ptr = nullptr;
     auto result = module0->getGlobalPointer("symbol", &size, &ptr);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GLOBAL_NAME, result);
     EXPECT_EQ(0u, size);
     EXPECT_EQ(nullptr, ptr);
 }
@@ -3111,7 +3111,7 @@ TEST_F(ModuleTest, givenModuleWithoutSymbolsThenFailureReturned) {
     void *ptr = nullptr;
     auto result = module0->getGlobalPointer("symbol", &size, &ptr);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GLOBAL_NAME, result);
     EXPECT_EQ(0u, size);
     EXPECT_EQ(nullptr, ptr);
 }
