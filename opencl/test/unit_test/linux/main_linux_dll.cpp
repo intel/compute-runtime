@@ -884,8 +884,12 @@ TEST(DeviceTest, whenCheckBlitSplitEnabledThenReturnsTrue) {
     EXPECT_TRUE(Device::isBlitSplitEnabled());
 }
 
-TEST(DeviceTest, whenCheckIsInitDeviceWithFirstSubmissionEnabledThenReturnsTrue) {
-    EXPECT_TRUE(Device::isInitDeviceWithFirstSubmissionEnabled());
+TEST(DeviceTest, givenCsrHwWhenCheckIsInitDeviceWithFirstSubmissionEnabledThenReturnsTrue) {
+    EXPECT_TRUE(Device::isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType::CSR_HW));
+}
+
+TEST(DeviceTest, givenCsrNonHwWhenCheckIsInitDeviceWithFirstSubmissionEnabledThenReturnsTrue) {
+    EXPECT_FALSE(Device::isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType::CSR_TBX));
 }
 
 TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/reference_tracked_object.h"
@@ -107,7 +108,7 @@ class Device : public ReferenceTrackedObject<Device> {
     RootDeviceEnvironment &getRootDeviceEnvironmentRef() const;
     bool isFullRangeSvm() const;
     static bool isBlitSplitEnabled();
-    static bool isInitDeviceWithFirstSubmissionEnabled();
+    static bool isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType csrType);
     bool isBcsSplitSupported();
     bool areSharedSystemAllocationsAllowed() const;
     template <typename SpecializedDeviceT>

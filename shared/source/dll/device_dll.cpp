@@ -13,8 +13,8 @@ bool Device::isBlitSplitEnabled() {
     return true;
 }
 
-bool Device::isInitDeviceWithFirstSubmissionEnabled() {
-    return true;
+bool Device::isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType csrType) {
+    return csrType == CommandStreamReceiverType::CSR_HW;
 }
 
 } // namespace NEO

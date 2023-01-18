@@ -1583,11 +1583,7 @@ void CommandStreamReceiverHw<GfxFamily>::createKernelArgsBufferAllocation() {
 
 template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
-    auto lock = obtainUniqueOwnership();
-
-    auto &commandStream = getCS(EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize());
-    auto commandStreamStart = commandStream.getUsed();
-    return this->flushSmallTask(commandStream, commandStreamStart);
+    return flushTagUpdate();
 }
 
 template <typename GfxFamily>
