@@ -7,7 +7,7 @@
 
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
-#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_properties.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"

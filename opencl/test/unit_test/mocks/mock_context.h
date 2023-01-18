@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/context/context.h"

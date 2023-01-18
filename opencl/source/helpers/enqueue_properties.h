@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_properties_container.h"
 
 namespace NEO {
 

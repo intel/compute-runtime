@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -748,6 +749,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
+        blitProperties.blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+        blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
         blitProperties.copySize = {bltSize, 1, 1};
         blitPropertiesContainer.push_back(blitProperties);
 
@@ -786,6 +789,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
+        blitProperties.blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+        blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
         blitProperties.copySize = {bltSize, 1, 1};
         blitPropertiesContainer.push_back(blitProperties);
 
@@ -823,6 +828,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
+        blitProperties.blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+        blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
         blitProperties.copySize = bltSize;
         blitPropertiesContainer.push_back(blitProperties);
 
@@ -860,6 +867,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
+        blitProperties.blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+        blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
         blitProperties.copySize = bltSize;
         blitPropertiesContainer.push_back(blitProperties);
 

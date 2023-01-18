@@ -1,0 +1,76 @@
+/*
+ * Copyright (C) 2023 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/helpers/blit_helper.h"
+
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+
+namespace NEO {
+
+namespace BlitHelperFunctions {
+BlitMemoryToAllocationFunc blitMemoryToAllocation = BlitHelper::blitMemoryToAllocation;
+} // namespace BlitHelperFunctions
+
+BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                       const Vec3<size_t> &size) {
+    auto memoryBanks = memory->storageInfo.getMemoryBanks();
+    return blitMemoryToAllocationBanks(device, memory, offset, hostPtr, size, memoryBanks);
+}
+
+BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                            const Vec3<size_t> &size, DeviceBitfield memoryBanks) {
+    const auto &hwInfo = device.getHardwareInfo();
+    if (!hwInfo.capabilityTable.blitterOperationsSupported) {
+        return BlitOperationResult::Unsupported;
+    }
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+
+    UNRECOVERABLE_IF(memoryBanks.none());
+
+    auto pRootDevice = device.getRootDevice();
+
+    for (uint8_t tileId = 0u; tileId < 4u; tileId++) {
+        if (!memoryBanks.test(tileId)) {
+            continue;
+        }
+
+        UNRECOVERABLE_IF(!pRootDevice->getDeviceBitfield().test(tileId));
+        auto pDeviceForBlit = pRootDevice->getNearestGenericSubDevice(tileId);
+        auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
+        auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
+        auto internalUsage = true;
+        auto bcsEngineType = EngineHelpers::getBcsEngineType(pDeviceForBlit->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
+        auto bcsEngineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+        auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
+        if (!bcsEngine) {
+            return BlitOperationResult::Unsupported;
+        }
+
+        bcsEngine->commandStreamReceiver->initializeResources();
+        bcsEngine->commandStreamReceiver->initDirectSubmission();
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(
+            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                            *bcsEngine->commandStreamReceiver, memory, nullptr,
+                                                            hostPtr,
+                                                            (memory->getGpuAddress() + offset),
+                                                            0, 0, 0, size, 0, 0, 0, 0));
+
+        const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *pDeviceForBlit);
+        if (newTaskCount == CompletionStamp::gpuHang) {
+            return BlitOperationResult::GpuHang;
+        }
+    }
+
+    return BlitOperationResult::Success;
+}
+
+} // namespace NEO

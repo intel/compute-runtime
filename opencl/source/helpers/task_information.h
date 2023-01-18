@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/map_operation_type.h"
 #include "shared/source/helpers/timestamp_packet.h"

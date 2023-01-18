@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"

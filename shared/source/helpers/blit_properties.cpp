@@ -1,24 +1,17 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_properties.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/device/device.h"
-#include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/surface.h"
 
 namespace NEO {
-
-namespace BlitHelperFunctions {
-BlitMemoryToAllocationFunc blitMemoryToAllocation = BlitHelper::blitMemoryToAllocation;
-} // namespace BlitHelperFunctions
 
 BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection blitDirection,
                                                                CommandStreamReceiver &commandStreamReceiver,
@@ -168,58 +161,10 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
     blitPropertiesContainer[numObjects].csrDependencies.timestampPacketContainer.push_back(&kernelTimestamps);
 }
 
-BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                       const Vec3<size_t> &size) {
-    auto memoryBanks = memory->storageInfo.getMemoryBanks();
-    return blitMemoryToAllocationBanks(device, memory, offset, hostPtr, size, memoryBanks);
-}
-
-BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                            const Vec3<size_t> &size, DeviceBitfield memoryBanks) {
-    const auto &hwInfo = device.getHardwareInfo();
-    if (!hwInfo.capabilityTable.blitterOperationsSupported) {
-        return BlitOperationResult::Unsupported;
-    }
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
-
-    UNRECOVERABLE_IF(memoryBanks.none());
-
-    auto pRootDevice = device.getRootDevice();
-
-    for (uint8_t tileId = 0u; tileId < 4u; tileId++) {
-        if (!memoryBanks.test(tileId)) {
-            continue;
-        }
-
-        UNRECOVERABLE_IF(!pRootDevice->getDeviceBitfield().test(tileId));
-        auto pDeviceForBlit = pRootDevice->getNearestGenericSubDevice(tileId);
-        auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
-        auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
-        auto internalUsage = true;
-        auto bcsEngineType = EngineHelpers::getBcsEngineType(pDeviceForBlit->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
-        auto bcsEngineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
-        auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
-        if (!bcsEngine) {
-            return BlitOperationResult::Unsupported;
-        }
-
-        bcsEngine->commandStreamReceiver->initializeResources();
-        bcsEngine->commandStreamReceiver->initDirectSubmission();
-        BlitPropertiesContainer blitPropertiesContainer;
-        blitPropertiesContainer.push_back(
-            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                            *bcsEngine->commandStreamReceiver, memory, nullptr,
-                                                            hostPtr,
-                                                            (memory->getGpuAddress() + offset),
-                                                            0, 0, 0, size, 0, 0, 0, 0));
-
-        const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *pDeviceForBlit);
-        if (newTaskCount == CompletionStamp::gpuHang) {
-            return BlitOperationResult::GpuHang;
-        }
-    }
-
-    return BlitOperationResult::Success;
+bool BlitProperties::isImageOperation() const {
+    return blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
+           blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr ||
+           blitDirection == BlitterConstants::BlitDirection::ImageToImage;
 }
 
 } // namespace NEO
