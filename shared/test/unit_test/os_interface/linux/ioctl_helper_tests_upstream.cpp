@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -206,7 +206,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectVal
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
 
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(1u, drm->numRegions);
     EXPECT_EQ(1024u, drm->createExt.size);
@@ -307,7 +307,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDistancesThenReturnEinval) 
     std::vector<DistanceInfo> distanceInfos;
     std::vector<QueryItem> queries(4);
     auto ret = drm->getIoctlHelper()->queryDistances(queries, distanceInfos);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     const bool queryUnsupported = std::all_of(queries.begin(), queries.end(),
                                               [](const QueryItem &item) { return item.length == -EINVAL; });
     EXPECT_TRUE(queryUnsupported);
@@ -434,13 +434,13 @@ TEST(IoctlHelperTestsUpstream, whenRegisterUuidIsCalledThenReturnNullHandle) {
 
     {
         const auto [retVal, handle] = ioctlHelper.registerUuid("", 0, 0, 0);
-        EXPECT_EQ(0u, retVal);
+        EXPECT_EQ(0, retVal);
         EXPECT_EQ(0u, handle);
     }
 
     {
         const auto [retVal, handle] = ioctlHelper.registerStringClassUuid("", 0, 0);
-        EXPECT_EQ(0u, retVal);
+        EXPECT_EQ(0, retVal);
         EXPECT_EQ(0u, handle);
     }
 }

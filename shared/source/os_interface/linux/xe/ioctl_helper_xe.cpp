@@ -346,9 +346,8 @@ bool IoctlHelperXe::isVmBindAvailable() {
     return true;
 }
 
-uint32_t IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
+int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
     struct drm_xe_gem_create create = {};
-    int ret;
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
 
     if (!regionsSize) {
@@ -374,7 +373,7 @@ uint32_t IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, siz
         UNRECOVERABLE_IF(true);
         break;
     }
-    ret = IoctlHelper::ioctl(DrmIoctl::GemCreate, &create);
+    auto ret = IoctlHelper::ioctl(DrmIoctl::GemCreate, &create);
     handle = create.handle;
 
     xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x h=0x%x r=%d\n", __FUNCTION__,
@@ -387,7 +386,7 @@ uint32_t IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, siz
         bindInfo.push_back(b);
     }
 
-    return static_cast<uint32_t>(ret);
+    return ret;
 }
 
 CacheRegion IoctlHelperXe::closAlloc() {
@@ -550,7 +549,7 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
     return ret;
 }
 
-uint32_t IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
+int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     if (distanceInfos.size() == 0) {
         DistanceInfo d;
@@ -842,8 +841,8 @@ uint64_t IoctlHelperXe::xeDecanonize(uint64_t address) {
     return (address & maxNBitValue(addressWidth));
 }
 
-uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
-    uint32_t ret = static_cast<uint32_t>(-1);
+int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
+    int ret = -1;
     xeLog(" => IoctlHelperXe::%s 0x%x\n", __FUNCTION__, request);
     switch (request) {
     case DrmIoctl::Getparam: {
@@ -869,7 +868,7 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             *d->value = static_cast<int>(xeTimestampFrequency);
             break;
         default:
-            ret = static_cast<uint32_t>(-1);
+            ret = -1;
         }
         xeLog(" -> IoctlHelperXe::ioctl Getparam 0x%x/0x%x r=%d\n", d->param, *d->value, ret);
     } break;
@@ -896,7 +895,7 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             bindInfo.push_back(b);
         }
         ret = 0;
-        xeLog(" -> IoctlHelperXe::ioctl GemUserptrGemUserptr p=0x%llx s=0x%llx f=0x%x h=0x%x r=0x%x\n", d->userPtr,
+        xeLog(" -> IoctlHelperXe::ioctl GemUserptrGemUserptr p=0x%llx s=0x%llx f=0x%x h=0x%x r=%d\n", d->userPtr,
               d->userSize, d->flags, d->handle, ret);
         xeShowBindTable();
     } break;
@@ -911,7 +910,7 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             ret = IoctlHelper::ioctl(request, &destroy);
         else
             ret = 0;
-        xeLog(" -> IoctlHelperXe::ioctl GemContextDestroryExt ctx=0x%x r=0x%x\n",
+        xeLog(" -> IoctlHelperXe::ioctl GemContextDestroryExt ctx=0x%x r=%d\n",
               d->contextId, ret);
     } break;
     case DrmIoctl::GemContextGetparam: {
@@ -929,10 +928,10 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             d->value = 0x1;
             break;
         default:
-            ret = static_cast<uint32_t>(-1);
+            ret = -1;
             break;
         }
-        xeLog(" -> IoctlHelperXe::ioctl GemContextGetparam r=0x%x\n", ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemContextGetparam r=%d\n", ret);
     } break;
     case DrmIoctl::GemContextSetparam: {
         GemContextParam *d = static_cast<GemContextParam *>(arg);
@@ -962,10 +961,10 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             ret = 0;
             break;
         default:
-            ret = static_cast<uint32_t>(-1);
+            ret = -1;
             break;
         }
-        xeLog(" -> IoctlHelperXe::ioctl GemContextSetparam r=0x%x\n", ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemContextSetparam r=%d\n", ret);
     } break;
     case DrmIoctl::GemClose: {
         struct GemClose *d = static_cast<struct GemClose *>(arg);
@@ -996,7 +995,7 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         } else {
             ret = 0; // let it pass trough for now
         }
-        xeLog(" -> IoctlHelperXe::ioctl GemClose found=%d h=0x%x r=0x%x\n", found, d->handle, ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemClose found=%d h=0x%x r=%d\n", found, d->handle, ret);
     } break;
     case DrmIoctl::RegRead: {
         struct drm_xe_mmio mmio = {};
@@ -1008,7 +1007,7 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         mmio.flags = DRM_XE_MMIO_READ | DRM_XE_MMIO_64BIT;
         ret = IoctlHelper::ioctl(request, &mmio);
         reg->value = mmio.value;
-        xeLog(" -> IoctlHelperXe::ioctl RegRead 0x%lx/0x%lx r=0x%x\n",
+        xeLog(" -> IoctlHelperXe::ioctl RegRead 0x%lx/0x%lx r=%d\n",
               reg->offset, reg->value, ret);
     } break;
     case DrmIoctl::GemVmCreate: {
@@ -1020,7 +1019,7 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         d->vmId = ret ? 0 : args.vm_id;
         xeVmId = d->vmId;
         printf("VM: 0x%llx\n", args.reserved[0]); // Don't remove for now
-        xeLog(" -> IoctlHelperXe::ioctl GemVmCreate vmid=0x%x r=0x%x\n", d->vmId, ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemVmCreate vmid=0x%x r=%d\n", d->vmId, ret);
 
     } break;
     case DrmIoctl::GemVmDestroy: {
@@ -1028,7 +1027,7 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         struct drm_xe_vm_destroy args = {};
         args.vm_id = d->vmId;
         ret = IoctlHelper::ioctl(request, &args);
-        xeLog(" -> IoctlHelperXe::ioctl GemVmDestroy vmid=0x%x r=0x%x\n", d->vmId, ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemVmDestroy vmid=0x%x r=%d\n", d->vmId, ret);
 
     } break;
 
@@ -1038,25 +1037,25 @@ uint32_t IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         mmo.handle = d->handle;
         ret = IoctlHelper::ioctl(request, &mmo);
         d->offset = mmo.offset;
-        xeLog(" -> IoctlHelperXe::ioctl GemMmapOffset h=0x%x o=0x%x r=0x%x\n",
+        xeLog(" -> IoctlHelperXe::ioctl GemMmapOffset h=0x%x o=0x%x r=%d\n",
               d->handle, d->offset, ret);
     } break;
     case DrmIoctl::GetResetStats: {
         ResetStats *d = static_cast<ResetStats *>(arg);
         //    d->batchActive = 1; // fake gpu hang
         ret = 0;
-        xeLog(" -> IoctlHelperXe::ioctl GetResetStats ctx=0x%x r=0x%x\n",
+        xeLog(" -> IoctlHelperXe::ioctl GetResetStats ctx=0x%x r=%d\n",
               d->contextId, ret);
     } break;
     case DrmIoctl::PrimeFdToHandle: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
-        xeLog(" ->PrimeFdToHandle  h=0x%x f=0x%x d=0x%x r=0x%x\n",
+        xeLog(" ->PrimeFdToHandle  h=0x%x f=0x%x d=0x%x r=%d\n",
               prime->handle, prime->flags, prime->fileDescriptor, ret);
     } break;
     case DrmIoctl::PrimeHandleToFd: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
-        xeLog(" ->PrimeHandleToFd h=0x%x f=0x%x d=0x%x r=0x%x\n",
+        xeLog(" ->PrimeHandleToFd h=0x%x f=0x%x d=0x%x r=%d\n",
               prime->handle, prime->flags, prime->fileDescriptor, ret);
         ret = IoctlHelper::ioctl(request, arg);
     } break;

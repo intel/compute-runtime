@@ -373,10 +373,10 @@ bool DebugSessionLinux::closeFd() {
         return false;
     }
 
-    auto res = NEO::SysCalls::close(fd);
+    auto ret = NEO::SysCalls::close(fd);
 
-    if (res != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("Debug connection close() on fd: %d failed: retCode: %d\n", fd, res);
+    if (ret != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("Debug connection close() on fd: %d failed: retCode: %d\n", fd, ret);
         return false;
     }
     fd = 0;
@@ -568,9 +568,9 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
                 readUuid.handle = static_cast<decltype(readUuid.handle)>(uuid->handle);
                 readUuid.payload_ptr = reinterpret_cast<uint64_t>(payload.get());
                 readUuid.payload_size = uuid->payload_size;
-                auto res = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_UUID, &readUuid);
+                auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_UUID, &readUuid);
 
-                if (res == 0) {
+                if (ret == 0) {
                     std::string uuidString = std::string(readUuid.uuid, 36);
                     uint32_t classIndex = static_cast<uint32_t>(NEO::DrmResourceClass::MaxSize);
                     auto validClassUuid = NEO::DrmUuid::getClassUuidIndex(uuidString, classIndex);
@@ -640,10 +640,10 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
                         extractUuidData(uuid->client_handle, uuidData);
                     }
 
-                    PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_UUID client_handle = %llu handle = %llu flags = %d uuid = %s res = %d\n",
-                                            (uint64_t)readUuid.client_handle, (uint64_t)readUuid.handle, (int)readUuid.flags, uuidString.c_str(), res);
+                    PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_UUID client_handle = %llu handle = %llu flags = %d uuid = %s ret = %d\n",
+                                            (uint64_t)readUuid.client_handle, (uint64_t)readUuid.handle, (int)readUuid.flags, uuidString.c_str(), ret);
                 } else {
-                    PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_UUID res = %d errno = %d\n", res, errno);
+                    PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_UUID ret = %d errno = %d\n", ret, errno);
                 }
             } else {
                 connection->uuidMap[uuid->handle].classHandle = uuid->class_handle;
@@ -789,10 +789,10 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
 }
 
 ze_result_t DebugSessionLinux::readEventImp(prelim_drm_i915_debug_event *drmDebugEvent) {
-    auto res = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_EVENT, drmDebugEvent);
+    auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_EVENT, drmDebugEvent);
 
-    if (res != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT failed: retCode: %d errno = %d\n", res, errno);
+    if (ret != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT failed: retCode: %d errno = %d\n", ret, errno);
     } else {
         if ((drmDebugEvent->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE) == 0 &&
             (drmDebugEvent->flags & PRELIM_DRM_I915_DEBUG_EVENT_DESTROY) == 0 &&
@@ -1415,16 +1415,16 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
 
     printBitmask(bitmask.get(), bitmaskSize);
 
-    auto res = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
-    if (res != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d\n", res, errno, command);
+    auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
+    if (ret != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d\n", ret, errno, command);
     } else {
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", (uint64_t)euControl.seqno, command);
     }
 
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL) {
-        if (res == 0) {
+        if (ret == 0) {
             euControlInterruptSeqno[tile] = euControl.seqno;
         } else {
             euControlInterruptSeqno[tile] = invalidHandle;
@@ -1435,7 +1435,7 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
         bitmaskOut = std::move(bitmask);
         bitmaskSizeOut = euControl.bitmask_size;
     }
-    return res;
+    return ret;
 }
 
 ze_result_t DebugSessionLinux::resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) {

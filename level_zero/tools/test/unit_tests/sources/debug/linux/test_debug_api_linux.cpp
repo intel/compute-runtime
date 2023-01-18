@@ -4980,7 +4980,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndFailingReadUuidEventIoctlWhenHandl
     EXPECT_EQ(0u, session->getClassHandleToIndex().size());
 
     auto errorMessage = ::testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string("\nERROR: PRELIM_I915_DEBUG_IOCTL_READ_UUID res = -1 errno = 0\n"), errorMessage);
+    EXPECT_EQ(std::string("\nERROR: PRELIM_I915_DEBUG_IOCTL_READ_UUID ret = -1 errno = 0\n"), errorMessage);
 }
 
 TEST_F(DebugApiLinuxTest, GivenEventsAvailableWhenReadingEventThenEventsAreReturned) {

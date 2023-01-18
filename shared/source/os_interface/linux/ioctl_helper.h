@@ -55,7 +55,7 @@ struct VmBindParams {
 };
 
 struct UuidRegisterResult {
-    uint32_t retVal;
+    int32_t retVal;
     uint32_t handle;
 };
 
@@ -68,12 +68,12 @@ class IoctlHelper {
     IoctlHelper(Drm &drmArg) : drm(drmArg){};
     virtual ~IoctlHelper() {}
     static std::unique_ptr<IoctlHelper> getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm);
-    virtual uint32_t ioctl(DrmIoctl request, void *arg);
+    virtual int ioctl(DrmIoctl request, void *arg);
 
     virtual bool initialize() = 0;
     virtual bool isSetPairAvailable() = 0;
     virtual bool isVmBindAvailable() = 0;
-    virtual uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) = 0;
+    virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) = 0;
     virtual CacheRegion closAlloc() = 0;
     virtual uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(CacheRegion closIndex) = 0;
@@ -86,7 +86,7 @@ class IoctlHelper {
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
-    virtual uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
+    virtual int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
     virtual int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
@@ -151,7 +151,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isVmBindAvailable() override;
-    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
     CacheRegion closAlloc() override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
@@ -164,7 +164,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
-    uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
+    int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
@@ -204,7 +204,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
         return std::make_unique<IoctlHelperImpl<gfxProduct>>(drm);
     }
 
-    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
@@ -217,7 +217,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isVmBindAvailable() override;
-    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
     CacheRegion closAlloc() override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
@@ -230,7 +230,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
-    uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
+    int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;

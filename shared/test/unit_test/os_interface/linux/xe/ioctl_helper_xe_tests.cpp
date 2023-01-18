@@ -57,7 +57,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     MemRegionsVec memRegions{};
     uint32_t handle = 0u;
-    EXPECT_NE(0u, xeIoctlHelper->createGemExt(memRegions, 0u, handle, {}, -1));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, {}, -1));
 
     EXPECT_TRUE(xeIoctlHelper->isVmBindAvailable());
 
@@ -88,7 +88,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     std::vector<QueryItem> queryItems;
     std::vector<DistanceInfo> distanceInfos;
-    EXPECT_EQ(0u, xeIoctlHelper->queryDistances(queryItems, distanceInfos));
+    EXPECT_EQ(0, xeIoctlHelper->queryDistances(queryItems, distanceInfos));
     EXPECT_EQ(0u, distanceInfos.size());
 
     EXPECT_EQ(PRELIM_I915_UFENCE_WAIT_SOFT, xeIoctlHelper->getWaitUserFenceSoftFlag());
@@ -132,11 +132,11 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     std::string uuid{};
     auto registerUuidResult = xeIoctlHelper->registerUuid(uuid, 0, 0, 0);
-    EXPECT_EQ(0u, registerUuidResult.retVal);
+    EXPECT_EQ(0, registerUuidResult.retVal);
     EXPECT_EQ(0u, registerUuidResult.handle);
 
     auto registerStringClassUuidResult = xeIoctlHelper->registerStringClassUuid(uuid, 0, 0);
-    EXPECT_EQ(0u, registerStringClassUuidResult.retVal);
+    EXPECT_EQ(0, registerStringClassUuidResult.retVal);
     EXPECT_EQ(0u, registerStringClassUuidResult.handle);
 
     EXPECT_EQ(0, xeIoctlHelper->unregisterUuid(0));
@@ -388,7 +388,7 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
     query.numItems = 1;
 
-    EXPECT_EQ(static_cast<uint32_t>(-1), mockXeIoctlHelper->ioctl(DrmIoctl::Query, &query));
+    EXPECT_EQ(-1, mockXeIoctlHelper->ioctl(DrmIoctl::Query, &query));
     queryItem.queryId = xeIoctlHelper->getDrmParamValue(DrmParam::QueryHwconfigTable);
     mockXeIoctlHelper->ioctl(DrmIoctl::Query, &query);
     EXPECT_EQ(0, queryItem.length);

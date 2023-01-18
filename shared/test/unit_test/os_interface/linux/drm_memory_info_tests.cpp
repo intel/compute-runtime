@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -237,7 +237,7 @@ HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemWithExtension
     MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
     auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
     EXPECT_EQ(1024u, drm->createExt.size);
 }
@@ -260,7 +260,7 @@ HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingle
 
     auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
     EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, drm->memRegions.memoryClass);
     EXPECT_EQ(1024u, drm->createExt.size);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,7 +111,7 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    int32_t ret = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_ENABLE, 0);
+    auto ret = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_ENABLE, 0);
     PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
                        "PRELIM_I915_PERF_IOCTL_ENABLE failed errno = %d | ret = %d \n", errno, ret);
 
@@ -120,11 +120,11 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
 
 ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
 
-    int32_t disableStatus = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_DISABLE, 0);
+    int disableStatus = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_DISABLE, 0);
     PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
                        "I915_PERF_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
 
-    int32_t closeStatus = NEO::SysCalls::close(stream);
+    int closeStatus = NEO::SysCalls::close(stream);
     PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
                        "close() failed errno = %d | ret = %d \n", errno, closeStatus);
     stream = -1;

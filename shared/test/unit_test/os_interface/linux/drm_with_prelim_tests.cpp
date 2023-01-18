@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,7 +136,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
 
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -159,7 +159,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegiste
     GemContextCreateExt arg{};
     drm->ioctlCallsCount = 0;
     auto ret = drm->ioctlHelper->ioctl(DrmIoctl::GemContextCreateExt, &arg);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -340,7 +340,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
     distances[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2};
     std::vector<QueryItem> queryItems(distances.size());
     auto ret = ioctlHelper->queryDistances(queryItems, distances);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(0, distances[0].distance);
     EXPECT_EQ(0, distances[1].distance);
     EXPECT_EQ(100, distances[2].distance);

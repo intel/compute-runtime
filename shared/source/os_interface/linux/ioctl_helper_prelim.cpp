@@ -66,7 +66,7 @@ bool IoctlHelperPrelim20::isVmBindAvailable() {
     return vmBindSupported;
 }
 
-uint32_t IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
+int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<prelim_drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {
@@ -330,7 +330,7 @@ prelim_drm_i915_query_distance_info translateToi915(const DistanceInfo &distance
     return dist;
 }
 
-uint32_t IoctlHelperPrelim20::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
+int IoctlHelperPrelim20::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
     std::vector<prelim_drm_i915_query_distance_info> i915Distances(distanceInfos.size());
     std::transform(distanceInfos.begin(), distanceInfos.end(), i915Distances.begin(), translateToi915);
 

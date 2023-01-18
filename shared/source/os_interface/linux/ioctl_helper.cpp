@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@
 
 namespace NEO {
 
-uint32_t IoctlHelper::ioctl(DrmIoctl request, void *arg) {
+int IoctlHelper::ioctl(DrmIoctl request, void *arg) {
     return drm.ioctl(request, arg);
 }
 
@@ -137,7 +137,7 @@ bool IoctlHelper::setDomainCpu(uint32_t handle, bool writeEnable) {
     setDomain.handle = handle;
     setDomain.read_domains = I915_GEM_DOMAIN_CPU;
     setDomain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
-    return this->ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0u;
+    return this->ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0;
 }
 
 uint32_t IoctlHelper::getFlagsForPrimeHandleToFd() const {
