@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,16 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-#include <getopt.h>
 #include <iostream>
 #include <map>
-#include <string.h>
 #include <sys/stat.h>
+#if defined(_WIN32) || defined(_WIN64)
+#include <shlobj_core.h>
+#include <string>
+#else // defined(_WIN32) || defined(_WIN64)#
+#include <string.h>
 #include <unistd.h>
+#endif // defined(_WIN32) || defined(_WIN64)
 #include <vector>
 
 bool verbose = true;
@@ -63,6 +67,24 @@ std::string getErrorString(ze_result_t error) {
         return "ZE_RESULT_ERROR_UNKNOWN";
     else
         return mgetErrorString.at(error);
+}
+inline bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName, int *optind) {
+    if (argc < 2) {
+        return false;
+    }
+    int index = 1;
+    char **arg = &argv[1];
+    char **argE = &argv[argc];
+
+    for (; arg != argE; ++arg) {
+        if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
+            *optind = index;
+            return true;
+        }
+        index++;
+    }
+
+    return false;
 }
 
 #define VALIDATECALL(myZeCall)                \
@@ -217,7 +239,15 @@ void setPowerLimit(const zes_pwr_handle_t &handle, std::vector<std::string> &buf
         std::cout << "Unsupported Power Level to set limit" << std::endl;
     }
 }
-
+#if defined(_WIN32) || defined(_WIN64)
+int geteuid() {
+    if (IsUserAnAdmin()) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+#endif // defined(_WIN32) || defined(_WIN64)
 void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, uint32_t &curDeviceIndex) {
     std::cout << std::endl
               << " ----  Power tests ---- " << std::endl;
@@ -1283,211 +1313,207 @@ bool validateGetenv(const char *name) {
         return false;
     return (0 == strcmp("1", env));
 }
+int enableSysman() {
+    int ret = 0;
+#if defined(_WIN32) || defined(_WIN64)
+    ret = _putenv_s("ZES_ENABLE_SYSMAN", "1");
+#else  // defined(_WIN32) || defined(_WIN64)
+    ret = setenv("ZES_ENABLE_SYSMAN", "1", 1);
+#endif // defined(_WIN32) || defined(_WIN64)
+    return ret;
+}
 int main(int argc, char *argv[]) {
     std::vector<ze_device_handle_t> devices;
     ze_driver_handle_t driver;
 
     if (!validateGetenv("ZES_ENABLE_SYSMAN")) {
-        std::cout << "Must set environment variable ZES_ENABLE_SYSMAN=1" << std::endl;
-        exit(0);
+        std::cout << "setting environment variable ZES_ENABLE_SYSMAN=1" << std::endl;
+        if (enableSysman() != 0) {
+            std::cout << "Must set environment variable ZES_ENABLE_SYSMAN=1" << std::endl;
+            exit(0);
+        }
     }
     getDeviceHandles(driver, devices, argc, argv);
-    int opt;
 
-    static struct option longOpts[] = {
-        {"help", no_argument, nullptr, 'h'},
-        {"pci", no_argument, nullptr, 'p'},
-        {"frequency", no_argument, nullptr, 'f'},
-        {"standby", no_argument, nullptr, 's'},
-        {"engine", no_argument, nullptr, 'e'},
-        {"scheduler", no_argument, nullptr, 'c'},
-        {"temperature", no_argument, nullptr, 't'},
-        {"power", optional_argument, nullptr, 'o'},
-        {"global", no_argument, nullptr, 'g'},
-        {"ras", no_argument, nullptr, 'R'},
-        {"memory", no_argument, nullptr, 'm'},
-        {"event", no_argument, nullptr, 'E'},
-        {"reset", required_argument, nullptr, 'r'},
-        {"fabricport", no_argument, nullptr, 'F'},
-        {"firmware", optional_argument, nullptr, 'i'},
-        {"diagnostics", no_argument, nullptr, 'd'},
-        {"performance", optional_argument, nullptr, 'P'},
-        {"ecc", no_argument, nullptr, 'C'},
-        {0, 0, 0, 0},
-    };
     bool force = false;
     bool pFactorIsSet = true;
     std::vector<std::string> buf;
     uint32_t deviceIndex = 0;
-    while ((opt = getopt_long(argc, argv, "hdpPfsectogmr:FEi:C", longOpts, nullptr)) != -1) {
-        switch (opt) {
-        case 'h':
+    int optind = 0;
+    char *optarg = nullptr;
+
+    if (isParamEnabled(argc, argv, "-h", "--help", &optind)) {
+        usage();
+        exit(0);
+    }
+    if (isParamEnabled(argc, argv, "-p", "--pci", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanPci(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-P", "--performance", &optind)) {
+        deviceIndex = 0;
+        optind = optind + 1;
+        while (optind < argc) {
+            buf.push_back(argv[optind]);
+            optind++;
+        }
+        if (buf.size() != 0 && (buf.size() != 5 || buf[0] != "--setconfig")) {
             usage();
             exit(0);
-            break;
-        case 'p':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanPci(device);
-            });
-            break;
-        case 'P':
-            deviceIndex = 0;
-            while (optind < argc) {
-                buf.push_back(argv[optind]);
-                optind++;
-            }
-            if (buf.size() != 0 && (buf.size() != 5 || buf[0] != "--setconfig")) {
-                usage();
-                exit(0);
-            }
-            if (buf.size() != 0) {
-                if (checkpFactorArguments(devices, buf) == false) {
-                    std::cout << "Invalid arguments passed for setting performance factor" << std::endl;
-                    usage();
-                    exit(0);
-                }
-                pFactorIsSet = false;
-            }
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanPerformance(device, buf, deviceIndex, pFactorIsSet);
-            });
-            if (pFactorIsSet == false) {
-                std::cout << "Unable to set the Performance factor" << std::endl;
-            }
-            buf.clear();
-            break;
-        case 'f':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanFrequency(device);
-            });
-            break;
-        case 's':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanStandby(device);
-            });
-            break;
-        case 'e':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanEngine(device);
-            });
-            break;
-        case 'c':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanScheduler(device);
-            });
-            break;
-        case 't':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanTemperature(device);
-            });
-            break;
-        case 'C':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanEcc(device);
-            });
-            break;
-        case 'o':
-            deviceIndex = 0;
-            while (optind < argc) {
-                buf.push_back(argv[optind]);
-                optind++;
-            }
-
-            if (buf.size() != 0) {
-                if (validatePowerLimitArguments(devices.size(), buf) == false) {
-                    std::cout << "Invalid Arguments passed to set power limit" << std::endl;
-                    usage();
-                    exit(0);
-                }
-            }
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanPower(device, buf, deviceIndex);
-            });
-            break;
-        case 'g':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanGlobalOperations(device);
-            });
-            break;
-        case 'm':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanMemory(device);
-            });
-            break;
-        case 'R':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanRas(device);
-            });
-            break;
-        case 'i': {
-            std::string filePathFirmware;
-            if (optarg != nullptr) {
-                filePathFirmware = optarg;
-            }
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanFirmware(device, filePathFirmware);
-            });
-            break;
         }
-        case 'r':
-            if (!strcmp(optarg, "force")) {
-                force = true;
-            } else if (!strcmp(optarg, "noforce")) {
-                force = false;
-            } else {
+        if (buf.size() != 0) {
+            if (checkpFactorArguments(devices, buf) == false) {
+                std::cout << "Invalid arguments passed for setting performance factor" << std::endl;
                 usage();
                 exit(0);
             }
-            if (optind < argc) {
-                deviceIndex = static_cast<uint32_t>(std::stoi(argv[optind]));
-                if (deviceIndex >= devices.size()) {
-                    std::cout << "Invalid deviceId specified for device reset" << std::endl;
-                    usage();
-                    exit(0);
-                }
-                testSysmanReset(devices[deviceIndex], force);
-            } else {
-                std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                    testSysmanReset(device, force);
-                });
+            pFactorIsSet = false;
+        }
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanPerformance(device, buf, deviceIndex, pFactorIsSet);
+        });
+        if (pFactorIsSet == false) {
+            std::cout << "Unable to set the Performance factor" << std::endl;
+        }
+        buf.clear();
+    }
+    if (isParamEnabled(argc, argv, "-f", "--frequency", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanFrequency(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-s", "--standby", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanStandby(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-e", "--engine", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanEngine(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-c", "--scheduler", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanScheduler(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-t", "--temperature", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanTemperature(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-C", "--ecc", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanEcc(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-o", "--power", &optind)) {
+        deviceIndex = 0;
+        optind = optind + 1;
+        while (optind < argc) {
+            buf.push_back(argv[optind]);
+            optind++;
+        }
+
+        if (buf.size() != 0) {
+            if (validatePowerLimitArguments(devices.size(), buf) == false) {
+                std::cout << "Invalid Arguments passed to set power limit" << std::endl;
+                usage();
+                exit(0);
             }
-            break;
-        case 'E':
+        }
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanPower(device, buf, deviceIndex);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-g", "--global", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanGlobalOperations(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-m", "--memory", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanMemory(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-R", "--ras", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanRas(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-i", "--firmware", &optind)) {
+        optind = optind + 1;
+        if (optind < argc) {
+            optarg = argv[optind];
+        }
+        std::string filePathFirmware;
+        if (optarg != nullptr) {
+            filePathFirmware = optarg;
+        }
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanFirmware(device, filePathFirmware);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-r", "--reset", &optind)) {
+        optind = optind + 1;
+        if (optind < argc) {
+            optarg = argv[optind];
+        }
+        if (!strcmp(optarg, "force")) {
+            force = true;
+        } else if (!strcmp(optarg, "noforce")) {
+            force = false;
+        } else {
+            usage();
+            exit(0);
+        }
+        optind++;
+        if (optind < argc) {
+            deviceIndex = static_cast<uint32_t>(std::stoi(argv[optind]));
+            if (deviceIndex >= devices.size()) {
+                std::cout << "Invalid deviceId specified for device reset" << std::endl;
+                usage();
+                exit(0);
+            }
+            testSysmanReset(devices[deviceIndex], force);
+        } else {
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                zesDeviceEventRegister(device,
-                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
-                                           ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                           ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
+                testSysmanReset(device, force);
             });
-            testSysmanListenEvents(driver, devices,
+        }
+    }
+    if (isParamEnabled(argc, argv, "-E", "--event", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            zesDeviceEventRegister(device,
                                    ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                        ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
                                        ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                zesDeviceEventRegister(device,
-                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
-                                           ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                           ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
-            });
-            testSysmanListenEventsEx(driver, devices,
-                                     ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
-                                         ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                         ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
-            break;
-        case 'F':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanFabricPort(device);
-            });
-            break;
-        case 'd':
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanDiagnostics(device);
-            });
-            break;
-        default:
-            usage();
-            exit(0);
-        }
+        });
+        testSysmanListenEvents(driver, devices,
+                               ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                   ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                   ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            zesDeviceEventRegister(device,
+                                   ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                       ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                       ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
+        });
+        testSysmanListenEventsEx(driver, devices,
+                                 ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                     ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                     ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
+    }
+    if (isParamEnabled(argc, argv, "-F", "--fabricport", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanFabricPort(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-d", "--diagnostics", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanDiagnostics(device);
+        });
     }
 
     return 0;
