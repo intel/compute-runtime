@@ -27,7 +27,7 @@ class DriverImp : public Driver {
 
 struct L0EnvVariables {
     std::string affinityMask;
-    bool programDebugging;
+    uint32_t programDebugging;
     bool metrics;
     bool pin;
     bool sysman;

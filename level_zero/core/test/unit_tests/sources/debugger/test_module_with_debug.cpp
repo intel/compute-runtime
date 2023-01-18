@@ -437,7 +437,7 @@ HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThen
 
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
-    neoDevice->getExecutionEnvironment()->setDebuggingEnabled();
+    neoDevice->getExecutionEnvironment()->setDebuggingMode(NEO::DebuggingMode::Enabled);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->initDebuggerL0(neoDevice);
     auto memoryOperationsHandler = new NEO::MockMemoryOperations();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.reset(memoryOperationsHandler);

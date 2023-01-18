@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/debugger/debugger.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <unordered_map>
@@ -34,10 +35,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void sortNeoDevicesDRM();
     void sortNeoDevicesWDDM();
     void prepareForCleanup() const;
-    void setDebuggingEnabled() {
-        debuggingEnabled = true;
+    void setDebuggingMode(DebuggingMode debuggingMode) {
+        debuggingEnabledMode = debuggingMode;
     }
-    bool isDebuggingEnabled() { return debuggingEnabled; }
+    bool isDebuggingEnabled() { return debuggingEnabledMode != DebuggingMode::Disabled; }
     void setMetricsEnabled(bool value) {
         this->metricsEnabled = value;
     }
@@ -46,6 +47,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         fp64EmulationEnabled = true;
     }
     bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
+
     DirectSubmissionController *initializeDirectSubmissionController();
 
     std::unique_ptr<MemoryManager> memoryManager;
@@ -58,9 +60,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void parseCcsCountLimitations();
     void adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const;
     void configureNeoEnvironment();
-    bool debuggingEnabled = false;
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
+
+    DebuggingMode debuggingEnabledMode = DebuggingMode::Disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
 };
 } // namespace NEO

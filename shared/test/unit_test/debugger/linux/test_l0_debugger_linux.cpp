@@ -28,7 +28,7 @@ struct L0DebuggerSharedLinuxFixture {
     void setUp(HardwareInfo *hwInfo) {
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->setDebuggingEnabled();
+        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo ? hwInfo : defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();

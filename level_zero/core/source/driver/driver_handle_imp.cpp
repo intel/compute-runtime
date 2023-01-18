@@ -188,7 +188,7 @@ void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &ne
 }
 
 void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice) {
-    if (enableProgramDebugging) {
+    if (enableProgramDebugging != NEO::DebuggingMode::Disabled) {
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
         auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
         rootDeviceEnvironment->initDebuggerL0(neoDevice.get());
@@ -255,7 +255,7 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     DriverHandleImp *driverHandle = new DriverHandleImp;
     UNRECOVERABLE_IF(nullptr == driverHandle);
 
-    driverHandle->enableProgramDebugging = envVariables.programDebugging;
+    driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(envVariables.programDebugging);
     driverHandle->enableSysman = envVariables.sysman;
     driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
     ze_result_t res = driverHandle->initialize(std::move(devices));

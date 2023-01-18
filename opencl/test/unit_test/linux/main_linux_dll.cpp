@@ -723,7 +723,7 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     DebugManager.flags.UseVmBind.set(1);
 
-    rootDeviceEnvironment->executionEnvironment.setDebuggingEnabled();
+    rootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     ASSERT_NE(drm, nullptr);
@@ -748,7 +748,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     DebugManager.flags.UseVmBind.set(0);
     DebugManager.flags.PrintDebugMessages.set(true);
 
-    rootDeviceEnvironment->executionEnvironment.setDebuggingEnabled();
+    rootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);

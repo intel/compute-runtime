@@ -34,7 +34,7 @@ void DriverImp::initialize(ze_result_t *result) {
     envVariables.affinityMask =
         envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
     envVariables.programDebugging =
-        envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", false);
+        envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
     envVariables.metrics =
         envReader.getSetting("ZET_ENABLE_METRICS", false);
     envVariables.pin =
@@ -51,7 +51,7 @@ void DriverImp::initialize(ze_result_t *result) {
 
     if (envVariables.programDebugging) {
         if (!NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
-            executionEnvironment->setDebuggingEnabled();
+            executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
         }
     }
 

@@ -29,7 +29,7 @@ using namespace NEO;
 TEST(Debugger, givenL0DebuggerWhenGettingL0DebuggerThenCorrectObjectIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
@@ -48,7 +48,7 @@ TEST(Debugger, givenL0DebuggerWhenGettingL0DebuggerThenCorrectObjectIsReturned) 
 TEST(Debugger, givenSourceLevelDebuggerWhenGettingL0DebuggerThenNullptrIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
@@ -102,7 +102,7 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
 TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUsed) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
@@ -130,7 +130,7 @@ TEST(Debugger, givenTileAttachAndDebuggingEnabledInExecEnvWhenAllocatingIsaThenM
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
@@ -162,7 +162,7 @@ TEST(Debugger, WhenInitializingDebuggerL0ThenCapabilitiesAreAdjustedAndDebuggerI
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
-    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto neoDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 
@@ -193,7 +193,7 @@ TEST(Debugger, GivenLegacyDebuggerWhenInitializingDebuggerL0ThenAbortIsCalledAft
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
-    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto neoDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 

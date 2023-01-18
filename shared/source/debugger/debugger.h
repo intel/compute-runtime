@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,11 @@ class Debugger {
 
   protected:
     bool isLegacyMode = true;
+};
+
+enum class DebuggingMode : uint32_t {
+    Disabled,
+    Enabled
 };
 
 static_assert(std::is_standard_layout<Debugger::SbaAddresses>::value);

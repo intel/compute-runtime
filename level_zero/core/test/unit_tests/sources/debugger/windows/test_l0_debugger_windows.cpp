@@ -35,7 +35,7 @@ struct L0DebuggerWindowsFixture {
     void setUp() {
         executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->setDebuggingEnabled();
+        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
         gdi = new MockGdi();
@@ -56,7 +56,7 @@ struct L0DebuggerWindowsFixture {
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->enableProgramDebugging = true;
+        driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
 
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];

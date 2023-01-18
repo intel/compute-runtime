@@ -8,6 +8,7 @@
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -258,8 +259,9 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInf
                                                   sizeof(std::unique_ptr<OsEnvironment>) +
                                                   sizeof(std::unique_ptr<DirectSubmissionController>) +
                                                   sizeof(std::unordered_map<uint32_t, uint32_t>) +
-                                                  sizeof(bool) +
-                                                  (is64bit ? 23 : 15),
+                                                  2 * sizeof(bool) +
+                                                  sizeof(NEO::DebuggingMode) +
+                                                  (is64bit ? 18 : 14),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {

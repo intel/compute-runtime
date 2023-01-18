@@ -295,14 +295,14 @@ TEST(Debugger, GivenLegacyDebuggerAndProgramDebuggingEnabledWhenInitializingDriv
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
-    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
 
     auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    driverHandle->enableProgramDebugging = true;
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
 
     EXPECT_THROW(driverHandle->initialize(std::move(devices)), std::exception);
     std::string output = testing::internal::GetCapturedStderr();

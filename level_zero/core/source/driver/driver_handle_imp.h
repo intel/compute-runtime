@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/debugger/debugger.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
@@ -129,7 +130,7 @@ struct DriverHandleImp : public DriverHandle {
     void enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice);
 
     // Environment Variables
-    bool enableProgramDebugging = false;
+    NEO::DebuggingMode enableProgramDebugging = NEO::DebuggingMode::Disabled;
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
     uint8_t powerHint = 0;

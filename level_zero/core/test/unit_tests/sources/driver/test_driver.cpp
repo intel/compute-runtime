@@ -349,7 +349,7 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
     auto driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
     EXPECT_NE(nullptr, driverHandle);
 
-    EXPECT_FALSE(driverHandle->enableProgramDebugging);
+    EXPECT_EQ(NEO::DebuggingMode::Disabled, driverHandle->enableProgramDebugging);
 
     delete driverHandle;
     L0::GlobalDriver = nullptr;
@@ -499,7 +499,7 @@ TEST(DriverTest, givenProgramDebuggingEnvVarNonZeroWhenCreatingDriverThenEnableP
     auto driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
     EXPECT_NE(nullptr, driverHandle);
 
-    EXPECT_TRUE(driverHandle->enableProgramDebugging);
+    EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::Enabled);
 
     delete driverHandle;
     L0::GlobalDriver = nullptr;

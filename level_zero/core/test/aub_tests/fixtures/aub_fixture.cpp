@@ -48,7 +48,7 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     if (debuggingEnabled) {
-        executionEnvironment->setDebuggingEnabled();
+        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
     }
     neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
 
@@ -74,7 +74,7 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<ult::Mock<DriverHandleImp>>();
 
-    driverHandle->enableProgramDebugging = debuggingEnabled;
+    driverHandle->enableProgramDebugging = debuggingEnabled ? NEO::DebuggingMode::Enabled : NEO::DebuggingMode::Disabled;
 
     driverHandle->initialize(std::move(devices));
 

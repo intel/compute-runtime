@@ -74,12 +74,12 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSip
 }
 
 TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenFusedEusAreDisabled) {
-    EXPECT_TRUE(driverHandle->enableProgramDebugging);
+    EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::Enabled);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.fusedEuEnabled);
 }
 
 TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenCompressionIsDisabled) {
-    EXPECT_TRUE(driverHandle->enableProgramDebugging);
+    EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::Enabled);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }

@@ -211,7 +211,7 @@ TEST(L0DeviceTest, givenDebuggerEnabledButIGCNotReturnsSSAHThenSSAHIsNotCopied) 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    driverHandle->enableProgramDebugging = true;
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
 
     driverHandle->initialize(std::move(devices));
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
