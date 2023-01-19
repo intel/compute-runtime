@@ -944,31 +944,52 @@ TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQue
 struct CommandQueueCreateWithMultipleRegularContextsTests : public DeviceCreateCommandQueueTest {
     void SetUp() override {
         DebugManager.flags.NumberOfRegularContextsPerEngine.set(numberOfRegularContextsPerEngine);
+        DebugManager.flags.EnableMultipleRegularContextForBcs.set(1);
         DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
 
         backupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         defaultHwInfo->featureTable.flags.ftrCCSNode = true;
 
         DeviceCreateCommandQueueTest::SetUp();
 
-        if (device->getHwInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled == 0) {
+        uint32_t regularCcsCount = 0;
+        uint32_t regularBcsCount = 0;
+
+        for (auto &engine : device->getNEODevice()->getAllEngines()) {
+            if (engine.getEngineUsage() == EngineUsage::Regular) {
+                if (engine.getEngineType() == aub_stream::EngineType::ENGINE_CCS) {
+                    regularCcsCount++;
+                } else if (engine.getEngineType() == aub_stream::EngineType::ENGINE_BCS) {
+                    regularBcsCount++;
+                }
+            }
+        }
+
+        if (regularCcsCount < numberOfRegularContextsPerEngine - 1 || regularBcsCount < numberOfRegularContextsPerEngine - 1) {
             GTEST_SKIP();
         }
 
         auto &engineGroups = device->getNEODevice()->getRegularEngineGroups();
 
         for (uint32_t i = 0; i < engineGroups.size(); i++) {
-            if (engineGroups[i].engineGroupType == EngineGroupType::Compute) {
+            if (engineGroups[i].engineGroupType == EngineGroupType::Compute && !computeOrdinalSet) {
                 computeOrdinal = i;
-                break;
+                computeOrdinalSet = true;
+            } else if (engineGroups[i].engineGroupType == EngineGroupType::Copy && !copyOrdinalSet) {
+                copyOrdinal = i;
+                copyOrdinalSet = true;
             }
         }
     }
 
     std::unique_ptr<VariableBackup<HardwareInfo>> backupHwInfo;
+    DebugManagerStateRestore restore;
     const uint32_t numberOfRegularContextsPerEngine = 5;
     uint32_t computeOrdinal = 0;
-    DebugManagerStateRestore restore;
+    uint32_t copyOrdinal = 0;
+    bool computeOrdinalSet = false;
+    bool copyOrdinalSet = false;
 };
 
 HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenSupportedRequestWhenCreatingCommandQueueThenAssignNextAvailableContext) {
@@ -985,6 +1006,25 @@ HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenSupportedReque
         expectedIndex++;
         if (expectedIndex == (numberOfRegularContextsPerEngine - 1)) {
             expectedIndex = 0;
+        }
+    }
+}
+
+HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenSupportedRequestWhenCreatingBcsCommandQueueThenAssignNextAvailableContext) {
+    auto defaultBcsIndex = static_cast<MockDevice *>(device->getNEODevice())->defaultBcsEngineIndex;
+    uint32_t expectedIndex = defaultBcsIndex;
+    constexpr uint32_t iterationCount = 3;
+
+    for (uint32_t i = 0; i < (numberOfRegularContextsPerEngine * iterationCount); i++) {
+        NEO::CommandStreamReceiver *csr = nullptr;
+        device->getCsrForOrdinalAndIndex(&csr, copyOrdinal, 0u);
+        ASSERT_NE(nullptr, csr);
+
+        EXPECT_EQ(csr, device->getNEODevice()->getAllEngines()[expectedIndex].commandStreamReceiver);
+
+        expectedIndex++;
+        if ((expectedIndex - defaultBcsIndex) == (numberOfRegularContextsPerEngine - 1)) {
+            expectedIndex = defaultBcsIndex;
         }
     }
 }

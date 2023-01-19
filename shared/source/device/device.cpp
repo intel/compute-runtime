@@ -396,6 +396,10 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         }
     }
 
+    if (EngineHelpers::isBcs(engineType) && (defaultBcsEngineIndex == std::numeric_limits<uint32_t>::max()) && (engineUsage == EngineUsage::Regular)) {
+        defaultBcsEngineIndex = deviceCsrIndex;
+    }
+
     if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {
         return false;
     }
@@ -926,12 +930,23 @@ BuiltIns *Device::getBuiltIns() const {
     return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getBuiltIns();
 }
 
-EngineControl &Device::getNextEngineForMultiRegularContextMode() {
+EngineControl &Device::getNextEngineForMultiRegularContextMode(aub_stream::EngineType engineType) {
     UNRECOVERABLE_IF(defaultEngineIndex != 0);
+    UNRECOVERABLE_IF((engineType != aub_stream::EngineType::ENGINE_BCS) && (engineType != aub_stream::EngineType::ENGINE_CCS));
 
-    auto maxIndex = numberOfRegularContextsPerEngine - 1; // 1 for internal engine
+    const auto maxIndex = numberOfRegularContextsPerEngine - 1; // 1 for internal engine
+    uint32_t atomicOutValue = 0;
+    uint32_t indexOffset = 0;
 
-    auto indexToAssign = regularContextPerEngineAssignmentHelper.fetch_add(1) % maxIndex;
+    if (engineType == aub_stream::EngineType::ENGINE_CCS) {
+        atomicOutValue = regularContextPerCcsEngineAssignmentHelper.fetch_add(1);
+        indexOffset = defaultEngineIndex;
+    } else {
+        atomicOutValue = regularContextPerBcsEngineAssignmentHelper.fetch_add(1);
+        indexOffset = defaultBcsEngineIndex;
+    }
+
+    auto indexToAssign = (atomicOutValue % maxIndex) + indexOffset;
 
     return allEngines[indexToAssign];
 }

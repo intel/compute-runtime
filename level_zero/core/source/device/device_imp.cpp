@@ -1416,8 +1416,12 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
 
         auto &osContext = (*csr)->getOsContext();
 
-        if (neoDevice->getNumberOfRegularContextsPerEngine() > 1 && !osContext.isRootDevice() && NEO::EngineHelpers::isCcs(osContext.getEngineType())) {
-            *csr = neoDevice->getNextEngineForMultiRegularContextMode().commandStreamReceiver;
+        if (neoDevice->getNumberOfRegularContextsPerEngine() > 1 && !osContext.isRootDevice()) {
+            if (NEO::EngineHelpers::isCcs(osContext.getEngineType())) {
+                *csr = neoDevice->getNextEngineForMultiRegularContextMode(aub_stream::EngineType::ENGINE_CCS).commandStreamReceiver;
+            } else if (osContext.getEngineType() == aub_stream::EngineType::ENGINE_BCS) {
+                *csr = neoDevice->getNextEngineForMultiRegularContextMode(aub_stream::EngineType::ENGINE_BCS).commandStreamReceiver;
+            }
         }
     } else {
         auto subDeviceOrdinal = ordinal - numEngineGroups;

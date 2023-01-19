@@ -81,7 +81,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getNextEngineForCommandQueue();
-    EngineControl &getNextEngineForMultiRegularContextMode();
+    EngineControl &getNextEngineForMultiRegularContextMode(aub_stream::EngineType engineType);
     EngineControl &getInternalEngine();
     EngineControl *getInternalCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
@@ -203,9 +203,11 @@ class Device : public ReferenceTrackedObject<Device> {
     ExecutionEnvironment *executionEnvironment = nullptr;
     aub_stream::EngineType engineInstancedType = aub_stream::EngineType::NUM_ENGINES;
     uint32_t defaultEngineIndex = 0;
+    uint32_t defaultBcsEngineIndex = std::numeric_limits<uint32_t>::max();
     uint32_t numSubDevices = 0;
     std::atomic_uint32_t regularCommandQueuesCreatedWithinDeviceCount{0};
-    std::atomic<uint8_t> regularContextPerEngineAssignmentHelper = 0;
+    std::atomic<uint8_t> regularContextPerCcsEngineAssignmentHelper = 0;
+    std::atomic<uint8_t> regularContextPerBcsEngineAssignmentHelper = 0;
     std::bitset<8> availableEnginesForCommandQueueusRoundRobin = 0;
     uint32_t queuesPerEngineCount = 1;
     uint32_t numberOfRegularContextsPerEngine = 1;

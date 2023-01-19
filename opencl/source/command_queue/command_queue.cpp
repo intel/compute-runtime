@@ -179,7 +179,7 @@ void CommandQueue::initializeGpgpu() const {
                 engineRoundRobinAvailable;
 
             if (device->getDevice().getNumberOfRegularContextsPerEngine() > 1) {
-                this->gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode();
+                this->gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(aub_stream::EngineType::ENGINE_CCS);
             } else if (assignEngineRoundRobin) {
                 this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
             } else {

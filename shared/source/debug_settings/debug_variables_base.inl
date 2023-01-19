@@ -225,6 +225,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, AdjustThreadGroupDispatchSize, -1, "-1: default,
 DECLARE_DEBUG_VARIABLE(int32_t, ForceNonblockingExecbufferCalls, -1, "-1: default, 0: make execbuffer call blocking, 1: make execbuffer call nonblocking. Supported only in prelim i915 kernels.")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlush, -1, "-1: default, 0: disable 1: Enable all flushing bits in ComputeWalker->PostSync")
 DECLARE_DEBUG_VARIABLE(int32_t, NumberOfRegularContextsPerEngine, -1, "-1: default, >0: Create more than 1 Regular contexts for the same engine")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableMultipleRegularContextForBcs, -1, "-1: default, 0: disabled, 1: Use NumberOfRegularContextsPerEngine to create multiple Regular contexts on the same engine")
 DECLARE_DEBUG_VARIABLE(int32_t, AppendAubStreamContextFlags, -1, "-1: default, >0: Append flags passed during HardwareContext creation.")
 
 /*LOGGING FLAGS*/
