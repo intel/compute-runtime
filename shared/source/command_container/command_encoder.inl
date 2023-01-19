@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -404,10 +404,10 @@ inline void EncodeStoreMMIO<Family>::encode(MI_STORE_REGISTER_MEM *cmdBuffer, ui
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
-    UNRECOVERABLE_IF(!isAligned<getSurfaceBaseAddressAlignment()>(args.size));
+    auto bufferSize = alignUp(args.size, getSurfaceBaseAddressAlignment());
 
     SURFACE_STATE_BUFFER_LENGTH length = {0};
-    length.Length = static_cast<uint32_t>(args.size - 1);
+    length.Length = static_cast<uint32_t>(bufferSize - 1);
 
     surfaceState->setWidth(length.SurfaceState.Width + 1);
     surfaceState->setHeight(length.SurfaceState.Height + 1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,29 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "encode_surface_state_args.h"
+
 using namespace NEO;
 using CommandEncoderTests = ::testing::Test;
+
+HWTEST_F(CommandEncoderTests, givenMisalignedSizeWhenProgrammingSurfaceStateForBufferThenAlignedSizeIsProgrammed) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    RENDER_SURFACE_STATE renderSurfaceState{};
+    MockExecutionEnvironment executionEnvironment{};
+
+    auto misalignedSize = 1u;
+    auto alignedSize = 4u;
+
+    NEO::EncodeSurfaceStateArgs args{};
+    args.outMemory = &renderSurfaceState;
+    args.gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+    args.size = misalignedSize;
+
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
+
+    EXPECT_EQ(alignedSize, renderSurfaceState.getWidth());
+}
 
 HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAllRequiredFields) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
