@@ -200,3 +200,65 @@ inline bool validate(const void *expected, const void *tested, size_t len) {
 
     return resultsAreOk;
 }
+
+struct CommandHandler {
+    ze_command_queue_handle_t cmdQueue;
+    ze_command_list_handle_t cmdList;
+
+    bool isImmediate = false;
+
+    ze_result_t create(ze_context_handle_t context, ze_device_handle_t device, bool immediate) {
+        isImmediate = immediate;
+        ze_result_t result;
+        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+        cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+        cmdQueueDesc.index = 0;
+
+        if (isImmediate) {
+            cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+            result = zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList);
+        } else {
+            cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+            result = zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue);
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
+            result = createCommandList(context, device, cmdList);
+        }
+
+        return result;
+    }
+
+    ze_result_t appendKernel(ze_kernel_handle_t kernel, const ze_group_count_t &dispatchTraits) {
+        return zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
+                                               nullptr, 0, nullptr);
+    }
+
+    ze_result_t execute() {
+        auto result = ZE_RESULT_SUCCESS;
+
+        if (!isImmediate) {
+            result = zeCommandListClose(cmdList);
+            if (result == ZE_RESULT_SUCCESS) {
+                result = zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr);
+            }
+        }
+        return result;
+    }
+
+    ze_result_t synchronize() {
+        if (!isImmediate) {
+            return zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max());
+        }
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t destroy() {
+        auto result = zeCommandListDestroy(cmdList);
+        if (result == ZE_RESULT_SUCCESS && !isImmediate) {
+            result = zeCommandQueueDestroy(cmdQueue);
+        }
+        return result;
+    }
+};

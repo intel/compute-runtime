@@ -38,18 +38,12 @@ __kernel void printf_kernel1(){
 static constexpr std::array<const char *, 2> kernelNames = {"printf_kernel",
                                                             "printf_kernel1"};
 
-void runPrintfKernel(ze_context_handle_t &context, ze_device_handle_t &device, uint32_t id) {
-    ze_command_queue_handle_t cmdQueue;
-    ze_command_list_handle_t cmdList;
+enum class PrintfExecutionMode : uint32_t {
+    CommandQueue,
+    ImmSyncCmdList
+};
 
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.ordinal = 0;
-    cmdQueueDesc.index = 0;
-    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-
-    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
-
+void createModule(const ze_context_handle_t context, const ze_device_handle_t device, ze_module_handle_t &module) {
     std::string buildLog;
     auto spirV = compileToSpirV(source, "", buildLog);
     if (buildLog.size() > 0) {
@@ -57,7 +51,6 @@ void runPrintfKernel(ze_context_handle_t &context, ze_device_handle_t &device, u
     }
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
-    ze_module_handle_t module;
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = spirV.data();
@@ -65,11 +58,22 @@ void runPrintfKernel(ze_context_handle_t &context, ze_device_handle_t &device, u
     moduleDesc.pBuildFlags = "";
 
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
+}
 
-    ze_kernel_handle_t kernel;
+void createKernel(const ze_module_handle_t module, ze_kernel_handle_t &kernel, const char *kernelName) {
+
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = kernelNames[id];
+    kernelDesc.pKernelName = kernelName;
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+}
+
+void runPrintfKernel(const ze_module_handle_t &module, const ze_kernel_handle_t &kernel,
+                     ze_context_handle_t &context, ze_device_handle_t &device, uint32_t id, PrintfExecutionMode mode) {
+
+    CommandHandler commandHandler;
+    bool isImmediateCmdList = (mode == PrintfExecutionMode::ImmSyncCmdList);
+
+    SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
 
     ze_group_count_t dispatchTraits;
     if (id == 0) {
@@ -95,16 +99,10 @@ void runPrintfKernel(ze_context_handle_t &context, ze_device_handle_t &device, u
         dispatchTraits.groupCountY = 1u;
         dispatchTraits.groupCountZ = 1u;
     }
-    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(kernel, dispatchTraits));
 
-    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
-
-    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
-    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
-    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
-    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(commandHandler.execute());
+    SUCCESS_OR_TERMINATE(commandHandler.synchronize());
 }
 
 int main(int argc, char *argv[]) {
@@ -122,67 +120,82 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     printDeviceProperties(deviceProperties);
 
+    ze_module_handle_t module = nullptr;
+    createModule(context, device, module);
+
     std::array<std::string, 2> expectedStrings = {
         "byte = 127\nshort = 32767\nint = 2147483647\nlong = 9223372036854775807",
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"};
 
-    for (uint32_t i = 0; i < 2; i++) {
+    PrintfExecutionMode executionModes[] = {PrintfExecutionMode::CommandQueue};
 
-        if (validatePrintfOutput) {
-            // duplicate stdout descriptor
-            stdoutFd = dup(fileno(stdout));
-            auto newFile = freopen(fileName, "w", stdout);
-            if (newFile == nullptr) {
-                std::cout << "Failed in freopen()" << std::endl;
-                abort();
-            }
-        }
+    for (auto mode : executionModes) {
+        for (uint32_t i = 0; i < 2; i++) {
 
-        runPrintfKernel(context, device, i);
-
-        if (validatePrintfOutput) {
-            printfValidated = false;
-            auto sizeOfBuffer = expectedStrings[0].size() + 1024;
-            auto kernelOutput = std::make_unique<char[]>(sizeOfBuffer);
-            memset(kernelOutput.get(), 0, sizeOfBuffer);
-            auto kernelOutputFile = fopen(fileName, "r");
-            [[maybe_unused]] auto result = fread(kernelOutput.get(), sizeof(char), sizeOfBuffer - 1, kernelOutputFile);
-            fclose(kernelOutputFile);
-            fflush(stdout);
-            // adjust/restore stdout to previous descriptor
-            dup2(stdoutFd, fileno(stdout));
-            // close duplicate
-            close(stdoutFd);
-            std::remove(fileName);
-
-            char *foundString = strstr(kernelOutput.get(), expectedStrings[i].c_str());
-            if (foundString != nullptr && result == expectedStrings[i].size()) {
-                printfValidated = true;
-            }
-
-            if (result > 0) {
-                std::cout << "Printf output:\n"
-                          << "\n------------------------------\n"
-                          << kernelOutput.get() << "\n------------------------------\n"
-                          << "valid output = " << printfValidated << std::endl;
-                if (!printfValidated) {
-                    std::cout << "Expected printf output:\n"
-                              << "\n------------------------------\n"
-                              << expectedStrings[i] << "\n------------------------------\n"
-                              << std::endl;
+            if (validatePrintfOutput) {
+                // duplicate stdout descriptor
+                stdoutFd = dup(fileno(stdout));
+                auto newFile = freopen(fileName, "w", stdout);
+                if (newFile == nullptr) {
+                    std::cout << "Failed in freopen()" << std::endl;
+                    abort();
                 }
-            } else {
-                std::cout << "Printf output empty!" << std::endl;
             }
-        }
 
-        if (validatePrintfOutput && !printfValidated) {
-            SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-            std::cout << "\nZello Printf FAILED " << std::endl;
-            return -1;
+            ze_kernel_handle_t kernel = nullptr;
+            createKernel(module, kernel, kernelNames[i]);
+
+            runPrintfKernel(module, kernel, context, device, i, mode);
+
+            if (validatePrintfOutput) {
+                printfValidated = false;
+                auto sizeOfBuffer = expectedStrings[0].size() + 1024;
+                auto kernelOutput = std::make_unique<char[]>(sizeOfBuffer);
+                memset(kernelOutput.get(), 0, sizeOfBuffer);
+                auto kernelOutputFile = fopen(fileName, "r");
+                [[maybe_unused]] auto result = fread(kernelOutput.get(), sizeof(char), sizeOfBuffer - 1, kernelOutputFile);
+                fclose(kernelOutputFile);
+                fflush(stdout);
+                // adjust/restore stdout to previous descriptor
+                dup2(stdoutFd, fileno(stdout));
+                // close duplicate
+                close(stdoutFd);
+                std::remove(fileName);
+
+                char *foundString = strstr(kernelOutput.get(), expectedStrings[i].c_str());
+                if (foundString != nullptr && result == expectedStrings[i].size()) {
+                    printfValidated = true;
+                }
+
+                if (result > 0) {
+                    std::cout << "\nPrintf output:\n"
+                              << "------------------------------\n"
+                              << kernelOutput.get() << "\n------------------------------\n"
+                              << "valid output = " << printfValidated << std::endl;
+                    if (!printfValidated) {
+                        std::cout << "Expected printf output:\n"
+                                  << "------------------------------\n"
+                                  << expectedStrings[i] << "\n------------------------------\n"
+                                  << std::endl
+                                  << std::endl;
+                    }
+                } else {
+                    std::cout << "Printf output empty!" << std::endl;
+                }
+            }
+
+            SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+
+            if (validatePrintfOutput && !printfValidated) {
+                SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+                std::cout << "\nZello Printf FAILED " << std::endl;
+                return -1;
+            }
         }
     }
+
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
     std::cout << "\nZello Printf PASSED " << std::endl;
 
