@@ -320,7 +320,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
-        launchParams.isHostSignalScopeEvent = !!(event->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
+        launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     appendEventForProfiling(event, true);
@@ -353,7 +353,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
-        launchParams.isHostSignalScopeEvent = !!(event->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
+        launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     appendEventForProfiling(event, true);
@@ -400,7 +400,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     // default state of event is single packet, handle case when reset is used 1st, launchkernel 2nd - just reset all packets then, use max
     bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
 
-    bool appendPipeControlWithPostSync = (!isCopyOnly()) && (!!event->signalScope || event->isEventTimestampFlagSet());
+    bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
     dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync);
 
     if (!isCopyOnly()) {
@@ -1179,8 +1179,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     Event *signalEvent = nullptr;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
-        launchParams.isHostSignalScopeEvent = !!(signalEvent->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
-        dcFlush = getDcFlushRequired(!!signalEvent->signalScope);
+        launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
+        dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
     }
 
     uint32_t kernelCounter = leftSize > 0 ? 1 : 0;
@@ -1555,8 +1555,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     bool dcFlush = false;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
-        launchParams.isHostSignalScopeEvent = !!(signalEvent->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
-        dcFlush = getDcFlushRequired(!!signalEvent->signalScope);
+        launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
+        dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
     }
 
     if (isCopyOnly()) {
@@ -1961,7 +1961,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     }
 
     event->setPacketsInUse(this->partitionCount);
-    bool appendPipeControlWithPostSync = (!isCopyOnly()) && (!!event->signalScope || event->isEventTimestampFlagSet());
+    bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
     dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -1999,7 +1999,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     if (this->dcFlushSupport) {
         for (uint32_t i = 0; i < numEvents; i++) {
             auto event = Event::fromHandle(phEvent[i]);
-            dcFlushRequired |= !!event->waitScope;
+            dcFlushRequired |= event->isWaitScope();
         }
     }
     if (dcFlushRequired) {
@@ -2120,7 +2120,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
 
             const auto &hwInfo = this->device->getHwInfo();
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
+            args.dcFlushEnable = getDcFlushRequired(event->isSignalScope());
             NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args,
                                                                                       hwInfo);
 
@@ -2536,7 +2536,7 @@ void CommandListCoreFamily<gfxCoreFamily>::addFlushRequiredCommand(bool flushOpe
         return;
     }
     if (signalEvent) {
-        flushOperationRequired &= !signalEvent->signalScope;
+        flushOperationRequired &= !signalEvent->isSignalScope();
     }
 
     if (getDcFlushRequired(flushOperationRequired)) {
@@ -2800,7 +2800,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event 
         eventPostSync.operationCount--;
     }
 
-    dispatchPostSyncCommands(eventPostSync, gpuAddress, value, useLastPipeControl, !!event->signalScope);
+    dispatchPostSyncCommands(eventPostSync, gpuAddress, value, useLastPipeControl, event->isSignalScope());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2813,7 +2813,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
         eventAddress += event->getSinglePacketSize() * event->getPacketsInUse();
 
         bool appendLastPipeControl = false;
-        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, !!event->signalScope);
+        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope());
     }
 }
 

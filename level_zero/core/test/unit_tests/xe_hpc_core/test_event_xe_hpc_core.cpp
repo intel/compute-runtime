@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
 namespace ult {
@@ -42,7 +43,7 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenGettingIpcHandleForEventPoolWithDe
     auto curMemoryManager = driverHandle->getMemoryManager();
     MemoryManagerEventPoolIPCMockXeHpc *mockMemoryManager = new MemoryManagerEventPoolIPCMockXeHpc(*neoDevice->executionEnvironment);
     driverHandle->setMemoryManager(mockMemoryManager);
-    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, eventPool);
 
@@ -83,7 +84,7 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenOpeningIpcHandleForEventPoolWithHo
     auto curMemoryManager = driverHandle->getMemoryManager();
     MemoryManagerEventPoolIPCMockXeHpc *mockMemoryManager = new MemoryManagerEventPoolIPCMockXeHpc(*neoDevice->executionEnvironment);
     driverHandle->setMemoryManager(mockMemoryManager);
-    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, eventPool);
 
@@ -95,7 +96,7 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenOpeningIpcHandleForEventPoolWithHo
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
+    auto ipcEventPool = whiteboxCast(L0::EventPool::fromHandle(ipcEventPoolHandle));
 
     EXPECT_EQ(ipcEventPool->isDeviceEventPoolAllocation, eventPool->isDeviceEventPoolAllocation);
     EXPECT_TRUE(ipcEventPool->isDeviceEventPoolAllocation);

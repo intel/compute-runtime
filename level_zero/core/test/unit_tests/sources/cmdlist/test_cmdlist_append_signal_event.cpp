@@ -72,9 +72,9 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPoolHostVisible = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    auto eventPoolHostVisible = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto eventHostVisible = std::unique_ptr<Event>(Event::create<uint32_t>(eventPoolHostVisible.get(), &eventDesc, device));
+    auto eventHostVisible = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolHostVisible.get(), &eventDesc, device));
 
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
     result = commandList->appendSignalEvent(eventHostVisible->toHandle());
@@ -160,7 +160,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     commandList->appendSignalEvent(event->toHandle());
     auto contextOffset = event->getContextEndOffset();

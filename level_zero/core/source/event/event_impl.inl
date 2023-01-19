@@ -13,6 +13,7 @@
 
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/tools/source/metrics/metric.h"
 
 namespace L0 {
 template <typename TagSizeT>
@@ -43,7 +44,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->csr = csr;
     event->maxKernelCount = eventPool->getMaxKernelCount();
     event->maxPacketCount = eventPool->getEventMaxPackets();
-    event->isFromIpcPool = eventPool->isImportedIpcPool;
+    event->isFromIpcPool = eventPool->getImportedIpcPool();
 
     event->kernelEventCompletionData =
         std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
@@ -57,7 +58,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
     // do not reset even if it has been imported, since event pool
     // might have been imported after events being already signaled
-    if (eventPool->isImportedIpcPool == false) {
+    if (event->isFromIpcPool == false) {
         event->resetDeviceCompletionData(true);
     }
 

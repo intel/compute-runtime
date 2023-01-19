@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,14 +170,14 @@ void OaMetricStreamerImp::attachEvent(ze_event_handle_t hNotificationEvent) {
     // Associate notification event with metric streamer.
     pNotificationEvent = Event::fromHandle(hNotificationEvent);
     if (pNotificationEvent != nullptr) {
-        pNotificationEvent->metricStreamer = this;
+        pNotificationEvent->setMetricStreamer(this);
     }
 }
 
 void OaMetricStreamerImp::detachEvent() {
     // Release notification event.
     if (pNotificationEvent != nullptr) {
-        pNotificationEvent->metricStreamer = nullptr;
+        pNotificationEvent->setMetricStreamer(nullptr);
     }
 }
 

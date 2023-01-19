@@ -16,6 +16,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
 namespace ult {
@@ -382,12 +383,12 @@ TEST_F(MemoryExportImportObtainFdTest,
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = EventPool::create(driverHandle.get(),
-                                       context.get(),
-                                       1,
-                                       &deviceHandle,
-                                       &eventPoolDesc,
-                                       result);
+    auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(),
+                                                    context.get(),
+                                                    1,
+                                                    &deviceHandle,
+                                                    &eventPoolDesc,
+                                                    result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, eventPool);
     eventPool->isShareableEventMemory = true;

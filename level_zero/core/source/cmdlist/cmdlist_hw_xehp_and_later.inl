@@ -174,14 +174,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
     Event *compactEvent = nullptr;
     if (event) {
-        isHostSignalScopeEvent = !!(event->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
-        if (compactL3FlushEvent(getDcFlushRequired(!!event->signalScope))) {
+        isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
+        if (compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
             compactEvent = event;
             event = nullptr;
         } else {
             NEO::GraphicsAllocation *eventAlloc = &event->getAllocation(this->device);
             commandContainer.addToResidencyContainer(eventAlloc);
-            bool flushRequired = !!event->signalScope &&
+            bool flushRequired = event->isSignalScope() &&
                                  !launchParams.isKernelSplitOperation;
             l3FlushEnable = getDcFlushRequired(flushRequired);
             isTimestampEvent = event->isUsingContextEndOffset();
@@ -421,7 +421,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
                                                                           Event *event,
                                                                           const CmdListKernelLaunchParams &launchParams) {
     if (event) {
-        if (eventSignalPipeControl(launchParams.isKernelSplitOperation, getDcFlushRequired(!!event->signalScope))) {
+        if (eventSignalPipeControl(launchParams.isKernelSplitOperation, getDcFlushRequired(event->isSignalScope()))) {
             event = nullptr;
         } else {
             event->increaseKernelCount();
@@ -445,7 +445,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
                 event->zeroKernelCount();
             } else {
                 if (event->getKernelCount() > 1) {
-                    if (getDcFlushRequired(!!event->signalScope)) {
+                    if (getDcFlushRequired(event->isSignalScope())) {
                         programEventL3Flush<gfxCoreFamily>(event, this->device, this->partitionCount, this->commandContainer);
                     }
                     dispatchEventRemainingPacketsPostSyncOperation(event);

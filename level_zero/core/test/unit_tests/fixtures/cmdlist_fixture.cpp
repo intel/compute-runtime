@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
@@ -34,8 +35,8 @@ void CommandListFixture::setUp() {
     eventDesc.wait = 0;
     eventDesc.signal = 0;
 
-    eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-    event = std::unique_ptr<L0::Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
 }
 
 void CommandListFixture::tearDown() {
@@ -75,8 +76,8 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     eventDesc.wait = 0;
     eventDesc.signal = 0;
 
-    eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-    event = std::unique_ptr<L0::Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(device->getL0GfxCoreHelper().createEvent(eventPool.get(), &eventDesc, device)));
 }
 
 void ModuleMutableCommandListFixture::setUpImpl(uint32_t revision) {
@@ -175,6 +176,8 @@ void AppendFillFixture::setUp() {
     driverHandle->initialize(std::move(devices));
     device = driverHandle->devices[0];
     neoDevice->deviceInfo.maxWorkGroupSize = 256;
+
+    DeviceFixture::device = device;
 }
 
 void AppendFillFixture::tearDown() {

@@ -29,13 +29,10 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/event/event_impl.inl"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
-#include "level_zero/tools/source/metrics/metric.h"
 
 #include <set>
-
-//
-#include "level_zero/core/source/event/event_impl.inl"
 
 namespace L0 {
 template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *);
@@ -184,11 +181,6 @@ void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t
     eventPoolSize = alignUp<size_t>(this->numEvents * eventSize, MemoryConstants::pageSize64k);
 }
 
-ze_result_t Event::destroy() {
-    delete this;
-    return ZE_RESULT_SUCCESS;
-}
-
 EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles, const ze_event_pool_desc_t *desc, ze_result_t &result) {
     auto eventPool = std::make_unique<EventPool>(desc);
     if (!eventPool) {
@@ -213,6 +205,111 @@ bool EventPool::isEventPoolTimestampFlagSet() const {
         return true;
     }
     return false;
+}
+
+ze_result_t EventPool::closeIpcHandle() {
+    return this->destroy();
+}
+
+ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
+    if (!this->isShareableEventMemory) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    IpcEventPoolData &poolData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle->data);
+    poolData = {};
+    poolData.numEvents = this->numEvents;
+    poolData.rootDeviceIndex = this->getDevice()->getRootDeviceIndex();
+    poolData.isDeviceEventPoolAllocation = this->isDeviceEventPoolAllocation;
+    poolData.isHostVisibleEventPoolAllocation = this->isHostVisibleEventPoolAllocation;
+    poolData.maxEventPackets = this->getEventMaxPackets();
+
+    int retCode = this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), poolData.handle);
+    return retCode == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+}
+
+ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
+                                              DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+    const IpcEventPoolData &poolData = *reinterpret_cast<const IpcEventPoolData *>(ipcEventPoolHandle.data);
+
+    ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    desc.count = static_cast<uint32_t>(poolData.numEvents);
+    auto eventPool = std::make_unique<EventPool>(&desc);
+    eventPool->isDeviceEventPoolAllocation = poolData.isDeviceEventPoolAllocation;
+    eventPool->isHostVisibleEventPoolAllocation = poolData.isHostVisibleEventPoolAllocation;
+
+    UNRECOVERABLE_IF(numDevices == 0);
+    auto device = Device::fromHandle(*deviceHandles);
+    auto neoDevice = device->getNEODevice();
+    NEO::osHandle osHandle = static_cast<NEO::osHandle>(poolData.handle);
+
+    eventPool->initializeSizeParameters(numDevices, deviceHandles, *driver, neoDevice->getRootDeviceEnvironment());
+    if (eventPool->getEventMaxPackets() != poolData.maxEventPackets) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(),
+                           stderr,
+                           "IPC handle max event packets %u does not match context devices max event packet %u\n",
+                           poolData.maxEventPackets, eventPool->getEventMaxPackets());
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    NEO::AllocationType allocationType = NEO::AllocationType::BUFFER_HOST_MEMORY;
+    if (eventPool->isDeviceEventPoolAllocation) {
+        allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+    }
+
+    NEO::AllocationProperties unifiedMemoryProperties{poolData.rootDeviceIndex,
+                                                      eventPool->getEventPoolSize(),
+                                                      allocationType,
+                                                      systemMemoryBitfield};
+
+    unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
+    auto memoryManager = driver->getMemoryManager();
+    NEO::GraphicsAllocation *alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle,
+                                                                                             unifiedMemoryProperties,
+                                                                                             false,
+                                                                                             eventPool->isHostVisibleEventPoolAllocation,
+                                                                                             false);
+
+    if (alloc == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    eventPool->context = context;
+    eventPool->eventPoolAllocations =
+        std::make_unique<NEO::MultiGraphicsAllocation>(static_cast<uint32_t>(context->rootDeviceIndices.size()));
+    eventPool->eventPoolAllocations->addAllocation(alloc);
+    eventPool->eventPoolPtr = reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
+    for (uint32_t i = 0; i < numDevices; i++) {
+        eventPool->devices.push_back(Device::fromHandle(deviceHandles[i]));
+    }
+    eventPool->isImportedIpcPool = true;
+
+    for (auto currDeviceIndex : context->rootDeviceIndices) {
+        if (currDeviceIndex == poolData.rootDeviceIndex) {
+            continue;
+        }
+
+        unifiedMemoryProperties.rootDeviceIndex = currDeviceIndex;
+        unifiedMemoryProperties.flags.isUSMHostAllocation = true;
+        unifiedMemoryProperties.flags.forceSystemMemory = true;
+        unifiedMemoryProperties.flags.allocateMemory = false;
+        auto graphicsAllocation = memoryManager->createGraphicsAllocationFromExistingStorage(unifiedMemoryProperties,
+                                                                                             eventPool->eventPoolPtr,
+                                                                                             eventPool->getAllocation());
+        if (!graphicsAllocation) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        eventPool->eventPoolAllocations->addAllocation(graphicsAllocation);
+    }
+
+    *eventPoolHandle = eventPool.release();
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Event::destroy() {
+    delete this;
+    return ZE_RESULT_SUCCESS;
 }
 
 uint64_t Event::getGpuAddress(Device *device) const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,7 +94,7 @@ HWTEST2_F(CommandListAppendGen9, givenSignalEventWhenAppendingMemoryRangesBarrie
     auto hDevice = device->toHandle();
     auto eventPool = whiteboxCast(EventPool::create(device->getDriverHandle(), context.get(), 1, &hDevice, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<typename FamilyType::TimestampPacketType>(eventPool, &eventDesc, device));
     auto usedSpaceBefore =
         commandList->commandContainer.getCommandStream()->getUsed();
     commandList->appendMemoryRangesBarrier(numRanges, &pRangeSizes, pRanges,

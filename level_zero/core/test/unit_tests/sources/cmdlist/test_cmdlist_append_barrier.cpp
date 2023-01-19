@@ -414,9 +414,9 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     eventDesc.signal = 0;
 
     ze_result_t returnValue;
-    auto eventPoolTimeStamp = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPoolTimeStamp = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto eventTimeStamp = std::unique_ptr<Event>(Event::create<uint32_t>(eventPoolTimeStamp.get(), &eventDesc, device));
+    auto eventTimeStamp = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolTimeStamp.get(), &eventDesc, device));
 
     uint64_t eventGpuAddress = eventTimeStamp->getGpuAddress(device);
     uint64_t contextStartAddress = eventGpuAddress + event->getContextStartOffset();

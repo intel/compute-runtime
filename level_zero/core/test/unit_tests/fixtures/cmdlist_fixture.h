@@ -17,6 +17,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
 namespace ult {
@@ -145,7 +146,7 @@ class AppendFillFixture : public DeviceFixture {
 
         ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
                                                  const ze_group_count_t *pThreadGroupDimensions,
-                                                 Event *event,
+                                                 L0::Event *event,
                                                  const CmdListKernelLaunchParams &launchParams) override {
             if (numberOfCallsToAppendLaunchKernelWithParams == thresholdOfCallsToAppendLaunchKernelWithParamsToFail) {
                 return ZE_RESULT_ERROR_UNKNOWN;
@@ -202,7 +203,7 @@ struct CommandListEventUsedPacketSignalFixture : public CommandListFixture {
 };
 
 struct TbxImmediateCommandListFixture : public ModuleMutableCommandListFixture {
-    using EventFieldType = uint32_t;
+    using EventFieldType = uint64_t;
 
     template <typename FamilyType>
     void setUpT();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1126,8 +1126,8 @@ void TbxImmediateCommandListFixture::setUpT() {
     eventDesc.signal = 0;
 
     ze_result_t returnValue;
-    eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-    event = std::unique_ptr<L0::Event>(Event::create<EventFieldType>(eventPool.get(), &eventDesc, device));
+    eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
 
     setEvent();
 }

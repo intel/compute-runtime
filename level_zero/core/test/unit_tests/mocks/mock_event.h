@@ -9,7 +9,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
@@ -21,19 +21,45 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
     using BaseClass::csr;
     using BaseClass::Event;
+    using BaseClass::gpuHangCheckPeriod;
     using BaseClass::hostAddress;
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;
     using BaseClass::signalAllEventPackets;
+    using BaseClass::signalScope;
+    using BaseClass::waitScope;
 };
 
 using Event = WhiteBox<::L0::Event>;
 
+template <typename TagSizeT>
+struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
+    using BaseClass = ::L0::EventImp<TagSizeT>;
+    using BaseClass::csr;
+    using BaseClass::gpuHangCheckPeriod;
+    using BaseClass::hostAddress;
+    using BaseClass::hostEventSetValueTimestamps;
+    using BaseClass::isFromIpcPool;
+    using BaseClass::l3FlushAppliedOnKernel;
+    using BaseClass::maxKernelCount;
+    using BaseClass::signalAllEventPackets;
+    using BaseClass::signalScope;
+    using BaseClass::waitScope;
+};
+
+template <typename TagSizeT>
+using EventImp = WhiteBox<::L0::EventImp<TagSizeT>>;
+
 template <>
 struct WhiteBox<::L0::EventPool> : public ::L0::EventPool {
     using BaseClass = ::L0::EventPool;
+    using BaseClass::devices;
     using BaseClass::eventPackets;
+    using BaseClass::isDeviceEventPoolAllocation;
+    using BaseClass::isHostVisibleEventPoolAllocation;
+    using BaseClass::isImportedIpcPool;
+    using BaseClass::isShareableEventMemory;
 };
 
 using EventPool = WhiteBox<::L0::EventPool>;
@@ -77,6 +103,8 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::l3FlushAppliedOnKernel;
     using ::L0::Event::maxKernelCount;
     using ::L0::Event::signalAllEventPackets;
+    using ::L0::Event::signalScope;
+    using ::L0::Event::waitScope;
 
     MockEvent() : Event(nullptr, 0, nullptr) {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0,

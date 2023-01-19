@@ -178,26 +178,28 @@ struct Event : _ze_event_handle_t {
         return maxKernelCount;
     }
 
+    bool isSignalScope() const {
+        return !!signalScope;
+    }
+    bool isSignalScope(ze_event_scope_flags_t flag) const {
+        return !!(signalScope & flag);
+    }
+    bool isWaitScope() const {
+        return !!waitScope;
+    }
+    void setMetricStreamer(MetricStreamer *metricStreamer) {
+        this->metricStreamer = metricStreamer;
+    }
+
+  protected:
+    Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
+
     uint64_t globalStartTS = 1;
     uint64_t globalEndTS = 1;
     uint64_t contextStartTS = 1;
     uint64_t contextEndTS = 1;
+
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
-
-    // Metric streamer instance associated with the event.
-    MetricStreamer *metricStreamer = nullptr;
-    NEO::CommandStreamReceiver *csr = nullptr;
-    void *hostAddress = nullptr;
-    Device *device = nullptr;
-    EventPool *eventPool = nullptr;
-
-    ze_event_scope_flags_t signalScope = 0u;
-    ze_event_scope_flags_t waitScope = 0u;
-
-    int index = 0;
-
-  protected:
-    Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
     std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
 
     size_t contextStartOffset = 0u;
@@ -212,10 +214,22 @@ struct Event : _ze_event_handle_t {
     size_t gpuStartTimestamp = 0u;
     size_t gpuEndTimestamp = 0u;
 
+    // Metric streamer instance associated with the event.
+    MetricStreamer *metricStreamer = nullptr;
+    NEO::CommandStreamReceiver *csr = nullptr;
+    void *hostAddress = nullptr;
+    Device *device = nullptr;
+    EventPool *eventPool = nullptr;
+
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
+
+    ze_event_scope_flags_t signalScope = 0u;
+    ze_event_scope_flags_t waitScope = 0u;
+
+    int index = 0;
 
     std::atomic<State> isCompleted{STATE_INITIAL};
 
@@ -227,6 +241,8 @@ struct Event : _ze_event_handle_t {
 
 struct EventPool : _ze_event_pool_handle_t {
     static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles, const ze_event_pool_desc_t *desc, ze_result_t &result);
+    static ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
+                                              DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
     EventPool(const ze_event_pool_desc_t *desc) : EventPool(desc->count) {
         eventPoolFlags = desc->flags;
     }
@@ -270,26 +286,34 @@ struct EventPool : _ze_event_pool_handle_t {
 
     Device *getDevice() const { return devices[0]; }
 
-    std::vector<Device *> devices;
-    std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
-    void *eventPoolPtr = nullptr;
-    ContextImp *context = nullptr;
-    ze_event_pool_flags_t eventPoolFlags;
-    bool isDeviceEventPoolAllocation = false;
-    bool isHostVisibleEventPoolAllocation = false;
-    bool isImportedIpcPool = false;
-    bool isShareableEventMemory = false;
+    bool getImportedIpcPool() const {
+        return isImportedIpcPool;
+    }
 
   protected:
     EventPool() = default;
     EventPool(size_t numEvents) : numEvents(numEvents) {}
 
+    std::vector<Device *> devices;
+
+    std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
+    void *eventPoolPtr = nullptr;
+    ContextImp *context = nullptr;
+
     size_t numEvents = 1;
     size_t eventPoolSize = 0;
+
     uint32_t eventAlignment = 0;
     uint32_t eventSize = 0;
     uint32_t eventPackets = 0;
     uint32_t maxKernelCount = 0;
+
+    ze_event_pool_flags_t eventPoolFlags;
+
+    bool isDeviceEventPoolAllocation = false;
+    bool isHostVisibleEventPoolAllocation = false;
+    bool isImportedIpcPool = false;
+    bool isShareableEventMemory = false;
 };
 
 } // namespace L0

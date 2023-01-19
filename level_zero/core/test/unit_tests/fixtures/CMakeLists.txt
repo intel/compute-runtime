@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ set(L0_FIXTURES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_fixture.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/device_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/event_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/event_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/module_fixture.cpp

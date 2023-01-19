@@ -438,7 +438,7 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                NEO::GraphicsAllocation *srcPtrAlloc,
                uint64_t srcOffset, uint64_t size,
                uint64_t elementSize, Builtin builtin,
-               Event *signalEvent,
+               L0::Event *signalEvent,
                bool isStateless,
                CmdListKernelLaunchParams &launchParams),
               (dstPtr, dstPtrAlloc, dstOffset, srcPtr, srcPtrAlloc, srcOffset, size, elementSize, builtin, signalEvent, isStateless, launchParams));
@@ -459,7 +459,7 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                                          Builtin builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
-                                         size_t srcOffset, Event *signalEvent,
+                                         size_t srcOffset, L0::Event *signalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         srcAlignedPtr = srcAlignedAllocation->alignedAllocationPtr;
         dstAlignedPtr = dstAlignedAllocation->alignedAllocationPtr;
@@ -471,7 +471,7 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                                          uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
-                                         Event *signalEvent, uint32_t numWaitEvents,
+                                         L0::Event *signalEvent, uint32_t numWaitEvents,
                                          ze_event_handle_t *phWaitEvents) override {
         srcAlignedPtr = srcAlignedAllocation->alignedAllocationPtr;
         dstAlignedPtr = dstAlignedAllocation->alignedAllocationPtr;
@@ -487,7 +487,7 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                                            size_t srcRowPitch, size_t srcSlicePitch,
                                            size_t dstRowPitch, size_t dstSlicePitch,
                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
-                                           Event *signalEvent,
+                                           L0::Event *signalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         srcBlitCopyRegionOffset = srcOffset;
         dstBlitCopyRegionOffset = dstOffset;
