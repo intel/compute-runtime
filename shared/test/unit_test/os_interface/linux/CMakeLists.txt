@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,6 +18,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_1.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_info_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_impl.h

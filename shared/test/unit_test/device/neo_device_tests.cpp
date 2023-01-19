@@ -702,3 +702,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsIn
     auto csr = device->allEngines[device->defaultEngineIndex].commandStreamReceiver;
     EXPECT_EQ(1u, csr->peekLatestSentTaskCount());
 }
+
+TEST(FailDeviceTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
+    auto hwInfo = defaultHwInfo.get();
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDevice>(hwInfo);
+
+    EXPECT_EQ(nullptr, pDevice);
+}
+
+TEST(FailDeviceTest, GivenMidThreadPreemptionAndFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(defaultHwInfo.get());
+
+    EXPECT_EQ(nullptr, pDevice);
+}

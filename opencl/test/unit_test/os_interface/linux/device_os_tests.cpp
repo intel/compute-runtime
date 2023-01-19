@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,13 +55,6 @@ TEST(DeviceOsTest, WhenDeviceIsCreatedThenSimultaneousInteropsIsSupported) {
     EXPECT_TRUE(pDevice->simultaneousInterops == expected);
 }
 
-TEST(DeviceOsTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
-    auto hwInfo = defaultHwInfo.get();
-    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDevice>(hwInfo);
-
-    EXPECT_EQ(nullptr, pDevice);
-}
-
 TEST(ApiOsTest, GivenUnupportedApiTokensWhenGettingInfoThenInvalidValueErrorIsReturned) {
     MockContext context;
     MockBuffer buffer;
@@ -102,13 +95,5 @@ TEST(ApiOsTest, GivenUnsupportedApiWhenGettingDispatchThenNullIsReturned) {
     EXPECT_EQ(nullptr, context.dispatch.icdDispatch->clCreateFromD3D11Texture3DKHR);
     EXPECT_EQ(nullptr, context.dispatch.icdDispatch->clEnqueueAcquireD3D11ObjectsKHR);
     EXPECT_EQ(nullptr, context.dispatch.icdDispatch->clEnqueueReleaseD3D11ObjectsKHR);
-}
-
-TEST(DeviceOsTest, GivenMidThreadPreemptionAndFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
-    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(defaultHwInfo.get());
-
-    EXPECT_EQ(nullptr, pDevice);
 }
 } // namespace NEO
