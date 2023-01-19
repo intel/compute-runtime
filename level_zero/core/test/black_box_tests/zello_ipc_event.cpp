@@ -87,7 +87,7 @@ void runClient(int commSocket, uint32_t clientId) {
 
     // get the number of events from the payload
     uint32_t numEvents = 0;
-    memcpy(&numEvents, pIpcEventPoolHandle.data + sizeof(int), sizeof(int));
+    memcpy(&numEvents, pIpcEventPoolHandle.data + sizeof(uint64_t), sizeof(uint64_t));
 
     std::vector<ze_event_handle_t> events(numEvents);
 
