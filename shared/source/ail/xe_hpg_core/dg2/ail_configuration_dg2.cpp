@@ -18,7 +18,8 @@ static EnableAIL<IGFX_DG2> enableAILDG2;
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMapDG2 = {
     {"Wondershare Filmora 11", {AILEnumeration::DISABLE_BLITTER}}, // Blitter is disabled as a temporary mitigation of high GPU utilization
     {"perf_check", {AILEnumeration::DISABLE_BLITTER}},             // perf_check
-    {"tlb_player_gui", {AILEnumeration::DISABLE_BLITTER}}          // and tlb_player_gui are part of Wondershare Filmora 11
+    {"tlb_player_gui", {AILEnumeration::DISABLE_BLITTER}},         // and tlb_player_gui are part of Wondershare Filmora 11
+    {"Wondershare Filmora", {AILEnumeration::DISABLE_BLITTER}}     // From version 12 Wondershare Filmora drops version number from process name
 };
 
 template <>
