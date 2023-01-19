@@ -47,6 +47,26 @@ TEST_F(MemoryIPCTests,
 }
 
 TEST_F(MemoryIPCTests,
+       whenCallingGetIpcHandleWithHostAllocationThenSuccessIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryIPCTests,
        whenCallingOpenIpcHandleWithIpcHandleThenDeviceAllocationIsReturned) {
     size_t size = 10;
     size_t alignment = 1u;

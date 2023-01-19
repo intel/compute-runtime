@@ -17,6 +17,11 @@ enum InternalMemoryType : uint32_t {
     SHARED_UNIFIED_MEMORY = 0b1000
 };
 
+enum class InternalIpcMemoryType : uint32_t {
+    IPC_DEVICE_UNIFIED_MEMORY = 0,
+    IPC_HOST_UNIFIED_MEMORY = 1
+};
+
 enum TransferType : uint32_t {
     HOST_NON_USM_TO_HOST_USM = 0,
     HOST_NON_USM_TO_DEVICE_USM = 1,
