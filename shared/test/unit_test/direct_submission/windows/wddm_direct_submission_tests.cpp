@@ -18,6 +18,8 @@
 
 using namespace NEO;
 
+extern uint64_t cpuFence;
+
 template <PreemptionMode preemptionMode>
 struct WddmDirectSubmissionFixture : public WddmFixture {
     void SetUp() override {
@@ -306,6 +308,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWaitFenceUpdateThenExpectNewRingBufferAllocated) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    VariableBackup<uint64_t> cpuFenceBackup(&cpuFence, 0);
 
     bool ret = wddmDirectSubmission.initialize(true, false);
     EXPECT_TRUE(ret);

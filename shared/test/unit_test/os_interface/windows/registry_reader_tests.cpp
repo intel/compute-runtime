@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/os_interface/windows/registry_reader_tests.h"
+#include "shared/test/unit_test/os_interface/windows/registry_reader_tests.h"
 
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/test/common/helpers/variable_backup.h"

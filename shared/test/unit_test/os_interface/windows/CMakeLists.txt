@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/adapter_info_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_win_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_adapter_luid_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_tests_win.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.cpp
@@ -19,11 +20,18 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/um_km_data_translator_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm20_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm23_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_windows_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_command_stream_l0_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_kmdaf_listener_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mapper_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_reservation_tests.cpp
   )

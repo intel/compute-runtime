@@ -15,13 +15,11 @@
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/mock_wddm_interface23.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
-
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 
@@ -29,9 +27,8 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
     void SetUp() override {
         GdiDllFixture::setUp();
 
-        executionEnvironment = platform()->peekExecutionEnvironment();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
-        auto &osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface;
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment.rootDeviceEnvironments[0].get()));
+        auto &osInterface = executionEnvironment.rootDeviceEnvironments[0]->osInterface;
         osInterface = std::make_unique<OSInterface>();
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
 
@@ -45,7 +42,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         wddmMockInterface = static_cast<WddmMockInterface23 *>(wddm->wddmInterface.release());
         wddm->init();
         wddm->wddmInterface.reset(wddmMockInterface);
-        auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        auto &gfxCoreHelper = this->executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
                                                    EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0], preemptionMode));
         osContext->ensureContextInitialized();
@@ -55,10 +52,10 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         GdiDllFixture::tearDown();
     }
 
+    MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<OsContextWin> osContext;
     WddmMock *wddm = nullptr;
     WddmMockInterface23 *wddmMockInterface = nullptr;
-    ExecutionEnvironment *executionEnvironment;
 };
 
 struct Wddm23Tests : public Wddm23TestsWithoutWddmInit {
@@ -79,7 +76,7 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 }
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
-    auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &gfxCoreHelper = this->executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto defaultEngine = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0];
     OsContextWin osContextWithoutPreemption(*wddm, 0, 0u,
                                             EngineDescriptorHelper::getDefaultDescriptor(defaultEngine, PreemptionMode::Disabled));

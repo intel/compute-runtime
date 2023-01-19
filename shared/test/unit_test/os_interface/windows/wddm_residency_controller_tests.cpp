@@ -25,12 +25,9 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
+#include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
-
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 
 #include "gtest/gtest.h"
 
@@ -119,35 +116,33 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
 
 struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerTest {
     void SetUp() {
-        executionEnvironment = platform()->peekExecutionEnvironment();
-
-        wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[0].get());
+        wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());
         wddm->resetGdi(new MockGdi());
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
 
-        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        executionEnvironment->initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        executionEnvironment.initializeMemoryManager();
 
-        memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
+        memoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
 
-        csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
-        auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        csr.reset(createCommandStream(executionEnvironment, 0u, 1));
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       preemptionMode));
         osContext->ensureContextInitialized();
 
         osContext->incRefInternal();
         residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
-        gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+        gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     }
 
     void TearDown() {
         osContext->decRefInternal();
     }
 
-    ExecutionEnvironment *executionEnvironment;
+    MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> csr;
     WddmMock *wddm = nullptr;
@@ -160,19 +155,18 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
     const uint32_t osContextId = 0u;
 
     void SetUp() {
-        executionEnvironment = platform()->peekExecutionEnvironment();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment.rootDeviceEnvironments[0].get()));
         wddm->init();
         gdi = new MockGdi();
         wddm->resetGdi(gdi);
 
-        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        executionEnvironment->initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        executionEnvironment.initializeMemoryManager();
 
-        memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
-        csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
-        auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        memoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
+        csr.reset(createCommandStream(executionEnvironment, 0u, 1));
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
         osContext->ensureContextInitialized();
@@ -180,14 +174,14 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         osContext->incRefInternal();
 
         residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
-        gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+        gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     }
 
     void TearDown() {
         osContext->decRefInternal();
     }
 
-    ExecutionEnvironment *executionEnvironment;
+    MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> csr;
 
@@ -587,7 +581,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     DebugManagerStateRestore restorer{};
     DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
 
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
@@ -995,7 +989,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentRes
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocationsWhenMakingResidentResidencyAllocationsThenAllAllocationsAreMarkedResident) {
-    if (executionEnvironment->memoryManager->isLimitedGPU(0)) {
+    if (executionEnvironment.memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
     }
     MockWddmAllocation allocation1(gmmHelper);

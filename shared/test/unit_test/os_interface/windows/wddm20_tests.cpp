@@ -15,12 +15,10 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
+#include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-
-#include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
-
-#include "mock_gmm_memory.h"
 
 #include <dxgi.h>
 
@@ -1401,7 +1399,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksAr
     GMM_DEVICE_CALLBACKS_INT expectedDeviceCb{};
     wddm->init();
     auto gdi = wddm->getGdi();
-    auto gmmMemory = static_cast<MockGmmMemory *>(wddm->getGmmMemory());
+    auto gmmMemory = static_cast<MockGmmMemoryBase *>(wddm->getGmmMemory());
 
     expectedDeviceCb.Adapter.KmtHandle = wddm->getAdapter();
     expectedDeviceCb.hDevice.KmtHandle = wddm->getDeviceHandle();

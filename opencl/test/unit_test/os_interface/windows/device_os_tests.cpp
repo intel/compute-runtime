@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,20 +60,5 @@ TEST(DeviceOsTest, WhenCreatingDeviceThenSimultaneousInteropsIsSupported) {
                                           0};
 
     EXPECT_TRUE(pDevice->simultaneousInterops == expected);
-}
-
-TEST(DeviceOsTest, GivenFailedDeviceWhenCreatingWithNewExecutionEnvironmentThenNullIsReturned) {
-    auto hwInfo = defaultHwInfo.get();
-    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDevice>(hwInfo);
-
-    EXPECT_EQ(nullptr, pDevice);
-}
-
-TEST(DeviceOsTest, GivenMidThreadPreemptionAndFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
-    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(defaultHwInfo.get());
-
-    EXPECT_EQ(nullptr, pDevice);
 }
 } // namespace NEO

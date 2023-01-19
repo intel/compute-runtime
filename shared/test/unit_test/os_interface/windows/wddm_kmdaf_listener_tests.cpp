@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,11 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
+#include "shared/test/common/mocks/windows/mock_kmdaf_listener.h"
+#include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
-
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/windows/mock_kmdaf_listener.h"
-#include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 
 using namespace NEO;
 
@@ -43,11 +41,10 @@ class WddmWithKmDafMock : public Wddm {
 class WddmKmDafListenerTest : public ::testing::Test {
   public:
     void SetUp() {
-        executionEnvironment = platform()->peekExecutionEnvironment();
-        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
         osEnvironment->gdi.reset(new MockGdi());
-        executionEnvironment->osEnvironment.reset(osEnvironment);
+        executionEnvironment.osEnvironment.reset(osEnvironment);
         wddmWithKmDafMock = new WddmWithKmDafMock(*rootDeviceEnvironment);
         wddmWithKmDafMock->init();
         wddmWithKmDafMock->featureTable->flags.ftrKmdDaf = true;
@@ -55,8 +52,8 @@ class WddmKmDafListenerTest : public ::testing::Test {
     void TearDown() {
     }
 
+    MockExecutionEnvironment executionEnvironment{};
     WddmWithKmDafMock *wddmWithKmDafMock = nullptr;
-    ExecutionEnvironment *executionEnvironment = nullptr;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 

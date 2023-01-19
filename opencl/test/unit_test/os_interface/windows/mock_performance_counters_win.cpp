@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/test/common/mocks/mock_wddm.h"
-
-#include "opencl/test/unit_test/os_interface/windows/mock_os_time_win.h"
+#include "shared/test/common/mocks/windows/mock_os_time_win.h"
 
 namespace NEO {
 ///////////////////////////////////////////////////////

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,13 @@
 
 #pragma once
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
-
-#include "opencl/source/os_interface/ocl_reg_path.h"
 
 namespace NEO {
 class TestedRegistryReader : public RegistryReader {
   public:
-    TestedRegistryReader(bool userScope) : RegistryReader(userScope, oclRegPath){};
+    TestedRegistryReader(bool userScope) : RegistryReader(userScope, ApiSpecificConfig::getRegistryPath()){};
     TestedRegistryReader(std::string regKey) : RegistryReader(false, regKey){};
     HKEY getHkeyType() const {
         return hkeyType;

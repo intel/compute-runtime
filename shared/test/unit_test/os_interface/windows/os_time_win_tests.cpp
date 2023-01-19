@@ -8,10 +8,10 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/windows/mock_os_time_win.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
 #include "gtest/gtest.h"
-#include "mock_os_time_win.h"
 
 #include <memory>
 

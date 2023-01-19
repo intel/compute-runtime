@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -436,7 +436,7 @@ NTSTATUS __stdcall mockD3DKMTUnlock2(IN CONST D3DKMT_UNLOCK2 *unlock2) {
     return STATUS_SUCCESS;
 }
 
-static size_t cpuFence = 0;
+uint64_t cpuFence = 0;
 
 static bool createSynchronizationObject2FailCall = false;
 

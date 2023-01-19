@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -120,7 +120,10 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
        ${NEO_SHARED_TEST_DIRECTORY}/common/mock_gdi/mock_os_library.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_kmdaf_listener.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_os_time_win.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_eudebug.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_allocation.h
        ${NEO_SHARED_TEST_DIRECTORY}/common/mock_gdi/mock_create_gdi.cpp
   )
 endif()
