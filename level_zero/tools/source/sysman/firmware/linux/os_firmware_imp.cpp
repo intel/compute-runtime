@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
@@ -27,6 +28,7 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
     std::vector<std::string> mtdDescriptorStrings = {};
     ze_result_t result = pFsAccess->read(mtdDescriptor, mtdDescriptorStrings);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, mtdDescriptor.c_str(), result);
         return result;
     }
     for (const auto &readByteLine : mtdDescriptorStrings) {
