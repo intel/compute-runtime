@@ -11,7 +11,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_time.h"
 
-#include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 
 namespace L0 {

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 

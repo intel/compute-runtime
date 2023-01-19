@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 
 #include "metrics_discovery_api.h"
 
+#include <map>
 #include <vector>
 
 struct _zet_metric_group_handle_t {};

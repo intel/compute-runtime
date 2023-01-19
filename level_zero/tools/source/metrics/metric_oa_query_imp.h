@@ -8,7 +8,10 @@
 #pragma once
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include "metrics_library_api_1_0.h"
+
 #include <map>
+#include <mutex>
 #include <vector>
 
 using MetricsLibraryApi::ClientCallbacks_1_0;

@@ -6,20 +6,28 @@
  */
 
 #pragma once
-#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/helpers/timestamp_packet_size_control.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 #include <level_zero/ze_api.h>
 
+#include <atomic>
 #include <bitset>
+#include <chrono>
 #include <limits>
+#include <memory>
+#include <vector>
 
 struct _ze_event_handle_t {};
 
 struct _ze_event_pool_handle_t {};
 
 namespace NEO {
+class CommandStreamReceiver;
+class GraphicsAllocation;
+class MultiGraphicsAllocation;
 struct RootDeviceEnvironment;
-}
+} // namespace NEO
 
 namespace L0 {
 typedef uint64_t FlushStamp;
@@ -91,9 +99,7 @@ struct Event : _ze_event_handle_t {
     uint64_t getCompletionFieldGpuAddress(Device *device) const {
         return this->getGpuAddress(device) + getCompletionFieldOffset();
     }
-    void *getCompletionFieldHostAddress() const {
-        return ptrOffset(getHostAddress(), getCompletionFieldOffset());
-    }
+    void *getCompletionFieldHostAddress() const;
     size_t getContextStartOffset() const {
         return contextStartOffset;
     }
@@ -128,10 +134,7 @@ struct Event : _ze_event_handle_t {
         this->csr = csr;
     }
 
-    void increaseKernelCount() {
-        kernelCount++;
-        UNRECOVERABLE_IF(kernelCount > maxKernelCount);
-    }
+    void increaseKernelCount();
     uint32_t getKernelCount() const {
         return kernelCount;
     }
@@ -220,63 +223,6 @@ struct Event : _ze_event_handle_t {
     bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
-};
-
-template <typename TagSizeT>
-class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT> {
-  public:
-    uint32_t getPacketsUsed() const { return packetsUsed; }
-    void setPacketsUsed(uint32_t value) { packetsUsed = value; }
-
-  protected:
-    uint32_t packetsUsed = 1;
-};
-
-template <typename TagSizeT>
-struct EventImp : public Event {
-
-    EventImp(EventPool *eventPool, int index, Device *device, bool downloadAllocationRequired)
-        : Event(eventPool, index, device), downloadAllocationRequired(downloadAllocationRequired) {
-        contextStartOffset = NEO::TimestampPackets<TagSizeT>::getContextStartOffset();
-        contextEndOffset = NEO::TimestampPackets<TagSizeT>::getContextEndOffset();
-        globalStartOffset = NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset();
-        globalEndOffset = NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset();
-        timestampSizeInDw = (sizeof(TagSizeT) / sizeof(uint32_t));
-        singlePacketSize = NEO::TimestampPackets<TagSizeT>::getSinglePacketSize();
-    }
-
-    ~EventImp() override {}
-
-    ze_result_t hostSignal() override;
-
-    ze_result_t hostSynchronize(uint64_t timeout) override;
-
-    ze_result_t queryStatus() override;
-
-    ze_result_t reset() override;
-
-    ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
-    ze_result_t queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) override;
-
-    void resetDeviceCompletionData(bool resetAllPackets);
-    void resetKernelCountAndPacketUsedCount() override;
-
-    uint64_t getPacketAddress(Device *device) override;
-    uint32_t getPacketsInUse() const override;
-    uint32_t getPacketsUsedInLastKernel() override;
-    void setPacketsInUse(uint32_t value) override;
-
-    std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
-
-    const bool downloadAllocationRequired = false;
-
-  protected:
-    ze_result_t calculateProfilingData();
-    ze_result_t queryStatusEventPackets();
-    MOCKABLE_VIRTUAL ze_result_t hostEventSetValue(TagSizeT eventValue);
-    ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
-    MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
-    void setRemainingPackets(TagSizeT eventVal, void *nextPacketAddress, uint32_t packetsAlreadySet);
 };
 
 struct EventPool : _ze_event_pool_handle_t {

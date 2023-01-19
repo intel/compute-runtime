@@ -10,6 +10,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 

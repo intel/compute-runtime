@@ -14,6 +14,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/timestamp_packet_size_control.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include <cstdint>
@@ -21,10 +22,6 @@
 namespace NEO {
 class CommandStreamReceiver;
 class LinearStream;
-
-namespace TimestampPacketSizeControl {
-constexpr uint32_t preferredPacketCount = 16u;
-}
 
 #pragma pack(1)
 template <typename TSize>
