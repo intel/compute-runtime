@@ -566,7 +566,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
 
     size_t additionalSize = 0u;
     const auto &hwInfo = device->getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
     if (productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, cmdQ.isOOQEnabled())) {
         additionalSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     }

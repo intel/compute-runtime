@@ -1578,7 +1578,8 @@ TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestamp
 
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
-    if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(*defaultHwInfo.get())) {
+    auto &productHelper = context.getDevice(0)->getProductHelper();
+    if (!productHelper.isBlitterFullySupported(*defaultHwInfo.get())) {
         GTEST_SKIP();
     }
 
@@ -2127,7 +2128,7 @@ TEST(CommandQueue, given64KBTileWith3DImageTypeWhenCallingBlitEnqueueImageAllowe
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
     const auto &hwInfo = *defaultHwInfo;
-    const auto &productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = context.getDevice(0)->getProductHelper();
 
     size_t correctRegion[3] = {10u, 10u, 0};
     size_t correctOrigin[3] = {1u, 1u, 0};
@@ -2148,7 +2149,7 @@ TEST(CommandQueue, given64KBTileWith3DImageTypeWhenCallingBlitEnqueueImageAllowe
                 mockGmmResourceInfo->getResourceFlags()->Info.Tile64 = isTile64;
 
                 if (isTile64 && (imageType == CL_MEM_OBJECT_IMAGE3D)) {
-                    auto supportExpected = productHelper->isTile64With3DSurfaceOnBCSSupported(hwInfo) && blitterEnabled;
+                    auto supportExpected = productHelper.isTile64With3DSurfaceOnBCSSupported(hwInfo) && blitterEnabled;
                     EXPECT_EQ(supportExpected, queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, *image));
                 } else {
                     EXPECT_EQ(blitterEnabled, queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, *image));

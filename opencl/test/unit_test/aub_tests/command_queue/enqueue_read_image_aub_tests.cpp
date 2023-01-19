@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -336,8 +336,10 @@ HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnab
 }
 
 HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+
+    auto &productHelper = pCmdQ->getDevice().getProductHelper();
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
-        !(ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
+        !(productHelper.isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
         GTEST_SKIP();
     }
 

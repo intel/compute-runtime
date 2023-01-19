@@ -633,9 +633,9 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(pHwInfo->platform.eProductFamily);
+    const auto &productHelper = pDevice->getProductHelper();
 
-    uint8_t memory[1 * KB];
+    uint8_t memory[1 * KB]{};
     auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(),
                                                             pDevice->getDeviceBitfield());
     MockOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}, DeviceBitfield(0))};
