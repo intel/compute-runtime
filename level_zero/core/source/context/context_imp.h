@@ -20,6 +20,14 @@ struct StructuresLookupTable;
 struct DriverHandleImp;
 struct Device;
 
+#pragma pack(1)
+struct IpcMemoryData {
+    uint64_t handle = 0;
+    uint8_t type = 0;
+};
+#pragma pack()
+static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
 struct ContextImp : Context {
     ContextImp(DriverHandle *driverHandle);
     ~ContextImp() override = default;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -377,10 +377,13 @@ struct ContextGetIpcHandleMock : public L0::ContextImp {
 
     ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override {
         uint64_t handle = driverHandle->mockFd;
-        memcpy_s(reinterpret_cast<void *>(pIpcHandle->data),
-                 sizeof(ze_ipc_mem_handle_t),
-                 &handle,
-                 sizeof(handle));
+        NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+        uint8_t type = static_cast<uint8_t>(Context::parseUSMType(allocData->memoryType));
+
+        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
+        ipcData = {};
+        ipcData.handle = handle;
+        ipcData.type = type;
 
         return ZE_RESULT_SUCCESS;
     }
@@ -548,10 +551,13 @@ struct ContextIpcMock : public L0::ContextImp {
 
     ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override {
         uint64_t handle = mockFd;
-        memcpy_s(reinterpret_cast<void *>(pIpcHandle->data),
-                 sizeof(ze_ipc_mem_handle_t),
-                 &handle,
-                 sizeof(handle));
+        NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+        uint8_t type = static_cast<uint8_t>(Context::parseUSMType(allocData->memoryType));
+
+        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
+        ipcData = {};
+        ipcData.handle = handle;
+        ipcData.type = type;
 
         return ZE_RESULT_SUCCESS;
     }
