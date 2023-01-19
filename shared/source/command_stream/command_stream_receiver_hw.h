@@ -130,6 +130,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     GraphicsAllocation *getClearColorAllocation() override;
 
     TagAllocatorBase *getTimestampPacketAllocator() override;
+    std::unique_ptr<TagAllocatorBase> createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer rootDeviceIndices) override;
 
     void postInitFlagsSetup() override;
     void programActivePartitionConfig(LinearStream &csr);

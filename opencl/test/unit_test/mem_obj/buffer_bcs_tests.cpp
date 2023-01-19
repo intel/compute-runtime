@@ -767,11 +767,11 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferOperationWithoutKernelWhenEstimati
     auto &hwInfo = cmdQ->getDevice().getHardwareInfo();
 
     auto readBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, csrDependencies, false, false,
-                                                                                   true, *cmdQ, multiDispatchInfo, false, false);
+                                                                                   true, *cmdQ, multiDispatchInfo, false, false, nullptr);
     auto writeBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, csrDependencies, false, false,
-                                                                                    true, *cmdQ, multiDispatchInfo, false, false);
+                                                                                    true, *cmdQ, multiDispatchInfo, false, false, nullptr);
     auto copyBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_COPY_BUFFER, csrDependencies, false, false,
-                                                                                   true, *cmdQ, multiDispatchInfo, false, false);
+                                                                                   true, *cmdQ, multiDispatchInfo, false, false, nullptr);
     auto expectedSize = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
 
     if (cmdQ->isCacheFlushForBcsRequired()) {

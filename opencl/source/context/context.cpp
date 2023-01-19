@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/heap_allocator.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -49,7 +50,9 @@ Context::Context(
 
 Context::~Context() {
     gtpinNotifyContextDestroy((cl_context)this);
-
+    if (multiRootDeviceTimestampPacketAllocator.get() != nullptr) {
+        multiRootDeviceTimestampPacketAllocator.reset();
+    }
     if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled(this)) {
         smallBufferPoolAllocator.releaseSmallBufferPool();
     }
@@ -563,6 +566,16 @@ void Context::BufferPoolAllocator::releaseSmallBufferPool() {
     DEBUG_BREAK_IF(!this->mainStorage);
     delete this->mainStorage;
     this->mainStorage = nullptr;
+}
+TagAllocatorBase *Context::getMultiRootDeviceTimestampPacketAllocator() {
+    return multiRootDeviceTimestampPacketAllocator.get();
+}
+void Context::setMultiRootDeviceTimestampPacketAllocator(std::unique_ptr<TagAllocatorBase> &allocator) {
+    multiRootDeviceTimestampPacketAllocator = std::move(allocator);
+}
+
+std::unique_lock<std::mutex> Context::obtainOwnershipForMultiRootDeviceAllocator() {
+    return std::unique_lock<std::mutex>(multiRootDeviceAllocatorMtx);
 }
 
 } // namespace NEO

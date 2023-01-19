@@ -439,6 +439,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool requiresCacheFlushAfterWalker = false;
 
     std::unique_ptr<TimestampPacketContainer> deferredTimestampPackets;
+    std::unique_ptr<TimestampPacketContainer> deferredMultiRootSyncNodes;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
 
     struct BcsTimestampPacketContainers {

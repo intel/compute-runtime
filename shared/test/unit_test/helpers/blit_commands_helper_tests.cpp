@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -663,4 +664,26 @@ HWTEST2_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlu
     hwParser.parseCommands<FamilyType>(linearStream);
     auto cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     ASSERT_EQ(hwParser.cmdList.end(), cmdIterator);
+}
+
+HWTEST_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlushDwIsProgramed) {
+    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
+    auto tag = mockTagAllocator->getTag();
+    BlitProperties blitProperties{};
+    blitProperties.copySize = {1, 1, 1};
+    BlitPropertiesContainer blitPropertiesContainer1;
+    blitPropertiesContainer1.push_back(blitProperties);
+    blitPropertiesContainer1.push_back(blitProperties);
+    blitPropertiesContainer1.push_back(blitProperties);
+
+    auto estimatedSizeWithoutNode = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        blitPropertiesContainer1, false, true, false, pDevice->getRootDeviceEnvironment());
+    blitProperties.multiRootDeviceEventSync = tag;
+    BlitPropertiesContainer blitPropertiesContainer2;
+    blitPropertiesContainer2.push_back(blitProperties);
+    blitPropertiesContainer2.push_back(blitProperties);
+    blitPropertiesContainer2.push_back(blitProperties);
+    auto estimatedSizeWithNode = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        blitPropertiesContainer2, false, true, false, pDevice->getRootDeviceEnvironment());
+    EXPECT_NE(estimatedSizeWithoutNode, estimatedSizeWithNode);
 }

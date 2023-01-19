@@ -486,7 +486,7 @@ TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefA
 
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     v.push_back(bufferSurf);
-    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1);
+    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1, nullptr);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
@@ -529,7 +529,7 @@ TEST_F(InternalsEventTest, GivenSubmitCommandTrueWhenSubmittingCommandsThenRefAp
     NullSurface *surface = new NullSurface;
     v.push_back(surface);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1);
+    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1, nullptr);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
@@ -580,7 +580,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1, nullptr);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
@@ -632,7 +632,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1, nullptr);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
@@ -681,7 +681,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1, nullptr);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
@@ -1170,7 +1170,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
       public:
         using CommandComputeKernel::eventsWaitlist;
         MockCommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces, Kernel *kernel)
-            : CommandComputeKernel(commandQueue, kernelOperation, surfaces, false, false, false, nullptr, PreemptionMode::Disabled, kernel, 0) {}
+            : CommandComputeKernel(commandQueue, kernelOperation, surfaces, false, false, false, nullptr, PreemptionMode::Disabled, kernel, 0, nullptr) {}
     };
     class MockEvent : public Event {
       public:
@@ -1751,7 +1751,7 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     std::vector<Surface *> v;
-    auto cmd = new CommandComputeKernel(*pCmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1);
+    auto cmd = new CommandComputeKernel(*pCmdQ, blockedCommandsData, v, false, false, false, nullptr, preemptionMode, pKernel, 1, nullptr);
     event->setCommand(std::unique_ptr<Command>(cmd));
 
     FlushStamp expectedFlushStamp = 0;
@@ -1893,4 +1893,36 @@ TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabled
         DebugManager.flags.EnableTimestampWaitForEvents.set(4);
         EXPECT_TRUE(event.isWaitForTimestampsEnabled());
     }
+}
+TEST(MultiRootEvent, givenContextWithMultiRootTagAllocatorWhenEventGetsTagThenNewAllocatorIsNotCreated) {
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context{};
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    auto allocator = cmdQ.getGpgpuCommandStreamReceiver().createMultiRootDeviceTimestampPacketAllocator(context.getRootDeviceIndices());
+    auto allocatorPtr = allocator.get();
+    context.setMultiRootDeviceTimestampPacketAllocator(allocator);
+    MockEvent<Event> event{&cmdQ, CL_COMMAND_MARKER, 0, 0};
+    event.getMultiRootTimestampSyncNode();
+    EXPECT_EQ(allocatorPtr, context.getMultiRootDeviceTimestampPacketAllocator());
+}
+TEST(MultiRootEvent, givenContextWithoutMultiRootTagAllocatorWhenEventGetsTagThenNewAllocatorIsCreated) {
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context{};
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    EXPECT_EQ(context.getMultiRootDeviceTimestampPacketAllocator(), nullptr);
+    MockEvent<Event> event{&cmdQ, CL_COMMAND_MARKER, 0, 0};
+    event.getMultiRootTimestampSyncNode();
+    EXPECT_NE(context.getMultiRootDeviceTimestampPacketAllocator(), nullptr);
+}
+TEST(MultiRootEvent, givenEventWithTagWhenEventGetsNewTagThenNewTagContainerIsNotCreated) {
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context{};
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    MockEvent<Event> event{&cmdQ, CL_COMMAND_MARKER, 0, 0};
+    EXPECT_EQ(event.getMultiRootDeviceTimestampPacketNodes(), nullptr);
+    event.getMultiRootTimestampSyncNode();
+    auto containerPtr = event.getMultiRootDeviceTimestampPacketNodes();
+    EXPECT_NE(containerPtr, nullptr);
+    event.getMultiRootTimestampSyncNode();
+    EXPECT_EQ(containerPtr, event.getMultiRootDeviceTimestampPacketNodes());
 }

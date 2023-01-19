@@ -13,6 +13,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -243,10 +244,14 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
     MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
 
     Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
+    auto node1 = event1.getMultiRootTimestampSyncNode();
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
     Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
+    auto node3 = event3.getMultiRootTimestampSyncNode();
     Event event4(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
+    auto node4 = event4.getMultiRootTimestampSyncNode();
     Event event5(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
+    auto node5 = event5.getMultiRootTimestampSyncNode();
     UserEvent userEvent1(&pCmdQ1->getContext());
     UserEvent userEvent2(&pCmdQ2->getContext());
 
@@ -285,12 +290,12 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
         EXPECT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(4u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(7u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
     }
 
     {
@@ -313,12 +318,12 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
         EXPECT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(15u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(20u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
     }
     alignedFree(svmPtr);
 }

@@ -166,7 +166,7 @@ size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(cons
 }
 
 template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, bool isMarkerWithProfiling, bool eventsInWaitlist) {
+size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, bool isMarkerWithProfiling, bool eventsInWaitlist, cl_event *outEvent) {
     size_t expectedSizeCS = 0;
     auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     auto &gfxCoreHelper = commandQueue.getDevice().getGfxCoreHelper();
@@ -219,8 +219,14 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (DebugManager.flags.GpuScratchRegWriteAfterWalker.get() != -1) {
         expectedSizeCS += sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
     }
-
-    expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(csrDeps);
+    expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDeps);
+    if (outEvent) {
+        auto pEvent = castToObjectOrAbort<Event>(*outEvent);
+        if ((pEvent->getContext()->getRootDeviceIndices().size() > 1) && (!pEvent->isUserEvent())) {
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
+        }
+    }
+    expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
     return expectedSizeCS;
 }

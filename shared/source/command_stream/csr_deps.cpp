@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,4 +22,10 @@ void CsrDependencies::copyNodesToNewContainer(TimestampPacketContainer &newTimes
         newTimestampPacketContainer.assignAndIncrementNodesRefCounts(*timestampPacketContainer);
     }
 }
+void CsrDependencies::copyRootDeviceSyncNodesToNewContainer(TimestampPacketContainer &newTimestampPacketContainer) {
+    for (auto &timestampPacketContainer : multiRootTimeStampSyncContainer) {
+        newTimestampPacketContainer.assignAndIncrementNodesRefCounts(*timestampPacketContainer);
+    }
+}
+
 } // namespace NEO

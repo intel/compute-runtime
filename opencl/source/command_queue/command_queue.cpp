@@ -104,7 +104,9 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
             deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         }
-
+        if (context && context->getRootDeviceIndices().size() > 1) {
+            deferredMultiRootSyncNodes = std::make_unique<TimestampPacketContainer>();
+        }
         auto deferCmdQBcsInitialization = hwInfo.featureTable.ftrBcsInfo.count() > 1u;
 
         if (DebugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
@@ -1247,6 +1249,10 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
     TimestampPacketContainer nodesToRelease;
     if (deferredTimestampPackets) {
         deferredTimestampPackets->swapNodes(nodesToRelease);
+    }
+    TimestampPacketContainer multiRootSyncNodesToRelease;
+    if (deferredMultiRootSyncNodes.get()) {
+        deferredMultiRootSyncNodes->swapNodes(multiRootSyncNodesToRelease);
     }
 
     waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);

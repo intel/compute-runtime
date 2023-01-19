@@ -49,6 +49,7 @@ struct BlitProperties {
                                                    CommandStreamReceiver &gpguCsr, CommandStreamReceiver &bcsCsr);
 
     TagNodeBase *outputTimestampPacket = nullptr;
+    TagNodeBase *multiRootDeviceEventSync = nullptr;
     BlitterConstants::BlitDirection blitDirection;
     CsrDependencies csrDependencies;
     AuxTranslationDirection auxTranslationDirection;

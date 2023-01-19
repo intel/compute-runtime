@@ -45,7 +45,7 @@ bool CommandQueueHw<Family>::isCacheFlushCommand(uint32_t commandType) const {
 }
 
 template <>
-LinearStream &getCommandStream<Family, CL_COMMAND_RESOURCE_BARRIER>(CommandQueue &commandQueue, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, bool blitEnqueue, const MultiDispatchInfo &multiDispatchInfo, Surface **surfaces, size_t numSurfaces, bool isMarkerWithProfiling, bool eventsInWaitList) {
+LinearStream &getCommandStream<Family, CL_COMMAND_RESOURCE_BARRIER>(CommandQueue &commandQueue, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, bool blitEnqueue, const MultiDispatchInfo &multiDispatchInfo, Surface **surfaces, size_t numSurfaces, bool isMarkerWithProfiling, bool eventsInWaitList, cl_event *outEvent) {
     size_t expectedSizeCS = 0;
     [[maybe_unused]] bool usePostSync = false;
     if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {

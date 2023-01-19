@@ -125,17 +125,11 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static void programCsrDependenciesForForTaskCountContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
-        auto &taskCountContainer = csrDependencies.taskCountContainer;
-
-        for (auto &[taskCountPreviousRootDevice, tagAddressPreviousRootDevice] : taskCountContainer) {
-            using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-            using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-
-            EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream,
-                                                                  static_cast<uint64_t>(tagAddressPreviousRootDevice),
-                                                                  static_cast<uint32_t>(taskCountPreviousRootDevice),
-                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+    static void programCsrDependenciesForForMultiRootDeviceSyncContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
+        for (auto timestampPacketContainer : csrDependencies.multiRootTimeStampSyncContainer) {
+            for (auto &node : timestampPacketContainer->peekNodes()) {
+                TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
+            }
         }
     }
 
@@ -199,8 +193,8 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static size_t getRequiredCmdStreamSizeForTaskCountContainer(const CsrDependencies &csrDependencies) {
-        return csrDependencies.taskCountContainer.size() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+    static size_t getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer(const CsrDependencies &csrDependencies) {
+        return csrDependencies.multiRootTimeStampSyncContainer.size() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
     }
 };
 

@@ -220,6 +220,7 @@ class CommandStreamReceiver {
     TagAllocatorBase *getEventTsAllocator();
     TagAllocatorBase *getEventPerfCountAllocator(const uint32_t tagSize);
     virtual TagAllocatorBase *getTimestampPacketAllocator() = 0;
+    virtual std::unique_ptr<TagAllocatorBase> createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer rootDeviceIndices) = 0;
 
     virtual bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 

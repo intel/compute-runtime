@@ -24,6 +24,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -234,7 +235,7 @@ HWTEST_F(EnqueueHandlerTest, givenNonBlitPropertyWhenEnqueueIsBlockedThenDontReg
     Surface *surfaces[] = {nullptr};
     mockCmdQ->enqueueBlocked(CL_COMMAND_MARKER, surfaces, size_t(0), multiDispatchInfo, timestampPacketDependencies,
                              blockedCommandsData, enqueuePropertiesForDependencyFlush, eventsRequest,
-                             eventBuilder, std::unique_ptr<PrintfHandler>(nullptr), nullptr);
+                             eventBuilder, std::unique_ptr<PrintfHandler>(nullptr), nullptr, nullptr);
     EXPECT_FALSE(blockedCommandsDataForDependencyFlush->blitEnqueue);
 }
 
@@ -267,7 +268,7 @@ HWTEST_F(EnqueueHandlerTest, givenBlitPropertyWhenEnqueueIsBlockedThenRegisterBl
     Surface *surfaces[] = {nullptr};
     mockCmdQ->enqueueBlocked(CL_COMMAND_READ_BUFFER, surfaces, size_t(0), multiDispatchInfo, timestampPacketDependencies,
                              blockedCommandsData, enqueuePropertiesForBlitEnqueue, eventsRequest,
-                             eventBuilder, std::unique_ptr<PrintfHandler>(nullptr), mockCmdQ->getBcsForAuxTranslation());
+                             eventBuilder, std::unique_ptr<PrintfHandler>(nullptr), mockCmdQ->getBcsForAuxTranslation(), nullptr);
     EXPECT_TRUE(blockedCommandsDataForBlitEnqueue->blitEnqueue);
     EXPECT_EQ(blitProperties.srcAllocation, blockedCommandsDataForBlitEnqueue->blitPropertiesContainer.begin()->srcAllocation);
     EXPECT_EQ(blitProperties.dstAllocation, blockedCommandsDataForBlitEnqueue->blitPropertiesContainer.begin()->dstAllocation);
@@ -351,7 +352,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
 
     timestampPacketDependencies.cacheFlushNodes.add(mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
     BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
-                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false);
+                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, nullptr);
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
@@ -390,7 +391,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKern
     CsrDependencies csrDeps;
 
     BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
-                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false);
+                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, nullptr);
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
@@ -432,7 +433,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
     mockCmdQ->obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, true, bcsCsr);
     timestampPacketDependencies.cacheFlushNodes.add(mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
     BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
-                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false);
+                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, nullptr);
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
@@ -478,7 +479,7 @@ HWTEST_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoT
     std::vector<Surface *> v;
 
     pKernel->setAdditionalKernelExecInfo(123u);
-    std::unique_ptr<CommandComputeKernel> cmd(new CommandComputeKernel(*mockCmdQ.get(), blockedCommandsData, v, false, false, false, std::move(printfHandler), PreemptionMode::Disabled, pKernel, 1));
+    std::unique_ptr<CommandComputeKernel> cmd(new CommandComputeKernel(*mockCmdQ.get(), blockedCommandsData, v, false, false, false, std::move(printfHandler), PreemptionMode::Disabled, pKernel, 1, nullptr));
     cmd->submit(1u, false);
     EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, 123u);
 
@@ -541,4 +542,41 @@ HWTEST_F(EnqueueHandlerTest, givenTimestampPacketWriteDisabledAndCommandWithCach
     EXPECT_EQ(nullptr, container);
     clReleaseEvent(event);
 }
+
+template <typename FamilyType>
+class MockCommandQueueWithProcessSignal : public MockCommandQueueHw<FamilyType> {
+    using MockCommandQueueHw<FamilyType>::MockCommandQueueHw;
+
+  public:
+    void processSignalMultiRootDeviceNode(LinearStream *commandStream,
+                                          TagNodeBase *node) override {
+        processSignalMultiRootDeviceNodeCalled++;
+    }
+    uint32_t processSignalMultiRootDeviceNodeCalled = 0;
+};
+
+using EnqueueHandlerMultiRootSync = MultiRootDeviceFixture;
+
+HWTEST_F(EnqueueHandlerMultiRootSync, givenOutEventInMultiRootContextWhenEnqueuehandlerForMapOperationCalledThenMultiRootTagIsNotSignaled) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueWithProcessSignal<FamilyType>>(context.get(), device1, nullptr);
+    auto event = std::make_unique<MockEvent<Event>>(context.get(), nullptr, 0, 0, 0);
+    cl_event clEvent = event.get();
+
+    MultiDispatchInfo multiDispatch;
+    mockCmdQ->template enqueueHandler<CL_COMMAND_SVM_MAP>(nullptr, 0, false, multiDispatch, 0, nullptr, &clEvent);
+    EXPECT_EQ(mockCmdQ->processSignalMultiRootDeviceNodeCalled, 0u);
+    clReleaseEvent(clEvent);
+}
+
+HWTEST_F(EnqueueHandlerMultiRootSync, givenOutEventInMultiRootContextWhenEnqueuehandlerForMarkerOperationCalledThenMultiRootTagIsSignaled) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueWithProcessSignal<FamilyType>>(context.get(), device1, nullptr);
+    auto event = std::make_unique<MockEvent<Event>>(context.get(), nullptr, 0, 0, 0);
+    cl_event clEvent = event.get();
+
+    MultiDispatchInfo multiDispatch;
+    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, &clEvent);
+    EXPECT_EQ(mockCmdQ->processSignalMultiRootDeviceNodeCalled, 1u);
+    clReleaseEvent(clEvent);
+}
+
 } // namespace NEO
