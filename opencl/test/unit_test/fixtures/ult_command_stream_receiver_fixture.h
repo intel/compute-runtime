@@ -156,7 +156,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.streamProperties.pipelineSelect.setProperties(true, false, false, *defaultHwInfo);
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
                                                                               gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), pDevice->getRootDeviceEnvironment());
-        commandStreamReceiver.streamProperties.frontEndState.setProperties(false, false, false, -1, *defaultHwInfo);
+        commandStreamReceiver.streamProperties.frontEndState.setProperties(false, false, false, -1, pDevice->getRootDeviceEnvironment());
 
         auto logicalStateHelper = commandStreamReceiver.getLogicalStateHelper();
 

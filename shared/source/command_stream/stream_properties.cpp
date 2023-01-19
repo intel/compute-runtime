@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,9 +104,11 @@ void StateComputeModeProperties::clearIsDirty() {
     clearIsDirtyExtra();
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
+void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
         productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }

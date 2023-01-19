@@ -628,13 +628,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecutionContext &ctx) {
-    const auto &hwInfo = this->device->getHwInfo();
 
     auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     auto &streamProperties = this->csr->getStreamProperties();
     if (!frontEndTrackingEnabled()) {
         streamProperties.frontEndState.setProperties(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
-                                                     true, isEngineInstanced, hwInfo);
+                                                     true, isEngineInstanced, this->device->getNEODevice()->getRootDeviceEnvironment());
         ctx.frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !this->csr->getLogicalStateHelper());
     } else {
         ctx.engineInstanced = isEngineInstanced;
