@@ -56,7 +56,7 @@ FabricVertex *FabricVertex::createFromDevice(Device *device) {
     memcpy_s(fabricVertex->properties.uuid.id, ZE_MAX_UUID_SIZE, deviceProperties.uuid.id, ZE_MAX_DEVICE_UUID_SIZE);
 
     if (deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-        fabricVertex->properties.type = ZE_FABRIC_VERTEX_EXP_TYPE_SUBEVICE;
+        fabricVertex->properties.type = ZE_FABRIC_VERTEX_EXP_TYPE_SUBDEVICE;
     } else {
         fabricVertex->properties.type = ZE_FABRIC_VERTEX_EXP_TYPE_DEVICE;
     }
