@@ -673,6 +673,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableSetAmbig
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebuggableOsContextWhenDeviceCreatesEnginesThenDeviceIsInitializedWithFirstSubmission) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useFirstSubmissionInitDevice = true;
+
     auto hwInfo = *defaultHwInfo;
     hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0);
 
@@ -687,7 +690,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebuggableOsContextWhenDeviceCrea
     EXPECT_EQ(1u, csr->peekLatestSentTaskCount());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenNonDebuggableOsContextWhenDeviceCreatesEnginesThenDeviceIsNotInitializedWithFirstSubmission) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsInitializedWithFirstSubmission) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useFirstSubmissionInitDevice = true;
+
     auto hwInfo = *defaultHwInfo;
     hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0);
 
@@ -698,7 +704,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenNonDebuggableOsContextWhenDeviceC
 
     auto device = deviceFactory.rootDevices[0];
     auto csr = device->allEngines[device->defaultEngineIndex].commandStreamReceiver;
-    EXPECT_EQ(0u, csr->peekLatestSentTaskCount());
+    EXPECT_EQ(device->isInitDeviceWithFirstSubmissionSupported(csr->getType()), csr->peekLatestSentTaskCount());
 }
 
 TEST(FailDeviceTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {

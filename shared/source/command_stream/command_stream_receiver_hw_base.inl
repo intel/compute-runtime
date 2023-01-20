@@ -1348,6 +1348,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
 
     auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, args.tlbInvalidation));
     auto commandStreamStart = commandStream.getUsed();
+    this->makeResident(*commandStream.getGraphicsAllocation());
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(commandStream,
                                                                               PostSyncMode::ImmediateData,
@@ -1594,11 +1595,7 @@ void CommandStreamReceiverHw<GfxFamily>::createKernelArgsBufferAllocation() {
 
 template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
-    auto lock = obtainUniqueOwnership();
-
-    auto &commandStream = getCS(EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize());
-    auto commandStreamStart = commandStream.getUsed();
-    return this->flushSmallTask(commandStream, commandStreamStart);
+    return this->flushTagUpdate();
 }
 
 template <typename GfxFamily>
