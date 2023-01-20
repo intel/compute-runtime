@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,6 @@
 #include "gl_types.h"
 
 using namespace NEO;
-
-bool MockGLSharingFunctions::SharingEnabled = false;
 
 class glSharingTests : public ::testing::Test {
   public:
